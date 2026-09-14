@@ -199,7 +199,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "PC-Port", "Nintendo Game and Watch", "Namco 2x6", "FBN", "J2ME", "NEC PC-88", "CGenius", "NEC PC88",
             "Fujitsu FM-7", "Fairchild Channel-F", "Exelvision EX100", "Enterprise 64-128", "Capcom Medalusion",
             "Sharp MZ-700", "Gakken Compact Vision", "Gamepark GP32", "Exidy Sorcerer", "Cybiko", "Mophun",
-            "PEL Varazdin Orao", "NEC PC-9801", "NEC PC-8801", "NEC PC-8001", "NEC PC-6001", "SEGA_RACING",
+            "PEL Varazdin Orao", "NEC PC-9801", "NEC PC-8801", "NEC PC-8001", "PC-8801", "NEC PC-6001", "SEGA_RACING",
             "Mitsubishi Multi-8", "Memotech MTX", "Matsushita JR-100", "M&D Monon Color", "Jupiter Ace", "Java",
             "Sord M5", "Sinclair QL", "Vector06c", "Sharp MZ-2200", "Sega Super Control Station", "Sega SC-3000",
             "Sega SC3000", "Sega SC 3000", "Sam Coupé", "RM Nimbus", "RCA Chip-8", "Philips VG5000", "RCA Studio II",
