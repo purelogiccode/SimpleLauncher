@@ -45,9 +45,9 @@ public static class JsonResourceWriter
         foreach (var kvp in newTranslations)
             existingEntries[kvp.Key] = kvp.Value;
 
-        // Write back as UTF-8 with BOM
-        var output = JsonSerializer.Serialize(existingEntries, JsonOptions);
-        var encoding = new UTF8Encoding(true);
+        // Write back as UTF-8 without BOM, matching the committed resource files.
+        var output = JsonSerializer.Serialize(existingEntries, JsonOptions) + Environment.NewLine;
+        var encoding = new UTF8Encoding(false);
         File.WriteAllText(filePath, output, encoding);
     }
 }

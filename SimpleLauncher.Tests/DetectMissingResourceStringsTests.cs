@@ -167,7 +167,7 @@ public partial class DetectMissingResourceStringsTests
             .ToList();
         var footer = new List<string> { "</ResourceDictionary>" };
 
-        var encoding = new UTF8Encoding(true);
+        var encoding = new UTF8Encoding(false);
         File.WriteAllLines(filePath, header.Concat(sortedEntries).Concat(footer), encoding);
     }
 

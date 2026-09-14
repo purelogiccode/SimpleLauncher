@@ -69,7 +69,7 @@ public partial class DetectAlphabeticalOrderingTests
                     .ToList();
                 var footer = new List<string> { "</ResourceDictionary>" };
 
-                var encoding = new UTF8Encoding(true);
+                var encoding = new UTF8Encoding(false);
                 File.WriteAllLines(file, header.Concat(sortedEntries).Concat(footer), encoding);
             }
         }

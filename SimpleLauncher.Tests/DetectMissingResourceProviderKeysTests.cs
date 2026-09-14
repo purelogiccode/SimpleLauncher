@@ -297,7 +297,7 @@ public partial class DetectMissingResourceProviderKeysTests
         lines.Add("</ResourceDictionary>");
 
         // Write the file with proper encoding.
-        var encoding = new UTF8Encoding(true);
+        var encoding = new UTF8Encoding(false);
         File.WriteAllLines(filePath, lines, encoding);
     }
 
@@ -343,7 +343,7 @@ public partial class DetectMissingResourceProviderKeysTests
         lines.Add("</ResourceDictionary>");
 
         // Write the file with proper encoding.
-        var encoding = new UTF8Encoding(true);
+        var encoding = new UTF8Encoding(false);
         File.WriteAllLines(filePath, lines, encoding);
     }
 

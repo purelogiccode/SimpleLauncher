@@ -76,7 +76,7 @@ SimpleLauncher.ResourceTranslator/
     ├── JsonResourceAnalyzer.cs         # Reads English JSON keys and diffs other JSON languages
     ├── OpenRouterTranslationService.cs # HTTP client for OpenRouter API batch translation
     ├── XamlResourceWriter.cs           # Writes updated XAML, removes duplicates, sorts keys
-    └── JsonResourceWriter.cs           # Writes updated JSON (UTF-8 BOM, 2-space indent, readable)
+    └── JsonResourceWriter.cs           # Writes updated JSON (UTF-8 without BOM, 2-space indent, readable)
 ```
 
 ## Configuration
@@ -98,4 +98,4 @@ The LLM receives each batch as a flat list of `Key|Value` lines and must answer 
 - If a translation batch fails (network error, rate limit, etc.), the app **skips that batch** and does not add empty strings to the resource file. Run the app again later to retry.
 - The app is safe to run multiple times; it only processes keys that are actually missing.
 - Empty English values are intentionally preserved as empty entries so translators can fill them in later.
-- JSON files are written with a UTF-8 BOM, 2-space indentation and `StringComparer.OrdinalIgnoreCase` key order — matching what the Avalonia tests expect.
+- JSON files are written as UTF-8 without a BOM, with 2-space indentation and `StringComparer.OrdinalIgnoreCase` key order — matching the committed Avalonia resource files.

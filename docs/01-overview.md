@@ -43,7 +43,7 @@ Three code projects implement it:
 
 18 languages are shipped as WPF resource dictionaries: `SimpleLauncher\resources\strings.{code}.xaml`. Switching language restarts the app (`App.ChangeLanguage`). See [08 — UI Layer](08-ui-layer.md#themes--language).
 
-The Avalonia port ships the same 18 languages as JSON resources: `SimpleLauncher.Avalonia\Resources\strings.{code}.json` (2661 keys per file, UTF-8 with BOM, key-sorted). `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) propagates missing keys from `strings.en.{xaml,json}` to all other languages; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
+The Avalonia port ships the same 18 languages as JSON resources: `SimpleLauncher.Avalonia\Resources\strings.{code}.json` (2669 keys per file, UTF-8 without BOM, key-sorted). `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) propagates missing keys from `strings.en.{xaml,json}` to all other languages; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 
 ## Version & license
 

@@ -166,7 +166,7 @@ public partial class DetectMissingResourceStringsTests
     ///     Parses strings.en.json, appends the missing entries, sorts everything
     ///     case-insensitively by key, and rewrites the file.
     ///     Mirrors the output format of the SimpleLauncher.ResourceTranslator JSON writer
-    ///     (2-space indented, UTF-8 with BOM, OrdinalIgnoreCase sort).
+    ///     (2-space indented, UTF-8 without BOM, OrdinalIgnoreCase sort).
     /// </summary>
     private static void AppendMissingEntries(string filePath, Dictionary<string, string> missingEntries)
     {
@@ -182,7 +182,7 @@ public partial class DetectMissingResourceStringsTests
         foreach (var kvp in existingEntries) sorted[kvp.Key] = kvp.Value;
 
         var json = JsonSerializer.Serialize(sorted, JsonOptions);
-        File.WriteAllText(filePath, json, new UTF8Encoding(true));
+        File.WriteAllText(filePath, json + Environment.NewLine, new UTF8Encoding(false));
     }
 
     private static Dictionary<string, string> LoadKeys(string filePath)

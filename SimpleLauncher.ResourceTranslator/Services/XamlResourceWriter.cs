@@ -70,7 +70,7 @@ public static class XamlResourceWriter
 
         sb.AppendLine("</ResourceDictionary>");
 
-        var encoding = new UTF8Encoding(true);
+        var encoding = new UTF8Encoding(false);
         File.WriteAllText(filePath, sb.ToString(), encoding);
     }
 }

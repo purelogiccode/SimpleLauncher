@@ -96,7 +96,7 @@ public class DetectEmptyResourceValuesAndAutoRemoveTests
 
                 lines.Add("</ResourceDictionary>");
 
-                var encoding = new UTF8Encoding(true);
+                var encoding = new UTF8Encoding(false);
                 File.WriteAllLines(file, lines, encoding);
             }
         }
