@@ -24,18 +24,26 @@ public static class CleanTempFolder
     }
 
     /// <summary>
-    ///     Cleans up partially extracted files from a failed extraction
+    ///     Cleans up partially extracted files from a failed extraction.
+    ///     WARNING: only call this for isolated temporary directories created for a single
+    ///     extraction run. Never call it on user content folders (ROM/download folders):
+    ///     it deletes all files and subdirectories. <see cref="SimpleLauncher.Core.Services.ExtractFiles.ExtractionService"/>
+    ///     no longer uses this for user destinations (CORE-01) and deletes only tracked files instead.
+    ///     As a safeguard, this is a no-op when the <c>.extraction_in_progress</c> marker is absent.
     /// </summary>
-    /// <param name="directoryPath">Directory containing partial extraction</param>
+    /// <param name="directoryPath">Isolated temp directory containing partial extraction</param>
     public static async Task CleanupPartialExtractionAsync(string directoryPath)
     {
         if (string.IsNullOrEmpty(directoryPath) || !Directory.Exists(directoryPath)) return;
 
         try
         {
-            // Delete the tracking file first
+            // Safeguard (CORE-01): without the marker we cannot know this directory
+            // belongs to a failed extraction run, so never wipe it.
             var trackingFile = Path.Combine(directoryPath, ".extraction_in_progress");
-            if (File.Exists(trackingFile)) await DeleteFiles.TryDeleteFileAsync(trackingFile);
+            if (!File.Exists(trackingFile)) return;
+
+            await DeleteFiles.TryDeleteFileAsync(trackingFile);
 
             // Delete all files in the directory
             foreach (var file in Directory.GetFiles(directoryPath)) await DeleteFiles.TryDeleteFileAsync(file);

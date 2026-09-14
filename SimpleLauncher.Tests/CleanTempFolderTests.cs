@@ -116,6 +116,7 @@ public class CleanTempFolderTests
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         var subDir = Path.Combine(tempDir, "subdir");
         Directory.CreateDirectory(subDir);
+        await File.WriteAllTextAsync(Path.Combine(tempDir, ".extraction_in_progress"), "in progress");
 
         var file1 = Path.Combine(tempDir, "file1.txt");
         var file2 = Path.Combine(subDir, "file2.txt");
@@ -143,6 +144,7 @@ public class CleanTempFolderTests
     {
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
+        await File.WriteAllTextAsync(Path.Combine(tempDir, ".extraction_in_progress"), "in progress");
         var readOnlyFile = Path.Combine(tempDir, "readonly.txt");
         await File.WriteAllTextAsync(readOnlyFile, "content");
         File.SetAttributes(readOnlyFile, FileAttributes.ReadOnly);
@@ -152,5 +154,22 @@ public class CleanTempFolderTests
         await CleanTempFolder.CleanupPartialExtractionAsync(tempDir);
 
         Assert.False(File.Exists(readOnlyFile), "Read-only file should be deleted after cleanup.");
+    }
+
+    /// <summary>
+    ///     Verifies that CleanupPartialExtractionAsync is a no-op without the tracking marker (CORE-01 safeguard).
+    /// </summary>
+    [Fact]
+    public async Task CleanupPartialExtractionAsyncWithoutTrackingFilePreservesFiles()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        var file1 = Path.Combine(tempDir, "keep.txt");
+        await File.WriteAllTextAsync(file1, "content");
+
+        await CleanTempFolder.CleanupPartialExtractionAsync(tempDir);
+
+        Assert.True(File.Exists(file1));
+        Assert.True(Directory.Exists(tempDir));
     }
 }

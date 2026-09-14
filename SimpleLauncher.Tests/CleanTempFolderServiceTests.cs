@@ -107,10 +107,12 @@ public class CleanTempFolderServiceTests : IDisposable
 
         await _service.CleanupPartialExtractionAsync(_tempDir);
 
+        // CORE-01 safeguard: without the marker nothing is deleted.
         _deleteFilesMock.Verify(
             x => x.TryDeleteFileAsync(
                 It.Is<string>(p => p.EndsWith(".extraction_in_progress", StringComparison.Ordinal))), Times.Never);
-        _deleteFilesMock.Verify(x => x.TryDeleteFileAsync(file), Times.Once);
+        _deleteFilesMock.Verify(x => x.TryDeleteFileAsync(file), Times.Never);
+        Assert.True(File.Exists(file));
     }
 
     [Fact]
@@ -124,6 +126,7 @@ public class CleanTempFolderServiceTests : IDisposable
     public Task CleanupPartialExtractionAsync_DeleteServiceThrows_DoesNotThrow()
     {
         Directory.CreateDirectory(_tempDir);
+        File.WriteAllText(Path.Combine(_tempDir, ".extraction_in_progress"), "partial");
         File.WriteAllText(Path.Combine(_tempDir, "game.iso"), "data");
         _deleteFilesMock
             .Setup(x => x.TryDeleteFileAsync(It.IsAny<string>()))

@@ -206,21 +206,12 @@ public class DownloadManager : IDisposable
         IsUserCancellation = false;
         IsFileLockedDuringDownload = false;
 
-        // Determine file name if not provided
-        if (string.IsNullOrEmpty(fileName))
-        {
-            try
-            {
-                fileName = Path.GetFileName(downloadUrl);
-                if (string.IsNullOrEmpty(fileName)) fileName = "download_" + Guid.NewGuid().ToString("N");
-            }
-            catch
-            {
-                fileName = "download_" + Guid.NewGuid().ToString("N");
-            }
-        }
+        // Determine a safe file name confined to TempFolder (CORE-05).
+        // Both the caller-supplied fileName and the URL-derived name are untrusted:
+        // strip directories, query strings, and invalid chars, then verify containment.
+        fileName = GetSafeDownloadFileName(fileName, downloadUrl);
 
-        // Create temp file path
+        // Create temp file path (guaranteed inside TempFolder by GetSafeDownloadFileName)
         var downloadFilePath = Path.Combine(TempFolder, fileName);
 
         // Attempt to delete any existing file to avoid file-lock issues
@@ -483,6 +474,83 @@ public class DownloadManager : IDisposable
             // return null to indicate inability to check rather than insufficient space.
             return null;
         }
+    }
+
+    /// <summary>
+    ///     Derives a safe file name confined to <see cref="TempFolder" /> (CORE-05).
+    ///     Strips directories, URL query/fragment, and invalid chars; falls back to a GUID
+    ///     name when the result is empty or would escape <see cref="TempFolder" />.
+    /// </summary>
+    private string GetSafeDownloadFileName(string? fileName, string downloadUrl)
+    {
+        if (string.IsNullOrEmpty(fileName))
+            fileName = DeriveFileNameFromUrl(downloadUrl);
+
+        // Strip any directory components (handles "../../evil.exe", "C:\evil", "a/b").
+        fileName = Path.GetFileName(fileName);
+
+        // Remove invalid file-name chars.
+        var invalid = Path.GetInvalidFileNameChars();
+        if (fileName.IndexOfAny(invalid) >= 0)
+        {
+            var builder = new System.Text.StringBuilder(fileName.Length);
+            foreach (var c in fileName)
+            {
+                if (Array.IndexOf(invalid, c) < 0)
+                    builder.Append(c);
+            }
+
+            fileName = builder.ToString();
+        }
+
+        fileName = fileName.Trim().Trim('.');
+        if (string.IsNullOrEmpty(fileName))
+            fileName = "download_" + Guid.NewGuid().ToString("N");
+
+        // Containment check: never allow escape from TempFolder.
+        try
+        {
+            var fullTemp = Path.GetFullPath(TempFolder);
+            if (!fullTemp.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+                fullTemp += Path.DirectorySeparatorChar;
+            var fullPath = Path.GetFullPath(Path.Combine(fullTemp, fileName));
+            if (!fullPath.StartsWith(fullTemp, StringComparison.OrdinalIgnoreCase))
+                return "download_" + Guid.NewGuid().ToString("N");
+        }
+        catch
+        {
+            return "download_" + Guid.NewGuid().ToString("N");
+        }
+
+        return fileName;
+    }
+
+    private static string DeriveFileNameFromUrl(string downloadUrl)
+    {
+        try
+        {
+            // Prefer URI parsing so "?x=1" / "#frag" never end up in the file name.
+            if (Uri.TryCreate(downloadUrl, UriKind.Absolute, out var uri))
+            {
+                var name = Path.GetFileName(uri.AbsolutePath);
+                name = Uri.UnescapeDataString(name ?? string.Empty).Trim();
+                if (!string.IsNullOrEmpty(name))
+                    return name;
+            }
+            else
+            {
+                var cut = downloadUrl.Split(['?', '#'], 2)[0];
+                var name = Path.GetFileName(cut).Trim();
+                if (!string.IsNullOrEmpty(name))
+                    return name;
+            }
+        }
+        catch
+        {
+            // Fall through to GUID fallback below.
+        }
+
+        return "download_" + Guid.NewGuid().ToString("N");
     }
 
     /// <summary>

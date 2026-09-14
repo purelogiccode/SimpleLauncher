@@ -29,6 +29,8 @@ public class GamePadController : IDisposable
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBoxLibrary;
     private readonly IMouseSimulator _mouseSimulator;
+    // System.Threading.Lock is non-reentrant: CheckAndReconnectControllers assumes
+    // the caller already holds this lock and must NOT acquire it again (CORE-03).
     private readonly Lock _stateLock = new();
     private readonly Timer _timer;
     private readonly SemaphoreSlim _updateLock = new(1, 1);
@@ -491,12 +493,11 @@ public class GamePadController : IDisposable
         // XInput/DirectInput are Windows-only; nothing to reconnect elsewhere.
         if (!OperatingSystem.IsWindows()) return;
 
-        // *** Acquire _stateLock to prevent race conditions with Update/Dispose ***
-        lock (_stateLock)
+        // Caller (UpdateAsync) already holds _stateLock; do NOT acquire it again —
+        // System.Threading.Lock is non-reentrant and would throw LockRecursionException (CORE-03).
+        try
         {
-            try
-            {
-                if (!IsRunning || _isDisposed) return;
+            if (!IsRunning || _isDisposed) return;
 
                 // If XInput is already connected, no need to reconnect DirectInput
                 if (_xinputController?.IsConnected == true)
@@ -643,7 +644,6 @@ public class GamePadController : IDisposable
                 _playStationControllerGuid = Guid.Empty;
 
                 // DO NOT call Stop(). Let the timer continue to run so we can try reconnecting again.
-            }
         }
     }
 

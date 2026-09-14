@@ -63,6 +63,7 @@ public class CleanTempFolderExtendedTests
         Directory.CreateDirectory(sub1);
         Directory.CreateDirectory(sub2);
         Directory.CreateDirectory(sub3);
+        await File.WriteAllTextAsync(Path.Combine(tempDir, ".extraction_in_progress"), "in progress");
 
         await File.WriteAllTextAsync(Path.Combine(sub1, "file1.txt"), "content1");
         await File.WriteAllTextAsync(Path.Combine(sub2, "file2.txt"), "content2");
@@ -158,6 +159,7 @@ public class CleanTempFolderExtendedTests
         for (var i = 0; i < 10; i++) current = Path.Combine(current, $"level{i}");
 
         Directory.CreateDirectory(current);
+        await File.WriteAllTextAsync(Path.Combine(tempDir, ".extraction_in_progress"), "in progress");
 
         await File.WriteAllTextAsync(Path.Combine(current, "deep.txt"), "deep content");
 

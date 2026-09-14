@@ -37,18 +37,23 @@ public class CleanTempFolderService : ICleanTempFolderService
     }
 
     /// <summary>
-    ///     Cleans up a partially extracted directory by removing the tracking file, all files, and subdirectories.
+    ///     Cleans up a partially extracted isolated temp directory by removing the tracking file, all files, and subdirectories.
+    ///     WARNING: only for isolated temp directories. Never call on user content folders (CORE-01).
+    ///     No-op when the <c>.extraction_in_progress</c> marker is absent.
     /// </summary>
-    /// <param name="directoryPath">The path of the directory to clean up.</param>
+    /// <param name="directoryPath">Isolated temp directory to clean up.</param>
     public async Task CleanupPartialExtractionAsync(string directoryPath)
     {
         if (string.IsNullOrEmpty(directoryPath) || !Directory.Exists(directoryPath)) return;
 
         try
         {
-            // Delete the tracking file first
+            // Safeguard (CORE-01): without the marker we cannot know this directory
+            // belongs to a failed extraction run, so never wipe it.
             var trackingFile = Path.Combine(directoryPath, ".extraction_in_progress");
-            if (File.Exists(trackingFile)) await _deleteFilesService.TryDeleteFileAsync(trackingFile);
+            if (!File.Exists(trackingFile)) return;
+
+            await _deleteFilesService.TryDeleteFileAsync(trackingFile);
 
             // Delete all files in the directory
             foreach (var file in Directory.GetFiles(directoryPath)) await _deleteFilesService.TryDeleteFileAsync(file);

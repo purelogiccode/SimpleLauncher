@@ -137,6 +137,10 @@ public class ExtractionService : IExtractionService
             return false;
         }
 
+        // Tracks only files written by this extraction run so failure cleanup
+        // never deletes pre-existing user files (CORE-01).
+        var extractedFiles = new List<string>();
+
         try
         {
             try
@@ -148,6 +152,11 @@ public class ExtractionService : IExtractionService
             {
                 // Notify developer
                 _logger.Error(ex, $"Failed to create directory: {resolvedDestinationFolder}");
+
+                // Do not continue when the destination cannot be created (CORE-01).
+                await _messageBoxLibrary.ExtractionFailedMessageBoxAsync();
+
+                return false;
             }
 
             // Create a tracking file in the resolved destination folder
@@ -208,11 +217,9 @@ public class ExtractionService : IExtractionService
                 {
                     if (entry.Key != null)
                     {
-                        var entryDestinationPath = Path.GetFullPath(Path.Combine(resolvedDestinationFolder, entry.Key));
-                        var fullDestPath = PathHelper.ResolveRelativeToAppDirectory(entryDestinationPath);
-
-                        if (fullDestPath != null && fullResolvedDestFolder != null &&
-                            !fullDestPath.StartsWith(fullResolvedDestFolder, StringComparison.OrdinalIgnoreCase))
+                        // Fail closed: any unresolvable path is treated as dangerous (CORE-02).
+                        var entryDestinationPath = GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
+                        if (entryDestinationPath == null)
                         {
                             // Notify user
                             await _messageBoxLibrary.PotentialPathManipulationDetectedMessageBoxAsync(archivePath);
@@ -228,7 +235,14 @@ public class ExtractionService : IExtractionService
 
                     if (entry.Key != null)
                     {
-                        var destinationPath = Path.Combine(resolvedDestinationFolder, entry.Key);
+                        // Re-validate per entry: never trust the first pass alone (CORE-02).
+                        var destinationPath = GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
+                        if (destinationPath == null)
+                        {
+                            await _messageBoxLibrary.PotentialPathManipulationDetectedMessageBoxAsync(archivePath);
+                            throw new SecurityException($"Potentially dangerous zip entry path: {entry.Key}");
+                        }
+
                         var directory = Path.GetDirectoryName(destinationPath);
                         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                             Directory.CreateDirectory(directory);
@@ -238,6 +252,8 @@ public class ExtractionService : IExtractionService
                         {
                             await entryStream.CopyToAsync(fileStream);
                         }
+
+                        extractedFiles.Add(destinationPath);
 
                         // Preserve file time if available
                         if (entry.LastModifiedTime.HasValue)
@@ -276,9 +292,25 @@ public class ExtractionService : IExtractionService
             {
                 try
                 {
+                    // Only remove the tracking marker plus files written by this run.
+                    // Never wipe the whole destination folder: it may contain pre-existing
+                    // user files (CORE-01).
                     var extractionTrackingFile = Path.Combine(resolvedDestinationFolder, ".extraction_in_progress");
                     if (File.Exists(extractionTrackingFile))
-                        await CleanTempFolder.CleanupPartialExtractionAsync(resolvedDestinationFolder);
+                        await DeleteFiles.TryDeleteFileAsync(extractionTrackingFile);
+
+                    foreach (var extractedFile in extractedFiles)
+                    {
+                        try
+                        {
+                            if (File.Exists(extractedFile))
+                                await DeleteFiles.TryDeleteFileAsync(extractedFile);
+                        }
+                        catch (Exception cleanupEx)
+                        {
+                            _logger.Error(cleanupEx, $"Failed to clean up partial extraction file: {extractedFile}");
+                        }
+                    }
                 }
                 catch (Exception cleanupEx)
                 {
@@ -509,6 +541,35 @@ public class ExtractionService : IExtractionService
             _logger.Error(ex, $"Error extracting with 7za: {archivePath}");
             return false;
         }
+    }
+
+    /// <summary>
+    ///     Resolves an archive entry to a destination path contained in the destination folder.
+    ///     Returns null when the entry is missing, unresolvable, or escapes the folder (fail closed).
+    /// </summary>
+    private static string? GetSafeEntryPath(string resolvedDestinationFolder, string? fullResolvedDestFolder, string entryKey)
+    {
+        if (string.IsNullOrEmpty(entryKey) || fullResolvedDestFolder == null)
+            return null;
+
+        string entryDestinationPath;
+        try
+        {
+            entryDestinationPath = Path.GetFullPath(Path.Combine(resolvedDestinationFolder, entryKey));
+        }
+        catch
+        {
+            return null;
+        }
+
+        var fullDestPath = PathHelper.ResolveRelativeToAppDirectory(entryDestinationPath);
+        if (fullDestPath == null)
+            return null;
+
+        if (!fullDestPath.StartsWith(fullResolvedDestFolder, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return entryDestinationPath;
     }
 
     private static string GetDetailedExceptionInfo(Exception ex)

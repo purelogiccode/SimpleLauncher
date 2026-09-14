@@ -87,10 +87,14 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
             process = new Process { StartInfo = processStartInfo };
             process.Start();
 
+            // Drain both pipes concurrently: discarding them can deadlock once the
+            // child fills the pipe buffer while we block in WaitForExitAsync (CORE-04).
             var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(SingleFileTimeout);
             await process.WaitForExitAsync(timeoutCts.Token);
+            await stderrTask;
 
             var stdout = (await stdoutTask).Trim();
             var hash = ParseHash(stdout);
@@ -196,12 +200,16 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
                     {
                         process = new Process { StartInfo = processStartInfo };
                         process.Start();
-                        _ = process.StandardOutput.ReadToEndAsync();
-                        _ = process.StandardError.ReadToEndAsync();
+                        // Await (not discard) both pipes: a verbose scan easily exceeds
+                        // the pipe buffer and would deadlock WaitForExitAsync (CORE-04).
+                        var batchStdoutTask = process.StandardOutput.ReadToEndAsync();
+                        var batchStderrTask = process.StandardError.ReadToEndAsync();
 
                         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                         timeoutCts.CancelAfter(BatchTimeout);
                         await process.WaitForExitAsync(timeoutCts.Token);
+                        await batchStdoutTask;
+                        await batchStderrTask;
 
                         foreach (var (path, hash) in ReadScanResults(outputFile)) result[path] = hash;
                     }
