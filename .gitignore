@@ -417,3 +417,7 @@ reasonix.toml
 # Planning docs (local, not committed)
 AvaloniaPlan.md
 AVALONIABUGS.md
+
+# Local-only files (untracked, never pushed to GitHub)
+BUGSNEEDFIX.md
+AGENTS.md
