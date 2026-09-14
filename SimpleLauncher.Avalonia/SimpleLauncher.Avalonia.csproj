@@ -70,7 +70,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.239">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.257">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
