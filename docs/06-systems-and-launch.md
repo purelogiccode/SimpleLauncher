@@ -107,7 +107,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 |---|---|---|
 | `ConvertChdToIsoAsync` (`:31`) | `tools\BatchConvertToCHD\chdman.exe` (+arm64) | `extractdvd -i -o` |
 | `ConvertChdToCueBinAsync` (`:121`) | chdman | `extractcd -i -o` |
-| `ConvertPbpToCueBinAsync` (`:211`) | PBPSharp (managed library) | `PbpFile.Open` → disc 1 → `ExtractToBinCue` |
+| `ConvertPbpToCueBinAsync` (`:211`) | PBPSharp (NuGet package) | `PbpFile.Open` → disc 1 → `ExtractToBinCue` |
 | `ConvertToIsoAsync` (`:317`) | `tools\BatchConvertToRVZ\DolphinTool.exe` (+arm64) | `convert --format=iso --input --output` |
 
 ## Emulator config handlers (21) & Core configuration services

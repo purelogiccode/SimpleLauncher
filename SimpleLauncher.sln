@@ -31,8 +31,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleLauncher.Core", "Simp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleLauncher.Avalonia", "SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj", "{38705F9D-AB44-4838-A55C-9382E031E366}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PBPSharp", "PBPSharp\PBPSharp.csproj", "{106678C0-EF6A-44CA-B328-A695C1A95C47}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleLauncher.Avalonia.Tests", "SimpleLauncher.Avalonia.Tests\SimpleLauncher.Avalonia.Tests.csproj", "{31C1140F-ACE6-4393-B6C0-E9068F7DB2F5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleLauncher.Avalonia.Updater", "SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj", "{2896991F-000F-4096-8AF3-0788C7F14D3D}"
@@ -155,18 +153,6 @@ Global
 		{38705F9D-AB44-4838-A55C-9382E031E366}.Release|x64.Build.0 = Release|Any CPU
 		{38705F9D-AB44-4838-A55C-9382E031E366}.Release|x86.ActiveCfg = Release|Any CPU
 		{38705F9D-AB44-4838-A55C-9382E031E366}.Release|x86.Build.0 = Release|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Debug|x64.Build.0 = Debug|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Debug|x86.Build.0 = Debug|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Release|Any CPU.Build.0 = Release|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Release|x64.ActiveCfg = Release|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Release|x64.Build.0 = Release|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Release|x86.ActiveCfg = Release|Any CPU
-		{106678C0-EF6A-44CA-B328-A695C1A95C47}.Release|x86.Build.0 = Release|Any CPU
 		{31C1140F-ACE6-4393-B6C0-E9068F7DB2F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{31C1140F-ACE6-4393-B6C0-E9068F7DB2F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31C1140F-ACE6-4393-B6C0-E9068F7DB2F5}.Debug|x64.ActiveCfg = Debug|Any CPU
