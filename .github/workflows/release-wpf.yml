@@ -35,10 +35,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -53,7 +53,7 @@ jobs:
           -WorkDir '${{ runner.temp }}/sl-publish'
 
       - name: Upload packages as workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: simplelauncher-wpf-${{ inputs.version }}
           path: artifacts/release/*.zip
