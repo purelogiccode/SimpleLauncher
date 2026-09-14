@@ -51,6 +51,7 @@
                 <ComboBox x:Name="SystemNameCombo"
                           ItemsSource="{Binding Systems}"
                           SelectedItem="{Binding SelectedSystem}"
+                          HorizontalAlignment="Stretch"
                           Height="32"
                           Background="{DynamicResource BgSecondaryBrush}"
                           Foreground="{DynamicResource TextPrimaryBrush}"
@@ -78,6 +79,7 @@
                              BorderBrush="{DynamicResource BorderNormalBrush}" />
                     <Button Grid.Column="1" Content="..."
                             Width="40" Height="32"
+                            Padding="0"
                             Margin="6,0,0,0"
                             Classes="secondary"
                             Click="BrowseFolder_Click"

@@ -18,17 +18,18 @@
                 Padding="12,10">
             <Grid ColumnDefinitions="*,Auto">
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                     <TextBlock Text="{ext:Translate System}" FontSize="13" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,8,0" />
-                    <ComboBox x:Name="SystemNameDropdown"
-                              MinWidth="220"
+                    <ComboBox Grid.Column="1" x:Name="SystemNameDropdown"
+                              HorizontalAlignment="Stretch"
+                              MinWidth="250"
                               Height="40"
                               SelectionChanged="SystemNameDropdown_SelectionChanged"
                               Background="{DynamicResource BgSecondaryBrush}"
                               Foreground="{DynamicResource TextPrimaryBrush}"
                               BorderBrush="{DynamicResource BorderNormalBrush}" />
-                </StackPanel>
+                </Grid>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button x:Name="AddSystemButton" Content="{ext:Translate EditSystemWindow_Add_New}"
@@ -77,7 +78,7 @@
                                 <Border Background="{DynamicResource BgTertiaryBrush}"
                                         BorderBrush="{DynamicResource BorderSubtleBrush}"
                                         BorderThickness="1" CornerRadius="4" Padding="4"
-                                        Width="88" Height="88">
+                                        Width="150" Height="150">
                                     <Image x:Name="SystemImagePreview" Stretch="Uniform"
                                            RenderOptions.BitmapInterpolationMode="HighQuality" />
                                 </Border>
@@ -124,8 +125,10 @@
                             <Expander x:Name="AdditionalFoldersExpander"
                                       Header="{ext:Translate AdditionalSystemFoldersOptional}"
                                       ToolTip.Tip="{ext:Translate TooltipAdditionalFoldersExpander}"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch"
                                       Margin="0,8,0,0">
-                                <StackPanel>
+                                <StackPanel HorizontalAlignment="Stretch">
                                     <ListBox x:Name="AdditionalFoldersListBox" Height="90" Margin="0,4,0,4"
                                              Background="{DynamicResource BgTertiaryBrush}"
                                              Foreground="{DynamicResource TextPrimaryBrush}"
