@@ -155,16 +155,18 @@ public class ChdMountStrategy : ILaunchStrategy
         }
         else
         {
-            gameFilePath = null; // return null -->> will be handle by the next Strategy
+            gameFilePath = null; // no emulator-specific file finder applies
         }
 
         if (string.IsNullOrEmpty(gameFilePath))
         {
             _logger.Debug(
                 $"[ChdMountStrategy] No suitable game file found in mounted CHD at {mountedDrive.MountedPath}");
-            _logger.Warning($"No game file found in mounted CHD for emulator '{context.EmulatorName}'");
+            // Expected condition (unsupported input; user already gets UI feedback): not a bug,
+            // keep it out of the bug report service.
+            _logger.Information($"No game file found in mounted CHD for emulator '{context.EmulatorName}'");
             await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(logPath);
-            return; // will be handle by the next Strategy
+            return; // no launch strategy runs after this one
         }
 
         // Launch the emulator with the found game file

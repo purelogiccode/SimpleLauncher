@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Win32;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.SanitizeInputString;
 using SimpleLauncher.Interfaces;
 
@@ -138,8 +139,20 @@ public class ScanEaGames : IGamePlatformScanner
             if (!response.IsSuccessStatusCode)
             {
                 _logger.Debug($"[ScanEaGames] Game classification API returned status: {response.StatusCode}");
-                logErrors.Warning(
-                    $"Game classification API failed with status {response.StatusCode}. Returning empty game list.");
+
+                if (ExpectedHttpStatus.IsExpectedExternalCondition(response.StatusCode))
+                {
+                    // Expected condition (rate limit or hosting/WAF block): not a bug, keep it
+                    // out of the bug report service.
+                    logErrors.Information(
+                        $"Game classification API returned {response.StatusCode} (expected external condition). Returning empty game list.");
+                }
+                else
+                {
+                    logErrors.Warning(
+                        $"Game classification API failed with status {response.StatusCode}. Returning empty game list.");
+                }
+
                 return [];
             }
 

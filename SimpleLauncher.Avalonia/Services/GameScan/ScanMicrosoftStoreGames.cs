@@ -5,6 +5,7 @@ using SimpleLauncher.Avalonia.Interfaces;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.SanitizeInputString;
 
 namespace SimpleLauncher.Avalonia.Services.GameScan;
@@ -300,8 +301,20 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
             {
                 _logger.Debug(
                     $"[ScanMicrosoftStoreGames] Game classification API returned status: {response.StatusCode}");
-                logErrors.Warning(
-                    $"Game classification API failed with status {response.StatusCode}. Returning empty game list.");
+
+                if (ExpectedHttpStatus.IsExpectedExternalCondition(response.StatusCode))
+                {
+                    // Expected condition (rate limit or hosting/WAF block): not a bug, keep it
+                    // out of the bug report service.
+                    logErrors.Information(
+                        $"Game classification API returned {response.StatusCode} (expected external condition). Returning empty game list.");
+                }
+                else
+                {
+                    logErrors.Warning(
+                        $"Game classification API failed with status {response.StatusCode}. Returning empty game list.");
+                }
+
                 return [];
             }
 

@@ -5,6 +5,27 @@ namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 /// </summary>
 public static class FindEbootBin
 {
+    private const string TargetFileName = "EBOOT.BIN";
+
+    // Names are matched in managed code with an explicit case-insensitive comparison while
+    // inaccessible entries are skipped. This also works on Dokan/WinFsp virtual drives, whose
+    // wildcard/casing behaviour can differ from a local filesystem (see bug 67013).
+    private static readonly EnumerationOptions TopLevelOptions = new()
+    {
+        RecurseSubdirectories = false,
+        IgnoreInaccessible = true,
+        AttributesToSkip = FileAttributes.None,
+        MatchCasing = MatchCasing.CaseInsensitive
+    };
+
+    private static readonly EnumerationOptions RecursiveOptions = new()
+    {
+        RecurseSubdirectories = true,
+        IgnoreInaccessible = true,
+        AttributesToSkip = FileAttributes.None,
+        MatchCasing = MatchCasing.CaseInsensitive
+    };
+
     /// <summary>
     ///     Recursively searches for EBOOT.BIN, prioritizing the top directory and PS3_GAME/USRDIR structure.
     /// </summary>
@@ -12,65 +33,76 @@ public static class FindEbootBin
     {
         if (string.IsNullOrEmpty(directoryPath)) return null;
 
-        const string targetFileName = "EBOOT.BIN";
-        logger.Debug($"[FindEbootBin.FindEbootBinRecursive] Searching for {targetFileName} in {directoryPath}");
+        logger.Debug($"[FindEbootBin.FindEbootBinRecursive] Searching for {TargetFileName} in {directoryPath}");
 
         try
         {
             // Check top directory first
-            var filesInTopDir = Directory.GetFiles(directoryPath, targetFileName, SearchOption.TopDirectoryOnly);
-            if (filesInTopDir.Length > 0)
+            var fileInTopDir = FindFileByName(directoryPath, TopLevelOptions);
+            if (fileInTopDir != null)
             {
                 logger.Debug(
-                    $"[FindEbootBin.FindEbootBinRecursive] Found {targetFileName} in top directory: {filesInTopDir[0]}");
-                return filesInTopDir[0];
+                    $"[FindEbootBin.FindEbootBinRecursive] Found {TargetFileName} in top directory: {fileInTopDir}");
+                return fileInTopDir;
             }
 
             // Check common PS3 structure: <mount>\PS3_GAME\USRDIR\EBOOT.BIN
-            var ps3GameDirs = Directory.GetDirectories(directoryPath, "PS3_GAME", SearchOption.TopDirectoryOnly);
-            foreach (var ps3GameDir in ps3GameDirs)
+            foreach (var ps3GameDir in FindDirectoriesByName(directoryPath, "PS3_GAME", TopLevelOptions))
             {
-                var usrDir = Path.Combine(ps3GameDir, "USRDIR");
-                if (!Directory.Exists(usrDir)) continue;
+                foreach (var usrDir in FindDirectoriesByName(ps3GameDir, "USRDIR", TopLevelOptions))
+                {
+                    var fileInUsrDir = FindFileByName(usrDir, TopLevelOptions);
+                    if (fileInUsrDir == null) continue;
 
-                var filesInUsrDir = Directory.GetFiles(usrDir, targetFileName, SearchOption.TopDirectoryOnly);
-                if (filesInUsrDir.Length <= 0) continue;
-
-                logger.Debug(
-                    $"[FindEbootBin.FindEbootBinRecursive] Found {targetFileName} in PS3_GAME/USRDIR: {filesInUsrDir[0]}");
-                return filesInUsrDir[0];
+                    logger.Debug(
+                        $"[FindEbootBin.FindEbootBinRecursive] Found {TargetFileName} in PS3_GAME/USRDIR: {fileInUsrDir}");
+                    return fileInUsrDir;
+                }
             }
 
             // Fallback to full recursive search if not found in common locations
             logger.Debug(
-                $"[FindEbootBin.FindEbootBinRecursive] {targetFileName} not found in typical locations. Starting full recursive search in {directoryPath}...");
-            var filesRecursive = Directory.GetFiles(directoryPath, targetFileName, SearchOption.AllDirectories);
-            if (filesRecursive.Length > 0)
+                $"[FindEbootBin.FindEbootBinRecursive] {TargetFileName} not found in typical locations. Starting full recursive search in {directoryPath}...");
+            var fileFoundRecursively = FindFileByName(directoryPath, RecursiveOptions);
+            if (fileFoundRecursively != null)
             {
                 logger.Debug(
-                    $"[FindEbootBin.FindEbootBinRecursive] Found {targetFileName} via full recursive search: {filesRecursive[0]}");
-                return filesRecursive[0];
+                    $"[FindEbootBin.FindEbootBinRecursive] Found {TargetFileName} via full recursive search: {fileFoundRecursively}");
+                return fileFoundRecursively;
             }
-        }
-        catch (UnauthorizedAccessException uaEx)
-        {
-            logger.Debug(
-                $"[FindEbootBin.FindEbootBinRecursive] UnauthorizedAccessException searching for {targetFileName} in {directoryPath}: {uaEx.Message}");
-
-            // Notify developer
-            logErrors.Error(uaEx,
-                $"Unauthorized access while searching for EBOOT.BIN in directory at {directoryPath}.");
         }
         catch (Exception ex)
         {
             logger.Debug(
-                $"[FindEbootBin.FindEbootBinRecursive] Error searching for {targetFileName} in {directoryPath}: {ex.Message}");
+                $"[FindEbootBin.FindEbootBinRecursive] Error searching for {TargetFileName} in {directoryPath}: {ex.Message}");
 
-            // Notify developer
-            logErrors.Error(ex, $"Error while searching for EBOOT.BIN in directory at {directoryPath}.");
+            // Expected condition (mounted/archived volume search failure; the caller reports the
+            // missing game file to the user): not a bug, keep it out of the bug report service.
+            logErrors.Information(ex, $"Error while searching for EBOOT.BIN in directory at {directoryPath}.");
         }
 
-        logger.Debug($"[FindEbootBin.FindEbootBinRecursive] {targetFileName} not found in {directoryPath}.");
+        logger.Debug($"[FindEbootBin.FindEbootBinRecursive] {TargetFileName} not found in {directoryPath}.");
         return null;
+    }
+
+    private static string? FindFileByName(string directoryPath, EnumerationOptions options)
+    {
+        foreach (var file in Directory.EnumerateFiles(directoryPath, "*", options))
+        {
+            if (string.Equals(Path.GetFileName(file), TargetFileName, StringComparison.OrdinalIgnoreCase))
+                return file;
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<string> FindDirectoriesByName(string directoryPath, string directoryName,
+        EnumerationOptions options)
+    {
+        foreach (var directory in Directory.EnumerateDirectories(directoryPath, "*", options))
+        {
+            if (string.Equals(Path.GetFileName(directory), directoryName, StringComparison.OrdinalIgnoreCase))
+                yield return directory;
+        }
     }
 }

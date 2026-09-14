@@ -18,6 +18,10 @@ internal static class ApplicationStats
     private const string ApiKeyEncoded =
         "YUdwb04zbDFOblExTm5SNWNqVTBNRzg1ZFRnM05qYzJOelp5TlRZM05EVXpORFExTXpJek5USTJOR00zTldJMmREZG5aMmRvWjJjM05uUnlaalUyTkdVPQ==";
 
+    // HTTP 418 ("I'm a teapot"), returned by some hosting/WAF layers when a request is blocked.
+    // The value has no HttpStatusCode member.
+    private const HttpStatusCode BlockedByHosting = (HttpStatusCode)418;
+
     private static readonly string ApiKey = DecodeApiKey();
 
     private static string DecodeApiKey()
@@ -57,9 +61,10 @@ internal static class ApplicationStats
 
             if (!response.IsSuccessStatusCode)
             {
-                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                if (response.StatusCode is HttpStatusCode.TooManyRequests or BlockedByHosting)
                 {
-                    // Expected condition (rate limit): not a bug, keep it out of the bug report service.
+                    // Expected condition (rate limit or hosting/WAF block): not a bug, keep it
+                    // out of the bug report service.
                     Log.Information("ApplicationStats API returned non-success status: {StatusCode}",
                         response.StatusCode);
                 }

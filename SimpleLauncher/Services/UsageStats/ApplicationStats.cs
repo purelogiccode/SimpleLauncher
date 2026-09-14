@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Reflection;
@@ -7,6 +6,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core;
+using SimpleLauncher.Core.Services;
 
 namespace SimpleLauncher.Services.UsageStats;
 
@@ -47,15 +47,15 @@ public static class ApplicationStats
             using var response = await client.PostAsync(statsUrl, content, cts.Token);
             if (!response.IsSuccessStatusCode)
             {
-                Logger.Debug($"ApplicationStats API returned: {response.StatusCode}");
-
-                var ex = new HttpRequestException($"ApplicationStats API returned: {response.StatusCode}");
-                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                if (ExpectedHttpStatus.IsExpectedExternalCondition(response.StatusCode))
                 {
-                    // ignore
+                    // Expected condition (rate limit or hosting/WAF block): not a bug, keep it
+                    // out of the bug report service.
+                    Logger.Information($"ApplicationStats API returned: {response.StatusCode}");
                 }
                 else
                 {
+                    var ex = new HttpRequestException($"ApplicationStats API returned: {response.StatusCode}");
                     logErrors.Error(ex, $"ApplicationStats API returned: {response.StatusCode}");
                 }
             }

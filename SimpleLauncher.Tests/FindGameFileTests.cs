@@ -463,4 +463,56 @@ public class FindGameFileTests : IDisposable
         Assert.NotNull(result);
         Assert.Equal(ps3Eboot, result);
     }
+
+    /// <summary>
+    ///     Verifies that FindEbootBin matches the file name case-insensitively (required on
+    ///     case-sensitive filesystems and on some mounted virtual drives).
+    /// </summary>
+    [Fact]
+    public void FindEbootBinFindsLowerCaseName()
+    {
+        var nestedDir = Path.Combine(_testDirectory, "PS3_GAME", "USRDIR");
+        Directory.CreateDirectory(nestedDir);
+        var ebootPath = Path.Combine(nestedDir, "eboot.bin");
+        File.WriteAllText(ebootPath, "fake");
+
+        var result = FindEbootBin.FindEbootBinRecursive(_testDirectory, _logErrors, _logger);
+
+        Assert.NotNull(result);
+        Assert.Equal(ebootPath, result);
+    }
+
+    /// <summary>
+    ///     Verifies that FindEbootBin matches the PS3_GAME/USRDIR directory names case-insensitively.
+    /// </summary>
+    [Fact]
+    public void FindEbootBinFindsLowerCasePs3Structure()
+    {
+        var nestedDir = Path.Combine(_testDirectory, "ps3_game", "usrdir");
+        Directory.CreateDirectory(nestedDir);
+        var ebootPath = Path.Combine(nestedDir, "EBOOT.BIN");
+        File.WriteAllText(ebootPath, "fake");
+
+        var result = FindEbootBin.FindEbootBinRecursive(_testDirectory, _logErrors, _logger);
+
+        Assert.NotNull(result);
+        Assert.Equal(ebootPath, result);
+    }
+
+    /// <summary>
+    ///     Verifies that FindEbootBin finds EBOOT.BIN even when the entry is flagged hidden/system,
+    ///     as some mounted filesystems report unusual attributes for disc entries.
+    /// </summary>
+    [Fact]
+    public void FindEbootBinFindsHiddenFile()
+    {
+        var ebootPath = Path.Combine(_testDirectory, "EBOOT.BIN");
+        File.WriteAllText(ebootPath, "fake");
+        File.SetAttributes(ebootPath, FileAttributes.Hidden | FileAttributes.System);
+
+        var result = FindEbootBin.FindEbootBinRecursive(_testDirectory, _logErrors, _logger);
+
+        Assert.NotNull(result);
+        Assert.Equal(ebootPath, result);
+    }
 }

@@ -293,7 +293,9 @@ public class LauncherService : ILauncherService
                         var gameFilePath = FindGameFileInMountedChd(mountedChd.MountedPath, chdKind);
                         if (string.IsNullOrEmpty(gameFilePath))
                         {
-                            Log.Warning("No game file found in mounted CHD for emulator '{Emulator}'", emulatorName);
+                            // Expected condition (unsupported input; user already gets UI feedback):
+                            // not a bug, keep it out of the bug report service.
+                            Log.Information("No game file found in mounted CHD for emulator '{Emulator}'", emulatorName);
                             await _messageBox.CustomErrorMessageBoxAsync(
                                 "No suitable game file was found inside the mounted CHD image.",
                                 "No Game File Found");
