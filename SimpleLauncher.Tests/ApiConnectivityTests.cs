@@ -57,14 +57,15 @@ public class ApiConnectivityTests
 
     /// <summary>
     ///     Verifies that the bug report request is built correctly without contacting the real API.
+    ///     The request targets a reserved, non-resolvable host so this test can never reach the
+    ///     production bug report endpoint even if the mock handler is bypassed.
     /// </summary>
     [Fact]
     public async Task BugReportApiCanSendReport()
     {
         using var settings = await LoadAppSettingsAsync();
         var apiKey = AppConstants.GetApiKey();
-        var apiUrl = settings.RootElement.GetProperty("BugReportApiUrl").GetString()
-                     ?? "https://www.purelogiccode.com/bugreport/api/send-bug-report/";
+        var apiUrl = "https://bugreport.invalid/api/send-bug-report";
 
         var payload = new
         {

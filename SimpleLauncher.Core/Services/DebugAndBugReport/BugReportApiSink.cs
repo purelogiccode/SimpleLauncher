@@ -17,7 +17,17 @@ namespace SimpleLauncher.Core.Services.DebugAndBugReport;
 /// </summary>
 public class BugReportApiSink : ILogEventSink, IDisposable
 {
+    /// <summary>
+    ///     Environment variable that disables bug report submission when set to "1". Automated tests set it so test
+    ///     runs — including application processes they launch — never contact the live bug report API.
+    /// </summary>
+    public const string DisableBugReportsEnvironmentVariable = "SIMPLELAUNCHER_BUGREPORT_DISABLE";
+
     private static readonly Lock InitLock = new();
+
+    private static readonly bool BugReportsDisabled =
+        string.Equals(Environment.GetEnvironmentVariable(DisableBugReportsEnvironmentVariable), "1",
+            StringComparison.Ordinal);
 
     private readonly Channel<LogEvent> _channel = Channel.CreateBounded<LogEvent>(new BoundedChannelOptions(100)
     {
@@ -120,6 +130,8 @@ public class BugReportApiSink : ILogEventSink, IDisposable
 
     private async Task SendReportAsync(LogEvent logEvent)
     {
+        if (BugReportsDisabled) return;
+
         if (_httpClientFactory == null || _configuration == null) return;
 
         var report = BuildReport(logEvent);
