@@ -61,11 +61,38 @@ public class VersionConsistencyTests
     [Fact]
     public void AvaloniaProjectVersionMatchesProjectVersion()
     {
+        AssertProjectVersionMatchesProjectVersion(
+            Path.Combine("SimpleLauncher.Avalonia", "SimpleLauncher.Avalonia.csproj"));
+    }
+
+    /// <summary>
+    ///     Verifies that the Avalonia updater csproj version metadata matches the canonical version
+    ///     from SimpleLauncher.csproj, auto-correcting mismatches.
+    /// </summary>
+    [Fact]
+    public void AvaloniaUpdaterProjectVersionMatchesProjectVersion()
+    {
+        AssertProjectVersionMatchesProjectVersion(
+            Path.Combine("SimpleLauncher.Avalonia.Updater", "SimpleLauncher.Avalonia.Updater.csproj"));
+    }
+
+    /// <summary>
+    ///     Verifies that the WPF updater csproj version metadata matches the canonical version from
+    ///     SimpleLauncher.csproj, auto-correcting mismatches.
+    /// </summary>
+    [Fact]
+    public void WpfUpdaterProjectVersionMatchesProjectVersion()
+    {
+        AssertProjectVersionMatchesProjectVersion(
+            Path.Combine("SimpleLauncher.Updater", "SimpleLauncher.Updater.csproj"));
+    }
+
+    private static void AssertProjectVersionMatchesProjectVersion(string relativePath)
+    {
         var projectVersion = GetProjectVersion();
 
-        var csprojPath =
-            GetProjectFilePath(Path.Combine("SimpleLauncher.Avalonia", "SimpleLauncher.Avalonia.csproj"));
-        Assert.True(File.Exists(csprojPath), $"SimpleLauncher.Avalonia.csproj not found at {csprojPath}");
+        var csprojPath = GetProjectFilePath(relativePath);
+        Assert.True(File.Exists(csprojPath), $"{relativePath} not found at {csprojPath}");
 
         var doc = XDocument.Load(csprojPath);
         var versionElements = doc.Descendants()
@@ -81,7 +108,7 @@ public class VersionConsistencyTests
         doc.Save(csprojPath);
 
         Assert.Fail(
-            $"SimpleLauncher.Avalonia.csproj version metadata was automatically updated to '{projectVersion}'. " +
+            $"{relativePath} version metadata was automatically updated to '{projectVersion}'. " +
             "Please review the change and commit it.");
     }
 

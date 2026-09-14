@@ -140,6 +140,10 @@ function Assert-Versions {
         }
     }
     else {
+        $updaterProjectVersion = Get-CsprojVersion $updaterProject
+        if ($updaterProjectVersion -ne $Version) {
+            throw "Version mismatch: requested $Version but $updaterProjectRelative says $updaterProjectVersion."
+        }
         $updaterVersionPath = Join-Path $repoDir 'SimpleLauncher.Updater\version.txt'
         $updaterVersion = (Get-Content -LiteralPath $updaterVersionPath -Raw).Trim()
         if ($updaterVersion -ne "release$Version") {

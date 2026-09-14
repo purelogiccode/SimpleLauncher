@@ -10,7 +10,6 @@
         <NeutralLanguage>en</NeutralLanguage>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
-        <NoWarn>NU1903</NoWarn>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <AssemblyVersion>5.7.0</AssemblyVersion>
@@ -87,16 +86,10 @@
             <_Parameter1>SimpleLauncher</_Parameter1>
         </AssemblyAttribute>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-            <_Parameter1>SimpleLauncher.New</_Parameter1>
-        </AssemblyAttribute>
-        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>SimpleLauncher.Avalonia</_Parameter1>
         </AssemblyAttribute>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>SimpleLauncher.Avalonia.Tests</_Parameter1>
-        </AssemblyAttribute>
-        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-            <_Parameter1>SimpleLauncher.New.Tests</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
 

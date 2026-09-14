@@ -26,7 +26,7 @@
     </PropertyGroup>
     <PropertyGroup>
         <StartupObject>SimpleLauncher.App</StartupObject>
-        <PackageIcon>icon2.png</PackageIcon>
+        <PackageIcon>icon\icon2.png</PackageIcon>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <AssemblyVersion>5.7.0</AssemblyVersion>
@@ -48,148 +48,10 @@
         <None Update="WhatsNew.md">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="tools\findromcover\ControlzEx.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\FindRomCover.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\FindRomCover.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\FindRomCover.pdb">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\FindRomCover.deps.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\FindRomCover.runtimeconfig.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\MahApps.Metro.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\Microsoft.Xaml.Behaviors.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\settings.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\audio\click.mp3">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\de\MahApps.Metro.resources.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\appsettings.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\findromcover\Newtonsoft.Json.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\Microsoft.Windows.SDK.NET.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\PS3BatchLauncherCreator.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\PS3BatchLauncherCreator.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\PS3BatchLauncherCreator.pdb">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\PS3BatchLauncherCreator.deps.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\PS3BatchLauncherCreator.runtimeconfig.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\ps3batchlaunchercreator\WinRT.Runtime.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforscummvmgames\CreateBatchFilesForScummVMGames.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforscummvmgames\CreateBatchFilesForScummVMGames.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforscummvmgames\CreateBatchFilesForScummVMGames.pdb">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforscummvmgames\CreateBatchFilesForScummVMGames.deps.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforscummvmgames\CreateBatchFilesForScummVMGames.runtimeconfig.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\Microsoft.Windows.SDK.NET.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\PS3BatchLauncherCreator.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\PS3BatchLauncherCreator.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\PS3BatchLauncherCreator.pdb">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\PS3BatchLauncherCreator.deps.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\PS3BatchLauncherCreator.runtimeconfig.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforps3games\WinRT.Runtime.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforwindowsgames\CreateBatchFilesForWindowsGames.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforwindowsgames\CreateBatchFilesForWindowsGames.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforwindowsgames\CreateBatchFilesForWindowsGames.pdb">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforwindowsgames\CreateBatchFilesForWindowsGames.deps.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\createbatchfilesforwindowsgames\CreateBatchFilesForWindowsGames.runtimeconfig.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="audio\shutter.mp3">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="audio\trash.mp3">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\7z.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\7z.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\BatchConvertTo7z.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\BatchConvertTo7z.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\BatchConvertTo7z.pdb">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\BatchConvertTo7z.deps.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertTo7z\BatchConvertTo7z.runtimeconfig.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForPS3Games\Microsoft.Extensions.DependencyInjection.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForPS3Games\Microsoft.Extensions.DependencyInjection.Abstractions.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="mame.dat">
@@ -378,9 +240,6 @@
         <None Update="images\systems\Sega Genesis CD.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="images\systems\Sharp X6800.png">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
         <None Update="images\systems\Sinclair ZX Spectrum.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -471,22 +330,13 @@
         <None Update="images\systems\Zeebo.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertIsoToXiso\7z_x64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\BatchConvertIsoToXiso\BatchConvertIsoToXiso.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\7z_x64.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\BatchConvertToCHD.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\chdman.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\maxcso.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCompressedFile\7z_arm64.dll">
@@ -537,16 +387,10 @@
         <None Update="tools\CreateBatchFilesForXbox360XBLAGames\CreateBatchFilesForXbox360XBLAGames_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\FindRomCover_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\RomValidator\RomValidator_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleZipDrive\SimpleZipDrive_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\mame.dat">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="RetroAchievements.dat">
@@ -564,12 +408,6 @@
         <None Update="tools\RetroGameCoverDownloader\RetroGameCoverDownloader_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\Magick.Native-Q16-arm64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\Magick.Native-Q16-x64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\RomValidator\7z_arm64.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -580,9 +418,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleXisoDrive\SimpleXisoDrive_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertIsoToXiso\7z_arm64.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertIsoToXiso\BatchConvertIsoToXiso_arm64.exe">
@@ -660,13 +495,7 @@
         <None Update="samples\Yumir\Ymir.toml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="images\systems\Super ACan.jpg">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="images\systems\Super ACan.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\7z_arm64.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\BatchConvertToCHD_arm64.exe">
@@ -706,42 +535,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="parameters.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Updater.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\back.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\BASE.PBP">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\DATA.PSP">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\gameInfo.db">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\ICON0.PNG">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\icon_back.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\icon_back_80x80.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\KEYS.BIN">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\no_icon0.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\PIC0.PNG">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\Resources\PIC1.PNG">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\Commander Genius.png">
@@ -971,13 +764,11 @@
         <Resource Include="resources\strings.ko.xaml" />
         <Page Remove="resources\Strings.pt-BR.xaml" />
         <Resource Include="resources\strings.pt-br.xaml" />
-        <Page Remove="resources\Strings.pt-PT.xaml" />
         <Page Remove="resources\Strings.ru.xaml" />
         <Resource Include="resources\strings.ru.xaml" />
         <Page Remove="resources\Strings.zh-Hans.xaml" />
         <Resource Include="resources\strings.ur.xaml" />
         <Resource Include="resources\strings.zh-hans.xaml" />
-        <Page Remove="resources\Strings.zh-Hant.xaml" />
         <Page Remove="resources\strings.ar.xaml" />
         <Resource Include="resources\strings.ar.xaml" />
         <Page Remove="resources\strings.hi.xaml" />
@@ -1178,7 +969,7 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-        <None Include="audio\click.mp3">
+        <None Update="audio\click.mp3">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
@@ -1315,7 +1106,6 @@
         <Compile Remove="title_snapshots\**" />
         <Compile Remove="videos\**" />
         <Compile Remove="walkthrough\**" />
-        <Compile Remove="LoadFiles.cs" />
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Remove="database\**" />
@@ -1400,8 +1190,6 @@
             <XamlRuntime>Wpf</XamlRuntime>
             <SubType>Designer</SubType>
         </Page>
-        <Page Remove="EditSystemEasyModeEditSystem.xaml" />
-        <Page Remove="OpenPdfFiles.xaml" />
         <Page Remove="images\Amstrad CPC GX4000\**" />
         <Page Remove="images\Arcade\**" />
         <Page Remove="images\Atari Jaguar\**" />
@@ -1476,23 +1264,6 @@
         <Page Remove="videos\**" />
         <Page Remove="walkthrough\**" />
     </ItemGroup>
-    <ItemGroup>
-        <Folder Include="samples\Stella\" />
-        <Folder Include="tools\SevenZip\" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="References\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Remove="References\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Page Remove="References\**" />
-    </ItemGroup>
-
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>SimpleLauncher.Tests</_Parameter1>

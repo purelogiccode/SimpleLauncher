@@ -14,7 +14,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
-        <NoWarn>NU1903;CS0436</NoWarn>
+        <NoWarn>CS0436</NoWarn>
         <AssemblyName>SimpleLauncher.Avalonia</AssemblyName>
         <RootNamespace>SimpleLauncher.Avalonia</RootNamespace>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
@@ -95,7 +95,7 @@
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <!-- Avalonia 12.1.1 — same version as the reference source tree -->
+        <!-- Avalonia 12.1.2; the References/Avalonia-12.1.1 tree is an older source snapshot -->
         <PackageReference Include="Avalonia" Version="12.1.2" />
         <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
@@ -486,10 +486,6 @@
               Link="tools\BatchConvertToCHD\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\BatchConvertToCHD\Resources\*"
-              Link="tools\BatchConvertToCHD\Resources\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Include="..\SimpleLauncher\tools\BatchConvertToCompressedFile\*"
               Link="tools\BatchConvertToCompressedFile\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -558,37 +554,62 @@
       <PackageReference Include="System.Drawing.Common" Version="10.0.12" />
     </ItemGroup>
 
-    <!-- $(OutDir) already ends with the RID folder (e.g. net10.0\linux-x64\); globbing the
-         updater's publish tree directly and flattening with %(Filename) avoids the
-         RecursiveDir RID-doubling the previous **-glob produced (linux-x64\linux-x64\).
-         AfterTargets=Build refreshes the plain build output; AfterTargets=Publish is
-         required because with ReferenceOutputAssembly=false the SDK publish payload only
-         carries the updater's apphost+runtimeconfig, not its managed dll/deps — without
-         this, a fresh checkout would publish an updater that cannot run. -->
+    <!-- ── Staging path for the app payload's copy of the updater ──
+         The updater is published into the app's obj folder instead of its own bin/publish so that
+         stale runtime files from earlier publishes (incremental publish over a changed runtime pack
+         can retain newer-timestamped files) can never leak into the app payload. The runtime
+         version is part of the path, so changing RuntimeFrameworkVersion starts from a fresh tree. -->
+    <PropertyGroup Condition="'$(TargetFramework)' != ''">
+        <AvaloniaUpdaterPublishDir>$(MSBuildThisFileDirectory)$(BaseIntermediateOutputPath)avalonia-updater\$(RuntimeFrameworkVersion)\$(Configuration)\$(TargetFramework)\</AvaloniaUpdaterPublishDir>
+        <AvaloniaUpdaterPublishDir Condition="'$(RuntimeIdentifier)' != ''">$(AvaloniaUpdaterPublishDir)$(RuntimeIdentifier)\publish\</AvaloniaUpdaterPublishDir>
+        <AvaloniaUpdaterPublishDir Condition="'$(RuntimeIdentifier)' == ''">$(AvaloniaUpdaterPublishDir)publish\</AvaloniaUpdaterPublishDir>
+    </PropertyGroup>
+
+    <!-- The updater's publish tree always starts at publish\, so %(RecursiveDir) is carried to the
+         destination; flattening with bare %(Filename) would drop subfolders (satellites, runtimes\...).
+
+         Publishing:
+         - PublishAvaloniaUpdater (BeforeTargets=CopyAvaloniaUpdaterToPublishDir) publishes the
+           updater for the same Configuration/TFM/RID into the staging folder. With
+           ReferenceOutputAssembly=false the SDK only contributes the updater's apphost/deps/
+           runtimeconfig to the app publish (no managed dll), so without this target a fresh
+           checkout would produce an updater that cannot run. RuntimeFrameworkVersion is passed
+           through so the updater's self-contained runtime pack always matches the app's pin.
+         - CopyAvaloniaUpdaterToPublishDir (AfterTargets=Publish) copies the staging tree into the
+           app publish folder; the Error guard makes a missing updater publish a build failure
+           instead of a silently broken updater in the payload.
+         - CopyAvaloniaUpdaterToOutput (AfterTargets=Build) mirrors an existing staging tree into
+           the plain build output. -->
     <Target Name="CopyAvaloniaUpdaterToOutput" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
         <ItemGroup>
-            <AvaloniaUpdaterFiles
-                Include="..\SimpleLauncher.Avalonia.Updater\bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\**\*.*"
-                Condition="'$(RuntimeIdentifier)' != ''" />
-            <AvaloniaUpdaterFiles
-                Include="..\SimpleLauncher.Avalonia.Updater\bin\$(Configuration)\$(TargetFramework)\publish\**\*.*"
-                Condition="'$(RuntimeIdentifier)' == ''" />
+            <AvaloniaUpdaterFiles Include="$(AvaloniaUpdaterPublishDir)**\*.*" />
         </ItemGroup>
         <Copy SourceFiles="@(AvaloniaUpdaterFiles)"
-              DestinationFiles="@(AvaloniaUpdaterFiles->'$(OutDir)%(Filename)%(Extension)')"
+              DestinationFiles="@(AvaloniaUpdaterFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true" />
+    </Target>
+    <Target Name="PublishAvaloniaUpdater"
+            BeforeTargets="CopyAvaloniaUpdaterToPublishDir"
+            Condition="'$(TargetFramework)' != ''">
+        <!-- PublishDir is set explicitly so the app's own output directory (-o) is not propagated
+             into the updater publish, which would leave the staging path empty. -->
+        <MSBuild Projects="..\SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj"
+                 Targets="Publish"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=true;RuntimeFrameworkVersion=$(RuntimeFrameworkVersion);PublishDir=$(AvaloniaUpdaterPublishDir)"
+                 Condition="'$(RuntimeIdentifier)' != ''" />
+        <MSBuild Projects="..\SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj"
+                 Targets="Publish"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);RuntimeFrameworkVersion=$(RuntimeFrameworkVersion);PublishDir=$(AvaloniaUpdaterPublishDir)"
+                 Condition="'$(RuntimeIdentifier)' == ''" />
     </Target>
     <Target Name="CopyAvaloniaUpdaterToPublishDir" AfterTargets="Publish" Condition="'$(PublishDir)' != ''">
         <ItemGroup>
-            <AvaloniaUpdaterPublishFiles
-                Include="..\SimpleLauncher.Avalonia.Updater\bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\**\*.*"
-                Condition="'$(RuntimeIdentifier)' != ''" />
-            <AvaloniaUpdaterPublishFiles
-                Include="..\SimpleLauncher.Avalonia.Updater\bin\$(Configuration)\$(TargetFramework)\publish\**\*.*"
-                Condition="'$(RuntimeIdentifier)' == ''" />
+            <AvaloniaUpdaterPublishFiles Include="$(AvaloniaUpdaterPublishDir)**\*.*" />
         </ItemGroup>
+        <Error Condition="'@(AvaloniaUpdaterPublishFiles)' == ''"
+               Text="The Avalonia updater publish output was not found under '$(AvaloniaUpdaterPublishDir)'. PublishAvaloniaUpdater should have produced it; check the updater publish for errors." />
         <Copy SourceFiles="@(AvaloniaUpdaterPublishFiles)"
-              DestinationFiles="@(AvaloniaUpdaterPublishFiles->'$(PublishDir)%(Filename)%(Extension)')"
+              DestinationFiles="@(AvaloniaUpdaterPublishFiles->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true" />
     </Target>
 </Project>
