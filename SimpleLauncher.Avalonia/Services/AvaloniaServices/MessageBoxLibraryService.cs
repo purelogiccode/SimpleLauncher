@@ -1712,7 +1712,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var message4 = _localization.GetString("AzaharConfigPermissionError4",
             "1. Run Simple Launcher as administrator, or");
         var message5 = _localization.GetString("AzaharConfigPermissionError5",
-            "2. Install Azahar in a user directory (e.g., C:\\Users\\YourName\\Azahar)");
+            @"2. Install Azahar in a user directory (e.g., C:\Users\YourName\Azahar)");
         var message6 = _localization.GetString("AzaharConfigPermissionError6",
             "The game will launch with the emulator's default settings.");
         return ShowAsync(O, $"{message1}\n\n{message2}\n\n{message3}\n{message4}\n{message5}\n\n" +
@@ -2201,7 +2201,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var message4 = _localization.GetString("Pcsx2ConfigPermissionError4",
             "1. Run Simple Launcher as administrator, or");
         var message5 = _localization.GetString("Pcsx2ConfigPermissionError5",
-            "2. Install PCSX2 in a user directory (e.g., C:\\Users\\YourName\\PCSX2)");
+            @"2. Install PCSX2 in a user directory (e.g., C:\Users\YourName\PCSX2)");
         var message6 = _localization.GetString("Pcsx2ConfigPermissionError6",
             "The game will launch with the emulator's default settings.");
         return ShowAsync(O, $"{message1}\n\n{message2}\n\n{message3}\n{message4}\n{message5}\n\n" +
