@@ -62,7 +62,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         ImagePacksToDisplay = [];
         SystemNames = [];
 
-        DownloadImagePackCommand = new RelayCommand<object?>(ExecuteDownloadAsync, _ => !IsOperationInProgress);
+        DownloadImagePackCommand = new AsyncRelayCommand<object?>(ExecuteDownloadAsync, _ => !IsOperationInProgress);
     }
 
     /// <summary>Gets the collection of system names available for image pack download.</summary>
@@ -145,7 +145,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
     public bool IsMainContentEnabled => !IsOperationInProgress && !IsLoading;
 
     /// <summary>Gets the command to download the selected image pack.</summary>
-    public IRelayCommand<object?> DownloadImagePackCommand { get; }
+    public IAsyncRelayCommand<object?> DownloadImagePackCommand { get; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -270,7 +270,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async void ExecuteDownloadAsync(object? parameter)
+    private async Task ExecuteDownloadAsync(object? parameter)
     {
         try
         {
