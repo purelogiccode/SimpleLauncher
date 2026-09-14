@@ -33,7 +33,10 @@ dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -
 wsl dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 ```
 
-See [14 — Testing](14-testing.md) for test filters and the known slow network test. No CI is configured (intentionally — see `AGENTS.md`); verification is local + WSL2.
+See [14 — Testing](14-testing.md) for test filters and the known slow network test. Tests are
+**not** run by CI (the suites include live endpoints and real app launches); verification stays
+local + WSL2. The GitHub Actions workflows only package releases and deploy the docs — see
+[Continuous integration](#continuous-integration).
 
 ## Publish (win-x64 / win-arm64)
 
@@ -45,6 +48,20 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 - `RuntimeIdentifiers` are `win-x64;win-arm64`; every bundled tool ships both variants (`X.exe` + `X_arm64.exe`) and is resolved per architecture at runtime (see [11 — Bundled Tools](11-bundled-tools.md)).
 - Release zip naming for updates: `release_{version}_{rid}.zip` + `updater_{rid}.zip` (see [16 — Updater](16-updater.md)).
 - A `publish-check\` folder with per-RID outputs is used locally to validate published payloads.
+
+### Release packaging script
+
+`scripts/package-release.ps1` reproduces the release artifacts (also used by CI):
+
+```powershell
+pwsh scripts/package-release.ps1 -Version 5.7.0
+# -> SimpleLauncher\bin\Release\release_5.7.0_win-x64.zip, release_5.7.0_win-arm64.zip
+# -> SimpleLauncher\bin\Release\updater_win-x64.zip, updater_win-arm64.zip
+```
+
+- Validates the version against `SimpleLauncher.csproj`, `SimpleLauncher.Core.csproj`, `app.manifest` and `SimpleLauncher.Updater\version.txt` before publishing.
+- Publishes framework-dependent single-file builds (`--self-contained false -p:PublishSingleFile=true`).
+- Prunes the other architecture's bundled tools from each payload (plus the Linux-only extension-less `RetroAchievementsSharp` binaries) and packages `Updater.exe` alone into `updater_{rid}.zip`.
 
 ### Publish the Avalonia app (multi-targeted)
 
@@ -83,7 +100,7 @@ Version `5.6.1` must stay in sync across:
 - `SimpleLauncher.Updater\version.txt` (`release5.6.1`)
 - `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (same three, matching the WPF app)
 
-`VersionConsistencyTests` enforces this in CI/local runs. Bump all of them together.
+`VersionConsistencyTests` enforces this in local runs. Bump all of them together.
 
 ## Localization
 
@@ -102,16 +119,30 @@ Version `5.6.1` must stay in sync across:
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).
 - Conventions observed in the codebase: services take Serilog `ILogger`; UI services use the host-interface pattern (`Initialize(host)`) instead of receiving windows; ViewModels use CommunityToolkit.Mvvm.
 
+## Continuous integration
+
+GitHub Actions only builds release packages and deploys documentation — it never runs the test
+suites (they include live endpoints and real app launches; run them locally). The Avalonia
+variants are intentionally not published by CI yet.
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `.github/workflows/release-wpf.yml` | manual (`workflow_dispatch`) with a version | Packages the WPF app for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release (with assets). Options: skip release creation, provide custom release notes. |
+| `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
+
+To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and
+push, then run **Actions → Publish WPF release → Run workflow** with the new version.
+
 ## Publishing the docs (Pages + wiki)
 
 The `docs\` folder is published in two places:
 
-### GitHub Pages (automatic, no credentials needed)
+### GitHub Pages (via Actions)
 
-The site is served from `/docs` via **docsify** (client-side rendering, no build step):
+The site is served from `docs/` via **docsify** (client-side rendering, no build step):
 
-1. Enable once in repo settings: **Settings → Pages → Deploy from a branch → branch `master`, folder `/docs`**.
-2. Every push to `docs/**` rebuilds the site automatically.
+1. Enable once in repo settings: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. The `docs.yml` workflow deploys `docs/` on every push to `master` that touches docs (or manually).
 3. URL: `https://purelogiccode.github.io/SimpleLauncher/`.
 
 `docs/index.html` (docsify loader), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
@@ -119,9 +150,9 @@ The site is served from `/docs` via **docsify** (client-side rendering, no build
 - `docs/parameters.md` ← `SimpleLauncher/parameters.md` — refresh it whenever the canonical file changes.
 - `docs/manual-tests.md` ← `ManualTests.md` (repo root) — refresh likewise.
 
-### GitHub Wiki (local sync script)
+### GitHub Wiki (CI + local script)
 
-The wiki is a separate git repo (`SimpleLauncher.wiki.git`); the default `GITHUB_TOKEN` cannot push to it, so syncing runs locally (or in CI with a PAT):
+The wiki is a separate git repo (`SimpleLauncher.wiki.git`); the default `GITHUB_TOKEN` cannot push to it, so the `docs.yml` workflow syncs it with a `WIKI_PAT` secret (classic PAT, `repo` scope). Without that secret the wiki job warns and skips.
 
 ```bash
 python scripts/sync-wiki.py --dry-run   # preview
@@ -130,14 +161,12 @@ python scripts/sync-wiki.py             # clone/pull, rewrite, commit, push
 
 The script maps `docs/README.md` → `Home`, copies all `docs/NN-*.md` as pages, and **protects the `parameters` page** (`https://github.com/purelogiccode/SimpleLauncher/wiki/parameters`) — the app opens this URL (`EditSystemWindow.xaml.cs`, config key `WikiParametersUrl`), so it is never deleted and is refreshed from `docs/parameters.md`. Stale pages are deleted, `_Sidebar.md` is regenerated, and markdown links are rewritten to the flat wiki namespace.
 
-For CI automation (optional): add a workflow that runs the script with a `WIKI_PAT` secret (classic PAT, `repo` scope) on `docs/**` pushes.
-
 ## Release workflow (from git history & What's New)
 
 1. Implement features/fixes; keep `WhatsNew.md` updated with a release section.
 2. Bump version in the five places above.
 3. Run the full test suite (minus the slow URL test).
-4. Publish both RIDs; package `release_{version}_{rid}.zip` + `updater_{rid}.zip`; create a GitHub release.
+4. Run **Actions → Publish WPF release** with the new version — it packages both RIDs (`release_{version}_{rid}.zip` + `updater_{rid}.zip`) and creates the GitHub release. Locally, `pwsh scripts/package-release.ps1 -Version <version>` produces the same packages.
 5. The in-app updater and silent update check use the GitHub `releases/latest` API.
 
 ## Related docs

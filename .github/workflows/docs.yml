@@ -1,0 +1,75 @@
+name: Docs
+
+# Publishes docs/ to GitHub Pages (docsify site) and syncs docs/ to the GitHub wiki.
+# Wiki sync needs the WIKI_PAT secret (classic PAT, repo scope); without it the wiki
+# job warns and skips. Pages requires Settings -> Pages -> Source = GitHub Actions.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+      - 'scripts/sync-wiki.py'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    name: Deploy GitHub Pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  wiki:
+    name: Sync wiki
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Sync docs to the wiki
+        env:
+          WIKI_PAT: ${{ secrets.WIKI_PAT }}
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          if [ -z "$WIKI_PAT" ]; then
+            echo "::warning::WIKI_PAT secret is not set - skipping the wiki sync."
+            exit 0
+          fi
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config --global url."https://x-access-token:${WIKI_PAT}@github.com/".insteadOf "https://github.com/"
+          python scripts/sync-wiki.py

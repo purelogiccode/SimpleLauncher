@@ -26,8 +26,16 @@ They are intentionally kept on disk.
 
 ## ✅ Standing policies (do not revert or bypass)
 
-- **No CI**: there is intentionally no CI pipeline for this solution. Verification is local:
-  `dotnet build` / `dotnet test` per project on Windows (plus WSL2 for the Linux paths).
+- **CI scope**: GitHub Actions only packages releases and deploys docs — it never runs tests.
+  - `.github/workflows/release-wpf.yml` — manual (`workflow_dispatch`); packages the WPF app
+    for `win-x64` / `win-arm64` via `scripts/package-release.ps1`
+    (`release_{version}_{rid}.zip` + `updater_{rid}.zip`) and creates/updates the GitHub release.
+    The Avalonia variants are intentionally not published by CI.
+  - `.github/workflows/docs.yml` — on `docs/**` pushes to `master`; deploys GitHub Pages from
+    `docs/` and syncs the wiki via `scripts/sync-wiki.py` (needs the `WIKI_PAT` secret, skipped
+    with a warning when absent).
+  - Verification stays local: `dotnet build` / `dotnet test` per project on Windows (plus WSL2
+    for the Linux paths), because the suites include live endpoints and real app launches.
 - **No quarantine**: there is no test filtering or `[Trait]`-based exclusion — **all tests run
   unfiltered in every `dotnet test`**, including live-endpoint tests and app-launch tests.
   Never add a filter, quarantine, or skip mechanism back.
