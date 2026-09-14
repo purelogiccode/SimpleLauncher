@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Avalonia.Models;
+using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Core.Models;
 
 namespace SimpleLauncher.Avalonia.Views;
@@ -61,24 +63,30 @@ public partial class MessageDialogWindow : Window
 
     private void BuildButtons(MessageButtons buttons)
     {
+        var localization = App.ServiceProvider?.GetService<LocalizationService>();
+        var okText = localization?.GetString("OkButtonText", "OK") ?? "OK";
+        var yesText = localization?.GetString("YesButtonText", "Yes") ?? "Yes";
+        var noText = localization?.GetString("NoButtonText", "No") ?? "No";
+        var cancelText = localization?.GetString("CancelButtonText", "Cancel") ?? "Cancel";
+
         var definitions = buttons switch
         {
-            MessageButtons.Ok => new[] { (Result: MessageBoxResult.Ok, Text: "OK", IsDefault: true, Primary: true) },
+            MessageButtons.Ok => new[] { (Result: MessageBoxResult.Ok, Text: okText, IsDefault: true, Primary: true) },
             MessageButtons.OkCancel => new[]
             {
-                (Result: MessageBoxResult.Ok, Text: "OK", IsDefault: true, Primary: true),
-                (Result: MessageBoxResult.Cancel, Text: "Cancel", IsDefault: false, Primary: false)
+                (Result: MessageBoxResult.Ok, Text: okText, IsDefault: true, Primary: true),
+                (Result: MessageBoxResult.Cancel, Text: cancelText, IsDefault: false, Primary: false)
             },
             MessageButtons.YesNo => new[]
             {
-                (Result: MessageBoxResult.Yes, Text: "Yes", IsDefault: true, Primary: true),
-                (Result: MessageBoxResult.No, Text: "No", IsDefault: false, Primary: false)
+                (Result: MessageBoxResult.Yes, Text: yesText, IsDefault: true, Primary: true),
+                (Result: MessageBoxResult.No, Text: noText, IsDefault: false, Primary: false)
             },
             _ => new[]
             {
-                (Result: MessageBoxResult.Yes, Text: "Yes", IsDefault: true, Primary: true),
-                (Result: MessageBoxResult.No, Text: "No", IsDefault: false, Primary: false),
-                (Result: MessageBoxResult.Cancel, Text: "Cancel", IsDefault: false, Primary: false)
+                (Result: MessageBoxResult.Yes, Text: yesText, IsDefault: true, Primary: true),
+                (Result: MessageBoxResult.No, Text: noText, IsDefault: false, Primary: false),
+                (Result: MessageBoxResult.Cancel, Text: cancelText, IsDefault: false, Primary: false)
             }
         };
 

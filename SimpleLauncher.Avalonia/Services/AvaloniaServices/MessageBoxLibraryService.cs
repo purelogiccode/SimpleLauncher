@@ -1,7 +1,8 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Avalonia.Models;
@@ -59,10 +60,35 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task ShowEmulatorDownloadErrorMessageBoxAsync(EasyModeSystemConfig selectedSystem)
+    public async Task ShowEmulatorDownloadErrorMessageBoxAsync(EasyModeSystemConfig selectedSystem)
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var downloaderror = _localization.GetString("Downloaderror", "Download error.");
+        var wouldyouliketoberedirected = _localization.GetString("Wouldyouliketoberedirected",
+            "Would you like to be redirected to the download page?");
+        var error = _localization.GetString("Error", "Error");
+
+        var result = await ShowAsync(O, $"{downloaderror}\n\n{wouldyouliketoberedirected}", error,
+            MessageButtons.YesNo, MessageIcon.Error);
+        if (result != MessageBoxResult.Yes) return;
+
+        var downloadLink = selectedSystem.Emulators?.Emulator?.EmulatorDownloadLink;
+        if (string.IsNullOrEmpty(downloadLink)) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadLink,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Expected condition (no default browser / broken link): not a bug report.
+            Log.Information(ex, "Error opening the emulator download link.");
+            await CouldNotOpenTheDownloadLinkMessageBoxAsync();
+        }
     }
 
 
@@ -77,7 +103,15 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public async Task<MessageBoxResult> CouldNotLoadHelpUserXmlMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var simpleLaunchercouldnotloadhelpuserxml = _localization.GetString("SimpleLaunchercouldnotloadhelpuserxml",
+            "'Simple Launcher' could not load 'helpuser.xml'.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        return await ShowAsync(O, $"{simpleLaunchercouldnotloadhelpuserxml}\n\n" +
+                                   $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
@@ -128,14 +162,25 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task PleaseExtractApplicationFirstMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("Error", "Error");
+        var message = _localization.GetString("SimpleLaunchercannotrunfromatemporary",
+            "'Simple Launcher' cannot run from a temporary folder.");
+        var message2 = _localization.GetString("Pleaseextracttheapplicationtoapermanentfolder",
+            "Please extract the application to a permanent folder before running it.");
+        return ShowAsync(O, $"{message}\n\n{message2}", title, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
     public Task ApplicationControlPolicyBlockedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var message = _localization.GetString("ApplicationControlPolicyBlockedFile",
+            "An application control policy blocked this file or link.");
+        var simpleLaunchercannotperform = _localization.GetString("SimpleLaunchercannotperform",
+            "'Simple Launcher' cannot perform the requested task.");
+        var securityPolicyBlocked = _localization.GetString("SecurityPolicyBlocked", "Security Policy Blocked");
+        return ShowAsync(O, $"{message}\n\n{simpleLaunchercannotperform}\n\n", securityPolicyBlocked,
+            MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
@@ -173,14 +218,41 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task PotentialPathManipulationDetectedMessageBoxAsync(string archivePath)
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("SecurityWarning", "Security Warning");
+        var pathManipulationDetected =
+            _localization.GetString("PathManipulationDetected", "Potential Path Manipulation Detected");
+        var zipSlipExplanation = _localization.GetString("ZipSlipExplanation",
+            "A security vulnerability called 'Zip Slip' was detected in the archive file. This is a path traversal vulnerability that could allow an attacker to write files outside of the intended extraction directory.");
+        var archivePathMessage = _localization.GetString("ArchivePathMessage", "Archive file:");
+        var actionTaken = _localization.GetString("ActionTaken",
+            "For your security, the extraction process has been properly handle and the issue has been logged.");
+        var reportedToDeveloper = _localization.GetString("ReportedToDeveloper",
+            "This security issue has been reported to the developer team.");
+        return ShowAsync(O, $"{pathManipulationDetected}\n\n{zipSlipExplanation}\n\n" +
+                            $"{archivePathMessage} {archivePath}\n\n{actionTaken}\n\n{reportedToDeveloper}", title,
+            MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
     public Task ExtractionFailedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var extractionfailed = _localization.GetString("Extractionfailed", "Extraction failed.");
+        var ensurethefileisnotcorrupted =
+            _localization.GetString("Ensurethefileisnotcorrupted", "Ensure the file is not corrupted.");
+        var ensureyouhaveenoughspaceintheHdd = _localization.GetString("EnsureyouhaveenoughspaceintheHDD",
+            "Ensure you have enough space in the HDD to extract the file.");
+        var grantSimpleLauncheradministrative = _localization.GetString("GrantSimpleLauncheradministrative",
+            "Grant 'Simple Launcher' administrative access and try again.");
+        var ensuretheSimpleLauncherfolder = _localization.GetString("EnsuretheSimpleLauncherfolder",
+            "Ensure the 'Simple Launcher' folder is a writable directory.");
+        var temporarilydisableyourantivirus = _localization.GetString("Temporarilydisableyourantivirus",
+            "Temporarily disable your antivirus software and try again.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{extractionfailed}\n\n{ensurethefileisnotcorrupted}\n" +
+                            $"{ensureyouhaveenoughspaceintheHdd}\n{grantSimpleLauncheradministrative}\n" +
+                            $"{ensuretheSimpleLauncherfolder}\n{temporarilydisableyourantivirus}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -221,7 +293,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task GameFileDoesNotExistMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thegamefiledoesnotexist =
+            _localization.GetString("Thegamefiledoesnotexist", "The game file does not exist!");
+        var thefilehasbeenremovedfromthelist = _localization.GetString("Thefilehasbeenremovedfromthelist",
+            "The file has been removed from the list.");
+        var info = _localization.GetString("Info", "Info");
+        return ShowAsync(O, $"{thegamefiledoesnotexist}\n\n{thefilehasbeenremovedfromthelist}", info,
+            MessageButtons.Ok, MessageIcon.Information);
     }
 
 
@@ -293,7 +371,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ThereWasAnErrorDeletingTheGameMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrordeletingthefile = _localization.GetString("Therewasanerrordeletingthefile",
+            "There was an error deleting the file.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrordeletingthefile}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -305,44 +389,101 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task ShowCoreDownloadErrorMessageBoxAsync(EasyModeSystemConfig selectedSystem)
+    public async Task ShowCoreDownloadErrorMessageBoxAsync(EasyModeSystemConfig selectedSystem)
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var downloaderror = _localization.GetString("Downloaderror", "Download error.");
+        var wouldyouliketoberedirected = _localization.GetString("Wouldyouliketoberedirected",
+            "Would you like to be redirected to the download page?");
+        var error = _localization.GetString("Error", "Error");
+
+        var result = await ShowAsync(O, $"{downloaderror}\n\n{wouldyouliketoberedirected}", error,
+            MessageButtons.YesNo, MessageIcon.Error);
+        if (result != MessageBoxResult.Yes) return;
+
+        var downloadLink = selectedSystem.Emulators?.Emulator?.CoreDownloadLink;
+        if (string.IsNullOrEmpty(downloadLink)) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadLink,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Expected condition (no default browser / broken link): not a bug report.
+            Log.Information(ex, "Error opening the core download link.");
+            await CouldNotOpenTheDownloadLinkMessageBoxAsync();
+        }
     }
 
     public async Task<MessageBoxResult> WarnUserAboutMemoryConsumptionMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var warningMessage = _localization.GetString("WarningSettingupaveryhighnumberofgamesperpage",
+            "Warning! Setting a very high number of games per page will significantly increase system memory usage when in Grid mode. If the number is too high, this may cause the application to crash. Please proceed with caution.");
+        var proceedQuestion =
+            _localization.GetString("AreYouSureYouWantToProceed", "Are you sure you want to proceed?");
+        var warningTitle = _localization.GetString("Warning", "Warning");
+        return await ShowAsync(O, $"{warningMessage}\n\n{proceedQuestion}", warningTitle,
+            MessageButtons.YesNo, MessageIcon.Warning);
     }
 
 
     public Task ErrorLoadingAppSettingsMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorloadingconfiguration = _localization.GetString("Therewasanerrorloadingconfiguration",
+            "There was an error loading 'appsettings.json'.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorloadingconfiguration}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
     public Task CouldNotSaveScreenshotMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var failedtosavescreenshot =
+            _localization.GetString("Failedtosavescreenshot", "Failed to save screenshot.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{failedtosavescreenshot}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
-    public Task NoHistoryXmlOrDatFoundMessageBoxAsync()
+    public async Task NoHistoryXmlOrDatFoundMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var nohistoryxmlfilefound = _localization.GetString("Nohistoryxmlfilefound2",
+            "No 'history.dat' or 'history.xml' file found in the application folder.");
+        var doyouwanttoreinstallSimpleLauncher = _localization.GetString("DoyouwanttoreinstallSimpleLauncher",
+            "Do you want to reinstall 'Simple Launcher' to fix the issue?");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{nohistoryxmlfilefound}\n\n{doyouwanttoreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
     public Task SystemNameCanNotBeEmptyMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var systemNamecannotbeemptyor = _localization.GetString("SystemNamecannotbeemptyor",
+            "'System Name' cannot be empty or contain only spaces.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{systemNamecannotbeemptyor}\n\n{pleasefixthisfield}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -457,10 +598,19 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task FailedToLoadParametersMdMessageBoxAsync()
+    public async Task FailedToLoadParametersMdMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var unabletoloadparametersmd = _localization.GetString("Unabletoloadparametersmd",
+            "Unable to load 'parameters.md'. The file may be corrupted or in use.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{unabletoloadparametersmd}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -656,14 +806,29 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task PathOrParameterInvalidMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var oneormorepathsorparameters = _localization.GetString("Oneormorepathsorparameters",
+            "One or more paths or parameters are invalid.");
+        var pleasefixthemtoproceed =
+            _localization.GetString("Pleasefixthemtoproceed", "Please fix them to proceed.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{oneormorepathsorparameters}\n\n{pleasefixthemtoproceed}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
-    public Task NoSystemInHelpUserXmlMessageBoxAsync()
+    public async Task NoSystemInHelpUserXmlMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var novalidsystemsfoundinthefilehelpuserxml = _localization.GetString(
+            "Novalidsystemsfoundinthefilehelpuserxml", "No valid systems found in the file 'helpuser.xml'.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{novalidsystemsfoundinthefilehelpuserxml}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -681,20 +846,43 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task NavigationButtonErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorinthenavigationbutton = _localization.GetString("Therewasanerrorinthenavigationbutton",
+            "There was an error in the navigation button.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorinthenavigationbutton}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
     public Task XemuParameterShouldContainDvdPathMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("Error", "Error");
+        var message = _localization.GetString("XemuParameterShouldContainDvdPath",
+            "The Xemu parameter should contain '-dvd_path'.");
+        var message2 = _localization.GetString("EditthissysteminExpertModeandfixtheparameter",
+            "Edit this system in 'Expert Mode' and fix the parameter field for this emulator.");
+        return ShowAsync(O, $"{message}\n\n{message2}", title, MessageButtons.Ok, MessageIcon.Error);
     }
 
     public async Task<MessageBoxResult> GameFileDoesNotExistAskToDeleteMessageBoxAsync(string filePath)
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thegamefiledoesnotexist =
+            _localization.GetString("Thegamefiledoesnotexist", "The game file does not exist!");
+        var filepathis = _localization.GetString("FilePathIs", "File path:");
+        var doYouWantToDeleteThisEntry = _localization.GetString("DoYouWantToDeleteThisEntry",
+            "Do you want to delete this entry from the play history?");
+        var clickNoToKeepTheEntry =
+            _localization.GetString("ClickNoToKeepTheEntry", "Click 'No' to keep the entry in the list.");
+        var gameNotAvailable = _localization.GetString("GameNotAvailable", "Game Not Available");
+        var message = $"{thegamefiledoesnotexist}\n\n" +
+                      $"{filepathis}\n{filePath}\n\n" +
+                      $"{doYouWantToDeleteThisEntry}\n" +
+                      $"{clickNoToKeepTheEntry}";
+        return await ShowAsync(O, message, gameNotAvailable, MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
@@ -749,20 +937,37 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task SystemImageFolderCanNotBeEmptyMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var systemImageFoldercannotbeempty = _localization.GetString("SystemImageFoldercannotbeempty",
+            "'System Image Folder' cannot be empty or contain only spaces.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{systemImageFoldercannotbeempty}\n\n{pleasefixthisfield}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
     public async Task<MessageBoxResult> SearchOnlineForRomHistoryMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thereisnoRoMhistoryinthelocaldatabase = _localization.GetString("ThereisnoROMhistoryinthelocaldatabase",
+            "There is no ROM history in the local database for this file.");
+        var doyouwanttosearchonline = _localization.GetString("Doyouwanttosearchonline",
+            "Do you want to search online for the ROM history?");
+        var rOmHistoryNotFound = _localization.GetString("ROMHistorynotfound", "ROM History not found");
+        return await ShowAsync(O, $"{thereisnoRoMhistoryinthelocaldatabase}\n\n{doyouwanttosearchonline}",
+            rOmHistoryNotFound, MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
     public Task CouldNotOpenHistoryWindowMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasaproblemopeningtheHistorywindow = _localization.GetString(
+            "TherewasaproblemopeningtheHistorywindow", "There was a problem opening the History window.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasaproblemopeningtheHistorywindow}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -866,13 +1071,22 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task NullFileExtensionMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thereisnoExtension = _localization.GetString("ThereisnoExtension",
+            "There is no 'Extension to Launch After Extraction' set in the system configuration.");
+        var pleaseeditthissystemto =
+            _localization.GetString("Pleaseeditthissystemto", "Please edit this system to fix that.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{thereisnoExtension}\n\n{pleaseeditthissystemto}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
     public async Task<MessageBoxResult> DoYouWantToCancelAndCloseMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var message = _localization.GetString("ProcessingStillRunningMessage",
+            "Processing is still running. Do you want to cancel and close?");
+        var title = _localization.GetString("ConfirmClose", "Confirm Close");
+        return await ShowAsync(O, message, title, MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
@@ -901,7 +1115,16 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task SimpleLauncherDoesNotSupportRaHashOfSystemGroupedByFolderMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var simpleLauncherdoesnotsupportRetroAchievementshashofSystems = _localization.GetString(
+            "simpleLauncherdoesnotsupportRetroAchievementshashofSystems",
+            "'Simple Launcher' does not support RetroAchievements hash of systems Grouped by Folder.");
+        var pleaseedittheSystemsettingsanddisablethe = _localization.GetString(
+            "pleaseedittheSystemsettingsanddisablethe",
+            "Please edit the system settings and disable the 'Group Files by Folder' option.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{simpleLauncherdoesnotsupportRetroAchievementshashofSystems}\n\n" +
+                            $"{pleaseedittheSystemsettingsanddisablethe}", error, MessageButtons.Ok,
+            MessageIcon.Error);
     }
 
 
@@ -919,7 +1142,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ExtensionToSearchIsRequiredMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var extensiontoSearchintheSystemFolder = _localization.GetString("ExtensiontoSearchintheSystemFolder",
+            "'Extension to Search in the System Folder' cannot be empty or contain only spaces.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{extensiontoSearchintheSystemFolder}\n\n{pleasefixthisfield}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1018,7 +1246,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ThereWasAnErrorDeletingTheCoverImageMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrordeletingthecoverimage = _localization.GetString("Therewasanerrordeletingthecoverimage",
+            "There was an error deleting the cover image.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrordeletingthecoverimage}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1036,7 +1270,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task MainWindowSearchEngineErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorwiththesearchengine = _localization.GetString("Therewasanerrorwiththesearchengine",
+            "There was an error with the search engine.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorwiththesearchengine}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1109,7 +1349,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task FailedToLoadLanguageResourceMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var failedtoloadlanguageresources =
+            _localization.GetString("Failedtoloadlanguageresources", "Failed to load language resources.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var languageLoadingError = _localization.GetString("LanguageLoadingError", "Language Loading Error");
+        return ShowAsync(O, $"{failedtoloadlanguageresources}\n\n{theerrorwasreportedtothedeveloper}",
+            languageLoadingError, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1126,7 +1372,16 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task UnabletomountIsOfileMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var unabletomountIsOfile = _localization.GetString("UnabletomountISOfile",
+            "Unable to mount ISO file due to PowerShell execution policy restrictions.");
+        var thisistypicallycausedbyGroup = _localization.GetString("ThisistypicallycausedbyGroup",
+            "This is typically caused by Group Policy settings on corporate or managed PCs.");
+        var simpleLaunchercannotperform = _localization.GetString("SimpleLaunchercannotperform",
+            "'Simple Launcher' cannot perform the requested task.");
+        var powerShellRestricted = _localization.GetString("PowerShellRestricted", "PowerShell Restricted");
+        return ShowAsync(O, $"{unabletomountIsOfile}\n\n{thisistypicallycausedbyGroup}\n\n" +
+                            $"{simpleLaunchercannotperform}", powerShellRestricted, MessageButtons.Ok,
+            MessageIcon.Warning);
     }
 
 
@@ -1143,7 +1398,16 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ShowImageDownloadTimeoutMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var simpleLauncherCouldNotDownloadImages = _localization.GetString("SimpleLauncherCouldNotDownloadImages",
+            "Simple Launcher could not download images due to access issues to Cloudflare servers.");
+        var thisMayBeDueToCountryFirewallRestrictions = _localization.GetString(
+            "ThisMayBeDueToCountryFirewallRestrictions", "This may be due to country firewall restrictions.");
+        var pleaseTryAgainBehindAVpn =
+            _localization.GetString("PleaseTryAgainBehindAVpn", "Please try again behind a VPN.");
+        var imageDownloadError = _localization.GetString("ImageDownloadError", "Image Download Error");
+        return ShowAsync(O, $"{simpleLauncherCouldNotDownloadImages}\n\n" +
+                            $"{thisMayBeDueToCountryFirewallRestrictions}\n\n{pleaseTryAgainBehindAVpn}",
+            imageDownloadError, MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
@@ -1204,14 +1468,25 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorOpeningDonationLinkMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerroropeningthedonation = _localization.GetString("Therewasanerroropeningthedonation",
+            "There was an error opening the Donation Link.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerroropeningthedonation}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
     public Task ErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerror = _localization.GetString("Therewasanerror", "There was an error.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerror}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1257,7 +1532,21 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task FolderCreationFailedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var simpleLauncherfailedtocreatethe = _localization.GetString("SimpleLauncherfailedtocreatethe",
+            "'Simple Launcher' failed to create the necessary folders for this system.");
+        var grantSimpleLauncheradministrative = _localization.GetString("GrantSimpleLauncheradministrative",
+            "Grant 'Simple Launcher' administrative access and try again.");
+        var temporarilydisableyourantivirus = _localization.GetString(
+            "Youcanalsotemporarilydisableyourantivirussoftware",
+            "You can also temporarily disable your antivirus software or add 'Simple Launcher' folder to the antivirus exclusion list.");
+        var ensurethattheSimpleLauncherfolderislocatedinawritable = _localization.GetString(
+            "EnsurethattheSimpleLauncherfolderislocatedinawritable",
+            "Ensure that the 'Simple Launcher' folder is located in a writable directory.");
+        var info = _localization.GetString("Info", "Info");
+        return ShowAsync(O, $"{simpleLauncherfailedtocreatethe}\n\n{grantSimpleLauncheradministrative}\n\n" +
+                            $"{temporarilydisableyourantivirus}\n\n" +
+                            $"{ensurethattheSimpleLauncherfolderislocatedinawritable}", info,
+            MessageButtons.Ok, MessageIcon.Information);
     }
 
 
@@ -1302,14 +1591,25 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task FailedSaveReportMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var failedtosavethereport = _localization.GetString("Failedtosavethereport", "Failed to save the report.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{failedtosavethereport}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
     public Task ApiKeyErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorintheApiKey = _localization.GetString("TherewasanerrorintheAPIKey",
+            "There was an error in the API Key of this form.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorintheApiKey}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1403,7 +1703,20 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task AzaharConfigurationInjectionPermissionErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("InjectionFailed", "Injection Failed");
+        var message1 = _localization.GetString("AzaharConfigPermissionError1",
+            "Failed to inject Azahar configuration. The emulator is installed in a protected system directory.");
+        var message2 = _localization.GetString("AzaharConfigPermissionError2",
+            "The configuration file could not be modified due to insufficient permissions.");
+        var message3 = _localization.GetString("AzaharConfigPermissionError3", "To fix this, either:");
+        var message4 = _localization.GetString("AzaharConfigPermissionError4",
+            "1. Run Simple Launcher as administrator, or");
+        var message5 = _localization.GetString("AzaharConfigPermissionError5",
+            "2. Install Azahar in a user directory (e.g., C:\\Users\\YourName\\Azahar)");
+        var message6 = _localization.GetString("AzaharConfigPermissionError6",
+            "The game will launch with the emulator's default settings.");
+        return ShowAsync(O, $"{message1}\n\n{message2}\n\n{message3}\n{message4}\n{message5}\n\n" +
+                            $"{message6}", title, MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
@@ -1439,7 +1752,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ThereIsNoUpdateAvailableMessageBoxAsync(string currentVersion)
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thereisnoupdateavailable =
+            _localization.GetString("thereisnoupdateavailable", "There is no update available.");
+        var thecurrentversionis = _localization.GetString("Thecurrentversionis", "The current version is");
+        var noupdateavailable = _localization.GetString("Noupdateavailable", "No update available");
+        return ShowAsync(O, $"{thereisnoupdateavailable}\n\n{thecurrentversionis} {currentVersion}",
+            noupdateavailable, MessageButtons.Ok, MessageIcon.Information);
     }
 
 
@@ -1457,7 +1775,14 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task CouldNotFindAFileMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var couldnotfindafilewiththeextensiondefined = _localization.GetString(
+            "Couldnotfindafilewiththeextensiondefined",
+            "Could not find a file with the extension defined in 'Extension to Launch After Extraction' inside the extracted folder.");
+        var pleaseeditthissystemtofix =
+            _localization.GetString("Pleaseeditthissystemto", "Please edit this system to fix that.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{couldnotfindafilewiththeextensiondefined}\n\n{pleaseeditthissystemtofix}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1589,7 +1914,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task RetroArchParameterShouldContainLMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("Error", "Error");
+        var message = _localization.GetString("RetroArchParameterShouldContainL",
+            "The RetroArch parameter should contain -L to properly point to the desired core.");
+        var message2 = _localization.GetString("EditthissysteminExpertModeandfixtheparameter",
+            "Edit this system in 'Expert Mode' and fix the parameter field for this emulator.");
+        return ShowAsync(O, $"{message}\n\n{message2}", title, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1615,7 +1945,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorCalculatingStatsMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var anerroroccurredwhilecalculatingtheGlobal = _localization.GetString(
+            "AnerroroccurredwhilecalculatingtheGlobal", "An error occurred while calculating the Global Statistics.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{anerroroccurredwhilecalculatingtheGlobal}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1704,21 +2040,49 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task DownloadExtractionFailedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var downloadorextractionfailed =
+            _localization.GetString("DownloadorExtractionFailed", "Download or extraction failed.");
+        var grantSimpleLauncheradministrativeaccess = _localization.GetString(
+            "GrantSimpleLauncheradministrativeaccess", "Grant 'Simple Launcher' administrative access and try again.");
+        var ensuretheSimpleLauncherfolder = _localization.GetString("EnsuretheSimpleLauncherfolder",
+            "Ensure the 'Simple Launcher' folder is a writable directory.");
+        var temporarilydisableyourantivirus = _localization.GetString(
+            "Youcanalsotemporarilydisableyourantivirussoftware",
+            "You can also temporarily disable your antivirus software or add 'Simple Launcher' folder to the antivirus exclusion list.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{downloadorextractionfailed}\n\n" +
+                            $"{grantSimpleLauncheradministrativeaccess}\n\n" +
+                            $"{ensuretheSimpleLauncherfolder}\n\n" +
+                            $"{temporarilydisableyourantivirus}", error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
     public Task ProblemOpeningInfoLinkMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasaproblemopeningthe = _localization.GetString("Therewasaproblemopeningthe",
+            "There was a problem opening the Info Link.");
+        var ensureyouhaveadefaultbrowserinstalled = _localization.GetString("Ensureyouhaveadefaultbrowserinstalled",
+            "Ensure you have a default browser installed and configured correctly on your system.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasaproblemopeningthe}\n\n{ensureyouhaveadefaultbrowserinstalled}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
-    public Task FileParametersMdIsEmptyMessageBoxAsync()
+    public async Task FileParametersMdIsEmptyMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var thefileparametersmdisempty =
+            _localization.GetString("Thefileparametersmdisempty", "The file 'parameters.md' is empty.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{thefileparametersmdisempty}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -1744,13 +2108,22 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task FileMustBeCompressedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var whenExtractFileBeforeLaunch = _localization.GetString("WhenExtractFileBeforeLaunch",
+            "When 'Extract File Before Launch' is set to true, 'Extension to Search in the System Folder' must include 'zip', '7z', or 'rar'.");
+        var itwillnotacceptotherextensions =
+            _localization.GetString("Itwillnotacceptotherextensions", "It will not accept other extensions.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{whenExtractFileBeforeLaunch}\n\n{itwillnotacceptotherextensions}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
     public async Task<MessageBoxResult> WouldYouLikeToSaveAReportMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var wouldyouliketosaveareport = _localization.GetString("Wouldyouliketosaveareport",
+            "Would you like to save a report with the results?");
+        var saveReport = _localization.GetString("SaveReport", "Save Report");
+        return await ShowAsync(O, wouldyouliketosaveareport, saveReport, MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
@@ -1819,14 +2192,36 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task Pcsx2ConfigurationInjectionPermissionErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("InjectionFailed", "Injection Failed");
+        var message1 = _localization.GetString("Pcsx2ConfigPermissionError1",
+            "Failed to inject PCSX2 configuration. The emulator is installed in a protected system directory.");
+        var message2 = _localization.GetString("Pcsx2ConfigPermissionError2",
+            "The configuration file could not be modified due to insufficient permissions.");
+        var message3 = _localization.GetString("Pcsx2ConfigPermissionError3", "To fix this, either:");
+        var message4 = _localization.GetString("Pcsx2ConfigPermissionError4",
+            "1. Run Simple Launcher as administrator, or");
+        var message5 = _localization.GetString("Pcsx2ConfigPermissionError5",
+            "2. Install PCSX2 in a user directory (e.g., C:\\Users\\YourName\\PCSX2)");
+        var message6 = _localization.GetString("Pcsx2ConfigPermissionError6",
+            "The game will launch with the emulator's default settings.");
+        return ShowAsync(O, $"{message1}\n\n{message2}\n\n{message3}\n{message4}\n{message5}\n\n" +
+                            $"{message6}", title, MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
-    public Task FailedToLoadHelpUserXmlMessageBoxAsync()
+    public async Task FailedToLoadHelpUserXmlMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var unabletoloadhelpuserxml = _localization.GetString("Unabletoloadhelpuserxml",
+            "Unable to load 'helpuser.xml'. The file may be corrupted.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{unabletoloadhelpuserxml}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -1844,7 +2239,15 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task FileNeedToBeCompressedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var theselectedfilecannotbe =
+            _localization.GetString("Theselectedfilecannotbe", "The selected file cannot be extracted.");
+        var toextractafileitneedstobe = _localization.GetString("Toextractafileitneedstobe",
+            "To extract a file, it needs to be a 7z, zip, or rar file.");
+        var pleasefixthatintheEditwindow =
+            _localization.GetString("PleasefixthatintheEditwindow", "Please fix that in the Edit window.");
+        var warning = _localization.GetString("Warning", "Warning");
+        return ShowAsync(O, $"{theselectedfilecannotbe}\n\n{toextractafileitneedstobe}\n\n" +
+                            $"{pleasefixthatintheEditwindow}", warning, MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
@@ -1906,7 +2309,15 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ImageViewerErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var failedtoloadtheimageintheImage = _localization.GetString("FailedtoloadtheimageintheImage",
+            "Failed to load the image in the Image Viewer window.");
+        var theimagemaybecorruptedorinaccessible = _localization.GetString("Theimagemaybecorruptedorinaccessible",
+            "The image may be corrupted or inaccessible.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{failedtoloadtheimageintheImage}\n\n{theimagemaybecorruptedorinaccessible}\n\n" +
+                            $"{theerrorwasreportedtothedeveloper}", error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -1923,7 +2334,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorMethodLoadGameFilesAsyncMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorloadingthegame = _localization.GetString("Therewasanerrorloadingthegame",
+            "There was an error loading the game list.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorloadingthegame}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2004,7 +2421,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorLoadingRomHistoryMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var anerroroccurredwhileloadingRoMhistory = _localization.GetString("AnerroroccurredwhileloadingROMhistory",
+            "An error occurred while loading ROM history.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{anerroroccurredwhileloadingRoMhistory}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2022,7 +2445,18 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         string resolvedSystemImageFolder)
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thesystem = _localization.GetString("Thesystem", "The system");
+        var hasbeenaddedsuccessfully = _localization.GetString("hasbeenaddedsuccessfully",
+            "has been added successfully.");
+        var putRoMsorIsOsforthissysteminside = _localization.GetString("PutROMsorISOsforthissysteminside",
+            "Put ROMs or ISOs for this system inside");
+        var putcoverimagesforthissysteminside = _localization.GetString("Putcoverimagesforthissysteminside",
+            "Put cover images for this system inside");
+        var info = _localization.GetString("Info", "Info");
+        return ShowAsync(O, $"{thesystem} '{systemName}' {hasbeenaddedsuccessfully}\n\n" +
+                            $"{putRoMsorIsOsforthissysteminside} '{resolvedSystemFolder}'\n\n" +
+                            $"{putcoverimagesforthissysteminside} '{resolvedSystemImageFolder}'.", info,
+            MessageButtons.Ok, MessageIcon.Information);
     }
 
 
@@ -2169,7 +2603,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task UnableToOpenLinkMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var unabletoopenthelink = _localization.GetString("Unabletoopenthelink", "Unable to open the link.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{unabletoopenthelink}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2186,7 +2625,18 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public async Task<MessageBoxResult> DoYouWantToUpdateMessageBoxAsync(string currentVersion, string latestVersion)
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thereIsAsoftwareUpdateAvailable = _localization.GetString("Thereisasoftwareupdateavailable",
+            "There is a software update available.");
+        var theCurrentVersionIs = _localization.GetString("Thecurrentversionis", "The current version is");
+        var theUpdateVersionIs = _localization.GetString("Theupdateversionis", "The update version is");
+        var doYouWantToDownloadAndInstall = _localization.GetString("Doyouwanttodownloadandinstall",
+            "Do you want to download and install the latest version automatically?");
+        var updateAvailable = _localization.GetString("UpdateAvailable", "Update Available");
+        return await ShowAsync(O, $"{thereIsAsoftwareUpdateAvailable}\n" +
+                                   $"{theCurrentVersionIs} {currentVersion}\n" +
+                                   $"{theUpdateVersionIs} {latestVersion}\n\n" +
+                                   $"{doYouWantToDownloadAndInstall}", updateAvailable, MessageButtons.YesNo,
+            MessageIcon.Information);
     }
 
 
@@ -2203,7 +2653,18 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task MoveToWritableFolderMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var itlookslikeSimpleLauncherisinstalled = _localization.GetString("ItlookslikeSimpleLauncherisinstalled",
+            "It looks like 'Simple Launcher' is installed in a restricted folder (e.g., Program Files), where it does not have write access.");
+        var itneedswriteaccesstoitsfolder =
+            _localization.GetString("Itneedswriteaccesstoitsfolder", "It needs write access to its folder.");
+        var pleasemovetheapplicationfolder = _localization.GetString("Pleasemovetheapplicationfolder",
+            "Please move the application folder to a writable location like the 'Documents' folder.");
+        var ifpossiblerunitwithadministrative = _localization.GetString("Ifpossiblerunitwithadministrative",
+            "If possible, run it with administrative privileges.");
+        var warning = _localization.GetString("Warning", "Warning");
+        return ShowAsync(O, $"{itlookslikeSimpleLauncherisinstalled}\n\n{itneedswriteaccesstoitsfolder}\n\n" +
+                            $"{pleasemovetheapplicationfolder}\n\n{ifpossiblerunitwithadministrative}", warning,
+            MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
@@ -2216,10 +2677,19 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task NoSystemInParametersMdMessageBoxAsync()
+    public async Task NoSystemInParametersMdMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var novalidsystemsfoundinthefileparametersmd = _localization.GetString(
+            "Novalidsystemsfoundinthefileparametersmd", "No valid systems found in the file 'parameters.md'.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{novalidsystemsfoundinthefileparametersmd}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -2244,7 +2714,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task InvalidSystemConfigMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorwhileloading = _localization.GetString("Therewasanerrorwhileloading",
+            "There was an error while loading the system configuration for this system.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorwhileloading}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2270,7 +2746,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ToggleGamepadFailureMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var failedtotogglegamepad = _localization.GetString("Failedtotogglegamepad", "Failed to toggle gamepad.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{failedtotogglegamepad}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2292,7 +2773,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ExtensionToLaunchIsRequiredMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var extensiontoLaunchAfterExtraction = _localization.GetString("ExtensiontoLaunchAfterExtraction",
+            "'Extension to Launch After Extraction' is required when 'Extract File Before Launch' is set to true.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{extensiontoLaunchAfterExtraction}\n\n{pleasefixthisfield}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2310,7 +2796,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task EmulatorNameIsRequiredMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var emulatornameisrequired =
+            _localization.GetString("Emulatornameisrequired", "Emulator name is required.");
+        var pleasefixthat = _localization.GetString("Pleasefixthat", "Please fix that.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{emulatornameisrequired}\n\n{pleasefixthat}", error, MessageButtons.Ok,
+            MessageIcon.Information);
     }
 
 
@@ -2444,14 +2935,29 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task SupportRequestSendErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var anerroroccurredwhilesendingthesupportrequest = _localization.GetString(
+            "Anerroroccurredwhilesendingthesupportrequest", "An error occurred while sending the support request.");
+        var thebugwasreportedtothedeveloper = _localization.GetString("Thebugwasreportedtothedeveloper",
+            "The bug was reported to the developer that will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{anerroroccurredwhilesendingthesupportrequest}\n\n" +
+                            $"{thebugwasreportedtothedeveloper}", error, MessageButtons.Ok, MessageIcon.Information);
     }
 
 
-    public Task ErrorWhileLoadingParametersMdMessageBoxAsync()
+    public async Task ErrorWhileLoadingParametersMdMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var unexpectederrorwhileloadingparametersmd = _localization.GetString(
+            "Unexpectederrorwhileloadingparametersmd", "Unexpected error while loading 'parameters.md'.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{unexpectederrorwhileloadingparametersmd}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -2486,10 +2992,19 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task FileHelpUserXmlIsMissingMessageBoxAsync()
+    public async Task FileHelpUserXmlIsMissingMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var thefilehelpuserxmlismissing =
+            _localization.GetString("Thefilehelpuserxmlismissing", "The file 'helpuser.xml' is missing.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{thefilehelpuserxmlismissing}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -2508,7 +3023,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task DownloadedFileIsMissingMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var downloadedfileismissing =
+            _localization.GetString("Downloadedfileismissing", "Downloaded file is missing.");
+        var oneDriveIssue = _localization.GetString("oneDriveIssue",
+            "If the file is in OneDrive, ensure it is synced and downloaded to your device. Right-click the file in File Explorer and select 'Always keep on this device'.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{downloadedfileismissing}\n\n{oneDriveIssue}", error, MessageButtons.Ok,
+            MessageIcon.Error);
     }
 
 
@@ -2521,10 +3042,25 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task ApplicationControlPolicyBlockedManualLinkMessageBoxAsync(string url)
+    public async Task ApplicationControlPolicyBlockedManualLinkMessageBoxAsync(string url)
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var message = _localization.GetString("ApplicationControlPolicyBlockedFileManualLink",
+            "An application control policy blocked this link.");
+        var simpleLaunchercannotperform = _localization.GetString("SimpleLaunchercannotperform",
+            "'Simple Launcher' cannot perform the requested task.");
+        var theUrLwascopiedtotheclipboard = _localization.GetString("TheURLwascopiedtotheclipboard",
+            "The URL was copied to the clipboard for your convenience. You can paste it into your browser.");
+        var securityPolicyBlocked = _localization.GetString("SecurityPolicyBlocked", "Security Policy Blocked");
+        await ShowAsync(O, $"{message}\n\n{simpleLaunchercannotperform}\n\n{theUrLwascopiedtotheclipboard}",
+            securityPolicyBlocked, MessageButtons.Ok, MessageIcon.Warning);
+
+        if (O.Clipboard is { } clipboard)
+        {
+            var dataTransfer = new DataTransfer();
+            dataTransfer.Add(DataTransferItem.CreateText(url));
+            await clipboard.SetDataAsync(dataTransfer); // Copy URL to clipboard
+        }
     }
 
 
@@ -2552,7 +3088,15 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public async Task<MessageBoxResult> FirstRunWelcomeMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var welcomeToSimpleLauncher =
+            _localization.GetString("WelcomeToSimpleLauncher", "Welcome to 'Simple Launcher'!");
+        var noSystemsFound =
+            _localization.GetString("NoSystemsFound", "No systems were found in your configuration.");
+        var easyModeGuide = _localization.GetString("DoyouwanttoaddyourfirstsystemusingtheEasyMode",
+            "Do you want to add your first system using the Easy Mode?");
+        var welcome = _localization.GetString("Welcome", "Welcome");
+        return await ShowAsync(O, $"{welcomeToSimpleLauncher}\n\n{noSystemsFound}\n\n{easyModeGuide}", welcome,
+            MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
@@ -2567,7 +3111,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task CouldNotOpenWalkthroughMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var failedtoopenthewalkthroughfile =
+            _localization.GetString("Failedtoopenthewalkthroughfile", "Failed to open the walkthrough file.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{failedtoopenthewalkthroughfile}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2671,17 +3221,35 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task FileParametersMdIsMissingMessageBoxAsync()
+    public async Task FileParametersMdIsMissingMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var thefileparametersmdismissing =
+            _localization.GetString("Thefileparametersmdismissing", "The file 'parameters.md' is missing.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{thefileparametersmdismissing}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
     public Task PowerShellExecutionPolicyRestrictionsMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var unabletoscanMicrosoftStoregames = _localization.GetString("UnabletoscanMicrosoftStoregames",
+            "Unable to scan Microsoft Store games due to PowerShell execution policy restrictions.");
+        var thisistypicallycausedbyGroupPolicy = _localization.GetString("ThisistypicallycausedbyGroupPolicy",
+            "This is typically caused by Group Policy settings on corporate or managed PCs.");
+        var simpleLaunchercannotperform = _localization.GetString("SimpleLaunchercannotperform",
+            "'Simple Launcher' cannot perform the requested task.");
+        var powerShellRestricted = _localization.GetString("PowerShellRestricted", "PowerShell Restricted");
+        return ShowAsync(O, $"{unabletoscanMicrosoftStoregames}\n\n{thisistypicallycausedbyGroupPolicy}\n\n" +
+                            $"{simpleLaunchercannotperform}", powerShellRestricted, MessageButtons.Ok,
+            MessageIcon.Warning);
     }
 
 
@@ -2698,20 +3266,65 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task Emulator1RequiredMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var emulator1Nameisrequired =
+            _localization.GetString("Emulator1Nameisrequired", "'Emulator 1 Name' is required.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{emulator1Nameisrequired}\n\n{pleasefixthisfield}", error, MessageButtons.Ok,
+            MessageIcon.Error);
     }
 
     public async Task<MessageBoxResult> WouldYouLikeToRestoreTheLastBackupMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var icouldnotfindthefilesystemxml = _localization.GetString("Icouldnotfindthefilesystemxml",
+            "I could not find the file 'system.xml', which is required to start the application.");
+        var butIfoundabackupfile = _localization.GetString("ButIfoundabackupfile", "But I found a backup file.");
+        var wouldyouliketorestore =
+            _localization.GetString("Wouldyouliketorestore", "Would you like to restore the last backup?");
+        var restoreBackup = _localization.GetString("RestoreBackup", "Restore Backup?");
+        return await ShowAsync(O, $"{icouldnotfindthefilesystemxml}\n\n{butIfoundabackupfile}\n\n" +
+                                   $"{wouldyouliketorestore}", restoreBackup, MessageButtons.YesNo,
+            MessageIcon.Question);
     }
 
 
-    public Task InstallUpdateManuallyMessageBoxAsync()
+    public async Task InstallUpdateManuallyMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var therewasanerrorinstallingorupdating = _localization.GetString("Therewasanerrorinstallingorupdating",
+            "There was an error installing or updating the application.");
+        var wouldyouliketoberedirectedtothedownloadpage = _localization.GetString(
+            "Wouldyouliketoberedirectedtothedownloadpage",
+            "Would you like to be redirected to the download page to install or update it manually?");
+        var error = _localization.GetString("Error", "Error");
+        var messageBoxResult = await ShowAsync(O, $"{therewasanerrorinstallingorupdating}\n\n" +
+                                                   $"{wouldyouliketoberedirectedtothedownloadpage}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+
+        if (messageBoxResult != MessageBoxResult.Yes) return;
+
+        var downloadPageUrl = _configuration.GetValue<string>("Urls:GitHubReleases") ??
+                              "https://github.com/purelogiccode/SimpleLauncher/releases/latest/";
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadPageUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Expected condition (no default browser): not a bug report.
+            Log.Information(ex, "Error in method InstallUpdateManuallyMessageBoxAsync");
+            var anerroroccurredwhileopeningthebrowser = _localization.GetString(
+                "Anerroroccurredwhileopeningthebrowser", "An error occurred while opening the browser.");
+            var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+                "The error was reported to the developer who will try to fix the issue.");
+            await ShowAsync(O, $"{anerroroccurredwhileopeningthebrowser}\n\n{theerrorwasreportedtothedeveloper}",
+                error, MessageButtons.Ok, MessageIcon.Error);
+        }
     }
 
 
@@ -2735,17 +3348,33 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task ErrorWhileLoadingHelpUserXmlMessageBoxAsync()
+    public async Task ErrorWhileLoadingHelpUserXmlMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var unexpectederrorwhileloadinghelpuserxml =
+            _localization.GetString("Unexpectederrorwhileloadinghelpuserxml",
+                "Unexpected error while loading 'helpuser.xml'.");
+        var doyouwanttoautomaticreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoautomaticreinstallSimpleLauncher",
+            "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
+        var error = _localization.GetString("Error", "Error");
+        var result = await ShowAsync(O, $"{unexpectederrorwhileloadinghelpuserxml}\n\n" +
+                                        $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
     public Task RightClickContextMenuErrorMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorintherightclick = _localization.GetString("Therewasanerrorintherightclick",
+            "There was an error in the right-click context menu.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorintherightclick}\n\n{theerrorwasreportedtothedeveloper}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -2780,7 +3409,10 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public async Task<MessageBoxResult> GroupByFolderWarningMessageBoxAsync()
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var message = _localization.GetString("YouhaveenabledGroupFilesbyFolderbuthave",
+            "You have enabled 'Group Files by Folder' but have configured neither a MAME nor a DOSBox emulator. This option is only compatible with MAME (Software List CHDs) or DOSBox (uncompressed game folders). Are you sure you want to save these settings?");
+        var title = _localization.GetString("ConfigurationWarning", "Configuration Warning");
+        return await ShowAsync(O, message, title, MessageButtons.YesNo, MessageIcon.Warning);
     }
 
 
@@ -2808,7 +3440,12 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task SystemFolderCanNotBeEmptyMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var systemFoldercannotbeempty = _localization.GetString("SystemFoldercannotbeempty",
+            "'System Folder' cannot be empty or contain only spaces.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{systemFoldercannotbeempty}\n\n{pleasefixthisfield}", error, MessageButtons.Ok,
+            MessageIcon.Error);
     }
 
 
@@ -2929,7 +3566,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task InvalidFolderCharactersMessageBoxAsync(string invalidChars)
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var systemFoldercontainsinvalid = _localization.GetString("SystemFoldercontainsinvalid",
+            "'System Folder' contains invalid characters:");
+        var pleaseRemoveTheseCharacters = _localization.GetString("PleaseRemoveTheseCharacters",
+            "Please remove these characters and try again.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{systemFoldercontainsinvalid}\n\n{invalidChars}\n\n{pleaseRemoveTheseCharacters}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -3019,10 +3662,43 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task UpdaterLaunchFailedMessageBoxAsync()
+    public async Task UpdaterLaunchFailedMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var updaterLaunchFailed = _localization.GetString("UpdaterLaunchFailed", "Failed to launch the Updater.");
+        var accessDeniedExplanation = _localization.GetString("AccessDeniedExplanation",
+            "This may be due to insufficient permissions or Windows security settings blocking the file.");
+        var wouldyouliketoberedirectedtothedownloadpage = _localization.GetString(
+            "Wouldyouliketoberedirectedtothedownloadpage",
+            "Would you like to be redirected to the download page to install or update it manually?");
+        var error = _localization.GetString("Error", "Error");
+        var messageBoxResult = await ShowAsync(O, $"{updaterLaunchFailed}\n\n{accessDeniedExplanation}\n\n" +
+                                                   $"{wouldyouliketoberedirectedtothedownloadpage}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+
+        if (messageBoxResult != MessageBoxResult.Yes) return;
+
+        var downloadPageUrl = _configuration.GetValue<string>("Urls:GitHubReleases") ??
+                              "https://github.com/purelogiccode/SimpleLauncher/releases/latest/";
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadPageUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Expected condition (no default browser): not a bug report.
+            Log.Information(ex, "Error in method UpdaterLaunchFailedMessageBoxAsync");
+            var anerroroccurredwhileopeningthebrowser = _localization.GetString(
+                "Anerroroccurredwhileopeningthebrowser", "An error occurred while opening the browser.");
+            var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+                "The error was reported to the developer who will try to fix the issue.");
+            await ShowAsync(O, $"{anerroroccurredwhileopeningthebrowser}\n\n{theerrorwasreportedtothedeveloper}",
+                error, MessageButtons.Ok, MessageIcon.Error);
+        }
     }
 
 
@@ -3084,7 +3760,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorChangingViewModeMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasanerrorwhilechangingtheviewmode = _localization.GetString(
+            "Therewasanerrorwhilechangingtheviewmode", "There was an error while changing the view mode.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasanerrorwhilechangingtheviewmode}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -3101,7 +3783,23 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task EmulatorPathNotConfiguredMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var emulatorPathNotConfigured =
+            _localization.GetString("EmulatorPathNotConfigured", "The emulator path is not configured.");
+        var emulatorPathNotConfiguredDetails1 = _localization.GetString("EmulatorPathNotConfiguredDetails1",
+            "The emulator you are using does not have a valid executable path configured.");
+        var emulatorPathNotConfiguredDetails2 =
+            _localization.GetString("EmulatorPathNotConfiguredDetails2", "This typically happens when:");
+        var emulatorPathNotConfiguredDetails3 = _localization.GetString("EmulatorPathNotConfiguredDetails3",
+            "- The system was configured to run directly executable files (.bat, .exe, .lnk)");
+        var emulatorPathNotConfiguredDetails4 = _localization.GetString("EmulatorPathNotConfiguredDetails4",
+            "- But you are trying to launch a file that requires an emulator");
+        var emulatorPathNotConfiguredDetails5 = _localization.GetString("EmulatorPathNotConfiguredDetails5",
+            "Please edit the system configuration and provide a valid emulator path.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{emulatorPathNotConfigured}\n{emulatorPathNotConfiguredDetails1}\n\n" +
+                            $"{emulatorPathNotConfiguredDetails2}\n{emulatorPathNotConfiguredDetails3}\n" +
+                            $"{emulatorPathNotConfiguredDetails4}\n\n{emulatorPathNotConfiguredDetails5}", error,
+            MessageButtons.Ok, MessageIcon.Warning);
     }
 
 
@@ -3150,7 +3848,17 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task CouldNotLaunchGameDueToDepViolationMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var title = _localization.GetString("Error", "Error");
+        var message = _localization.GetString("CouldNotLaunchGameDueToDepViolation",
+            "The game failed to launch due to a DEP (Data Execution Prevention) violation.");
+        var message2 = _localization.GetString("CouldNotLaunchGameDueToDepViolation2",
+            "This is a Windows security feature that prevents programs from executing code in protected memory regions.");
+        var message3 = _localization.GetString("CouldNotLaunchGameDueToDepViolation3",
+            "Ensure you're using the latest emulator version with improved security compatibility.");
+        var message4 = _localization.GetString("CouldNotLaunchGameDueToDepViolation4",
+            "You can also try to switch to a different emulator or core.");
+        return ShowAsync(O, $"{message}\n\n{message2}\n\n{message3}\n\n{message4}", title,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -3185,14 +3893,42 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task EmulatorNameRequiredMessageBoxAsync(int i)
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var emulator = _localization.GetString("Emulator", "Emulator");
+        var nameisrequiredbecauserelateddata = _localization.GetString("nameisrequiredbecauserelateddata",
+            "name is required because related data has been provided.");
+        var pleasefixthisfield = _localization.GetString("Pleasefixthisfield", "Please fix this field.");
+        var info = _localization.GetString("Info", "Info");
+        return ShowAsync(O, $"{emulator} {i} {nameisrequiredbecauserelateddata}\n\n{pleasefixthisfield}", info,
+            MessageButtons.Ok, MessageIcon.Information);
     }
 
 
-    public Task HandleApiConfigErrorMessageBoxAsync(string reason)
+    public async Task HandleApiConfigErrorMessageBoxAsync(string reason)
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        if (O == null) return;
+        var apiConfigErrorTitle = _localization.GetString("ApiConfigErrorTitle", "API Configuration Error");
+        var apiConfigErrorMessage = _localization.GetString("ApiConfigErrorMessage",
+            "'Simple Launcher' encountered an error loading its API configuration.");
+        var reasonLabel = _localization.GetString("ReasonLabel", "Reason:");
+        var reinstallSuggestion = _localization.GetString("ReinstallSuggestion",
+            "This might prevent some features (like automatic bug reporting) from working correctly. Would you like to reinstall 'Simple Launcher' to fix this?");
+        var result = await ShowAsync(O, $"{apiConfigErrorMessage}\n\n{reasonLabel} {reason}\n\n" +
+                                        $"{reinstallSuggestion}", apiConfigErrorTitle, MessageButtons.YesNo,
+            MessageIcon.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+            return;
+        }
+
+        var manualReinstallSuggestion = _localization.GetString("ManualReinstallSuggestion",
+            "Please reinstall 'Simple Launcher' manually to fix the issue.");
+        var applicationWillShutdown =
+            _localization.GetString("Theapplicationwillshutdown", "The application will shutdown.");
+        await ShowAsync(O, $"{manualReinstallSuggestion}\n\n{applicationWillShutdown}", apiConfigErrorTitle,
+            MessageButtons.Ok, MessageIcon.Error);
+        App.ServiceProvider.GetRequiredService<AvaloniaQuitSimpleLauncher>().SimpleQuitApplication();
     }
 
 
@@ -3240,14 +3976,30 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task UnabletoDismountIsOfileMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var unabletodismountIsOfile = _localization.GetString("UnabletoDismountISOfile",
+            "Unable to dismount ISO file due to PowerShell execution policy restrictions.");
+        var thisistypicallycausedbyGroup = _localization.GetString("ThisistypicallycausedbyGroup",
+            "This is typically caused by Group Policy settings on corporate or managed PCs.");
+        var simpleLaunchercannotperform = _localization.GetString("SimpleLaunchercannotperform",
+            "'Simple Launcher' cannot perform the requested task.");
+        var powerShellRestricted = _localization.GetString("PowerShellRestricted", "PowerShell Restricted");
+        return ShowAsync(O, $"{unabletodismountIsOfile}\n\n{thisistypicallycausedbyGroup}\n\n" +
+                            $"{simpleLaunchercannotperform}", powerShellRestricted, MessageButtons.Ok,
+            MessageIcon.Warning);
     }
 
 
     public Task ErrorCheckingForUpdatesMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var anerroroccurredwhilecheckingforupdates =
+            _localization.GetString("Anerroroccurredwhilecheckingforupdates",
+                "An error occurred while checking for updates.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{anerroroccurredwhilecheckingforupdates}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -3264,7 +4016,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task InvalidSystemNameCharactersMessageBoxAsync(string invalidChars)
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var systemNamecontainsinvalid =
+            _localization.GetString("SystemNamecontainsinvalid", "'System Name' contains invalid characters:");
+        var pleaseRemoveTheseCharacters = _localization.GetString("PleaseRemoveTheseCharacters",
+            "Please remove these characters and try again.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{systemNamecontainsinvalid}\n\n{invalidChars}\n\n{pleaseRemoveTheseCharacters}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -3280,7 +4038,19 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public async Task<MessageBoxResult> FavoriteFileDoesNotExistAskToDeleteMessageBoxAsync(string filePath)
     {
         if (O == null) return MessageBoxResult.Cancel;
-        return await ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var thegamefiledoesnotexist =
+            _localization.GetString("Thegamefiledoesnotexist", "The game file does not exist!");
+        var filepathis = _localization.GetString("FilePathIs", "File path:");
+        var doYouWantToDeleteThisFavorite = _localization.GetString("DoYouWantToDeleteThisFavorite",
+            "Do you want to delete this favorite from the list?");
+        var clickNoToKeepTheFavorite =
+            _localization.GetString("ClickNoToKeepTheFavorite", "Click 'No' to keep the favorite in the list.");
+        var gameNotAvailable = _localization.GetString("GameNotAvailable", "Game Not Available");
+        var message = $"{thegamefiledoesnotexist}\n\n" +
+                      $"{filepathis}\n{filePath}\n\n" +
+                      $"{doYouWantToDeleteThisFavorite}\n" +
+                      $"{clickNoToKeepTheFavorite}";
+        return await ShowAsync(O, message, gameNotAvailable, MessageButtons.YesNo, MessageIcon.Question);
     }
 
 
@@ -3395,7 +4165,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorOpeningBrowserMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var anerroroccurredwhileopeningthebrowser = _localization.GetString("Anerroroccurredwhileopeningthebrowser",
+            "An error occurred while opening the browser.");
+        var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
+            "The error was reported to the developer who will try to fix the issue.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{anerroroccurredwhileopeningthebrowser}\n\n{theerrorwasreportedtothedeveloper}",
+            error, MessageButtons.Ok, MessageIcon.Error);
     }
 
 
@@ -3552,7 +4328,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ErrorOpeningVideoLinkMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;
-        return ShowAsync(O, "", "", MessageButtons.Ok, MessageIcon.Information);
+        var therewasaproblemopeningtheVideo = _localization.GetString("TherewasaproblemopeningtheVideo",
+            "There was a problem opening the Video Link.");
+        var ensureyouhaveadefaultbrowserinstalled = _localization.GetString("Ensureyouhaveadefaultbrowserinstalled",
+            "Ensure you have a default browser installed and configured correctly on your system.");
+        var error = _localization.GetString("Error", "Error");
+        return ShowAsync(O, $"{therewasaproblemopeningtheVideo}\n\n{ensureyouhaveadefaultbrowserinstalled}", error,
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
     private static async Task<MessageBoxResult> ShowAsync(

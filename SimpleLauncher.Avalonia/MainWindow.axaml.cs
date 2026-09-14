@@ -390,10 +390,7 @@ public partial class MainWindow : Window, IPaginationHost
                 var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
                 await easyModeWindow.ShowDialog(this);
                 if (easyModeWindow.DataContext is EasyModeViewModel { SystemAdded: true })
-                {
-                    _systemSelectionOrchestrator.LoadOrReloadSystemManager();
-                    RefreshSidebarCounts();
-                }
+                    await RefreshAfterSystemConfigurationChangeAsync();
             }
         }
     }
@@ -553,15 +550,11 @@ public partial class MainWindow : Window, IPaginationHost
             // before reading the result (otherwise the SystemAdded refresh below never runs).
             await easyModeWindow.ShowDialog(this);
 
-            // If a system was added, refresh the UI
+            // If a system was added, refresh the UI and show the updated system list
             if (easyModeWindow.DataContext is EasyModeViewModel { SystemAdded: true })
             {
                 _viewModel.InvalidateAllGameFileCaches();
-                _viewModel.NavigateToAllGamesCommand.Execute(null);
-
-                // Rebuild the sidebar so the new system (e.g. Atari 2600) appears in the
-                // left menu immediately and can be clicked to filter its games.
-                await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+                await RefreshAfterSystemConfigurationChangeAsync();
             }
         }
         catch (Exception ex)
@@ -1372,7 +1365,7 @@ public partial class MainWindow : Window, IPaginationHost
                 ShowToast(_localization.GetString("Context.Copied"), fileName);
             },
             OnShowInFolder = g => _ = ShowGameInFolderAsync(g),
-            OnEditSystem = OpenEditSystemForGame
+            OnEditSystem = g => _ = OpenEditSystemForGameAsync(g)
         };
     }
 
@@ -1417,7 +1410,7 @@ public partial class MainWindow : Window, IPaginationHost
     /// <summary>
     ///     Opens the Edit System window (Expert Mode) pre-selected to the game's system.
     /// </summary>
-    private void OpenEditSystemForGame(GameCardViewModel game)
+    private async Task OpenEditSystemForGameAsync(GameCardViewModel game)
     {
         try
         {
@@ -1425,7 +1418,11 @@ public partial class MainWindow : Window, IPaginationHost
 
             var factory = App.ServiceProvider.GetRequiredService<Func<string?, EditSystemWindow>>();
             var editWindow = factory(game.SystemName);
-            editWindow.ShowDialog(this);
+            await editWindow.ShowDialog(this);
+
+            // The edited system may have been renamed/deleted — refresh and return to the
+            // system selection view.
+            await RefreshAfterSystemConfigurationChangeAsync();
         }
         catch (Exception ex)
         {
@@ -2250,9 +2247,9 @@ public partial class MainWindow : Window, IPaginationHost
             var editWindow = factory(systemToPreselect);
             await editWindow.ShowDialog(this);
 
-            // The Expert window can add, rename, or delete systems — keep the sidebar in sync.
-            await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
-            RefreshSidebarCounts();
+            // The Expert window can add, rename, or delete systems — keep the sidebar in
+            // sync and return to the system selection view.
+            await RefreshAfterSystemConfigurationChangeAsync();
         }
         catch (Exception ex)
         {
@@ -2345,6 +2342,18 @@ public partial class MainWindow : Window, IPaginationHost
     }
 
     // ── System Selection Screen (WPF DisplaySystemSelectionScreenAsync parity) ──
+
+    /// <summary>
+    ///     Refreshes everything that depends on system.xml after a configuration change and
+    ///     returns to the system selection view. Shared by the Easy Mode, Expert Mode and
+    ///     system-selection-grid edit flows.
+    /// </summary>
+    private async Task RefreshAfterSystemConfigurationChangeAsync()
+    {
+        await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+        RefreshSidebarCounts();
+        await ShowSystemSelectionScreenAsync();
+    }
 
     /// <summary>
     ///     Shows the system selection grid and hides all other content panels.
@@ -2523,9 +2532,7 @@ public partial class MainWindow : Window, IPaginationHost
             var factory = App.ServiceProvider.GetRequiredService<Func<string?, EditSystemWindow>>();
             var editWindow = factory(systemName);
             await editWindow.ShowDialog(this);
-            await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
-            RefreshSidebarCounts();
-            await ShowSystemSelectionScreenAsync();
+            await RefreshAfterSystemConfigurationChangeAsync();
         }
         catch (Exception ex)
         {
