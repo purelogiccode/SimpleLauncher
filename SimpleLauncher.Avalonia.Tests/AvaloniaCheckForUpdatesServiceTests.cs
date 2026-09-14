@@ -48,6 +48,22 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
         }
     }
 
+    /// <summary>
+    ///     Verifies Avalonia packages use their own asset names so they can share a GitHub
+    ///     release with the WPF packages without overwriting them.
+    /// </summary>
+    [Fact]
+    public void AssetNamesAreAvaloniaSpecific()
+    {
+        Assert.Equal($"release_avalonia_9.9.9_{Rid}.zip",
+            AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid));
+        Assert.Equal($"updater_avalonia_{Rid}.zip", AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid));
+        Assert.NotEqual($"release_9.9.9_{Rid}.zip",
+            AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid), StringComparer.Ordinal);
+        Assert.NotEqual($"updater_{Rid}.zip", AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid),
+            StringComparer.Ordinal);
+    }
+
     private static string GitHubReleaseJson(string versionTag, params string[] assetNames)
     {
         return JsonSerializer.Serialize(new
@@ -65,8 +81,8 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
     private static string LatestReleaseAssetsJson(string versionTag)
     {
         return GitHubReleaseJson(versionTag,
-            $"release_{versionTag.TrimStart('v')}_{Rid}.zip",
-            $"updater_{Rid}.zip");
+            AvaloniaCheckForUpdatesService.ReleaseAssetName(versionTag.TrimStart('v'), Rid),
+            AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid));
     }
 
     private (AvaloniaCheckForUpdatesService Service, Mock<IMessageBoxLibraryService> MessageBox,
@@ -246,7 +262,7 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
     public async Task ManualCheck_UpdaterAssetMissingFromRelease_ShowsManual()
     {
         var (service, messageBox, lifetime) = CreateService(_ =>
-            Json(GitHubReleaseJson("v9.9.9", $"release_9.9.9_{Rid}.zip")));
+            Json(GitHubReleaseJson("v9.9.9", AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid))));
 
         messageBox.Setup(m => m.DoYouWantToUpdateMessageBoxAsync(It.IsAny<string>(), "9.9.9.0"))
             .ReturnsAsync(CoreMessageBoxResult.Yes);

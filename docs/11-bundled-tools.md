@@ -5,7 +5,7 @@
 
 ## Shipped payloads (`SimpleLauncher\tools\`)
 
-Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. All are launched through `ExternalToolLauncherService` (below).
+Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. All are launched through `ExternalToolLauncherService` (below). In `BatchConvertIsoToXiso`, the `bchunk.exe`, `extract-xiso.exe` and `xdvdfs.exe` helpers are x64-only and are invoked by the wrapper (on Windows 11 ARM64 they run under x64 emulation).
 
 | Folder | Executables | Purpose |
 |---|---|---|

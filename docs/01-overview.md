@@ -48,7 +48,7 @@ The Avalonia port ships the same 18 languages as JSON resources: `SimpleLauncher
 ## Version & license
 
 - Current version: **5.6.1** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj`, `app.manifest` and `SimpleLauncher.Updater\version.txt` are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.6.1) while still in development.
-- The `SimpleLauncher.Updater\version.txt` file mirrors the current release (e.g. `release5.6.1`) and is what the secondary server publishes.
+- The `SimpleLauncher.Updater\version.txt` file mirrors the current release (e.g. `release5.7.0`) and is what the secondary server publishes.
 - Framework: **.NET 10** (`net10.0-windows`), **C# 14**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).
 - Repository: https://github.com/purelogiccode/SimpleLauncher

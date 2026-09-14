@@ -190,14 +190,16 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive.exe")
     ];
 
-    private static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsX64 =
+    internal static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsX64 =
     [
     ];
 
-    private static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsArm64 =
+    // The BatchConvertIsoToXiso and BatchConvertToCHD folders must never be deleted:
+    // both ship native ARM64 variants (BatchConvertToCHD_arm64.exe, chdman_arm64.exe,
+    // CHDSharp_arm64.exe, BatchConvertIsoToXiso_arm64.exe, 7za_arm64.exe), so removing
+    // the whole folder on an ARM64 OS destroyed the ARM64 tools at every startup.
+    internal static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsArm64 =
     [
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD"),
         Path.Combine(AppDirectory, "tools", "xbox-iso-vfs")
     ];
 

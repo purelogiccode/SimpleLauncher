@@ -10,15 +10,19 @@
 - **Source fallback chain** (app + both updaters): 
   1. GitHub API `https://api.github.com/repos/purelogiccode/SimpleLauncher/releases/latest` (primary repo),
   2. GitHub API `https://api.github.com/repos/purelogiccode/SimpleLauncher/releases/latest` (transferred organization),
-  3. Secondary server `assets.purelogiccode.com/Simple Launcher/Simple Launcher/version.txt` (Cloudflare-hosted) — builds the release/updater URLs from it (`release_{version}_{rid}.zip`, `updater_{rid}.zip`).
+  3. Secondary server `assets.purelogiccode.com/Simple Launcher/Simple Launcher/version.txt` (Cloudflare-hosted) — builds the release/updater URLs from it. WPF uses `release_{version}_{rid}.zip` / `updater_{rid}.zip`; Avalonia uses `release_avalonia_{version}_{rid}.zip` / `updater_avalonia_{rid}.zip`.
 - **Silent check** at startup (`CheckForUpdatesService.cs`). If every GitHub source is unreachable (offline, rate-limited, blocked), the check falls back to the secondary server.
 - **Manual check**: About window "Check for Updates" (`AboutViewModel` → `ManualCheckForUpdatesAsync`).
-- Version comparison against the current `5.6.1`; new version → prompts to download.
+- Version comparison against the current `5.7.0`; new version → prompts to download.
 
 ## Update assets
 
-- `release_{version}_{rid}.zip` — the new app payload (rid = `win-x64` / `win-arm64`).
+Both apps read the same GitHub release, so the asset names are prefixed per app (an unprefixed name would collide and each app would download the other app's payload):
+
+- `release_{version}_{rid}.zip` — the new WPF app payload (rid = `win-x64` / `win-arm64`).
 - `updater_{rid}.zip` — the standalone `Updater.exe` used when it is not already present.
+- `release_avalonia_{version}_{rid}.zip` — the new Avalonia app payload.
+- `updater_avalonia_{rid}.zip` — the Avalonia updater (`SimpleLauncher.Avalonia.Updater.exe` + dll/deps/runtimeconfig); it runs with the self-contained runtime shipped in the app folder.
 
 ## Update install flow
 
@@ -44,7 +48,7 @@ sequenceDiagram
 
 ## `SimpleLauncher.Updater` project
 
-Standalone console app (`Updater.exe`) shipped with each release (`version.txt` = `release5.6.1`). Responsibilities: fetch the latest release (GitHub API primary → transferred-organization repo → secondary server as fallback), download the release zip for the current RID (retrying from the secondary server if the primary download fails), extract over the application folder, relaunch the app. The Avalonia cross-platform updater (`SimpleLauncher.Avalonia.Updater`) uses the same fallback chain.
+Standalone console app (`Updater.exe`) shipped with each release (`version.txt` = `release5.7.0`). Responsibilities: fetch the latest release (GitHub API primary → transferred-organization repo → secondary server as fallback), download the release zip for the current RID (retrying from the secondary server if the primary download fails), extract over the application folder, relaunch the app. The Avalonia cross-platform updater (`SimpleLauncher.Avalonia.Updater`) uses the same fallback chain with the `release_avalonia_{version}_{rid}.zip` asset name and relaunches `SimpleLauncher.Avalonia(.exe)`.
 
 ## Related docs
 

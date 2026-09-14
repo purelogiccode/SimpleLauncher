@@ -137,13 +137,17 @@ internal class ProcessService
     {
         try
         {
-            var exePath = Path.Combine(appDirectory, $"{executableName}.exe");
+            var baseName = executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                ? executableName[..^4]
+                : executableName;
+            var executableFileName = OperatingSystem.IsWindows() ? $"{baseName}.exe" : baseName;
+            var exePath = Path.Combine(appDirectory, executableFileName);
 
             // Check if the executable exists before attempting to start it
             if (!File.Exists(exePath))
             {
                 LogMessage?.Invoke(this,
-                    new EventArgs<string>($"{executableName}.exe not found. Cannot restart automatically."));
+                    new EventArgs<string>($"{executableFileName} not found. Cannot restart automatically."));
                 return false;
             }
 

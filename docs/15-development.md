@@ -46,7 +46,7 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 ```
 
 - `RuntimeIdentifiers` are `win-x64;win-arm64`; every bundled tool ships both variants (`X.exe` + `X_arm64.exe`) and is resolved per architecture at runtime (see [11 — Bundled Tools](11-bundled-tools.md)).
-- Release zip naming for updates: `release_{version}_{rid}.zip` + `updater_{rid}.zip` (see [16 — Updater](16-updater.md)).
+- Release zip naming for updates: `release_{version}_{rid}.zip` + `updater_{rid}.zip` (WPF) and `release_avalonia_{version}_{rid}.zip` + `updater_avalonia_{rid}.zip` (Avalonia) (see [16 — Updater](16-updater.md)).
 - A `publish-check\` folder with per-RID outputs is used locally to validate published payloads.
 
 ### Release packaging script
@@ -62,6 +62,19 @@ pwsh scripts/package-release.ps1 -Version 5.7.0
 - Validates the version against `SimpleLauncher.csproj`, `SimpleLauncher.Core.csproj`, `app.manifest` and `SimpleLauncher.Updater\version.txt` before publishing.
 - Publishes framework-dependent single-file builds (`--self-contained false -p:PublishSingleFile=true`).
 - Prunes the other architecture's bundled tools from each payload (plus the Linux-only extension-less `RetroAchievementsSharp` binaries) and packages `Updater.exe` alone into `updater_{rid}.zip`.
+
+`scripts/package-release.ps1 -App Avalonia` packages the Avalonia app instead:
+
+```powershell
+pwsh scripts/package-release.ps1 -Version 5.7.0 -App Avalonia
+# -> SimpleLauncher.Avalonia\bin\Release\release_avalonia_5.7.0_win-x64.zip, release_avalonia_5.7.0_win-arm64.zip
+# -> SimpleLauncher.Avalonia\bin\Release\updater_avalonia_win-x64.zip, updater_avalonia_win-arm64.zip
+```
+
+- Validates the version against `SimpleLauncher.csproj`, `SimpleLauncher.Avalonia.csproj`, `SimpleLauncher.Avalonia\app.manifest`, `SimpleLauncher.Core.csproj` and `SimpleLauncher.Avalonia.Updater.csproj`.
+- Publishes self-contained, multi-file builds (`--self-contained true`); the updater is published first to its default output so the app csproj copy target embeds it in the payload.
+- The updater asset contains only the updater's own files (`SimpleLauncher.Avalonia.Updater.exe`/`.dll`/`.deps.json`/`.runtimeconfig.json`); it runs with the self-contained runtime that ships in the app folder.
+- Uses the same pruning rules as the WPF variant. The `avalonia_` prefix is required: both apps read the same `releases/latest` assets and unprefixed names would collide with the WPF packages.
 
 ### Publish the Avalonia app (multi-targeted)
 
@@ -87,20 +100,24 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/SimpleLau
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` — window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (482 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` — window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (498 tests via `Avalonia.Headless`).
 
 ## Versioning
 
-Version `5.6.1` must stay in sync across:
+Version `5.7.0` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)
 - `SimpleLauncher.Tests\SimpleLauncher.Tests.csproj`
 - `SimpleLauncher\app.manifest` (`assemblyIdentity version`)
-- `SimpleLauncher.Updater\version.txt` (`release5.6.1`)
+- `SimpleLauncher.Updater\version.txt` (`release5.7.0`)
 - `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (same three, matching the WPF app)
+- `SimpleLauncher.Avalonia\app.manifest` (`assemblyIdentity version`)
+- `SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj` (`Version`, matching the WPF app)
 
-`VersionConsistencyTests` enforces this in local runs. Bump all of them together.
+`VersionConsistencyTests` enforces the WPF manifest/version.txt and the Avalonia csproj/manifest
+in local runs; `scripts/package-release.ps1` validates all of the above when packaging. Bump
+all of them together.
 
 ## Localization
 
@@ -122,16 +139,17 @@ Version `5.6.1` must stay in sync across:
 ## Continuous integration
 
 GitHub Actions only builds release packages and deploys documentation — it never runs the test
-suites (they include live endpoints and real app launches; run them locally). The Avalonia
-variants are intentionally not published by CI yet.
+suites (they include live endpoints and real app launches; run them locally).
 
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `.github/workflows/release-wpf.yml` | manual (`workflow_dispatch`) with a version | Packages the WPF app for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release (with assets). Options: skip release creation, provide custom release notes. |
+| `.github/workflows/release-avalonia.yml` | manual (`workflow_dispatch`) with a version | Packages the Avalonia app for `win-x64` + `win-arm64` via `scripts/package-release.ps1 -App Avalonia` and attaches `release_avalonia_{version}_{rid}.zip` + `updater_avalonia_{rid}.zip` to the same `release{version}` tag. Both release workflows share a concurrency group, so they run one at a time. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and
-push, then run **Actions → Publish WPF release → Run workflow** with the new version.
+push, then run **Actions → Publish WPF release → Run workflow** with the new version (and
+**Publish Avalonia release** for the Avalonia packages).
 
 ## Publishing the docs (Pages + wiki)
 
@@ -164,10 +182,11 @@ The script maps `docs/README.md` → `Home`, copies all `docs/NN-*.md` as pages,
 ## Release workflow (from git history & What's New)
 
 1. Implement features/fixes; keep `WhatsNew.md` updated with a release section.
-2. Bump version in the five places above.
+2. Bump version in the places listed under [Versioning](#versioning).
 3. Run the full test suite (minus the slow URL test).
 4. Run **Actions → Publish WPF release** with the new version — it packages both RIDs (`release_{version}_{rid}.zip` + `updater_{rid}.zip`) and creates the GitHub release. Locally, `pwsh scripts/package-release.ps1 -Version <version>` produces the same packages.
-5. The in-app updater and silent update check use the GitHub `releases/latest` API.
+5. Run **Actions → Publish Avalonia release** to attach `release_avalonia_{version}_{rid}.zip` + `updater_avalonia_{rid}.zip` to the same release. Locally, `pwsh scripts/package-release.ps1 -Version <version> -App Avalonia`.
+6. The in-app updater and silent update check use the GitHub `releases/latest` API.
 
 ## Related docs
 

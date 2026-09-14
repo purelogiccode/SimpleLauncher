@@ -1,9 +1,11 @@
-name: Publish WPF release
+name: Publish Avalonia release
 
-# Manual release: packages the WPF app for win-x64 and win-arm64, uploads the zips as
-# workflow artifacts and creates/updates the GitHub release the in-app updater reads.
-# The Avalonia packages are published by release-avalonia.yml and attach to the same
-# release with distinct "avalonia_"-prefixed asset names.
+# Manual release: packages the Avalonia app for win-x64 and win-arm64 via
+# scripts/package-release.ps1 -App Avalonia (-OutputDir/-WorkDir override the defaults)
+# and creates/updates the GitHub release the in-app updater reads.
+# The assets carry the "avalonia_" prefix (release_avalonia_{version}_{rid}.zip,
+# updater_avalonia_{rid}.zip) so they share the release tag with the WPF packages
+# produced by release-wpf.yml without overwriting them.
 
 on:
   workflow_dispatch:
@@ -32,7 +34,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Package WPF (win-x64, win-arm64)
+    name: Package Avalonia (win-x64, win-arm64)
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -50,14 +52,15 @@ jobs:
         run: >
           ./scripts/package-release.ps1
           -Version $env:VERSION
-          -OutputDir '${{ github.workspace }}/artifacts/release'
-          -WorkDir '${{ runner.temp }}/sl-publish'
+          -App Avalonia
+          -OutputDir '${{ github.workspace }}/artifacts/release-avalonia'
+          -WorkDir '${{ runner.temp }}/sl-publish-avalonia'
 
       - name: Upload packages as workflow artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: simplelauncher-wpf-${{ inputs.version }}
-          path: artifacts/release/*.zip
+          name: simplelauncher-avalonia-${{ inputs.version }}
+          path: artifacts/release-avalonia/*.zip
           retention-days: 7
 
       - name: Create or update GitHub release
@@ -69,7 +72,7 @@ jobs:
           RELEASE_NOTES: ${{ inputs.release_notes }}
         run: |
           $tag = "release$env:VERSION"
-          $assets = Get-ChildItem -LiteralPath 'artifacts/release' -Filter '*.zip' | ForEach-Object { $_.FullName }
+          $assets = Get-ChildItem -LiteralPath 'artifacts/release-avalonia' -Filter '*.zip' | ForEach-Object { $_.FullName }
 
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {

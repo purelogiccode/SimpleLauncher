@@ -26,7 +26,7 @@
 
 ### 🚀 Performance & Core Infrastructure
 * **MessagePack Engine:** High-speed MessagePack serialization for near-instant settings loading
-* **Native ARM64 Support:** Fully optimized for Windows on ARM (Surface Pro, Snapdragon X Elite) alongside x64
+* **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) alongside x64
 * **Asynchronous Architecture:** Multi-threaded game scanning and validation with fluid UI
 * **Single Instance Enforcement:** Prevents resource conflicts by ensuring only one instance runs
 * **Elevation Detection:** Automatically detects games requiring Administrator privileges

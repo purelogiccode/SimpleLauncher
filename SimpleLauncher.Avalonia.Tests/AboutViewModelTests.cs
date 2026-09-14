@@ -34,7 +34,7 @@ public class AboutViewModelTests : IDisposable
     {
         var version = versionTag.TrimStart('v');
         return
-            $$"""{"tag_name": "{{versionTag}}", "assets": [{"name": "release_{{version}}_{{Rid}}.zip", "browser_download_url": "https://example.com/x.zip"}, {"name": "updater_{{Rid}}.zip", "browser_download_url": "https://example.com/u.zip"}]}""";
+            $$"""{"tag_name": "{{versionTag}}", "assets": [{"name": "{{AvaloniaCheckForUpdatesService.ReleaseAssetName(version, Rid)}}", "browser_download_url": "https://example.com/x.zip"}, {"name": "{{AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid)}}", "browser_download_url": "https://example.com/u.zip"}]}""";
     }
 
     private (AboutViewModel Vm, Mock<IMessageBoxLibraryService> MessageBox)

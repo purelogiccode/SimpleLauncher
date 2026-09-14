@@ -41,6 +41,52 @@ public class VersionConsistencyTests
     [Fact]
     public void AppManifestVersionMatchesProjectVersion()
     {
+        AssertManifestVersionMatchesProjectVersion(Path.Combine("SimpleLauncher", "app.manifest"));
+    }
+
+    /// <summary>
+    ///     Verifies that the version in the Avalonia app.manifest matches the canonical project
+    ///     version, auto-correcting mismatches.
+    /// </summary>
+    [Fact]
+    public void AvaloniaAppManifestVersionMatchesProjectVersion()
+    {
+        AssertManifestVersionMatchesProjectVersion(Path.Combine("SimpleLauncher.Avalonia", "app.manifest"));
+    }
+
+    /// <summary>
+    ///     Verifies that the Avalonia csproj version metadata matches the canonical version from
+    ///     SimpleLauncher.csproj, auto-correcting mismatches.
+    /// </summary>
+    [Fact]
+    public void AvaloniaProjectVersionMatchesProjectVersion()
+    {
+        var projectVersion = GetProjectVersion();
+
+        var csprojPath =
+            GetProjectFilePath(Path.Combine("SimpleLauncher.Avalonia", "SimpleLauncher.Avalonia.csproj"));
+        Assert.True(File.Exists(csprojPath), $"SimpleLauncher.Avalonia.csproj not found at {csprojPath}");
+
+        var doc = XDocument.Load(csprojPath);
+        var versionElements = doc.Descendants()
+            .Where(element => element.Name.LocalName is "AssemblyVersion" or "FileVersion" or "Version")
+            .ToList();
+
+        var mismatched = versionElements
+            .Where(element => !string.Equals(element.Value.Trim(), projectVersion, StringComparison.Ordinal))
+            .ToList();
+        if (mismatched.Count == 0) return;
+
+        foreach (var element in mismatched) element.Value = projectVersion;
+        doc.Save(csprojPath);
+
+        Assert.Fail(
+            $"SimpleLauncher.Avalonia.csproj version metadata was automatically updated to '{projectVersion}'. " +
+            "Please review the change and commit it.");
+    }
+
+    private static void AssertManifestVersionMatchesProjectVersion(string relativePath)
+    {
         var projectVersion = GetProjectVersion();
         var version = Version.Parse(projectVersion);
 
@@ -51,7 +97,7 @@ public class VersionConsistencyTests
             version.Build == -1 ? 0 : version.Build,
             version.Revision == -1 ? 0 : version.Revision).ToString();
 
-        var manifestPath = GetProjectFilePath(Path.Combine("SimpleLauncher", "app.manifest"));
+        var manifestPath = GetProjectFilePath(relativePath);
         Assert.True(File.Exists(manifestPath), $"app.manifest not found at {manifestPath}");
 
         var doc = XDocument.Load(manifestPath);
@@ -69,7 +115,7 @@ public class VersionConsistencyTests
         doc.Save(manifestPath);
 
         Assert.Fail(
-            $"app.manifest version was automatically updated from '{currentVersion}' to '{expectedVersion}'. " +
+            $"{relativePath} version was automatically updated from '{currentVersion}' to '{expectedVersion}'. " +
             "Please review the change and commit it.");
     }
 

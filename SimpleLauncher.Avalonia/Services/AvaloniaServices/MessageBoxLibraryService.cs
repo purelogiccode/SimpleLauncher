@@ -2384,17 +2384,40 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task DokanDriverNotInstalledMessageBoxAsync()
+    public async Task DokanDriverNotInstalledMessageBoxAsync()
     {
-        if (O == null) return Task.CompletedTask;
+        if (O == null) return;
         var dokanDriverNotFound = _localization.GetString("DokanDriverNotFound",
             "The Dokan file system driver (dokan2.dll) is required to mount archives as virtual drives. It does not appear to be installed on this system.");
         var doYouWantToOpenBrowser =
             _localization.GetString("DoyouwanttoopenyourbrowsertodownloadDokan",
                 "Do you want to open your browser to download Dokan?");
         var error = _localization.GetString("Error", "Error");
-        return ShowAsync(O, $"{dokanDriverNotFound}\n\n{doYouWantToOpenBrowser}", error, MessageButtons.YesNo,
-            MessageIcon.Question);
+        var messageBoxResult = await ShowAsync(O, $"{dokanDriverNotFound}\n\n{doYouWantToOpenBrowser}", error,
+            MessageButtons.YesNo, MessageIcon.Question);
+
+        // WPF parity: open the configured Dokan page only when the user agrees.
+        if (messageBoxResult != MessageBoxResult.Yes) return;
+
+        var downloadPageUrl = _configuration.GetValue<string>("Urls:DokanyWebsite")
+                              ?? "https://github.com/dokan-dev/dokany";
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadPageUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Expected condition (no default browser / headless session): not a bug report.
+            Log.Information(ex, "Could not open the Dokan website.");
+            await ShowAsync(O,
+                _localization.GetString("Anerroroccurredwhileopeningyourbrowser",
+                    "An error occurred while opening your browser."),
+                error, MessageButtons.Ok, MessageIcon.Error);
+        }
     }
 
 

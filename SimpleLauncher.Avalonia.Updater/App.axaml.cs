@@ -40,6 +40,9 @@ public class App : Application
 
         Log.Information("Updater starting...");
 
+        // WPF updater parity: report a launch event.
+        ApplicationStats.SendLaunchStats();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var args = Environment.GetCommandLineArgs().Skip(1).ToArray();

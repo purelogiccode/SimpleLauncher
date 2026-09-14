@@ -33,6 +33,13 @@ public partial class AvaloniaCheckForUpdatesService
         "https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/";
 
     private const string UpdaterFileName = "SimpleLauncher.Avalonia.Updater";
+
+    /// <summary>
+    ///     Distinguishes the Avalonia release assets from the WPF ones. Both apps are
+    ///     attached to the same GitHub release, so the package names must not collide.
+    /// </summary>
+    private const string AssetPrefix = "avalonia_";
+
     private static readonly string[] RepoOwners = ["purelogiccode"];
     private readonly IApplicationLifetime _applicationLifetime;
     private readonly HttpClient _httpClient;
@@ -89,6 +96,24 @@ public partial class AvaloniaCheckForUpdatesService
 
             return arch == Architecture.Arm64 ? "linux-arm64" : "linux-x64";
         }
+    }
+
+    /// <summary>
+    ///     Name of the release package asset for a raw version and runtime identifier,
+    ///     e.g. release_avalonia_5.7.0_win-x64.zip.
+    /// </summary>
+    internal static string ReleaseAssetName(string rawVersion, string rid)
+    {
+        return $"release_{AssetPrefix}{rawVersion}_{rid}.zip";
+    }
+
+    /// <summary>
+    ///     Name of the updater package asset for a runtime identifier,
+    ///     e.g. updater_avalonia_win-x64.zip.
+    /// </summary>
+    internal static string UpdaterAssetName(string rid)
+    {
+        return $"updater_{AssetPrefix}{rid}.zip";
     }
 
     private string CurrentVersion
@@ -483,8 +508,8 @@ public partial class AvaloniaCheckForUpdatesService
 
             var rawVersion = versionMatch.Value;
             var latestVersion = NormalizeVersion(rawVersion);
-            var releasePackageUrl = SecondaryServerBaseUrl + $"release_{rawVersion}_{CurrentRuntimeIdentifier}.zip";
-            var updaterZipAssetUrl = SecondaryServerBaseUrl + $"updater_{CurrentRuntimeIdentifier}.zip";
+            var releasePackageUrl = SecondaryServerBaseUrl + ReleaseAssetName(rawVersion, CurrentRuntimeIdentifier);
+            var updaterZipAssetUrl = SecondaryServerBaseUrl + UpdaterAssetName(CurrentRuntimeIdentifier);
 
             _logger.Information("GitHub API unavailable. Using the secondary server: version {LatestVersion}.",
                 latestVersion);
@@ -584,8 +609,8 @@ public partial class AvaloniaCheckForUpdatesService
             string? foundReleasePackageUrl = null;
             string? foundUpdaterZipUrl = null;
 
-            var expectedUpdaterFileName = $"updater_{CurrentRuntimeIdentifier}.zip";
-            var expectedReleaseFileName = $"release_{rawVersionStringFromTag}_{CurrentRuntimeIdentifier}.zip";
+            var expectedUpdaterFileName = UpdaterAssetName(CurrentRuntimeIdentifier);
+            var expectedReleaseFileName = ReleaseAssetName(rawVersionStringFromTag!, CurrentRuntimeIdentifier);
 
             _logger.Debug($"Searching for assets: '{expectedReleaseFileName}' and '{expectedUpdaterFileName}'");
 

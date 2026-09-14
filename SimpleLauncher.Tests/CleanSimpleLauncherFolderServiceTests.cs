@@ -163,6 +163,29 @@ public class CleanSimpleLauncherFolderServiceTests
         }
     }
 
+    /// <summary>
+    ///     Verifies that no architecture-specific folder cleanup deletes the converter tool
+    ///     folders: both ship native ARM64 variants that are resolved at runtime.
+    /// </summary>
+    [Fact]
+    public void ArchitectureSpecificFolderCleanupKeepsConverterToolFolders()
+    {
+        string[] converterFolders =
+        [
+            Path.Combine("tools", "BatchConvertIsoToXiso"),
+            Path.Combine("tools", "BatchConvertToCHD")
+        ];
+
+        Assert.DoesNotContain(
+            CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsArm64,
+            directory => converterFolders.Any(folder =>
+                directory.EndsWith(folder, StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(
+            CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsX64,
+            directory => converterFolders.Any(folder =>
+                directory.EndsWith(folder, StringComparison.OrdinalIgnoreCase)));
+    }
+
     private sealed class NoOpDeleteFilesService : IDeleteFilesService
     {
         /// <summary>

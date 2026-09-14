@@ -266,8 +266,9 @@ internal class UpdateService
     /// <returns>True if the restart was successful, false otherwise.</returns>
     public bool RestartMainApplication()
     {
-        var executableName = OperatingSystem.IsWindows() ? "SimpleLauncher.Avalonia.exe" : "SimpleLauncher.Avalonia";
-        return _processService.RestartApplication(_appDirectory, executableName, "-whatsnew");
+        // ProcessService appends the platform-appropriate extension: passing the ".exe"
+        // suffix here produced "SimpleLauncher.Avalonia.exe.exe" on Windows.
+        return _processService.RestartApplication(_appDirectory, "SimpleLauncher.Avalonia", "-whatsnew");
     }
 
     /// <summary>

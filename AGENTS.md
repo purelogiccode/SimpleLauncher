@@ -30,7 +30,11 @@ They are intentionally kept on disk.
   - `.github/workflows/release-wpf.yml` — manual (`workflow_dispatch`); packages the WPF app
     for `win-x64` / `win-arm64` via `scripts/package-release.ps1`
     (`release_{version}_{rid}.zip` + `updater_{rid}.zip`) and creates/updates the GitHub release.
-    The Avalonia variants are intentionally not published by CI.
+  - `.github/workflows/release-avalonia.yml` — manual (`workflow_dispatch`); packages the
+    Avalonia app for `win-x64` / `win-arm64` via `scripts/package-release.ps1 -App Avalonia`
+    (`release_avalonia_{version}_{rid}.zip` + `updater_avalonia_{rid}.zip`) and attaches the
+    assets to the same GitHub release tag. The `avalonia_` prefix is required: both apps read
+    the same `releases/latest` assets, and unprefixed names would collide with the WPF packages.
   - `.github/workflows/docs.yml` — on `docs/**` pushes to `master`; deploys GitHub Pages from
     `docs/` and syncs the wiki via `scripts/sync-wiki.py` (needs the `WIKI_PAT` secret, skipped
     with a warning when absent).
