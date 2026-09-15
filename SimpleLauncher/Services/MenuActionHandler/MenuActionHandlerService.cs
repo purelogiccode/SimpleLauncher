@@ -323,7 +323,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method EasyMode_Click.");
+            _logger.Error(ex, "Error in the method EasyMode_Click");
         }
     }
 
@@ -360,7 +360,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method ExpertMode_Click.");
+            _logger.Error(ex, "Error in the method ExpertMode_Click");
         }
     }
 
@@ -385,7 +385,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method DownloadImagePack_Click.");
+            _logger.Error(ex, "Error in the method DownloadImagePack_Click");
         }
     }
 
@@ -415,7 +415,7 @@ public class MenuActionHandlerService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in method ScanForMicrosoftWindowsGames_ClickAsync.");
+                _logger.Error(ex, "Error in method ScanForMicrosoftWindowsGames_ClickAsync");
             }
             finally
             {
@@ -424,7 +424,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method ScanForMicrosoftWindowsGames_ClickAsync.");
+            _logger.Error(ex, "Error in the method ScanForMicrosoftWindowsGames_ClickAsync");
         }
     }
 
@@ -454,7 +454,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method EditLinksClickAsync.");
+            _logger.Error(ex, "Error in the method EditLinksClickAsync");
         }
     }
 
@@ -557,7 +557,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method ToggleFuzzyMatchingClickAsync.");
+            _logger.Error(ex, "Error in the method ToggleFuzzyMatchingClickAsync");
         }
     }
 
@@ -629,7 +629,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method HandleToggleAnnotationStrippingAsync.");
+            _logger.Error(ex, "Error in the method HandleToggleAnnotationStrippingAsync");
         }
     }
 
@@ -779,7 +779,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method ButtonSizeClickAsync.");
+            _logger.Error(ex, "Error in the method ButtonSizeClickAsync");
         }
     }
 
@@ -821,7 +821,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method ButtonAspectRatioClickAsync.");
+            _logger.Error(ex, "Error in the method ButtonAspectRatioClickAsync");
         }
     }
 
@@ -864,12 +864,12 @@ public class MenuActionHandlerService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in the method GamesPerPageClickAsync.");
+                _logger.Error(ex, "Error in the method GamesPerPageClickAsync");
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method GamesPerPageClickAsync.");
+            _logger.Error(ex, "Error in the method GamesPerPageClickAsync");
         }
     }
 
@@ -1007,7 +1007,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in method NavSelectedSystemFavoriteButtonClickAsync.");
+            _logger.Error(ex, "Error in method NavSelectedSystemFavoriteButtonClickAsync");
         }
     }
 
@@ -1027,7 +1027,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method NavRandomLuckGameButtonClickAsync.");
+            _logger.Error(ex, "Error in the method NavRandomLuckGameButtonClickAsync");
         }
     }
 
@@ -1134,7 +1134,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method NavShowGamesWithRetroAchievementsButtonClickAsync.");
+            _logger.Error(ex, "Error in the method NavShowGamesWithRetroAchievementsButtonClickAsync");
         }
     }
 
@@ -1202,7 +1202,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method HandleRescanRetroAchievementsForSelectedSystemAsync.");
+            _logger.Error(ex, "Error in the method HandleRescanRetroAchievementsForSelectedSystemAsync");
         }
 
         return Task.CompletedTask;
@@ -1290,7 +1290,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method HandleZoomInAsync.");
+            _logger.Error(ex, "Error in the method HandleZoomInAsync");
         }
     }
 
@@ -1343,7 +1343,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method HandleZoomOutAsync.");
+            _logger.Error(ex, "Error in the method HandleZoomOutAsync");
         }
     }
 
@@ -1386,7 +1386,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method NavToggleViewModeClickAsync.");
+            _logger.Error(ex, "Error in the method NavToggleViewModeClickAsync");
         }
     }
 
@@ -1477,13 +1477,13 @@ public class MenuActionHandlerService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in method FilenameDisplayMode_ClickAsync.");
+                _logger.Error(ex, "Error in method FilenameDisplayMode_ClickAsync");
                 await _messageBoxLibrary.ErrorMessageBoxAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method FilenameDisplayMode_ClickAsync.");
+            _logger.Error(ex, "Error in the method FilenameDisplayMode_ClickAsync");
         }
     }
 
@@ -1521,13 +1521,13 @@ public class MenuActionHandlerService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in method DisplayMachineName_ClickAsync.");
+                _logger.Error(ex, "Error in method DisplayMachineName_ClickAsync");
                 await _messageBoxLibrary.ErrorMessageBoxAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method DisplayMachineName_ClickAsync.");
+            _logger.Error(ex, "Error in the method DisplayMachineName_ClickAsync");
         }
     }
 
@@ -1567,13 +1567,13 @@ public class MenuActionHandlerService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in method FilenameFontSize_ClickAsync.");
+                _logger.Error(ex, "Error in method FilenameFontSize_ClickAsync");
                 await _messageBoxLibrary.ErrorMessageBoxAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method FilenameFontSize_ClickAsync.");
+            _logger.Error(ex, "Error in the method FilenameFontSize_ClickAsync");
         }
     }
 
@@ -1613,13 +1613,13 @@ public class MenuActionHandlerService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in method MachineNameFontSize_ClickAsync.");
+                _logger.Error(ex, "Error in method MachineNameFontSize_ClickAsync");
                 await _messageBoxLibrary.ErrorMessageBoxAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method MachineNameFontSize_ClickAsync.");
+            _logger.Error(ex, "Error in the method MachineNameFontSize_ClickAsync");
         }
     }
 
@@ -1643,7 +1643,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error opening Sound Configuration window.");
+            _logger.Error(ex, "Error opening Sound Configuration window");
             await _messageBoxLibrary.CouldNotOpenSoundConfigurationWindowMessageBoxAsync();
         }
     }
@@ -1668,7 +1668,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error opening RetroAchievements settings window.");
+            _logger.Error(ex, "Error opening RetroAchievements settings window");
             await _messageBoxLibrary.ErrorMessageBoxAsync();
         }
     }
@@ -1698,7 +1698,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error toggling RetroAchievements overlay button.");
+            _logger.Error(ex, "Error toggling RetroAchievements overlay button");
             await _messageBoxLibrary.ErrorMessageBoxAsync();
         }
     }
@@ -1725,7 +1725,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error toggling video link overlay button.");
+            _logger.Error(ex, "Error toggling video link overlay button");
             await _messageBoxLibrary.ErrorMessageBoxAsync();
         }
     }
@@ -1752,7 +1752,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error toggling info link overlay button.");
+            _logger.Error(ex, "Error toggling info link overlay button");
             await _messageBoxLibrary.ErrorMessageBoxAsync();
         }
     }
@@ -1795,7 +1795,7 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in TopLetterNumberMenuClickAsync.");
+            _logger.Error(ex, "Error in TopLetterNumberMenuClickAsync");
         }
     }
 
@@ -1833,8 +1833,8 @@ public class MenuActionHandlerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in SortOrderToggleButtonClickAsync.");
-            _logger.Debug("Error in SortOrderToggleButtonClickAsync.");
+            _logger.Error(ex, "Error in SortOrderToggleButtonClickAsync");
+            _logger.Debug("Error in SortOrderToggleButtonClickAsync");
         }
     }
 }

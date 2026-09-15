@@ -157,7 +157,7 @@ internal partial class EditSystemWindow : ILoadingState
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Error loading systems into Edit window.");
+            _logger.Error(ex, "Error loading systems into Edit window");
         }
         finally
         {
@@ -278,7 +278,7 @@ internal partial class EditSystemWindow : ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method AddSystemButton_ClickAsync.");
+            _logger.Error(ex, "Error in the method AddSystemButton_ClickAsync");
         }
     }
 
@@ -537,7 +537,7 @@ internal partial class EditSystemWindow : ILoadingState
                 {
                     // Specific message for application control policy blocking links
                     await _messageBox.ApplicationControlPolicyBlockedManualLinkMessageBoxAsync(searchUrl);
-                    _logger.Error(ex, "Application control policy blocked opening HelpLink.");
+                    _logger.Error(ex, "Application control policy blocked opening HelpLink");
                 }
                 else
                 {
@@ -586,7 +586,7 @@ internal partial class EditSystemWindow : ILoadingState
         LoadingOverlay.Visibility = Visibility.Collapsed;
         MainContentGrid?.IsEnabled = true;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in EditSystemWindow.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in EditSystemWindow");
         (Application.Current.MainWindow as MainWindow)?.UpdateStatusBarService.UpdateContent(
             "Emergency reset performed.");
     }
@@ -659,7 +659,7 @@ internal partial class EditSystemWindow : ILoadingState
                         // program, e.g. another running SimpleLauncher instance, an image viewer or
                         // the Windows Explorer preview pane): not a bug, keep it out of the bug report.
                         _logger.Information(ex,
-                            "Could not copy the system image to '{DestFilePath}': the file is in use by another program. Ask the user to close the other program and retry.",
+                            "Could not copy the system image to '{DestFilePath}': the file is in use by another program. Ask the user to close the other program and retry",
                             destFilePath);
                         await _messageBox.FailedToCopySystemImageMessageBoxAsync(ex.Message);
                         return;
@@ -670,13 +670,13 @@ internal partial class EditSystemWindow : ILoadingState
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error copying system image.");
+                _logger.Error(ex, "Error copying system image");
                 await _messageBox.FailedToCopySystemImageMessageBoxAsync(ex.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error copying system image.");
+            _logger.Error(ex, "Error copying system image");
         }
     }
 

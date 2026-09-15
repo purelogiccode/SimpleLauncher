@@ -88,7 +88,7 @@ public class GameScannerService
     {
         if (!OperatingSystem.IsWindows())
         {
-            _logger.Debug("[GameScannerService] Storefront scanning is Windows-only. Skipping.");
+            _logger.Debug("[GameScannerService] Storefront scanning is Windows-only. Skipping");
             return new StorefrontScanResult(0, 0, false);
         }
 
@@ -135,13 +135,13 @@ public class GameScannerService
             var shortcutsAfter = EnumerateShortcutFiles(_windowsRomsPath);
             var shortcutsCreated = shortcutsAfter.Except(shortcutsBefore, StringComparer.OrdinalIgnoreCase).Count();
 
-            _logger.Debug("[GameScannerService] All store game scans completed.");
+            _logger.Debug("[GameScannerService] All store game scans completed");
 
             return new StorefrontScanResult(shortcutsCreated, shortcutsCreated, WasNewSystemCreated);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An error occurred during the game scanning process.");
+            _logger.Error(ex, "An error occurred during the game scanning process");
             return new StorefrontScanResult(0, 0, WasNewSystemCreated);
         }
     }
@@ -168,7 +168,7 @@ public class GameScannerService
             // path points to an unavailable drive. Log at Information level so the bug report
             // API does not pick it up (see bugs 66182-66188).
             logger.Information(ex,
-                "Cannot create the '{Kind}' directory '{Path}' for the 'Microsoft Windows' system. Store-game shortcuts will not be created.",
+                "Cannot create the '{Kind}' directory '{Path}' for the 'Microsoft Windows' system. Store-game shortcuts will not be created",
                 kind, path);
             return false;
         }
@@ -262,7 +262,7 @@ public class GameScannerService
             // Expected condition: app is in a protected directory (e.g. Program Files).
             // Log at Information level so the bug report API does not pick it up.
             _logger.Information(ex,
-                "Cannot create 'Microsoft Windows' system directories in protected location. Falling back to default paths.");
+                "Cannot create 'Microsoft Windows' system directories in protected location. Falling back to default paths");
 
             // Fall back to default paths even on error
             var fallbackRomsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "roms", WindowsSystemName);
@@ -272,7 +272,7 @@ public class GameScannerService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to initialize 'Microsoft Windows' system paths.");
+            _logger.Error(ex, "Failed to initialize 'Microsoft Windows' system paths");
 
             // Fall back to default paths even on error
             var fallbackRomsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "roms", WindowsSystemName);

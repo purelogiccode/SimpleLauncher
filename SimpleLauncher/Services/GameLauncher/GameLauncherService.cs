@@ -203,14 +203,14 @@ public partial class GameLauncherService : ILauncherService
             {
                 await _messageBoxLibrary.ApplicationControlPolicyBlockedMessageBoxAsync();
                 // Expected user-environment condition (OS policy blocks the file): not a bug.
-                _logger.Information(ex, "Application control policy blocked launching batch file.");
+                _logger.Information(ex, "Application control policy blocked launching batch file");
                 _updateStatusBar.UpdateContent($"Error: {Path.GetFileName(resolvedFilePath)} failed");
             }
             else if (CheckApplicationControlPolicyService.IsElevationRequired(ex))
             {
                 await _messageBoxLibrary.ElevationRequiredMessageBoxAsync();
                 // Expected user-environment condition (the file requires admin rights): not a bug.
-                _logger.Information(ex, "Elevation required to launch batch file.");
+                _logger.Information(ex, "Elevation required to launch batch file");
                 _updateStatusBar.UpdateContent($"Error: {Path.GetFileName(resolvedFilePath)} failed");
             }
             else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
@@ -349,13 +349,13 @@ public partial class GameLauncherService : ILauncherService
             {
                 await _messageBoxLibrary.ApplicationControlPolicyBlockedMessageBoxAsync();
                 // Expected user-environment condition (OS policy blocks the file): not a bug.
-                _logger.Information(ex, "Application control policy blocked launching shortcut file.");
+                _logger.Information(ex, "Application control policy blocked launching shortcut file");
             }
             else if (CheckApplicationControlPolicyService.IsElevationRequired(ex))
             {
                 await _messageBoxLibrary.ElevationRequiredMessageBoxAsync();
                 // Expected user-environment condition (the file requires admin rights): not a bug.
-                _logger.Information(ex, "Elevation required to launch shortcut file.");
+                _logger.Information(ex, "Elevation required to launch shortcut file");
             }
             else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
             {
@@ -492,13 +492,13 @@ public partial class GameLauncherService : ILauncherService
             {
                 await _messageBoxLibrary.ApplicationControlPolicyBlockedMessageBoxAsync();
                 // Expected user-environment condition (OS policy blocks the file): not a bug.
-                _logger.Information(ex, "Application control policy blocked launching executable.");
+                _logger.Information(ex, "Application control policy blocked launching executable");
             }
             else if (CheckApplicationControlPolicyService.IsElevationRequired(ex))
             {
                 await _messageBoxLibrary.ElevationRequiredMessageBoxAsync();
                 // Expected user-environment condition (the file requires admin rights): not a bug.
-                _logger.Information(ex, "Elevation required to launch executable.");
+                _logger.Information(ex, "Elevation required to launch executable");
             }
             else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
             {
@@ -1076,13 +1076,13 @@ public partial class GameLauncherService : ILauncherService
                     {
                         await _messageBoxLibrary.ApplicationControlPolicyBlockedMessageBoxAsync();
                         // Expected user-environment condition (OS policy blocks the emulator): not a bug.
-                        _logger.Information(ex, "Application control policy blocked launching emulator.");
+                        _logger.Information(ex, "Application control policy blocked launching emulator");
                     }
                     else if (CheckApplicationControlPolicyService.IsElevationRequired(ex))
                     {
                         await _messageBoxLibrary.ElevationRequiredMessageBoxAsync();
                         // Expected user-environment condition (the emulator requires admin rights): not a bug.
-                        _logger.Information(ex, "Elevation required to launch emulator.");
+                        _logger.Information(ex, "Elevation required to launch emulator");
                     }
                     else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
                     {
@@ -1505,7 +1505,7 @@ public partial class GameLauncherService : ILauncherService
             {
                 var contents = File.ReadAllText(batchFilePath);
                 _logger.Debug($"Batch file contents for '{batchFilePath}':\n{contents}");
-                _logger.Debug("End of batch file contents.");
+                _logger.Debug("End of batch file contents");
             }
         }
         catch (Exception ex)
@@ -1550,7 +1550,7 @@ public partial class GameLauncherService : ILauncherService
             output.ToString().Contains("Permission denied", StringComparison.OrdinalIgnoreCase))
         {
             _logger.Debug(
-                "[CheckForExitCodeWithErrorAnyAsync] RetroArch mkdir permission denied due to special characters in path.");
+                "[CheckForExitCodeWithErrorAnyAsync] RetroArch mkdir permission denied due to special characters in path");
             _logger.Warning(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
@@ -1571,7 +1571,7 @@ public partial class GameLauncherService : ILauncherService
         if (emulatorManager.EmulatorName.Contains("retroarch", StringComparison.OrdinalIgnoreCase) ||
             emulatorManager.EmulatorLocation.Contains("retroarch", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] RetroArch parameter issues.");
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] RetroArch parameter issues");
             _logger.Warning(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
@@ -1596,7 +1596,7 @@ public partial class GameLauncherService : ILauncherService
              output.ToString().Contains("WRONG LENGTH", StringComparison.OrdinalIgnoreCase) ||
              output.ToString().Contains("Required files are missing", StringComparison.OrdinalIgnoreCase)))
         {
-            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME ROM set error.");
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME ROM set error");
             _logger.Warning(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
@@ -1621,7 +1621,7 @@ public partial class GameLauncherService : ILauncherService
             (output.ToString().Contains("Unknown system", StringComparison.OrdinalIgnoreCase) ||
              output.ToString().Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
         {
-            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unknown system error.");
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unknown system error");
             _logger.Warning(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
@@ -1644,7 +1644,7 @@ public partial class GameLauncherService : ILauncherService
             (output.ToString().Contains("Unable to load image", StringComparison.OrdinalIgnoreCase) ||
              output.ToString().Contains("No such file or directory", StringComparison.OrdinalIgnoreCase)))
         {
-            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unable to load image error.");
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unable to load image error");
             _logger.Warning(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
@@ -1668,12 +1668,12 @@ public partial class GameLauncherService : ILauncherService
             error.ToString().Contains("Warning: unknown option in INI", StringComparison.OrdinalIgnoreCase))
         {
             _logger.Debug(
-                "[CheckForExitCodeWithErrorAnyAsync] MAME unknown option in INI detected. Restoring mame.ini from sample.");
+                "[CheckForExitCodeWithErrorAnyAsync] MAME unknown option in INI detected. Restoring mame.ini from sample");
             var restored = MameConfigurationService.RestoreMameIniFromSample(psi.FileName, _logger);
             if (restored)
-                _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] mame.ini restored successfully. User should retry.");
+                _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] mame.ini restored successfully. User should retry");
             else
-                _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Failed to restore mame.ini from sample.");
+                _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Failed to restore mame.ini from sample");
 
             return;
         }

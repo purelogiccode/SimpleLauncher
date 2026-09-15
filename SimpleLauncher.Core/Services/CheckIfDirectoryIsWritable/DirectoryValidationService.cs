@@ -44,7 +44,7 @@ public class DirectoryValidationService : IDirectoryValidationService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to check if directory is writable.");
+            _logger.Error(ex, "Failed to check if directory is writable");
             return false;
         }
     }

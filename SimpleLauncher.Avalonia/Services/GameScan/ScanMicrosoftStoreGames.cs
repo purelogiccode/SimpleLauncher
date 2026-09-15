@@ -122,7 +122,7 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                 if (process == null)
                 {
                     _logger.Debug(
-                        "[ScanMicrosoftStoreGames] PowerShell process returned null (likely blocked by policy). Skipping Microsoft Store scan.");
+                        "[ScanMicrosoftStoreGames] PowerShell process returned null (likely blocked by policy). Skipping Microsoft Store scan");
                     return;
                 }
 
@@ -134,7 +134,7 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
             catch (OperationCanceledException)
             {
                 _logger.Debug(
-                    "[ScanMicrosoftStoreGames] PowerShell scan timed out after 30 seconds. Skipping Microsoft Store scan.");
+                    "[ScanMicrosoftStoreGames] PowerShell scan timed out after 30 seconds. Skipping Microsoft Store scan");
                 return;
             }
             catch (Win32Exception ex) when (ex.NativeErrorCode is 5 or 2 or 126)
@@ -157,7 +157,7 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                 if (IsExecutionPolicyRestricted(errorOutput))
                 {
                     _logger.Debug(
-                        "[ScanMicrosoftStoreGames] PowerShell execution policy restrictions detected. Skipping Microsoft Store games scan.");
+                        "[ScanMicrosoftStoreGames] PowerShell execution policy restrictions detected. Skipping Microsoft Store games scan");
                     return;
                 }
 
@@ -220,13 +220,13 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                 }
                 catch (Exception ex)
                 {
-                    logErrors.Error(ex, "Error processing Microsoft Store game entry.");
+                    logErrors.Error(ex, "Error processing Microsoft Store game entry");
                 }
             }
 
             if (allInstalledApps.Count == 0)
             {
-                _logger.Debug("[ScanMicrosoftStoreGames] No Microsoft Store apps found.");
+                _logger.Debug("[ScanMicrosoftStoreGames] No Microsoft Store apps found");
                 return;
             }
 
@@ -264,12 +264,12 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
             else
             {
                 _logger.Debug(
-                    "[ScanMicrosoftStoreGames] API returned no confirmed games. The admin may need to curate the game list via the dashboard.");
+                    "[ScanMicrosoftStoreGames] API returned no confirmed games. The admin may need to curate the game list via the dashboard");
             }
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Microsoft Store games.");
+            logErrors.Error(ex, "An error occurred while scanning for Microsoft Store games");
         }
     }
 
@@ -323,7 +323,7 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
 
             if (apiResponse?.Games == null)
             {
-                _logger.Debug("[ScanMicrosoftStoreGames] Game classification API returned null games list.");
+                _logger.Debug("[ScanMicrosoftStoreGames] Game classification API returned null games list");
                 return [];
             }
 
@@ -345,7 +345,7 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
         catch (OperationCanceledException)
         {
             _logger.Debug(
-                "[ScanMicrosoftStoreGames] Game classification API request timed out. Returning empty game list.");
+                "[ScanMicrosoftStoreGames] Game classification API request timed out. Returning empty game list");
             return [];
         }
         catch (HttpRequestException ex)
@@ -358,7 +358,7 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
         {
             _logger.Debug(
                 $"[ScanMicrosoftStoreGames] Game classification API error: {ex.Message}. Returning empty game list.");
-            logErrors.Error(ex, "Failed to classify games via API.");
+            logErrors.Error(ex, "Failed to classify games via API");
             return [];
         }
     }

@@ -398,7 +398,7 @@ internal partial class GameButtonFactory(
                     // Null check for mainWindowLocal before using it
                     if (mainWindowLocal == null)
                     {
-                        loggerLocal.Warning("_mainWindow is null in trophy button click handler.");
+                        loggerLocal.Warning("_mainWindow is null in trophy button click handler");
                         return;
                     }
 
@@ -427,7 +427,7 @@ internal partial class GameButtonFactory(
                 }
                 catch (Exception ex)
                 {
-                    loggerLocal.Error(ex, "Error opening Retro Achievements Window.");
+                    loggerLocal.Error(ex, "Error opening Retro Achievements Window");
                     _logger.Debug($"Error opening Retro Achievements Window: {ex.Message}");
                 }
             };
@@ -492,7 +492,7 @@ internal partial class GameButtonFactory(
                 }
                 catch (Exception ex)
                 {
-                    loggerLocal.Error(ex, "Error opening the video Link.");
+                    loggerLocal.Error(ex, "Error opening the video Link");
                     _logger.Debug($"Error opening the video link: {ex.Message}");
                 }
             };
@@ -557,7 +557,7 @@ internal partial class GameButtonFactory(
                 }
                 catch (Exception ex)
                 {
-                    loggerLocal.Error(ex, "Error opening the info Link.");
+                    loggerLocal.Error(ex, "Error opening the info Link");
                     _logger.Debug($"Error opening the info link: {ex.Message}");
                 }
             };
@@ -665,7 +665,7 @@ internal partial class GameButtonFactory(
 
                 if (emulatorCombo == null)
                 {
-                    loggerLocal.Warning("[CreateGameButtonAsync] _emulatorComboBox is null.");
+                    loggerLocal.Warning("[CreateGameButtonAsync] _emulatorComboBox is null");
                     await messageBoxLocal.EmulatorNameIsRequiredMessageBoxAsync();
                     mainWindowLocal?.SetGameButtonsEnabled(true);
                     return;
@@ -676,7 +676,7 @@ internal partial class GameButtonFactory(
                 if (string.IsNullOrEmpty(selectedEmulatorName))
                 {
                     // Notify developer
-                    loggerLocal.Warning("[CreateGameButtonAsync] selectedEmulatorName is null or empty.");
+                    loggerLocal.Warning("[CreateGameButtonAsync] selectedEmulatorName is null or empty");
 
                     // Notify user
                     await messageBoxLocal.EmulatorNameIsRequiredMessageBoxAsync();
@@ -691,7 +691,7 @@ internal partial class GameButtonFactory(
 
                     if (gameLauncherLocal == null)
                     {
-                        loggerLocal.Warning("[CreateGameButtonAsync] _gameLauncher is null.");
+                        loggerLocal.Warning("[CreateGameButtonAsync] _gameLauncher is null");
                         return;
                     }
 

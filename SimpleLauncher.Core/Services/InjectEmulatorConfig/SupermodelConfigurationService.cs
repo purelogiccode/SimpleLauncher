@@ -154,7 +154,7 @@ public static class SupermodelConfigurationService
         try
         {
             File.WriteAllLines(configPath, lines, new UTF8Encoding(false));
-            logger.Debug("[SupermodelConfig] Injected configuration changes.");
+            logger.Debug("[SupermodelConfig] Injected configuration changes");
         }
         catch (Exception ex)
         {

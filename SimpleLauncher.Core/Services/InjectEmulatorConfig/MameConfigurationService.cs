@@ -247,7 +247,7 @@ public static partial class MameConfigurationService
             {
                 File.WriteAllLines(tempPath, lines, new UTF8Encoding(false));
                 File.Move(tempPath, configPath, true);
-                logger.Debug("[MameConfig] Injected configuration changes.");
+                logger.Debug("[MameConfig] Injected configuration changes");
             }
             catch (Exception ex)
             {
@@ -264,8 +264,8 @@ public static partial class MameConfigurationService
                     }
                 }
 
-                logger.Debug("[MameConfig] Failed to inject configuration changes.");
-                logger.Error(ex, "[MameConfig] Failed to inject configuration changes.");
+                logger.Debug("[MameConfig] Failed to inject configuration changes");
+                logger.Error(ex, "[MameConfig] Failed to inject configuration changes");
                 throw;
             }
         }

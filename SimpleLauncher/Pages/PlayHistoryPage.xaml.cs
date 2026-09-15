@@ -162,7 +162,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the PlayHistoryPageLoadedAsync method.");
+            _logger.Error(ex, "Error in the PlayHistoryPageLoadedAsync method");
         }
     }
 
@@ -207,7 +207,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
             var emulatorManager = systemManager.Emulators.FirstOrDefault();
             if (emulatorManager == null)
             {
-                _logger.Warning("emulatorManager is null.");
+                _logger.Warning("emulatorManager is null");
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -245,7 +245,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "There was an error in the method PlayHistoryPrepareForRightClickContextAsync.");
+            _logger.Error(ex, "There was an error in the method PlayHistoryPrepareForRightClickContextAsync");
             await _messageBox.RightClickContextMenuErrorMessageBoxAsync();
         }
     }
@@ -255,7 +255,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         var selectedSystemManager = _viewModel.GetSystemManager(selectedSystemName);
         if (selectedSystemManager == null)
         {
-            _logger.Warning("[LaunchGameFromHistoryAsync] systemManager is null.");
+            _logger.Warning("[LaunchGameFromHistoryAsync] systemManager is null");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
             return;
@@ -278,7 +278,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         var emulatorManager = selectedSystemManager.Emulators.FirstOrDefault();
         if (emulatorManager == null)
         {
-            _logger.Warning("[LaunchGameFromHistoryAsync] emulatorManager is null.");
+            _logger.Warning("[LaunchGameFromHistoryAsync] emulatorManager is null");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
             return;
@@ -321,7 +321,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method MouseDoubleClick.");
+            _logger.Error(ex, "Error in the method MouseDoubleClick");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
         }
@@ -345,7 +345,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         catch (Exception ex)
         {
             PreviewImage.Source = null;
-            _logger.Error(ex, "Error in the SetPreviewImageOnSelectionChangedAsync method.");
+            _logger.Error(ex, "Error in the SetPreviewImageOnSelectionChangedAsync method");
         }
     }
 
@@ -385,7 +385,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method DeleteHistoryItemWithDelButtonAsync.");
+            _logger.Error(ex, "Error in the method DeleteHistoryItemWithDelButtonAsync");
         }
     }
 
@@ -472,7 +472,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method RemoveHistoryItemButton_ClickAsync.");
+            _logger.Error(ex, "Error in the method RemoveHistoryItemButton_ClickAsync");
         }
     }
 
@@ -488,7 +488,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method RemoveAllHistoryItemButton_ClickAsync.");
+            _logger.Error(ex, "Error in the method RemoveAllHistoryItemButton_ClickAsync");
         }
     }
 
@@ -511,7 +511,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the LaunchGameClickAsync method.");
+            _logger.Error(ex, "Error in the LaunchGameClickAsync method");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
         }
@@ -523,7 +523,7 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         _cancellationTokenSource?.Cancel();
         LoadingOverlay.Visibility = Visibility.Collapsed;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in PlayHistoryPage.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in PlayHistoryPage");
         _mainWindow.UpdateStatusBarService.UpdateContent("Emergency reset performed.");
     }
 }

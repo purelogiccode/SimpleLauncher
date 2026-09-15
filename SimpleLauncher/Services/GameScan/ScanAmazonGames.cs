@@ -68,7 +68,7 @@ public class ScanAmazonGames : IGamePlatformScanner
                 }
                 catch (Exception ex)
                 {
-                    logErrors.Error(ex, "Error processing an Amazon game entry.");
+                    logErrors.Error(ex, "Error processing an Amazon game entry");
                 }
             }
         }
@@ -76,7 +76,7 @@ public class ScanAmazonGames : IGamePlatformScanner
         {
             // Log but don't crash if SQLite is missing or DB is locked
             _logger.Debug($"[ScanAmazonGames] Error scanning Amazon games: {ex.Message}");
-            logErrors.Error(ex, "Error scanning Amazon games.");
+            logErrors.Error(ex, "Error scanning Amazon games");
         }
     }
 }

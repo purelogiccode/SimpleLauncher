@@ -57,7 +57,7 @@ public class ReinstallSimpleLauncher
                     catch (Win32Exception ex) when (ex.NativeErrorCode == 5) // Access Denied
                     {
                         // Log the access denied error
-                        _logger.Error(ex, "Access denied when starting Updater.exe.");
+                        _logger.Error(ex, "Access denied when starting Updater.exe");
 
                         // Notify user that update failed
                         await messageBoxLibrary.UpdaterLaunchFailedMessageBoxAsync();
@@ -112,7 +112,7 @@ public class ReinstallSimpleLauncher
                             catch (Win32Exception ex) when (ex.NativeErrorCode == 5) // Access Denied
                             {
                                 // Log the access denied error
-                                _logger.Error(ex, "Access denied when starting Updater.exe after download.");
+                                _logger.Error(ex, "Access denied when starting Updater.exe after download");
 
                                 // Notify user that update failed
                                 await messageBoxLibrary.UpdaterLaunchFailedMessageBoxAsync();
@@ -127,7 +127,7 @@ public class ReinstallSimpleLauncher
                     catch (Exception ex)
                     {
                         // Notify developer
-                        _logger.Error(ex, "Failed to download and reinstall the updater.");
+                        _logger.Error(ex, "Failed to download and reinstall the updater");
 
                         // Notify user
                         await messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
@@ -137,7 +137,7 @@ public class ReinstallSimpleLauncher
             catch (Exception ex)
             {
                 // Notify developer
-                _logger.Error(ex, "Failed to reinstall SimpleLauncher.");
+                _logger.Error(ex, "Failed to reinstall SimpleLauncher");
 
                 // Notify user
                 await messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
@@ -145,7 +145,7 @@ public class ReinstallSimpleLauncher
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method StartUpdaterAndShutdownAsync.");
+            _logger.Error(ex, "Error in the method StartUpdaterAndShutdownAsync");
         }
     }
 

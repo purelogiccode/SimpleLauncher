@@ -75,7 +75,7 @@ public class MameConfigHandler : IEmulatorConfigHandler
                     {
                         _logger.Debug($"[MameConfigHandler] Failed to inject MAME configuration: {ex.Message}");
                         _logger.Error(ex,
-                            "[MameConfigHandler] Failed to inject MAME configuration. The game will launch with existing MAME settings.");
+                            "[MameConfigHandler] Failed to inject MAME configuration. The game will launch with existing MAME settings");
                         await _messageBoxLibrary.FailedToInjectMameConfigurationMessageBoxAsync();
                     }
                 }

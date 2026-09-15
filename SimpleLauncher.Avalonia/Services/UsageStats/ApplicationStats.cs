@@ -56,7 +56,7 @@ public static class ApplicationStats
         }
         catch (OperationCanceledException)
         {
-            Log.Debug("ApplicationStats API call timed out.");
+            Log.Debug("ApplicationStats API call timed out");
         }
         catch (Exception ex)
         {

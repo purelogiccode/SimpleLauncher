@@ -62,7 +62,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the NextPageButtonClickAsync method.");
+            _logger.Error(ex, "Error in the NextPageButtonClickAsync method");
 
             // Notify user
             await _messageBox.NavigationButtonErrorMessageBoxAsync();

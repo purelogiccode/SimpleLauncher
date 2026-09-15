@@ -43,7 +43,7 @@ public static class AskAiToFixParameters
             if (!wantAiHelp)
                 return;
 
-            logger.Debug("[AskAiToFixParameters] User accepted AI parameter suggestion.");
+            logger.Debug("[AskAiToFixParameters] User accepted AI parameter suggestion");
 
             var loadingOverlayService = serviceProvider.GetRequiredService<LoadingOverlayService>();
             var loadingMessage = (string)Application.Current.TryFindResource("ParameterResolverLoading") ??
@@ -69,7 +69,7 @@ public static class AskAiToFixParameters
                 var result = await parameterResolverService.ResolveParametersAsync(request);
                 if (result == null)
                 {
-                    logger.Debug("[AskAiToFixParameters] ParameterResolver API returned null.");
+                    logger.Debug("[AskAiToFixParameters] ParameterResolver API returned null");
                     return;
                 }
 
@@ -101,7 +101,7 @@ public static class AskAiToFixParameters
                     await messageBoxLibrary.CustomQuestionMessageBoxAsync(aiSuggestionTitle, dialogMessage);
                 if (!applyResult)
                 {
-                    logger.Debug("[AskAiToFixParameters] User declined to apply AI suggestion.");
+                    logger.Debug("[AskAiToFixParameters] User declined to apply AI suggestion");
                     return;
                 }
 
@@ -166,7 +166,7 @@ public static class AskAiToFixParameters
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Error in AskAiToFixParameters.");
+            logger.Error(ex, "Error in AskAiToFixParameters");
             logger.Debug($"[AskAiToFixParameters] Error: {ex.Message}");
         }
     }

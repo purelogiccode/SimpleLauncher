@@ -32,7 +32,7 @@ public class WpfApplicationLifetime(ILogger logErrors, IServiceProvider serviceP
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Restart failed: Process.Start threw an exception.");
+            _logger.Error(ex, "Restart failed: Process.Start threw an exception");
             _ = _messageBoxLibraryService.Value.FailedToRestartMessageBoxAsync();
         }
     }

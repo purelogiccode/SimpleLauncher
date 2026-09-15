@@ -120,7 +120,7 @@ internal class ScanGogGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for GOG games.");
+            logErrors.Error(ex, "An error occurred while scanning for GOG games");
         }
     }
 }

@@ -78,7 +78,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             var cgDataPath = GetCommanderGeniusDataPath(context.EmulatorManager?.EmulatorLocation);
             if (string.IsNullOrEmpty(cgDataPath))
             {
-                _logger.Debug("[CommanderGeniusLaunchStrategy] Could not resolve CG data path.");
+                _logger.Debug("[CommanderGeniusLaunchStrategy] Could not resolve CG data path");
                 LogErrorAsync("Could not resolve Commander Genius data path.");
                 return;
             }
@@ -94,7 +94,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
 
             if (!extracted || !Directory.Exists(extractionDir))
             {
-                _logger.Debug("[CommanderGeniusLaunchStrategy] Extraction failed or directory not found.");
+                _logger.Debug("[CommanderGeniusLaunchStrategy] Extraction failed or directory not found");
                 return;
             }
 
@@ -107,7 +107,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
 
                 if (string.IsNullOrEmpty(emulatorLocation) || !File.Exists(PathHelper.GetLongPath(emulatorLocation)))
                 {
-                    _logger.Debug("[CommanderGeniusLaunchStrategy] Emulator executable not found.");
+                    _logger.Debug("[CommanderGeniusLaunchStrategy] Emulator executable not found");
                     LogErrorAsync($"Emulator executable not found: {emulatorLocation}");
                     await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                         PathHelper.ResolveLogFilePath(_configuration));
@@ -245,7 +245,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             }
             else
             {
-                _logger.Debug("[CommanderGenius] SearchPath1 not found in config. Falling back to default.");
+                _logger.Debug("[CommanderGenius] SearchPath1 not found in config. Falling back to default");
             }
         }
         else
@@ -324,7 +324,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             }
             else
             {
-                _logger.Debug("[CommanderGenius] BIN variable found but emulator location is unknown.");
+                _logger.Debug("[CommanderGenius] BIN variable found but emulator location is unknown");
                 return null;
             }
         }

@@ -408,7 +408,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             catch (Exception ex)
             {
                 DownloadStatus = _localization.GetString("ErrorFailedtoaddsystem", "Error: Failed to add system.");
-                _logger.Error(ex, "Unexpected error adding system.");
+                _logger.Error(ex, "Unexpected error adding system");
                 await _messageBox.AddSystemFailedMessageBoxAsync();
             }
             finally
@@ -420,7 +420,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             EndOperation();
-            _logger.Error(ex, "Error in AddSystemAsync.");
+            _logger.Error(ex, "Error in AddSystemAsync");
         }
     }
 
@@ -647,7 +647,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             EndOperation();
-            _logger.Error(ex, "Error in DownloadComponentAsync.");
+            _logger.Error(ex, "Error in DownloadComponentAsync");
         }
     }
 

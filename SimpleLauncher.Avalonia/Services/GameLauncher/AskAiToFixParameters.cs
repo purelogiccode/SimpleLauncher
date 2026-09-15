@@ -60,7 +60,7 @@ public class AskAiToFixParameters
             if (!wantAiHelp)
                 return;
 
-            _logger.Debug("[AskAiToFixParameters] User accepted AI parameter suggestion.");
+            _logger.Debug("[AskAiToFixParameters] User accepted AI parameter suggestion");
 
             loadingStateProvider?.SetLoadingState(true,
                 _localization.GetString("ParameterResolverLoading", "Resolving parameters, please wait..."));
@@ -84,7 +84,7 @@ public class AskAiToFixParameters
                 var result = await _parameterResolver.ResolveParametersAsync(request);
                 if (result is null)
                 {
-                    _logger.Debug("[AskAiToFixParameters] ParameterResolver API returned null.");
+                    _logger.Debug("[AskAiToFixParameters] ParameterResolver API returned null");
                     return;
                 }
 
@@ -115,7 +115,7 @@ public class AskAiToFixParameters
                 var applyResult = await _messageBox.CustomQuestionMessageBoxAsync(aiSuggestionTitle, dialogMessage);
                 if (!applyResult)
                 {
-                    _logger.Debug("[AskAiToFixParameters] User declined to apply AI suggestion.");
+                    _logger.Debug("[AskAiToFixParameters] User declined to apply AI suggestion");
                     return;
                 }
 
@@ -166,7 +166,7 @@ public class AskAiToFixParameters
                 _systemManager.InvalidateCache();
 
                 _logger.Debug(
-                    "[AskAiToFixParameters] Parameter updated for emulator '{Emulator}' in system '{System}'.",
+                    "[AskAiToFixParameters] Parameter updated for emulator '{Emulator}' in system '{System}'",
                     emulatorManager.EmulatorName, systemManager.SystemName);
 
                 await _messageBox.CustomInfoMessageBoxAsync(
@@ -181,7 +181,7 @@ public class AskAiToFixParameters
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in AskAiToFixParameters.");
+            _logger.Error(ex, "Error in AskAiToFixParameters");
             _logger.Debug("[AskAiToFixParameters] Error: {Message}", ex.Message);
         }
     }

@@ -36,7 +36,7 @@ public partial class UpdateHistoryWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error initializing UpdateHistoryWindow.");
+            _logger.Error(ex, "Error initializing UpdateHistoryWindow");
         }
     }
 }

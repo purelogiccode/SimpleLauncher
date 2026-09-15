@@ -63,7 +63,7 @@ internal class ScanSteamGames : IGamePlatformScanner
 
             if (string.IsNullOrEmpty(steamPath))
             {
-                _logger.Debug("[GameScannerService] Steam installation not found.");
+                _logger.Debug("[GameScannerService] Steam installation not found");
                 return;
             }
 
@@ -177,7 +177,7 @@ internal class ScanSteamGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Steam games.");
+            logErrors.Error(ex, "An error occurred while scanning for Steam games");
         }
     }
 

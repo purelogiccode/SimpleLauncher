@@ -75,7 +75,7 @@ public class AvaloniaApplicationLifecycleService
         }
         catch (Exception ex)
         {
-            _logger.Debug(ex, "Usage stats reporting failed.");
+            _logger.Debug(ex, "Usage stats reporting failed");
         }
     }
 

@@ -110,7 +110,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to initialize RetroAchievementsForAGameWindow.");
+            _logger.Error(ex, "Failed to initialize RetroAchievementsForAGameWindow");
         }
     }
 
@@ -153,7 +153,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in TabControl_SelectionChanged of RetroAchievementsForAGameWindow.");
+            _logger.Error(ex, "Error in TabControl_SelectionChanged of RetroAchievementsForAGameWindow");
         }
     }
 
@@ -273,7 +273,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             // launcher instead of assuming Windows shell-execute.
             if (!await ExternalLinkHelper.TryOpenUrlAsync(url, TopLevel.GetTopLevel(this)))
             {
-                _logger.Error("Unable to open URL: invalid or unreachable URL.");
+                _logger.Error("Unable to open URL: invalid or unreachable URL");
                 await _messageBox.UnableToOpenLinkMessageBoxAsync();
             }
         }
@@ -311,13 +311,13 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             else
             {
                 // Log and potentially inform the user if the image source is not a valid URI
-                _logger.Warning("Clicked image has no valid URI source to display in viewer.");
+                _logger.Warning("Clicked image has no valid URI source to display in viewer");
                 await _messageBox.ErrorMessageBoxAsync(); // Generic error for the user
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method GameImage_PointerPressed.");
+            _logger.Error(ex, "Error in the method GameImage_PointerPressed");
         }
     }
 
@@ -401,7 +401,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in OpenRaSettings_Click of RetroAchievementsForAGameWindow.");
+            _logger.Error(ex, "Error in OpenRaSettings_Click of RetroAchievementsForAGameWindow");
         }
     }
 
@@ -1220,6 +1220,6 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         _playSoundEffects.PlayNotificationSound();
         LoadingOverlay.IsVisible = false;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in RetroAchievements Window.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in RetroAchievements Window");
     }
 }

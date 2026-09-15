@@ -63,7 +63,7 @@ public class FavoritesManager
         var defaultManager = new FavoritesManager { _logger = logErrors };
         _ = defaultManager.SaveFavoritesAsync().ContinueWith(static (task, state) =>
         {
-            if (task.IsFaulted) (state as ILogger)?.Error(task.Exception, "Error saving default favorites.");
+            if (task.IsFaulted) (state as ILogger)?.Error(task.Exception, "Error saving default favorites");
         }, logErrors, TaskContinuationOptions.OnlyOnFaulted);
         return defaultManager; // Return default instance if error occurs
     }

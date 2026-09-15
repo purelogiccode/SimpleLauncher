@@ -49,7 +49,7 @@ public partial class ActiveWindowScreenshotService
                 var hWnd = GetForegroundWindow();
                 if (hWnd == IntPtr.Zero)
                 {
-                    _logger.Debug("[ActiveWindowScreenshot] No foreground window found.");
+                    _logger.Debug("[ActiveWindowScreenshot] No foreground window found");
                     return Task.CompletedTask;
                 }
 
@@ -59,7 +59,7 @@ public partial class ActiveWindowScreenshotService
                 {
                     if (!WindowScreenshot.GetWindowRect(hWnd, out rectangle))
                     {
-                        _logger.Debug("[ActiveWindowScreenshot] Failed to retrieve window dimensions.");
+                        _logger.Debug("[ActiveWindowScreenshot] Failed to retrieve window dimensions");
                         return Task.CompletedTask;
                     }
                 }
@@ -74,7 +74,7 @@ public partial class ActiveWindowScreenshotService
                 if (width <= 0 || height <= 0)
                 {
                     _logger.Debug(
-                        "[ActiveWindowScreenshot] Cannot take a screenshot of a minimized or zero-size window.");
+                        "[ActiveWindowScreenshot] Cannot take a screenshot of a minimized or zero-size window");
                     return Task.CompletedTask;
                 }
 
@@ -104,7 +104,7 @@ public partial class ActiveWindowScreenshotService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "[ActiveWindowScreenshot] Error capturing the active window screenshot.");
+                _logger.Error(ex, "[ActiveWindowScreenshot] Error capturing the active window screenshot");
             }
 
             return Task.CompletedTask;
@@ -133,13 +133,13 @@ public partial class ActiveWindowScreenshotService
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "[ActiveWindowScreenshot] Error showing flash overlay.");
+                    _logger.Error(ex, "[ActiveWindowScreenshot] Error showing flash overlay");
                 }
             });
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[ActiveWindowScreenshot] Error playing shutter sound or flash.");
+            _logger.Error(ex, "[ActiveWindowScreenshot] Error playing shutter sound or flash");
         }
     }
 }

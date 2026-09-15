@@ -321,7 +321,7 @@ public class MountChdFiles : IMountChdFiles
                     {
                         _logger.Debug(
                             $"[MountChdFiles] InvalidOperationException while terminating CHDMounter (ID: {mountProcessId}): {ioEx}");
-                        logErrors.Error(ioEx, "Unexpected InvalidOperationException during CHDMounter termination.");
+                        logErrors.Error(ioEx, "Unexpected InvalidOperationException during CHDMounter termination");
                     }
                 }
                 catch (Exception termEx)
@@ -342,7 +342,7 @@ public class MountChdFiles : IMountChdFiles
             else
             {
                 _logger.Debug(
-                    "[MountChdFiles] CHDMounter process was not started successfully. No termination needed.");
+                    "[MountChdFiles] CHDMounter process was not started successfully. No termination needed");
             }
 
             mountProcess?.Dispose();
@@ -535,7 +535,7 @@ public class MountChdFiles : IMountChdFiles
                     {
                         _logger.Debug(
                             $"[MountChdFiles] InvalidOperationException while terminating CHDMounter (ID: {mountProcessId}): {ioEx}");
-                        logErrors.Error(ioEx, "Unexpected InvalidOperationException during CHDMounter termination.");
+                        logErrors.Error(ioEx, "Unexpected InvalidOperationException during CHDMounter termination");
                     }
                 }
                 catch (Exception termEx)
@@ -556,7 +556,7 @@ public class MountChdFiles : IMountChdFiles
             else
             {
                 _logger.Debug(
-                    "[MountChdFiles] CHDMounter process was not started successfully. No termination needed.");
+                    "[MountChdFiles] CHDMounter process was not started successfully. No termination needed");
             }
 
             mountProcess?.Dispose();

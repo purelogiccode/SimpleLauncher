@@ -78,7 +78,7 @@ public static class ConvertDiscImageToIso
             }
             catch (OperationCanceledException)
             {
-                Logger.Debug("[ConvertDiscImageToIso] Conversion timed out after 5 minutes.");
+                Logger.Debug("[ConvertDiscImageToIso] Conversion timed out after 5 minutes");
                 try
                 {
                     process.Kill();
@@ -93,7 +93,7 @@ public static class ConvertDiscImageToIso
 
             if (process.ExitCode == 0 && File.Exists(tempIsoPath))
             {
-                Logger.Debug("[ConvertDiscImageToIso] Conversion successful.");
+                Logger.Debug("[ConvertDiscImageToIso] Conversion successful");
                 return tempIsoPath;
             }
 
@@ -103,9 +103,9 @@ public static class ConvertDiscImageToIso
         }
         catch (Exception ex)
         {
-            Logger.Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO.");
+            Logger.Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO");
             App.ServiceProvider.GetRequiredService<ILogger>()
-                .Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO.");
+                .Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO");
             return null;
         }
     }

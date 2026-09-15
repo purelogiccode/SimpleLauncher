@@ -97,7 +97,7 @@ public static class MesenConfigurationService
             var options = new JsonSerializerOptions { WriteIndented = true };
             File.WriteAllText(configPath, root.ToJsonString(options));
 
-            logger.Debug("[MesenConfig] Injection successful.");
+            logger.Debug("[MesenConfig] Injection successful");
         }
         catch (Exception ex)
         {

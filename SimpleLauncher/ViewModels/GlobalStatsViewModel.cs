@@ -172,7 +172,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             catch (Exception ex)
             {
                 // A torn-down VM racing in-flight work is shutdown noise, not a bug.
-                if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics.");
+                if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics");
 
                 if (!_forceClose && !_disposed)
                 {
@@ -210,7 +210,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics.");
+            if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics");
             ResetUiAfterProcessing();
         }
     }
@@ -420,7 +420,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed to save report.");
+                _logger.Error(ex, "Failed to save report");
                 await _messageBox.FailedSaveReportMessageBoxAsync();
             }
         }
@@ -514,7 +514,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in method Closing.");
+            _logger.Error(ex, "Error in method Closing");
         }
     }
 

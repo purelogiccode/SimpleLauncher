@@ -566,13 +566,13 @@ public partial class App : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Failed to cleanup trash in SimpleLauncher folder.");
+                    Log.Error(ex, "Failed to cleanup trash in SimpleLauncher folder");
                 }
             });
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to resolve the background folder cleanup service.");
+            Log.Error(ex, "Failed to resolve the background folder cleanup service");
         }
 
         if (!isRestarting) // Only perform the mutex check if NOT restarting
@@ -592,21 +592,21 @@ public partial class App : IDisposable
                 // but we explicitly set it for clarity and to ensure the flow continues as a first instance.
                 _isFirstInstance = true;
                 Log.Logger.Debug(
-                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance.");
+                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance");
                 // No need to call ILogger.LogErrorAsync here, as it's not a critical error preventing startup,
                 // but rather an informational event about a previous abnormal shutdown.
             }
             catch (UnauthorizedAccessException ex)
             {
                 ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to create or acquire single instance mutex.");
+                    .Error(ex, "Failed to create or acquire single instance mutex");
                 ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
                 return;
             }
             catch (IOException ex)
             {
                 ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to create or acquire single instance mutex.");
+                    .Error(ex, "Failed to create or acquire single instance mutex");
                 ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
                 return;
             }
@@ -627,7 +627,7 @@ public partial class App : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Failed to signal existing instance.");
+                    Log.Error(ex, "Failed to signal existing instance");
                     RestoreExistingWindow();
                 }
 
@@ -645,7 +645,7 @@ public partial class App : IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to create instance signal event.");
+                Log.Error(ex, "Failed to create instance signal event");
             }
         }
         // --- End Single Instance Check ---
@@ -679,7 +679,7 @@ public partial class App : IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to call ApplicationStats API on startup.");
+                Log.Error(ex, "Failed to call ApplicationStats API on startup");
             }
         });
 
@@ -703,7 +703,7 @@ public partial class App : IDisposable
                     try
                     {
                         ServiceProvider.GetRequiredService<ILogger>().Error(ex,
-                            "Error showing UpdateHistoryWindow with -whatsnew argument.");
+                            "Error showing UpdateHistoryWindow with -whatsnew argument");
                     }
                     catch
                     {
@@ -747,7 +747,7 @@ public partial class App : IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to show the failed-to-start message box.");
+                Log.Error(ex, "Failed to show the failed-to-start message box");
             }
 
             _singleInstanceMutex?.Dispose();
@@ -758,12 +758,12 @@ public partial class App : IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to shut down after startup failure.");
+                Log.Error(ex, "Failed to shut down after startup failure");
             }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to show the failed-to-start message box.");
+            Log.Error(ex, "Failed to show the failed-to-start message box");
         }
     }
 
@@ -828,7 +828,7 @@ public partial class App : IDisposable
         catch (Exception ex)
         {
             ServiceProvider.GetRequiredService<ILogger>()
-                .Information(ex, "Failed to cancel the RetroAchievements hash scan on exit.");
+                .Information(ex, "Failed to cancel the RetroAchievements hash scan on exit");
         }
 
         // Kill any lingering CHDMounter processes as a safety net
@@ -840,12 +840,12 @@ public partial class App : IDisposable
         catch (InvalidOperationException ex)
         {
             ServiceProvider.GetRequiredService<ILogger>()
-                .Error(ex, "Failed to kill lingering CHDMounter processes on exit.");
+                .Error(ex, "Failed to kill lingering CHDMounter processes on exit");
         }
         catch (SystemException ex)
         {
             ServiceProvider.GetRequiredService<ILogger>()
-                .Error(ex, "Failed to kill lingering CHDMounter processes on exit.");
+                .Error(ex, "Failed to kill lingering CHDMounter processes on exit");
         }
 
         try
@@ -863,7 +863,7 @@ public partial class App : IDisposable
                 _ = stopTask.ContinueWith(static (t, state) =>
                 {
                     if (t.IsFaulted)
-                        (state as ILogger)?.Error(t.Exception, "Failed to stop the gamepad controller on exit.");
+                        (state as ILogger)?.Error(t.Exception, "Failed to stop the gamepad controller on exit");
                 }, ServiceProvider.GetRequiredService<ILogger>(), TaskContinuationOptions.OnlyOnFaulted);
             }
 
@@ -873,12 +873,12 @@ public partial class App : IDisposable
         catch (InvalidOperationException ex)
         {
             // Notify developer
-            ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to dispose gamepad resources.");
+            ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to dispose gamepad resources");
         }
         catch (SystemException ex)
         {
             // Notify developer
-            ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to dispose gamepad resources.");
+            ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to dispose gamepad resources");
         }
 
         // Release the mutex if this was the first instance and the mutex was successfully created
@@ -894,19 +894,19 @@ public partial class App : IDisposable
             {
                 // Notify developer
                 ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to release single instance mutex on exit.");
+                    .Error(ex, "Failed to release single instance mutex on exit");
             }
             catch (ObjectDisposedException ex)
             {
                 // Notify developer
                 ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to release single instance mutex on exit.");
+                    .Error(ex, "Failed to release single instance mutex on exit");
             }
             catch (InvalidOperationException ex)
             {
                 // Notify developer
                 ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to release single instance mutex on exit.");
+                    .Error(ex, "Failed to release single instance mutex on exit");
             }
             finally
             {
@@ -964,7 +964,7 @@ public partial class App : IDisposable
             // Expected user input (e.g. --language zz): fall back to English without
             // going through ApplyLanguage, which would log an Error for the missing
             // resource and trigger a bug report.
-            Log.Information("Unsupported language launch argument '{Language}'. Falling back to English.", argLanguage);
+            Log.Information("Unsupported language launch argument '{Language}'. Falling back to English", argLanguage);
             return "en";
         }
 
@@ -998,7 +998,7 @@ public partial class App : IDisposable
         catch (Exception ex)
         {
             // Log the error using the LogErrorsService
-            ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to Apply Language.");
+            ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to Apply Language");
 
             // Fallback to English if loading the specified language fails
             if (!string.Equals(languageCode, "en", StringComparison.Ordinal))
@@ -1015,12 +1015,12 @@ public partial class App : IDisposable
                 {
                     // If even English fails, something is seriously wrong
                     ServiceProvider.GetRequiredService<ILogger>()
-                        .Error(fallbackEx, "Failed to apply English as fallback language.");
+                        .Error(fallbackEx, "Failed to apply English as fallback language");
                 }
 
                 // Notify developer
                 ServiceProvider.GetRequiredService<ILogger>()
-                    .Warning("Fallback to English language resources due to initial culture error.");
+                    .Warning("Fallback to English language resources due to initial culture error");
             }
         }
     }
@@ -1254,7 +1254,7 @@ public partial class App : IDisposable
         // Apply theme to all currently open windows
         foreach (Window window in Current.Windows) ApplyThemeToWindow(window);
 
-        Log.Logger.Debug("Theme has been applied to all windows.");
+        Log.Logger.Debug("Theme has been applied to all windows");
         Log.Logger.Debug($"Saved theme settings: {baseTheme}.{accentColor}");
     }
 
@@ -1283,7 +1283,7 @@ public partial class App : IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error in instance signal listener.");
+                Log.Error(ex, "Error in instance signal listener");
             }
         }
     }
@@ -1316,7 +1316,7 @@ public partial class App : IDisposable
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to restore existing SimpleLauncher window.");
+            Log.Error(ex, "Failed to restore existing SimpleLauncher window");
         }
     }
 }

@@ -64,7 +64,7 @@ public class UiResetService : IUiResetService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in the method ResetUiAsync.");
+                _logger.Error(ex, "Error in the method ResetUiAsync");
             }
             finally
             {
@@ -77,7 +77,7 @@ public class UiResetService : IUiResetService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method ResetUiAsync.");
+            _logger.Error(ex, "Error in the method ResetUiAsync");
         }
     }
 }

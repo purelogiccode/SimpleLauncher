@@ -71,7 +71,7 @@ public class ScanUplayGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Ubisoft games.");
+            logErrors.Error(ex, "An error occurred while scanning for Ubisoft games");
         }
     }
 }

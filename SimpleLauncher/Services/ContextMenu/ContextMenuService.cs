@@ -130,7 +130,7 @@ public class ContextMenuService : IContextMenuService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "[CreateMenu] Error launching the game.");
+                _logger.Error(ex, "[CreateMenu] Error launching the game");
                 _logger.Debug($"Error launching the game: {ex.Message}");
             }
             finally
@@ -285,7 +285,7 @@ public class ContextMenuService : IContextMenuService
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Error opening the RetroAchievements window.");
+                    _logger.Error(ex, "Error opening the RetroAchievements window");
                     _logger.Debug($"Error opening the RetroAchievements window: {ex.Message}");
                 }
             };
@@ -554,7 +554,7 @@ public class ContextMenuService : IContextMenuService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error taking the screenshot.");
+                _logger.Error(ex, "Error taking the screenshot");
                 _logger.Debug($"Error taking the screenshot: {ex.Message}");
             }
         };
@@ -611,7 +611,7 @@ public class ContextMenuService : IContextMenuService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error deleting the game.");
+                _logger.Error(ex, "Error deleting the game");
                 _logger.Debug($"Error deleting the game: {ex.Message}");
             }
         };
@@ -662,7 +662,7 @@ public class ContextMenuService : IContextMenuService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error deleting the cover image.");
+                _logger.Error(ex, "Error deleting the cover image");
                 _logger.Debug($"Error deleting the cover image: {ex.Message}");
             }
         };
@@ -704,7 +704,7 @@ public class ContextMenuService : IContextMenuService
             if (string.IsNullOrEmpty(context.FilePath))
             {
                 // Expected condition (stale entry); the user is already notified via the message box — not a bug report.
-                _logger.Information("Right click context menu was invoked, but the FilePath is null or empty.");
+                _logger.Information("Right click context menu was invoked, but the FilePath is null or empty");
 
                 // Notify user
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -718,7 +718,7 @@ public class ContextMenuService : IContextMenuService
                 // Log at Information level: expected condition (user right-clicked a game with no emulator
                 // selected) and the user is already notified via the message box — not a bug report.
                 _logger.Information(
-                    "[CheckParametersForNullOrEmptyAsync] Right click context menu was invoked, but the SelectedEmulatorName is null or empty.");
+                    "[CheckParametersForNullOrEmptyAsync] Right click context menu was invoked, but the SelectedEmulatorName is null or empty");
 
                 // Notify user
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -731,7 +731,7 @@ public class ContextMenuService : IContextMenuService
             {
                 // Expected condition; the user is already notified via the message box — not a bug report.
                 _logger.Information(
-                    "Right click context menu was invoked, but the SelectedSystemName is null or empty.");
+                    "Right click context menu was invoked, but the SelectedSystemName is null or empty");
 
                 // Notify user
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -743,7 +743,7 @@ public class ContextMenuService : IContextMenuService
             if (context.SelectedSystemManager == null)
             {
                 // Expected condition; the user is already notified via the message box — not a bug report.
-                _logger.Information("Right click context menu was invoked, but the SelectedSystemManager is null.");
+                _logger.Information("Right click context menu was invoked, but the SelectedSystemManager is null");
 
                 // Notify user
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(

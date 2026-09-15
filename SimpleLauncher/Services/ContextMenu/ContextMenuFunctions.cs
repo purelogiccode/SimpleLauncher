@@ -242,7 +242,7 @@ public class ContextMenuFunctions : IContextMenuFunctions
                                             StringComparison.OrdinalIgnoreCase))
         {
             logErrors.Error(ex,
-                "Win32Exception: No default application configured for opening web links (Video Link).");
+                "Win32Exception: No default application configured for opening web links (Video Link)");
             await messageBox.NoDefaultBrowserConfiguredMessageBoxAsync();
         }
         catch (Exception ex)
@@ -307,7 +307,7 @@ public class ContextMenuFunctions : IContextMenuFunctions
                                         ex.Message.Contains("No application is associated",
                                             StringComparison.OrdinalIgnoreCase))
         {
-            logErrors.Error(ex, "Win32Exception: No default application configured for opening web links (Info Link).");
+            logErrors.Error(ex, "Win32Exception: No default application configured for opening web links (Info Link)");
             await messageBox.NoDefaultBrowserConfiguredMessageBoxAsync();
         }
         catch (Exception ex)
@@ -450,9 +450,9 @@ public class ContextMenuFunctions : IContextMenuFunctions
             {
                 await messageBox.SimpleLauncherDoesNotSupportRaHashOfSystemGroupedByFolderMessageBoxAsync();
                 _logger.Debug(
-                    "[RA Service] 'Simple Launcher' does not support RetroAchievements hash of systems Grouped by Folder.");
+                    "[RA Service] 'Simple Launcher' does not support RetroAchievements hash of systems Grouped by Folder");
                 _logger.Debug(
-                    "[RA Service] Please edit the system settings and disable the 'Group Files by Folder' option.");
+                    "[RA Service] Please edit the system settings and disable the 'Group Files by Folder' option");
                 return;
             }
 
@@ -474,8 +474,8 @@ public class ContextMenuFunctions : IContextMenuFunctions
 
             if (string.IsNullOrEmpty(fileNameWithoutExtension))
             {
-                _logger.Debug("[RA Service] FileNameWithoutExtension is null or empty.");
-                logErrors.Warning("[RA Service] FileNameWithoutExtension is null or empty.");
+                _logger.Debug("[RA Service] FileNameWithoutExtension is null or empty");
+                logErrors.Warning("[RA Service] FileNameWithoutExtension is null or empty");
                 await messageBox.ErrorMessageBoxAsync();
 
                 Application.Current.Dispatcher.Invoke(() =>
@@ -489,8 +489,8 @@ public class ContextMenuFunctions : IContextMenuFunctions
 
             if (string.IsNullOrWhiteSpace(systemName))
             {
-                _logger.Debug("[RA Service] SystemName is null or empty.");
-                logErrors.Warning("[RA Service] SystemName is null or empty.");
+                _logger.Debug("[RA Service] SystemName is null or empty");
+                logErrors.Warning("[RA Service] SystemName is null or empty");
 
                 var messageBoxResult = await messageBox.GameNotSupportedByRetroAchievementsMessageBoxAsync();
                 if (messageBoxResult == CoreMessageBoxResult.Yes)
@@ -536,7 +536,7 @@ public class ContextMenuFunctions : IContextMenuFunctions
             if (string.Equals(raHashResult.ExtractionErrorMessage, "System selection cancelled by user.",
                     StringComparison.Ordinal))
             {
-                _logger.Debug("[RA Service] User cancelled RetroAchievements hashing.");
+                _logger.Debug("[RA Service] User cancelled RetroAchievements hashing");
                 return;
             }
 
@@ -1125,7 +1125,7 @@ public class ContextMenuFunctions : IContextMenuFunctions
             }
             catch (Exception ex)
             {
-                logErrors.Error(ex, "Error clearing preview image source before taking screenshot.");
+                logErrors.Error(ex, "Error clearing preview image source before taking screenshot");
             }
 
             var systemImageFolder = PathHelper.ResolveRelativeToAppDirectory(selectedSystemManager.SystemImageFolder);
@@ -1237,7 +1237,7 @@ public class ContextMenuFunctions : IContextMenuFunctions
                 {
                     // Notify the user that they can't screenshot a minimized window.
                     await messageBox.CannotScreenshotMinimizedWindowMessageBoxAsync();
-                    _logger.Debug("Cannot take a screenshot of a minimized window.");
+                    _logger.Debug("Cannot take a screenshot of a minimized window");
 
                     return; // Exit the method gracefully
                 }

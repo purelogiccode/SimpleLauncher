@@ -68,7 +68,7 @@ file static class Program
 
             if (games == null || games.Count == 0)
             {
-                Log.Error("The JSON file is empty or invalid. No data to convert.");
+                Log.Error("The JSON file is empty or invalid. No data to convert");
             }
             else
             {
@@ -107,7 +107,7 @@ file static class Program
 
             if (consoles.Count == 0)
             {
-                Log.Error("No consoles found. Aborting.");
+                Log.Error("No consoles found. Aborting");
                 Environment.Exit(1);
             }
 
@@ -129,12 +129,12 @@ file static class Program
             if (allGames.Count > 0)
                 await SaveGameDataAsync(allGames, serializerOptions);
             else
-                Log.Warning("No games were found to save.");
+                Log.Warning("No games were found to save");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Critical error during fetch");
-            Log.Error("Process incomplete.");
+            Log.Error("Process incomplete");
             Environment.Exit(1);
         }
 
@@ -291,7 +291,7 @@ file static class Program
 
         if (string.IsNullOrWhiteSpace(settings.Username) || string.IsNullOrWhiteSpace(settings.WebApiKey))
         {
-            Log.Error("Username and Web API Key cannot be empty.");
+            Log.Error("Username and Web API Key cannot be empty");
             Environment.Exit(1);
         }
 

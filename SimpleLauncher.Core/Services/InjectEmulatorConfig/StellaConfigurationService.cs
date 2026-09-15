@@ -85,6 +85,6 @@ public static class StellaConfigurationService
 
         transaction.Commit();
 
-        logger.Debug("[StellaConfig] Injection successful.");
+        logger.Debug("[StellaConfig] Injection successful");
     }
 }

@@ -512,7 +512,7 @@ public class ExtractionService : IExtractionService
             }
             catch (OperationCanceledException)
             {
-                _logger.Debug("[ExtractionService] 7za extraction timed out after 30 minutes.");
+                _logger.Debug("[ExtractionService] 7za extraction timed out after 30 minutes");
                 try
                 {
                     process.Kill();

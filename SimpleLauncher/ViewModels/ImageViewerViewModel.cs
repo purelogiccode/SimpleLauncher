@@ -140,7 +140,7 @@ public class ImageViewerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to show the image viewer error dialog.");
+            _logger.Error(ex, "Failed to show the image viewer error dialog");
         }
     }
 }

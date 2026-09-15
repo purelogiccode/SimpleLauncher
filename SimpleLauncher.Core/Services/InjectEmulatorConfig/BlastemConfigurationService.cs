@@ -167,7 +167,7 @@ public static partial class BlastemConfigurationService
         }
         else
         {
-            logger.Debug("[BlastemConfig] No changes needed for Blastem configuration.");
+            logger.Debug("[BlastemConfig] No changes needed for Blastem configuration");
         }
     }
 

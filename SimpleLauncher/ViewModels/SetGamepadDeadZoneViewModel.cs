@@ -87,7 +87,7 @@ public partial class SetGamepadDeadZoneViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error saving gamepad dead zone settings.");
+            _logger.Error(ex, "Error saving gamepad dead zone settings");
             await _messageBox.FailedToSaveSettingsMessageBoxAsync();
         }
     }

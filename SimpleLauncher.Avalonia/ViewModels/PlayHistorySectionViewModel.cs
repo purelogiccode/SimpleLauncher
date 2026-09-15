@@ -81,7 +81,7 @@ public partial class PlayHistorySectionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error loading play history data.");
+            _logErrors.Error(ex, "Error loading play history data");
             PlayHistoryList = [];
         }
         finally
@@ -153,7 +153,7 @@ public partial class PlayHistorySectionViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                _logErrors.Error(ex, "Error removing history item.");
+                _logErrors.Error(ex, "Error removing history item");
             }
 
             return Task.CompletedTask;
@@ -183,7 +183,7 @@ public partial class PlayHistorySectionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error removing all history items.");
+            _logErrors.Error(ex, "Error removing all history items");
         }
     }
 

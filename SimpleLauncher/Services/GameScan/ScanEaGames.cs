@@ -102,12 +102,12 @@ public class ScanEaGames : IGamePlatformScanner
             }
             else
             {
-                _logger.Debug("[ScanEaGames] API returned no confirmed games. No shortcuts created.");
+                _logger.Debug("[ScanEaGames] API returned no confirmed games. No shortcuts created");
             }
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for EA games.");
+            logErrors.Error(ex, "An error occurred while scanning for EA games");
         }
     }
 
@@ -161,7 +161,7 @@ public class ScanEaGames : IGamePlatformScanner
 
             if (apiResponse?.Games == null)
             {
-                _logger.Debug("[ScanEaGames] Game classification API returned null games list.");
+                _logger.Debug("[ScanEaGames] Game classification API returned null games list");
                 return [];
             }
 
@@ -181,7 +181,7 @@ public class ScanEaGames : IGamePlatformScanner
         }
         catch (OperationCanceledException)
         {
-            _logger.Debug("[ScanEaGames] Game classification API request timed out. Returning empty game list.");
+            _logger.Debug("[ScanEaGames] Game classification API request timed out. Returning empty game list");
             return [];
         }
         catch (HttpRequestException ex)
@@ -193,7 +193,7 @@ public class ScanEaGames : IGamePlatformScanner
         catch (Exception ex)
         {
             _logger.Debug($"[ScanEaGames] Game classification API error: {ex.Message}. Returning empty game list.");
-            logErrors.Error(ex, "Failed to classify EA games via API.");
+            logErrors.Error(ex, "Failed to classify EA games via API");
             return [];
         }
     }

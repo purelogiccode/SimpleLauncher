@@ -109,7 +109,7 @@ public partial class InjectDaphneConfigViewModel : ObservableObject
         catch (Exception ex)
         {
             ShouldRun = true;
-            _logger.Error(ex, "Error saving Daphne configuration.");
+            _logger.Error(ex, "Error saving Daphne configuration");
             await _messageBox.ErrorMessageBoxAsync();
         }
     }
@@ -125,7 +125,7 @@ public partial class InjectDaphneConfigViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error saving Daphne configuration.");
+            _logger.Error(ex, "Error saving Daphne configuration");
             await _messageBox.DaphneConfigurationSaveFailedMessageBoxAsync();
         }
     }

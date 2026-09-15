@@ -90,17 +90,17 @@ public class StartupInitializationService
             _host.StatusBarTimer.Stop();
         };
 
-        _logger.Debug("StatusBarTimer was initialized.");
+        _logger.Debug("StatusBarTimer was initialized");
     }
 
     private void ApplyInitialThemeAndLanguage()
     {
         _languageMenuService.SetLanguageCheckMarks(_settings.Language);
-        _logger.Debug("Language and menu was set.");
+        _logger.Debug("Language and menu was set");
 
         App.ChangeTheme(_settings.BaseTheme, _settings.AccentColor);
         _themeMenuService.SetCheckedTheme(_settings.BaseTheme, _settings.AccentColor);
-        _logger.Debug("Theme was set.");
+        _logger.Debug("Theme was set");
     }
 
     private void InitializeUiState()
@@ -108,10 +108,10 @@ public class StartupInitializationService
         var nosystemselected = (string)Application.Current.TryFindResource("Nosystemselected") ?? "No system selected";
         _host.SelectedSystem = nosystemselected;
         _host.PlayTime = "00:00:00";
-        _logger.Debug("SelectedSystem and PlayTime was set.");
+        _logger.Debug("SelectedSystem and PlayTime was set");
 
         _host.SetViewMode(_settings.ViewMode);
-        _logger.Debug("ViewMode was set.");
+        _logger.Debug("ViewMode was set");
     }
 
     private async Task CheckWriteAccessAsync()
@@ -119,14 +119,14 @@ public class StartupInitializationService
         if (!CheckDirWritable.IsWritableDirectory(AppDomain.CurrentDomain.BaseDirectory, _logger))
         {
             await _messageBoxLibrary.MoveToWritableFolderMessageBoxAsync();
-            _logger.Debug("Application does not have write access.");
+            _logger.Debug("Application does not have write access");
         }
     }
 
     private void InitializePagination()
     {
         _host.SetPaginationButtonsDefault();
-        _logger.Debug("Pagination was set.");
+        _logger.Debug("Pagination was set");
     }
 
     private void InitializeTrayIcon()
@@ -135,11 +135,11 @@ public class StartupInitializationService
         {
             _host.SetTrayIconManager(new TrayIconManager(_host.HostWindow, _applicationLifetime, _logger,
                 _toastNotificationService));
-            _logger.Debug("TrayIconManager was initialized.");
+            _logger.Debug("TrayIconManager was initialized");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error initializing the tray icon. The application will continue without it.");
+            _logger.Error(ex, "Error initializing the tray icon. The application will continue without it");
         }
     }
 
@@ -148,11 +148,11 @@ public class StartupInitializationService
         try
         {
             await _requiredFiles.CheckFilesAsync(_configuration, _logger);
-            _logger.Debug("Required files were checked.");
+            _logger.Debug("Required files were checked");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method CheckRequiredFilesAsync.");
+            _logger.Error(ex, "Error in the method CheckRequiredFilesAsync");
         }
     }
 
@@ -161,7 +161,7 @@ public class StartupInitializationService
         _host.RetroAchievementButton.IsChecked = _settings.OverlayRetroAchievementButton;
         _host.VideoLinkButton.IsChecked = _settings.OverlayOpenVideoButton;
         _host.InfoLinkButton.IsChecked = _settings.OverlayOpenInfoButton;
-        _logger.Debug("Overlay buttons were set.");
+        _logger.Debug("Overlay buttons were set");
     }
 
     private void InitializeGamePad()
@@ -174,6 +174,6 @@ public class StartupInitializationService
 
         _gamePadController.DeadZoneX = _settings.DeadZoneX;
         _gamePadController.DeadZoneY = _settings.DeadZoneY;
-        _logger.Debug("GamePadController was initialized.");
+        _logger.Debug("GamePadController was initialized");
     }
 }

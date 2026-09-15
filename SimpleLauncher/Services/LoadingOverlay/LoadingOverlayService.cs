@@ -107,6 +107,6 @@ public class LoadingOverlayService
 
         _ = host.ResetUiAsync();
         host.UpdateStatusBarService.UpdateContent("Emergency reset performed.");
-        _logger.Debug("[Emergency] User forced overlay dismissal via Return button.");
+        _logger.Debug("[Emergency] User forced overlay dismissal via Return button");
     }
 }

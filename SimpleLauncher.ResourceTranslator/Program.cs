@@ -51,7 +51,7 @@ public static class Program
             var apiKey = Console.ReadLine()?.Trim();
             if (string.IsNullOrEmpty(apiKey))
             {
-                Log.Error("API key is required.");
+                Log.Error("API key is required");
                 Environment.Exit(1);
             }
 
@@ -112,7 +112,7 @@ public static class Program
             }
             else
             {
-                Log.Warning("Could not locate SimpleLauncher/resources directory. Skipping WPF project.");
+                Log.Warning("Could not locate SimpleLauncher/resources directory. Skipping WPF project");
             }
 
             Console.WriteLine();
@@ -135,7 +135,7 @@ public static class Program
             }
             else
             {
-                Log.Warning("Could not locate SimpleLauncher.Avalonia/Resources directory. Skipping Avalonia project.");
+                Log.Warning("Could not locate SimpleLauncher.Avalonia/Resources directory. Skipping Avalonia project");
             }
 
             overallStopwatch.Stop();
@@ -181,7 +181,7 @@ public static class Program
         if (batches.Count == 0)
         {
             Console.WriteLine();
-            Log.Information("All language files are fully synchronized with English. No action needed.");
+            Log.Information("All language files are fully synchronized with English. No action needed");
             return (0, 0);
         }
 

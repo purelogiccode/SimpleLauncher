@@ -171,7 +171,7 @@ public class MountXisoFiles : IMountXisoFiles
         catch (Exception ex)
         {
             _logger.Debug($"[MountXisoFiles.GetAvailableDriveLetter] Error enumerating drives: {ex.Message}");
-            logErrors.Error(ex, "Error enumerating available drive letters.");
+            logErrors.Error(ex, "Error enumerating available drive letters");
             return null;
         }
     }

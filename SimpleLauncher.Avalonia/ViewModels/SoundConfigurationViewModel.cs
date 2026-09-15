@@ -81,7 +81,7 @@ public partial class SoundConfigurationViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error choosing or copying sound file.");
+            _logger.Error(ex, "Error choosing or copying sound file");
             await _messageBox.ErrorSettingSoundFileMessageBoxAsync();
         }
     }

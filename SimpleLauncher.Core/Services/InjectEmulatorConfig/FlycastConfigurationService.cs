@@ -149,7 +149,7 @@ public static class FlycastConfigurationService
         }
         else
         {
-            logger.Debug("[FlycastConfig] No changes needed.");
+            logger.Debug("[FlycastConfig] No changes needed");
         }
     }
 }

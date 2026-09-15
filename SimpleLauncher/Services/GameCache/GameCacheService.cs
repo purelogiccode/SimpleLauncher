@@ -200,7 +200,7 @@ public class GameCacheService : IGameCacheService, IDisposable
         {
             _allGamesForCurrentSystem.Clear();
             _currentSearchResults.Clear();
-            _logger.Debug("[GameCacheService] All game file caches invalidated.");
+            _logger.Debug("[GameCacheService] All game file caches invalidated");
         }
         finally
         {
@@ -229,7 +229,7 @@ public class GameCacheService : IGameCacheService, IDisposable
             }
             else
             {
-                _logger?.Debug("GameCacheService.ClearSync timed out waiting for lock after 5 seconds.");
+                _logger?.Debug("GameCacheService.ClearSync timed out waiting for lock after 5 seconds");
             }
         }
         catch (ObjectDisposedException)

@@ -74,7 +74,7 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error saving RetroAchievements settings.");
+            _logger.Error(ex, "Error saving RetroAchievements settings");
             await _messageBox.FailedToSaveSettingsMessageBoxAsync();
         }
     }
@@ -148,7 +148,7 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in ConfigureEmulator method.");
+            _logger.Error(ex, "Error in ConfigureEmulator method");
         }
     }
 

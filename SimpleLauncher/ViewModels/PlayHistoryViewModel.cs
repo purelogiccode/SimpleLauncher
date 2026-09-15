@@ -145,7 +145,7 @@ public partial class PlayHistoryViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading play history data.");
+            _logger.Error(ex, "Error loading play history data");
             await _messageBox.ErrorLoadingRomHistoryMessageBoxAsync();
         }
         finally
@@ -220,7 +220,7 @@ public partial class PlayHistoryViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in RemoveAllAsync.");
+            _logger.Error(ex, "Error in RemoveAllAsync");
         }
     }
 
@@ -255,7 +255,7 @@ public partial class PlayHistoryViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading preview image.");
+            _logger.Error(ex, "Error loading preview image");
             PreviewImageSource = null;
         }
     }

@@ -80,7 +80,7 @@ public class RetroAchievementsService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[RA Service] Failed to get session token.");
+            _logger.Error(ex, "[RA Service] Failed to get session token");
             return null;
         }
     }
@@ -93,7 +93,7 @@ public class RetroAchievementsService
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(apiKey))
         {
-            _logger.Debug("[RA Service] Username or API Key is missing.");
+            _logger.Debug("[RA Service] Username or API Key is missing");
             return (null, null);
         }
 

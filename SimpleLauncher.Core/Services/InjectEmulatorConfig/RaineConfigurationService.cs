@@ -53,7 +53,7 @@ public static class RaineConfigurationService
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, "Failed to create Raine config from sample.");
+                    logger.Error(ex, "Failed to create Raine config from sample");
                     throw;
                 }
             }
@@ -207,11 +207,11 @@ public static class RaineConfigurationService
             try
             {
                 File.WriteAllLines(configPath, lines, new UTF8Encoding(false));
-                logger.Debug("[RaineConfig] Configuration injected.");
+                logger.Debug("[RaineConfig] Configuration injected");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Failed to inject Raine configuration.");
+                logger.Error(ex, "Failed to inject Raine configuration");
                 throw;
             }
         }

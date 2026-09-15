@@ -48,7 +48,7 @@ public class AvaloniaQuitSimpleLauncher
         catch (Win32Exception ex) when (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
         {
             // Expected user-environment condition (e.g., canceled UAC/security prompt): not a bug.
-            _logger.Information(ex, "Application restart was canceled by the user.");
+            _logger.Information(ex, "Application restart was canceled by the user");
 
             // Notify user and don't shut down the current instance if the new one couldn't start
             await messageBox.FailedToRestartMessageBoxAsync();
@@ -57,7 +57,7 @@ public class AvaloniaQuitSimpleLauncher
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Failed to start new process during application restart.");
+            _logger.Error(ex, "Failed to start new process during application restart");
 
             // Notify user
             await messageBox.FailedToRestartMessageBoxAsync();
@@ -106,7 +106,7 @@ public class AvaloniaQuitSimpleLauncher
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to start updater and shut down.");
+            _logger.Error(ex, "Failed to start updater and shut down");
 
             await messageBox.UpdaterLaunchFailedMessageBoxAsync();
         }

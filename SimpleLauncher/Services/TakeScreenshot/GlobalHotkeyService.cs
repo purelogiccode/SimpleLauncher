@@ -48,7 +48,7 @@ public partial class GlobalHotkeyService : IDisposable
             if (_windowHandle != IntPtr.Zero)
             {
                 _ = UnregisterHotKey(_windowHandle, HotkeyId);
-                _logger.Debug("[GlobalHotkeyService] F8 hotkey unregistered.");
+                _logger.Debug("[GlobalHotkeyService] F8 hotkey unregistered");
             }
         }
         catch (Exception ex)
@@ -92,7 +92,7 @@ public partial class GlobalHotkeyService : IDisposable
         }
         else
         {
-            _logger.Debug("[GlobalHotkeyService] F8 hotkey registered successfully.");
+            _logger.Debug("[GlobalHotkeyService] F8 hotkey registered successfully");
             IsRegistered = true;
         }
     }
@@ -112,7 +112,7 @@ public partial class GlobalHotkeyService : IDisposable
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(ex, "[GlobalHotkeyService] Error invoking F8Pressed event.");
+                        _logger.Error(ex, "[GlobalHotkeyService] Error invoking F8Pressed event");
                     }
                 });
             }

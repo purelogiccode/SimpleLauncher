@@ -67,7 +67,7 @@ public class UpdateHistoryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error opening hyperlink in browser.");
+            _logger.Error(ex, "Error opening hyperlink in browser");
         }
     }
 }

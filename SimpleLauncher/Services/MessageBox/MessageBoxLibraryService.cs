@@ -458,7 +458,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwasnotfound = _resourceProvider.GetString("Thefileerroruserlogwasnotfound",
                     "The file 'error_user.log' was not found!");
 
@@ -526,7 +526,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwasnotfound = _resourceProvider.GetString("Thefileerroruserlogwasnotfound",
                     "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlogwasnotfound, error);
@@ -693,7 +693,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwasnotfound = _resourceProvider.GetString("Thefileerroruserlogwasnotfound",
                     "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlogwasnotfound, error);
@@ -1234,7 +1234,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlog =
                     _resourceProvider.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlog, error);
@@ -1270,7 +1270,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                _logger.Information(ex, "Failed to open the 'error_user.log' file. The file may not exist.");
+                _logger.Information(ex, "Failed to open the 'error_user.log' file. The file may not exist");
                 var thefileerroruserlog =
                     _resourceProvider.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlog, error);
@@ -1305,7 +1305,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlog =
                     _resourceProvider.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlog, error);
@@ -2270,7 +2270,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 // Notify user
                 var thefileerroruserlogwas = _resourceProvider.GetString("Thefileerroruserlogwas",
                     "The file 'error_user.log' was not found!");
@@ -2312,7 +2312,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwas = _resourceProvider.GetString("Thefileerroruserlogwas",
                     "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlogwas, error);
@@ -2359,7 +2359,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwas = _resourceProvider.GetString("Thefileerroruserlogwas",
                     "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlogwas, error);
@@ -2406,7 +2406,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwas = _resourceProvider.GetString("Thefileerroruserlogwas",
                     "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlogwas, error);
@@ -2444,7 +2444,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlog =
                     _resourceProvider.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlog, error);
@@ -2498,7 +2498,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a batch file error message box. The file may not exist.");
+                    "Failed to open the error log file from a batch file error message box. The file may not exist");
                 var notFound =
                     _resourceProvider.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(notFound, error);
@@ -3137,7 +3137,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwas = _resourceProvider.GetString("Thefileerroruserlogwas",
                     "The file 'error_user.log' was not found!");
                 await _messageDialog.ShowErrorAsync(thefileerroruserlogwas, error);
@@ -3184,7 +3184,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 // Notify developer
-                _logger.Error(ex, "Could not open the Dokan website.");
+                _logger.Error(ex, "Could not open the Dokan website");
 
                 // Notify user
                 var anerroroccurredwhileopeningthebrowser = _resourceProvider.GetString(
@@ -3222,7 +3222,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Could not open the Dokan website.");
+                _logger.Error(ex, "Could not open the Dokan website");
                 var anerroroccurredwhileopeningthebrowser = _resourceProvider.GetString(
                     "Anerroroccurredwhileopeningyourbrowser", "An error occurred while opening your browser.");
                 await _messageDialog.ShowErrorAsync(anerroroccurredwhileopeningthebrowser, error);
@@ -3650,7 +3650,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 var thefileerroruserlogwasnotfound = _resourceProvider.GetString("Thefileerroruserlogwasnotfound",
                     "The file 'error_user.log' was not found!");
 
@@ -4878,7 +4878,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             catch (Exception ex)
             {
                 _logger.Information(ex,
-                    "Failed to open the error log file from a message box. The file may not exist.");
+                    "Failed to open the error log file from a message box. The file may not exist");
                 // Notify user
                 var thefileerroruserlogwas = _resourceProvider.GetString("Thefileerroruserlogwas",
                     "The file 'error_user.log' was not found!");

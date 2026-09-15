@@ -92,6 +92,6 @@ public class AvaloniaLoadingOverlayService
         });
 
         _ = host.ResetUiAsync();
-        Log.Debug("[Emergency] User forced overlay dismissal via Return button.");
+        Log.Debug("[Emergency] User forced overlay dismissal via Return button");
     }
 }

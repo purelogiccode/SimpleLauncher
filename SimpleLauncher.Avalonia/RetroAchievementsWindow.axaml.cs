@@ -103,7 +103,7 @@ public partial class RetroAchievementsWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in TabControl_SelectionChanged of RetroAchievementsWindow.");
+            _logger.Error(ex, "Error in TabControl_SelectionChanged of RetroAchievementsWindow");
         }
     }
 
@@ -115,7 +115,7 @@ public partial class RetroAchievementsWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in RetroAchievementsWindow_Opened.");
+            _logger.Error(ex, "Error in RetroAchievementsWindow_Opened");
         }
     }
 
@@ -288,7 +288,7 @@ public partial class RetroAchievementsWindow : Window
             // launcher instead of assuming Windows shell-execute.
             if (!await ExternalLinkHelper.TryOpenUrlAsync(url, TopLevel.GetTopLevel(this)))
             {
-                _logger.Error("Unable to open URL: invalid or unreachable URL.");
+                _logger.Error("Unable to open URL: invalid or unreachable URL");
                 await _messageBox.UnableToOpenLinkMessageBoxAsync();
             }
         }
@@ -358,7 +358,7 @@ public partial class RetroAchievementsWindow : Window
         _playSoundEffects.PlayNotificationSound();
         LoadingOverlay.IsVisible = false;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in RetroAchievements Window.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in RetroAchievements Window");
     }
 
     private static DateTimeOffset? ToDateTimeOffset(DateTime? date)

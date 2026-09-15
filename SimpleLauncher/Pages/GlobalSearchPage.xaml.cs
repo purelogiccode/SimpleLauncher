@@ -157,7 +157,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error cleaning up resources on page unload.");
+            _logger.Error(ex, "Error cleaning up resources on page unload");
         }
     }
 
@@ -195,7 +195,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         catch (Exception ex)
         {
             SetLoadingState(false);
-            _logger.Error(ex, "Error in SearchButtonClickAsync.");
+            _logger.Error(ex, "Error in SearchButtonClickAsync");
         }
     }
 
@@ -222,7 +222,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in LaunchButton_ClickAsync (GlobalSearch).");
+            _logger.Error(ex, "Error in LaunchButton_ClickAsync (GlobalSearch)");
             await _messageBox.ErrorLaunchingGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
         }
@@ -237,7 +237,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
                 selectedEmulatorManager == null)
             {
                 _logger.Warning(
-                    "[LaunchGameFromSearchResultAsync] filePath or selectedSystemName or selectedEmulatorManager is null.");
+                    "[LaunchGameFromSearchResultAsync] filePath or selectedSystemName or selectedEmulatorManager is null");
                 await _messageBox.ErrorLaunchingGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -246,7 +246,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
             var selectedSystemManager = _viewModel.GetSystemManager(selectedSystemName);
             if (selectedSystemManager == null)
             {
-                _logger.Warning("[LaunchGameFromSearchResultAsync] System manager not found.");
+                _logger.Warning("[LaunchGameFromSearchResultAsync] System manager not found");
                 await _messageBox.ErrorLaunchingGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -288,7 +288,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
             if (string.IsNullOrEmpty(selectedResult.FilePath) || string.IsNullOrEmpty(selectedResult.SystemName) ||
                 selectedResult.EmulatorManager == null)
             {
-                _logger.Warning("FilePath, SystemName, or EmulatorManager is null.");
+                _logger.Warning("FilePath, SystemName, or EmulatorManager is null");
                 await _messageBox.ErrorLaunchingGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -326,7 +326,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in GlobalSearch right-click context menu.");
+            _logger.Error(ex, "Error in GlobalSearch right-click context menu");
             await _messageBox.RightClickContextMenuErrorMessageBoxAsync();
         }
     }
@@ -347,7 +347,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in ResultsDataGrid_MouseDoubleClickAsync (GlobalSearch).");
+            _logger.Error(ex, "Error in ResultsDataGrid_MouseDoubleClickAsync (GlobalSearch)");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
         }
@@ -374,7 +374,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading image in ActionsWhenUserSelectAResultItemAsync (GlobalSearch).");
+            _logger.Error(ex, "Error loading image in ActionsWhenUserSelectAResultItemAsync (GlobalSearch)");
             PreviewImage.Source = null;
         }
     }
@@ -385,7 +385,7 @@ internal partial class GlobalSearchPage : IDisposable, ILoadingState
         _viewModel.CancelSearch();
         LoadingOverlay.Visibility = Visibility.Collapsed;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in GlobalSearchPage.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in GlobalSearchPage");
         _mainWindow.UpdateStatusBarService.UpdateContent("Emergency reset performed.");
     }
 }

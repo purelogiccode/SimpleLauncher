@@ -46,7 +46,7 @@ public class AvaloniaTrayIconManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Debug(ex, "Error disposing the tray icon.");
+            _logger.Debug(ex, "Error disposing the tray icon");
         }
 
         GC.SuppressFinalize(this);
@@ -74,7 +74,7 @@ public class AvaloniaTrayIconManager : IDisposable
 
         TrayIconControl.SetIcons(Application.Current!, [_trayIcon]);
 
-        _logger.Debug("AvaloniaTrayIconManager was initialized.");
+        _logger.Debug("AvaloniaTrayIconManager was initialized");
     }
 
     private static WindowIcon? LoadIcon()
@@ -86,7 +86,7 @@ public class AvaloniaTrayIconManager : IDisposable
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Failed to load the tray icon.");
+            Log.Debug(ex, "Failed to load the tray icon");
             return null;
         }
     }
@@ -156,7 +156,7 @@ public class AvaloniaTrayIconManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to open the debug window from the tray menu.");
+            _logger.Error(ex, "Failed to open the debug window from the tray menu");
 
             // WPF parity (TrayIconManager.OnOpenDebugWindow): notify the user via a toast.
             if (_mainWindow is MainWindow mainWindow)

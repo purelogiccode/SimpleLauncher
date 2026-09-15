@@ -132,7 +132,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
         // The flag is set synchronously so a concurrent request is rejected immediately.
         if (Interlocked.CompareExchange(ref _isScanningFlag, 1, 0) != 0)
         {
-            _logger.Information("[RA Hash Scanner] A hash scan is already in progress. Ignoring the new request.");
+            _logger.Information("[RA Hash Scanner] A hash scan is already in progress. Ignoring the new request");
             return Task.FromResult(false);
         }
 
@@ -173,7 +173,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
             }
             catch (OperationCanceledException)
             {
-                _logger.Information("[RA Hash Scanner] Hash scan was canceled.");
+                _logger.Information("[RA Hash Scanner] Hash scan was canceled");
                 return false;
             }
             finally
@@ -208,7 +208,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
         try
         {
             await scanTask.WaitAsync(timeout);
-            _logger.Debug("[RA Hash Scanner] Hash scan finished cleanly during shutdown.");
+            _logger.Debug("[RA Hash Scanner] Hash scan finished cleanly during shutdown");
         }
         catch (TimeoutException)
         {

@@ -85,7 +85,7 @@ public partial class GlobalStatsWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in method GlobalStatsWindow_Closing.");
+            _logger.Error(ex, "Error in method GlobalStatsWindow_Closing");
         }
     }
 }

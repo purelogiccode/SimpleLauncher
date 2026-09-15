@@ -63,7 +63,7 @@ public static class ConvertChdToCueBin
             process.StartInfo = processStartInfo;
 
             Logger.Debug($"[ConvertChdToCueBin] Running chdman with args: {args}");
-            Logger.Debug("[ConvertChdToCueBin] Converting from CHD to CUE/BIN.");
+            Logger.Debug("[ConvertChdToCueBin] Converting from CHD to CUE/BIN");
 
             var errorBuilder = new StringBuilder();
             process.ErrorDataReceived += (_, e) =>
@@ -83,7 +83,7 @@ public static class ConvertChdToCueBin
             }
             catch (OperationCanceledException)
             {
-                Logger.Debug("[ConvertChdToCueBin] Conversion timed out after 5 minutes. Killing process.");
+                Logger.Debug("[ConvertChdToCueBin] Conversion timed out after 5 minutes. Killing process");
                 try
                 {
                     process.Kill();
@@ -98,7 +98,7 @@ public static class ConvertChdToCueBin
 
             if (process.ExitCode == 0 && File.Exists(tempCuePath))
             {
-                Logger.Debug("[ConvertChdToCueBin] Conversion successful.");
+                Logger.Debug("[ConvertChdToCueBin] Conversion successful");
                 return tempCuePath;
             }
 
@@ -107,9 +107,9 @@ public static class ConvertChdToCueBin
         }
         catch (Exception ex)
         {
-            Logger.Error(ex, "[ConvertChdToCueBin] Error converting CHD to CUE/BIN.");
+            Logger.Error(ex, "[ConvertChdToCueBin] Error converting CHD to CUE/BIN");
             App.ServiceProvider.GetRequiredService<ILogger>()
-                .Error(ex, "[ConvertChdToCueBin] Error converting CHD to CUE/BIN.");
+                .Error(ex, "[ConvertChdToCueBin] Error converting CHD to CUE/BIN");
             return null;
         }
     }

@@ -119,7 +119,7 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
 
             if (string.IsNullOrEmpty(userSelectedSystem))
             {
-                _logger.Debug("[GetGameHashForRetroAchievementsAsync] User did not choose a system. Returning null.");
+                _logger.Debug("[GetGameHashForRetroAchievementsAsync] User did not choose a system. Returning null");
                 return new RaHashResult(null, null, false, "System selection cancelled by user.");
             }
 
@@ -148,8 +148,8 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
 
         if (string.IsNullOrWhiteSpace(systemName))
         {
-            _logger.Debug("[RA Hasher Tool] SystemName is null or empty.");
-            logErrors.Information("[RA Hasher Tool] SystemName is null or empty.");
+            _logger.Debug("[RA Hasher Tool] SystemName is null or empty");
+            logErrors.Information("[RA Hasher Tool] SystemName is null or empty");
             loadingState?.SetLoadingState(false);
             return new RaHashResult(null, null, false, "System name is missing.");
         }

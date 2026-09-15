@@ -121,7 +121,7 @@ public partial class ScanRockstarGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Rockstar games.");
+            logErrors.Error(ex, "An error occurred while scanning for Rockstar games");
         }
     }
 

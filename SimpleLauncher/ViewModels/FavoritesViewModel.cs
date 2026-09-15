@@ -159,7 +159,7 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading favorites data in FavoritesViewModel.");
+            _logger.Error(ex, "Error loading favorites data in FavoritesViewModel");
             await _messageBox.ErrorWhileAddingFavoritesMessageBoxAsync();
         }
         finally
@@ -189,7 +189,7 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in RemoveFavoriteAsync.");
+            _logger.Error(ex, "Error in RemoveFavoriteAsync");
         }
     }
 
@@ -209,7 +209,7 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in LaunchGameAsync.");
+            _logger.Error(ex, "Error in LaunchGameAsync");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
         }
@@ -231,7 +231,7 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
             {
                 // Expected condition (favorite references a removed system; user is notified below):
                 // not a bug, keep it out of the bug report service.
-                _logger.Information("[LaunchGameFromFavoritesAsync] selectedSystemManager is null.");
+                _logger.Information("[LaunchGameFromFavoritesAsync] selectedSystemManager is null");
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -257,7 +257,7 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
             var emulatorManager = selectedSystemManager.Emulators.FirstOrDefault();
             if (emulatorManager == null)
             {
-                _logger.Information("[LaunchGameFromFavoritesAsync] emulatorManager is null.");
+                _logger.Information("[LaunchGameFromFavoritesAsync] emulatorManager is null");
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
             }
@@ -291,7 +291,7 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading preview image.");
+            _logger.Error(ex, "Error loading preview image");
         }
     }
 

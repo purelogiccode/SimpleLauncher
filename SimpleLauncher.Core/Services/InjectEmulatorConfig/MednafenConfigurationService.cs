@@ -152,7 +152,7 @@ public static class MednafenConfigurationService
         }
         else
         {
-            logger.Debug("[MednafenConfig] No changes needed.");
+            logger.Debug("[MednafenConfig] No changes needed");
         }
     }
 }

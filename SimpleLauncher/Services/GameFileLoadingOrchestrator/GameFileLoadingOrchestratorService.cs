@@ -171,7 +171,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         }
         catch (OperationCanceledException)
         {
-            _logger.Debug("[LoadGameFilesAsync] Operation was canceled.");
+            _logger.Debug("[LoadGameFilesAsync] Operation was canceled");
             _gameItemRenderService.ClearRenderedItems();
         }
         catch (Exception ex)

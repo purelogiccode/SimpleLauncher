@@ -264,7 +264,7 @@ internal class UpdateService
             catch (Exception ex)
             {
                 lastPrimaryError = ex;
-                Log.Information(ex, "Download from the primary source failed (attempt {Attempt}/2).", attempt);
+                Log.Information(ex, "Download from the primary source failed (attempt {Attempt}/2)", attempt);
 
                 if (attempt == 1)
                 {

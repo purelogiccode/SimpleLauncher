@@ -75,6 +75,6 @@ public partial class SupportWindow : Window
     {
         LoadingOverlay.IsVisible = false;
         MainContentGrid.IsEnabled = true;
-        Log.Debug("[Emergency] User forced overlay dismissal in SupportWindow.");
+        Log.Debug("[Emergency] User forced overlay dismissal in SupportWindow");
     }
 }

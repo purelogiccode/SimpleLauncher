@@ -342,7 +342,7 @@ public class AvaloniaHelpUserService
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Failed to load parameters.md.");
+            _logger.Error(ex, "Failed to load parameters.md");
         }
     }
 

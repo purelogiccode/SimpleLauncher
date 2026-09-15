@@ -55,7 +55,7 @@ public sealed partial class AvaloniaGlobalHotkeyService : IDisposable
                 _ = UnregisterHotKey(_hwnd, HotkeyId);
                 _ = DestroyWindow(_hwnd);
                 _hwnd = IntPtr.Zero;
-                _logger.Debug("[AvaloniaGlobalHotkeyService] F8 hotkey unregistered.");
+                _logger.Debug("[AvaloniaGlobalHotkeyService] F8 hotkey unregistered");
             }
         }
         catch (Exception ex)
@@ -126,7 +126,7 @@ public sealed partial class AvaloniaGlobalHotkeyService : IDisposable
         }
         else
         {
-            _logger.Debug("[AvaloniaGlobalHotkeyService] F8 hotkey registered successfully.");
+            _logger.Debug("[AvaloniaGlobalHotkeyService] F8 hotkey registered successfully");
             IsRegistered = true;
         }
     }
@@ -145,7 +145,7 @@ public sealed partial class AvaloniaGlobalHotkeyService : IDisposable
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(ex, "[AvaloniaGlobalHotkeyService] Error invoking the F8Pressed event.");
+                        _logger.Error(ex, "[AvaloniaGlobalHotkeyService] Error invoking the F8Pressed event");
                     }
                 });
 

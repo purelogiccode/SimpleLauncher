@@ -78,7 +78,7 @@ public static class YumirConfigurationService
         try
         {
             File.WriteAllText(configPath, updatedToml);
-            logger.Debug("[YumirConfig] Injected configuration changes.");
+            logger.Debug("[YumirConfig] Injected configuration changes");
         }
         catch (Exception ex)
         {

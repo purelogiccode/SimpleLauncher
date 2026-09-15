@@ -82,7 +82,7 @@ public partial class CheckForUpdatesService
             catch (Exception ex)
             {
                 // Notify developer
-                _logger.Error(ex, "Error getting CurrentVersion.");
+                _logger.Error(ex, "Error getting CurrentVersion");
 
                 return _resourceProvider.GetString("UnknownString", "Unknown");
             }
@@ -128,11 +128,11 @@ public partial class CheckForUpdatesService
         }
         catch (TaskCanceledException)
         {
-            _logger.Debug("Silent update check canceled (network timeout or user canceled).");
+            _logger.Debug("Silent update check canceled (network timeout or user canceled)");
         }
         catch (OperationCanceledException)
         {
-            _logger.Debug("Silent update check canceled.");
+            _logger.Debug("Silent update check canceled");
         }
         catch (Exception ex)
         {
@@ -165,7 +165,7 @@ public partial class CheckForUpdatesService
                 // Expected condition (both sources unreachable / offline); the user is
                 // already notified via the message box below — not a bug report.
                 _logger.Information(
-                    "Could not determine the latest version (GitHub and the secondary server are unreachable).");
+                    "Could not determine the latest version (GitHub and the secondary server are unreachable)");
                 await _messageBoxLibrary.ErrorCheckingForUpdatesMessageBoxAsync();
                 return;
             }
@@ -229,7 +229,7 @@ public partial class CheckForUpdatesService
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Error fetching latest updater info.");
+            _logger.Error(ex, "Error fetching latest updater info");
             return (null, null);
         }
     }
@@ -305,7 +305,7 @@ public partial class CheckForUpdatesService
             var releasePackageUrl = SecondaryServerBaseUrl + $"release_{rawVersion}_{CurrentRuntimeIdentifier}.zip";
             var updaterZipAssetUrl = SecondaryServerBaseUrl + $"updater_{CurrentRuntimeIdentifier}.zip";
 
-            _logger.Information("GitHub API unavailable. Using the secondary server: version {LatestVersion}.",
+            _logger.Information("GitHub API unavailable. Using the secondary server: version {LatestVersion}",
                 latestVersion);
             return (latestVersion, releasePackageUrl, updaterZipAssetUrl, true);
         }
@@ -467,7 +467,7 @@ public partial class CheckForUpdatesService
         catch (Exception ex)
         {
             // Notify developer
-            logErrors.Error(ex, "Error processing the update ZIP archive.");
+            logErrors.Error(ex, "Error processing the update ZIP archive");
             logWindow?.Log($"Failed to process the update ZIP archive. Error: {ex.Message}");
 
             return false;
@@ -483,7 +483,7 @@ public partial class CheckForUpdatesService
                 // Notify developer
                 _logger.Error(
                     new ArgumentException(@"Current or latest version string is null or empty.",
-                        nameof(currentVersion)), "Invalid version string for comparison.");
+                        nameof(currentVersion)), "Invalid version string for comparison");
                 return false;
             }
 
@@ -495,7 +495,7 @@ public partial class CheckForUpdatesService
                 // Notify developer
                 _logger.Error(
                     new ArgumentException(@"Normalized version string is null or empty after regex replace.",
-                        nameof(latestVersion)), "Invalid version string after normalization.");
+                        nameof(latestVersion)), "Invalid version string after normalization");
                 return false;
             }
 
@@ -519,7 +519,7 @@ public partial class CheckForUpdatesService
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Unexpected error in IsNewVersionAvailable.");
+            _logger.Error(ex, "Unexpected error in IsNewVersionAvailable");
             return false;
         }
     }
@@ -627,12 +627,12 @@ public partial class CheckForUpdatesService
         catch (JsonException jsonEx)
         {
             // Notify developer
-            _logger.Error(jsonEx, "Failed to parse JSON response from GitHub API.");
+            _logger.Error(jsonEx, "Failed to parse JSON response from GitHub API");
         }
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Unexpected error in ParseVersionAndAssetUrlsFromResponse.");
+            _logger.Error(ex, "Unexpected error in ParseVersionAndAssetUrlsFromResponse");
         }
 
         return (null, null, null);

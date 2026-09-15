@@ -70,7 +70,7 @@ public class AvaloniaGameFileWatcherService : IDisposable
         foreach (var system in systemManagerConfigs)
             _watcher.StartWatching(system.SystemFolders, system.SystemName, system.FileFormatsToSearch, false);
 
-        _logger.Debug("[AvaloniaGameFileWatcherService] Started watching {Count} system(s).",
+        _logger.Debug("[AvaloniaGameFileWatcherService] Started watching {Count} system(s)",
             systemManagerConfigs.Count);
     }
 

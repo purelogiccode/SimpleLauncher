@@ -41,7 +41,7 @@ public static class CreateDefaultSystemFoldersService
                 catch (Exception ex)
                 {
                     // Notify developer
-                    logErrors.Error(ex, "Error creating the primary system folder.");
+                    logErrors.Error(ex, "Error creating the primary system folder");
 
                     // Notify user
                     await messageBox.FolderCreationFailedMessageBoxAsync();
@@ -57,7 +57,7 @@ public static class CreateDefaultSystemFoldersService
                 catch (Exception ex)
                 {
                     // Notify developer
-                    logErrors.Error(ex, "Error creating the primary image folder.");
+                    logErrors.Error(ex, "Error creating the primary image folder");
 
                     // Notify user
                     await messageBox.FolderCreationFailedMessageBoxAsync();

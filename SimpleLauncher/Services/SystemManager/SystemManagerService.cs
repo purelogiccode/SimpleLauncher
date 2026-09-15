@@ -247,7 +247,7 @@ public partial class SystemManagerService : ISystemManager
                 }
                 catch (XmlException ex)
                 {
-                    logErrors?.Error(ex, "Structural corruption in 'system.xml'. Attempting partial recovery.");
+                    logErrors?.Error(ex, "Structural corruption in 'system.xml'. Attempting partial recovery");
 
                     // Create a fresh document for rebuilding
                     doc = new XDocument(new XElement("SystemConfigs"));
@@ -282,14 +282,14 @@ public partial class SystemManagerService : ISystemManager
                     catch (Exception fatalEx)
                     {
                         _logger?.Debug($"Failed to perform regex recovery on system.xml: {fatalEx.Message}");
-                        logErrors?.Error(fatalEx, "Failed to perform regex recovery on system.xml.");
+                        logErrors?.Error(fatalEx, "Failed to perform regex recovery on system.xml");
                     }
 
                     // If no systems could be recovered, the file is completely corrupted
                     if (systemManagers.Count == 0 && invalidManagers.Count == 0)
                     {
                         logErrors?.Error(ex,
-                            "No systems could be recovered from 'system.xml'. The file is completely corrupted.");
+                            "No systems could be recovered from 'system.xml'. The file is completely corrupted");
 
                         if (messageBoxLibrary != null)
                         {
@@ -302,7 +302,7 @@ public partial class SystemManagerService : ISystemManager
                 }
                 catch (IOException ex)
                 {
-                    logErrors?.Error(ex, "The file 'system.xml' is locked.");
+                    logErrors?.Error(ex, "The file 'system.xml' is locked");
                     if (messageBoxLibrary != null) _ = messageBoxLibrary.FileSystemXmlIsLockedMessageBoxAsync();
                 }
 
@@ -707,7 +707,7 @@ public partial class SystemManagerService : ISystemManager
                     }
                     catch (Exception ex)
                     {
-                        logErrors?.Error(ex, "Error loading/parsing system.xml for saving.");
+                        logErrors?.Error(ex, "Error loading/parsing system.xml for saving");
                         throw new InvalidOperationException("Failed to load system configuration for saving.", ex);
                     }
 
@@ -831,7 +831,7 @@ public partial class SystemManagerService : ISystemManager
                     }
 
                     // All retries exhausted or non-transient error
-                    logErrors?.Error(lastException, "Error saving system.xml.");
+                    logErrors?.Error(lastException, "Error saving system.xml");
 
                     // Attempt to clean up temp file if it exists
                     try
@@ -851,7 +851,7 @@ public partial class SystemManagerService : ISystemManager
         catch (Exception ex)
         {
             _logger?.Debug($"Error saving system configuration: {ex.Message}");
-            logErrors?.Error(ex, "Error saving system configuration.");
+            logErrors?.Error(ex, "Error saving system configuration");
         }
     }
 

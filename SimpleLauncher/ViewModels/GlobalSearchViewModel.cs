@@ -204,7 +204,7 @@ public partial class GlobalSearchViewModel : ObservableObject, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error during search operation.");
+                _logger.Error(ex, "Error during search operation");
                 await _messageBox.GlobalSearchErrorMessageBoxAsync();
                 NoResultsVisible = true;
                 ResultsCountText = "";
@@ -217,7 +217,7 @@ public partial class GlobalSearchViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in SearchAsync.");
+            _logger.Error(ex, "Error in SearchAsync");
         }
     }
 
@@ -354,7 +354,7 @@ public partial class GlobalSearchViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading preview image.");
+            _logger.Error(ex, "Error loading preview image");
             PreviewImageSource = null;
         }
     }

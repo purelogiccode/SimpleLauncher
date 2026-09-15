@@ -153,7 +153,7 @@ public static class AresConfigurationService
         }
         else
         {
-            logger.Debug("[AresConfig] No changes needed.");
+            logger.Debug("[AresConfig] No changes needed");
         }
     }
 }

@@ -168,7 +168,7 @@ internal partial class EditSystemWindow
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method LoadSystemDetailsAsync.");
+            _logger.Error(ex, "Error in the method LoadSystemDetailsAsync");
         }
     }
 

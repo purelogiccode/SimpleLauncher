@@ -130,7 +130,7 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in TabControl_SelectionChanged of RetroAchievementsWindow.");
+            _logger.Error(ex, "Error in TabControl_SelectionChanged of RetroAchievementsWindow");
         }
     }
 
@@ -142,7 +142,7 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in RetroAchievementsWindow_Loaded.");
+            _logger.Error(ex, "Error in RetroAchievementsWindow_Loaded");
         }
     }
 
@@ -204,7 +204,7 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading RetroAchievements user profile.");
+            _logger.Error(ex, "Error loading RetroAchievements user profile");
         }
         finally
         {
@@ -244,7 +244,7 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading RetroAchievements unlocks by date.");
+            _logger.Error(ex, "Error loading RetroAchievements unlocks by date");
         }
         finally
         {
@@ -326,7 +326,7 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading RetroAchievements user progress.");
+            _logger.Error(ex, "Error loading RetroAchievements user progress");
         }
         finally
         {
@@ -395,7 +395,7 @@ public partial class RetroAchievementsWindow : ILoadingState
         _playSoundEffects.PlayNotificationSound();
         LoadingOverlay.Visibility = Visibility.Collapsed;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in RetroAchievements Window.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in RetroAchievements Window");
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent("Emergency reset performed.");
     }
 }

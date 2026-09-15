@@ -208,7 +208,7 @@ public class ExternalToolLauncherService : IExternalToolLauncher
         if (string.IsNullOrEmpty(toolPath))
         {
             // Expected user-error condition (no tool configured): not a bug.
-            _logger.Information("Tool path cannot be null or empty.");
+            _logger.Information("Tool path cannot be null or empty");
             await _messageBoxLibrary.SelectedToolNotFoundMessageBoxAsync();
             return;
         }

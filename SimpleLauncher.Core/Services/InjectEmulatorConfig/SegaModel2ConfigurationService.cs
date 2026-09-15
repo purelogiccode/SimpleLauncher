@@ -186,7 +186,7 @@ public static class SegaModel2ConfigurationService
             try
             {
                 File.WriteAllLines(configPath, lines, new UTF8Encoding(false));
-                logger.Debug("[SegaModel2Config] Injected configuration changes.");
+                logger.Debug("[SegaModel2Config] Injected configuration changes");
             }
             catch (Exception ex)
             {
@@ -197,7 +197,7 @@ public static class SegaModel2ConfigurationService
         }
         else
         {
-            logger.Debug("[SegaModel2Config] No changes needed.");
+            logger.Debug("[SegaModel2Config] No changes needed");
         }
     }
 }

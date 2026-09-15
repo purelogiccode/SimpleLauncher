@@ -110,7 +110,7 @@ public partial class FavoritesSectionViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                _logErrors.Error(ex, "Error reconciling favorites against configured systems.");
+                _logErrors.Error(ex, "Error reconciling favorites against configured systems");
             }
 
             var rows = await Task.Run(() =>
@@ -174,7 +174,7 @@ public partial class FavoritesSectionViewModel : ObservableObject
         {
             // Only a failure of the load machinery itself (not a single bad entry) reaches
             // here. Preserve whatever was already loaded rather than wiping the list.
-            _logErrors.Error(ex, "Error loading favorites in the Favorites section.");
+            _logErrors.Error(ex, "Error loading favorites in the Favorites section");
             if (Favorites is null || Favorites.Count == 0) Favorites = [];
         }
         finally
@@ -238,7 +238,7 @@ public partial class FavoritesSectionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error removing favorite from the Favorites section.");
+            _logErrors.Error(ex, "Error removing favorite from the Favorites section");
         }
     }
 
@@ -300,7 +300,7 @@ public partial class FavoritesSectionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error launching favorite from the Favorites section.");
+            _logErrors.Error(ex, "Error launching favorite from the Favorites section");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(GetLogFilePath());
         }
     }

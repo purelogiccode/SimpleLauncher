@@ -96,7 +96,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
                         if (string.IsNullOrEmpty(extractedDir) || !Directory.Exists(extractedDir))
                         {
-                            _logger.Debug("[DosBoxLaunchStrategy] Extraction failed or temp directory not created.");
+                            _logger.Debug("[DosBoxLaunchStrategy] Extraction failed or temp directory not created");
                             return;
                         }
 
@@ -125,7 +125,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                         // No owner window (e.g. headless/test run): pick the first file
                         selectedFile = gameFiles[0];
                         _logger.Debug(
-                            "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file.");
+                            "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file");
                     }
                     else
                     {
@@ -135,7 +135,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
                         if (string.IsNullOrEmpty(dialog.SelectedFilePath))
                         {
-                            _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection.");
+                            _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection");
                             return;
                         }
 
@@ -268,7 +268,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 await _mountIsoFiles.ExecutePowerShellMountCommandAsync(context.ResolvedFilePath, _logger, _messageBox);
             if (string.IsNullOrEmpty(driveLetter))
             {
-                _logger.Debug("[DosBoxLaunchStrategy] Failed to mount ISO via PowerShell.");
+                _logger.Debug("[DosBoxLaunchStrategy] Failed to mount ISO via PowerShell");
                 await _messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
                 return;
             }
@@ -306,7 +306,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                         // No owner window (e.g. headless/test run): pick the first file
                         selectedFile = gameFiles[0];
                         _logger.Debug(
-                            "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file on ISO.");
+                            "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file on ISO");
                         break;
                     }
 
@@ -316,7 +316,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
                     if (string.IsNullOrEmpty(dialog.SelectedFilePath))
                     {
-                        _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for ISO.");
+                        _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for ISO");
                         return;
                     }
 
@@ -429,7 +429,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
             if (!mountedDrive.IsMounted)
             {
-                _logger.Debug("[DosBoxLaunchStrategy] Failed to mount CHD via CHDMounter.");
+                _logger.Debug("[DosBoxLaunchStrategy] Failed to mount CHD via CHDMounter");
                 return;
             }
 
@@ -458,7 +458,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 // No owner window (e.g. headless/test run): pick the first file
                 selectedFile = gameFiles[0];
                 _logger.Debug(
-                    "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file on CHD.");
+                    "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file on CHD");
             }
             else
             {
@@ -468,7 +468,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
                 if (string.IsNullOrEmpty(dialog.SelectedFilePath))
                 {
-                    _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for CHD.");
+                    _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for CHD");
                     return;
                 }
 

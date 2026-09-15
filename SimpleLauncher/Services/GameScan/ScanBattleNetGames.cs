@@ -146,7 +146,7 @@ public partial class ScanBattleNetGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Battle.net games.");
+            logErrors.Error(ex, "An error occurred while scanning for Battle.net games");
         }
     }
 

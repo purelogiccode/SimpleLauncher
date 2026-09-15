@@ -57,25 +57,25 @@ public partial class SupportViewModel : ObservableObject
     [RelayCommand]
     private async Task SendSupportRequestAsync()
     {
-        _logger.Debug("[Support] SendSupportRequestAsync started.");
+        _logger.Debug("[Support] SendSupportRequestAsync started");
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            _logger.Debug("[Support] Validation failed: Name is empty.");
+            _logger.Debug("[Support] Validation failed: Name is empty");
             await _messageBox.EnterNameMessageBoxAsync();
             return;
         }
 
         if (string.IsNullOrWhiteSpace(Email))
         {
-            _logger.Debug("[Support] Validation failed: Email is empty.");
+            _logger.Debug("[Support] Validation failed: Email is empty");
             await _messageBox.EnterEmailMessageBoxAsync();
             return;
         }
 
         if (string.IsNullOrWhiteSpace(SupportRequest))
         {
-            _logger.Debug("[Support] Validation failed: SupportRequest is empty.");
+            _logger.Debug("[Support] Validation failed: SupportRequest is empty");
             await _messageBox.EnterSupportRequestMessageBoxAsync();
             return;
         }
@@ -97,13 +97,13 @@ public partial class SupportViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[Support] Exception in SendSupportRequestAsync.");
-            _logger.Error(ex, "Error in the SendSupportRequestClickAsync method.");
+            _logger.Error(ex, "[Support] Exception in SendSupportRequestAsync");
+            _logger.Error(ex, "Error in the SendSupportRequestClickAsync method");
         }
         finally
         {
             IsLoading = false;
-            _logger.Debug("[Support] SendSupportRequestAsync finished. IsLoading set to false.");
+            _logger.Debug("[Support] SendSupportRequestAsync finished. IsLoading set to false");
         }
     }
 
@@ -145,7 +145,7 @@ public partial class SupportViewModel : ObservableObject
             if (httpClient == null)
             {
                 _logger.Debug(
-                    "[Support] ERROR: httpClient is null. IHttpClientFactory returned null for 'SupportWindowClient'.");
+                    "[Support] ERROR: httpClient is null. IHttpClientFactory returned null for 'SupportWindowClient'");
                 return;
             }
 
@@ -177,7 +177,7 @@ public partial class SupportViewModel : ObservableObject
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.Debug("[Support] SUCCESS: Email sent successfully.");
+                    _logger.Debug("[Support] SUCCESS: Email sent successfully");
 
                     Name = "";
                     Email = "";
@@ -202,16 +202,16 @@ public partial class SupportViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            _logger.Debug("[Support] TIMEOUT: Request timed out after 20 seconds.");
+            _logger.Debug("[Support] TIMEOUT: Request timed out after 20 seconds");
             _logger.Warning(
-                "The support request timed out after 20 seconds. Please check your internet connection and try again.");
+                "The support request timed out after 20 seconds. Please check your internet connection and try again");
 
             await _messageBox.SupportRequestSendErrorMessageBoxAsync();
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[Support] EXCEPTION: Error sending the Support Request.");
-            _logger.Error(ex, "Error sending the Support Request.");
+            _logger.Error(ex, "[Support] EXCEPTION: Error sending the Support Request");
+            _logger.Error(ex, "Error sending the Support Request");
 
             await _messageBox.SupportRequestSendErrorMessageBoxAsync();
         }

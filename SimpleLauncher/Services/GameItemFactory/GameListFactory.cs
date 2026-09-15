@@ -133,7 +133,7 @@ public class GameListFactory(
                 _logger.Error(
                     new InvalidOperationException(
                         "_mainWindow is null in GameListFactory.HandleSelectionChangedAsync."),
-                    "MainWindow instance is null. Cannot update preview.");
+                    "MainWindow instance is null. Cannot update preview");
 
                 return;
             }
@@ -144,7 +144,7 @@ public class GameListFactory(
                 _logger.Error(
                     new InvalidOperationException(
                         "_mainWindow.PreviewImage is null in GameListFactory.HandleSelectionChangedAsync."),
-                    "PreviewImage control in MainWindow is null. Cannot update preview.");
+                    "PreviewImage control in MainWindow is null. Cannot update preview");
 
                 return;
             }
@@ -164,7 +164,7 @@ public class GameListFactory(
                     // Notify developer
                     _logger.Error(
                         new ArgumentException(@"selectedItem.FilePath is null or empty.", nameof(selectedItem)),
-                        "Selected item has an invalid file path. Cannot load preview.");
+                        "Selected item has an invalid file path. Cannot load preview");
 
                     _mainWindow.PreviewImage.Source = null; // Clear preview
                     var (defaultStream, _) = await _imageLoader.LoadImageAsync(null); // Load global default
@@ -181,7 +181,7 @@ public class GameListFactory(
                 {
                     // Notify developer
                     _logger.Error(new InvalidOperationException("Selected system name is null or empty from ComboBox."),
-                        "No system selected or system name is invalid. Cannot load preview.");
+                        "No system selected or system name is invalid. Cannot load preview");
 
                     _mainWindow.PreviewImage.Source = null; // Clear preview
                     var (defaultStream, _) = await _imageLoader.LoadImageAsync(null); // Load global default
@@ -252,7 +252,7 @@ public class GameListFactory(
             catch (Exception ex)
             {
                 // Notify developer
-                _logger.Error(ex, "Error loading preview image.");
+                _logger.Error(ex, "Error loading preview image");
 
                 // Attempt to set a default image in case of any error during the process
                 try
@@ -271,14 +271,14 @@ public class GameListFactory(
                 catch (Exception fallbackEx)
                 {
                     // Notify developer
-                    _logger.Error(fallbackEx, "Error loading fallback preview image after an initial error.");
+                    _logger.Error(fallbackEx, "Error loading fallback preview image after an initial error");
                 }
             }
         }
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Error in method GameListFactory.HandleSelectionChangedAsync.");
+            _logger.Error(ex, "Error in method GameListFactory.HandleSelectionChangedAsync");
         }
     }
 
@@ -300,7 +300,7 @@ public class GameListFactory(
         if (selectedItem == null)
         {
             // Notify developer
-            _logger.Warning("selectedItem is null.");
+            _logger.Warning("selectedItem is null");
 
             // Notify user
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -318,7 +318,7 @@ public class GameListFactory(
         if (string.IsNullOrEmpty(filePath))
         {
             // Notify developer
-            _logger.Warning("[HandleDoubleClickAsync] filepath is null or empty.");
+            _logger.Warning("[HandleDoubleClickAsync] filepath is null or empty");
 
             // Notify user
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -330,7 +330,7 @@ public class GameListFactory(
         if (string.IsNullOrEmpty(selectedEmulatorName))
         {
             // Notify developer
-            _logger.Warning("[HandleDoubleClickAsync] selectedEmulatorName is null or empty.");
+            _logger.Warning("[HandleDoubleClickAsync] selectedEmulatorName is null or empty");
 
             // Notify user
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -342,7 +342,7 @@ public class GameListFactory(
         if (string.IsNullOrEmpty(selectedSystemName))
         {
             // Notify developer
-            _logger.Warning("[HandleDoubleClickAsync] selectedSystemName is null or empty.");
+            _logger.Warning("[HandleDoubleClickAsync] selectedSystemName is null or empty");
 
             // Notify user
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
@@ -354,7 +354,7 @@ public class GameListFactory(
         if (selectedSystemManager == null)
         {
             // Notify developer
-            _logger.Warning("[HandleDoubleClickAsync] selectedSystemManager is null.");
+            _logger.Warning("[HandleDoubleClickAsync] selectedSystemManager is null");
 
             // Notify user
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(

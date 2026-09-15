@@ -46,7 +46,7 @@ internal class ProcessService
                     StringComparison.OrdinalIgnoreCase))
             {
                 Log.Warning(
-                    "Ignoring process ID argument {Pid}: process name is '{Actual}' (expected '{Expected}').",
+                    "Ignoring process ID argument {Pid}: process name is '{Actual}' (expected '{Expected}')",
                     pid, process.ProcessName, ExpectedMainAppProcessName);
                 return null;
             }
@@ -56,13 +56,13 @@ internal class ProcessService
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
             // No such process, or it exited mid-check — fall back to the by-name wait.
-            Log.Information("Ignoring process ID argument {Pid}: process not running.", pid);
+            Log.Information("Ignoring process ID argument {Pid}: process not running", pid);
             return null;
         }
         catch (Exception ex)
         {
             // E.g. access denied reading an elevated process — never trust it.
-            Log.Warning(ex, "Ignoring process ID argument {Pid}: could not verify the process.", pid);
+            Log.Warning(ex, "Ignoring process ID argument {Pid}: could not verify the process", pid);
             return null;
         }
     }
@@ -112,7 +112,7 @@ internal class ProcessService
             {
                 // Expected condition: Simple Launcher already exited before the poll started —
                 // log at Information level, not a bug report.
-                Log.Information("Simple Launcher process not found (PID: {ProcessId}). Assuming it has already exited.",
+                Log.Information("Simple Launcher process not found (PID: {ProcessId}). Assuming it has already exited",
                     processId);
                 LogMessage?.Invoke(this,
                     new EventArgs<string>("Simple Launcher process not found. Assuming it has already exited."));
@@ -167,7 +167,7 @@ internal class ProcessService
                 {
                     // Expected condition: process exited between GetProcessesByName and HasExited check
                     Log.Information(
-                        "SimpleLauncher.Avalonia process disappeared during wait. Assuming it has already exited.");
+                        "SimpleLauncher.Avalonia process disappeared during wait. Assuming it has already exited");
                     LogMessage?.Invoke(this,
                         new EventArgs<string>(
                             "SimpleLauncher.Avalonia process disappeared. Assuming it has already exited."));
@@ -226,7 +226,7 @@ internal class ProcessService
             using var startedProcess = Process.Start(startInfo);
             if (startedProcess == null)
             {
-                Log.Warning("Restart of {Executable} reported no new process handle.", executableFileName);
+                Log.Warning("Restart of {Executable} reported no new process handle", executableFileName);
                 LogMessage?.Invoke(this,
                     new EventArgs<string>(
                         $"Could not restart {executableFileName}: the process did not start."));

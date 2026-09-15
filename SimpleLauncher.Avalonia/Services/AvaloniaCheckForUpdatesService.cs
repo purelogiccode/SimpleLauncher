@@ -126,7 +126,7 @@ public partial class AvaloniaCheckForUpdatesService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error getting CurrentVersion.");
+                _logger.Error(ex, "Error getting CurrentVersion");
                 return "0.0.0.0";
             }
         }
@@ -146,33 +146,33 @@ public partial class AvaloniaCheckForUpdatesService
             if (latestVersion == null)
             {
                 _logger.Information(
-                    "Silent update check: could not determine the latest version (GitHub and the secondary server are unreachable).");
+                    "Silent update check: could not determine the latest version (GitHub and the secondary server are unreachable)");
                 return;
             }
 
             if (!IsNewVersionAvailable(CurrentVersion, latestVersion))
             {
                 _logger.Information(
-                    "Silent update check: no update available (current {CurrentVersion}, latest {LatestVersion}).",
+                    "Silent update check: no update available (current {CurrentVersion}, latest {LatestVersion})",
                     CurrentVersion, latestVersion);
                 return;
             }
 
-            _logger.Information("Silent update check: update {LatestVersion} available (current {CurrentVersion}).",
+            _logger.Information("Silent update check: update {LatestVersion} available (current {CurrentVersion})",
                 latestVersion, CurrentVersion);
 
             // WPF parity: prompt the user directly instead of just raising an event
             var result = await _messageBoxLibrary.DoYouWantToUpdateMessageBoxAsync(CurrentVersion, latestVersion);
             if (result == CoreMessageBoxResult.Yes)
             {
-                _logger.Information("Update to {LatestVersion} confirmed by user; launching the updater.",
+                _logger.Information("Update to {LatestVersion} confirmed by user; launching the updater",
                     latestVersion);
                 await ShowUpdateWindowAsync(releasePackageUrl, updaterZipAssetUrl, TryGetMainWindow());
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error checking for updates (silent).");
+            _logger.Error(ex, "Error checking for updates (silent)");
         }
     }
 
@@ -192,7 +192,7 @@ public partial class AvaloniaCheckForUpdatesService
                 // Expected condition (both sources unreachable / offline); the user is
                 // already notified via the message box below — not a bug report.
                 _logger.Information(
-                    "Could not determine the latest version (GitHub and the secondary server are unreachable).");
+                    "Could not determine the latest version (GitHub and the secondary server are unreachable)");
                 await _messageBoxLibrary.ErrorCheckingForUpdatesMessageBoxAsync();
                 return;
             }
@@ -202,7 +202,7 @@ public partial class AvaloniaCheckForUpdatesService
                 var result = await _messageBoxLibrary.DoYouWantToUpdateMessageBoxAsync(CurrentVersion, latestVersion);
                 if (result == CoreMessageBoxResult.Yes)
                 {
-                    _logger.Information("Update to {LatestVersion} confirmed by user; launching the updater.",
+                    _logger.Information("Update to {LatestVersion} confirmed by user; launching the updater",
                         latestVersion);
                     await ShowUpdateWindowAsync(releasePackageUrl, updaterZipAssetUrl, owner);
                 }
@@ -214,7 +214,7 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error checking for updates (manual).");
+            _logger.Error(ex, "Error checking for updates (manual)");
             await _messageBoxLibrary.ErrorCheckingForUpdatesMessageBoxAsync();
         }
     }
@@ -237,7 +237,7 @@ public partial class AvaloniaCheckForUpdatesService
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed to resolve the updater package URL for reinstall.");
+                _logger.Error(ex, "Failed to resolve the updater package URL for reinstall");
             }
         }
 
@@ -255,16 +255,16 @@ public partial class AvaloniaCheckForUpdatesService
             // back to the local copy only when the download fails or no URL is available.
             if (!string.IsNullOrWhiteSpace(updaterZipAssetUrl))
             {
-                _logger.Information("Downloading a fresh updater package from the release assets.");
+                _logger.Information("Downloading a fresh updater package from the release assets");
                 if (!await DownloadAndExtractUpdaterAsync(updaterZipAssetUrl, _updaterDirectory))
-                    _logger.Information("Updater download failed; falling back to the local copy.");
+                    _logger.Information("Updater download failed; falling back to the local copy");
             }
 
             if (!File.Exists(updaterPath))
             {
                 // Expected condition (offline / missing asset); the user is already
                 // notified via the message box below — not a bug report.
-                _logger.Information("Could not obtain the updater package; guiding the user to a manual update.");
+                _logger.Information("Could not obtain the updater package; guiding the user to a manual update");
                 await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
                 return;
             }
@@ -279,7 +279,7 @@ public partial class AvaloniaCheckForUpdatesService
                 };
                 Process.Start(startInfo);
 
-                _logger.Information("Updater launched (PID {ProcessId}); shutting down for the update.",
+                _logger.Information("Updater launched (PID {ProcessId}); shutting down for the update",
                     Environment.ProcessId);
                 _applicationLifetime.Shutdown();
             }
@@ -293,7 +293,7 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to prepare the updater.");
+            _logger.Error(ex, "Failed to prepare the updater");
             await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
         }
     }
@@ -377,7 +377,7 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            _logger.Debug(ex, "Update log window unavailable; continuing the update without it.");
+            _logger.Debug(ex, "Update log window unavailable; continuing the update without it");
             return null;
         }
     }
@@ -425,7 +425,7 @@ public partial class AvaloniaCheckForUpdatesService
                 if (!destinationFileFullPath.StartsWith(fullDestinationPath, StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.Information(
-                        "Security warning: path traversal attempt in updater package entry '{Entry}'. Aborting.",
+                        "Security warning: path traversal attempt in updater package entry '{Entry}'. Aborting",
                         entry.FullName);
                     return false;
                 }
@@ -441,7 +441,7 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            _logger.Information(ex, "Failed to download or extract the updater package.");
+            _logger.Information(ex, "Failed to download or extract the updater package");
             return false;
         }
     }
@@ -516,7 +516,7 @@ public partial class AvaloniaCheckForUpdatesService
             var releasePackageUrl = SecondaryServerBaseUrl + ReleaseAssetName(rawVersion, CurrentRuntimeIdentifier);
             var updaterZipAssetUrl = SecondaryServerBaseUrl + UpdaterAssetName(CurrentRuntimeIdentifier);
 
-            _logger.Information("GitHub API unavailable. Using the secondary server: version {LatestVersion}.",
+            _logger.Information("GitHub API unavailable. Using the secondary server: version {LatestVersion}",
                 latestVersion);
             return (latestVersion, releasePackageUrl, updaterZipAssetUrl, true);
         }
@@ -535,7 +535,7 @@ public partial class AvaloniaCheckForUpdatesService
             {
                 _logger.Error(
                     new ArgumentException("Current or latest version string is null or empty.", nameof(currentVersion)),
-                    "Invalid version string for comparison.");
+                    "Invalid version string for comparison");
                 return false;
             }
 
@@ -546,7 +546,7 @@ public partial class AvaloniaCheckForUpdatesService
             {
                 _logger.Error(
                     new ArgumentException("Normalized version string is null or empty after regex replace.",
-                        nameof(latestVersion)), "Invalid version string after normalization.");
+                        nameof(latestVersion)), "Invalid version string after normalization");
                 return false;
             }
 
@@ -568,7 +568,7 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Unexpected error in IsNewVersionAvailable.");
+            _logger.Error(ex, "Unexpected error in IsNewVersionAvailable");
             return false;
         }
     }
@@ -664,11 +664,11 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (JsonException jsonEx)
         {
-            _logger.Error(jsonEx, "Failed to parse JSON response from GitHub API.");
+            _logger.Error(jsonEx, "Failed to parse JSON response from GitHub API");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Unexpected error in ParseVersionAndAssetUrlsFromResponse.");
+            _logger.Error(ex, "Unexpected error in ParseVersionAndAssetUrlsFromResponse");
         }
 
         return (null, null, null);

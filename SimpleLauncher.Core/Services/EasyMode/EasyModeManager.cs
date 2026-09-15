@@ -133,29 +133,29 @@ public class EasyModeManager : IDisposable
         var manager = LoadFromXml(_logger);
         if (manager != null && manager.Systems.Count != 0)
         {
-            _logger.Debug("Loaded EasyMode configuration from local XML file.");
+            _logger.Debug("Loaded EasyMode configuration from local XML file");
             return manager;
         }
 
         // If XML fails or is empty, try loading from the API
-        _logger.Debug("Local EasyMode XML not found or is empty. Attempting to load from API.");
+        _logger.Debug("Local EasyMode XML not found or is empty. Attempting to load from API");
         manager = await LoadFromApiAsync();
         if (manager != null && manager.Systems.Count != 0)
         {
-            _logger.Debug("Successfully loaded EasyMode configuration from API.");
+            _logger.Debug("Successfully loaded EasyMode configuration from API");
             return manager;
         }
 
         // If both local XML and API fail, try loading from fallback URL
-        _logger.Debug("API load failed. Attempting to load from fallback XML URL.");
+        _logger.Debug("API load failed. Attempting to load from fallback XML URL");
         manager = await LoadFromFallbackAsync();
         if (manager != null && manager.Systems.Count != 0)
         {
-            _logger.Debug("Successfully loaded EasyMode configuration from fallback URL.");
+            _logger.Debug("Successfully loaded EasyMode configuration from fallback URL");
             return manager;
         }
 
-        _logger.Debug("Failed to load EasyMode configuration from all sources (local XML, API, and fallback URL).");
+        _logger.Debug("Failed to load EasyMode configuration from all sources (local XML, API, and fallback URL)");
         return null; // Return null if all methods fail
     }
 
@@ -240,7 +240,7 @@ public class EasyModeManager : IDisposable
             try
             {
                 _apiCache = (manager, DateTime.UtcNow);
-                _logger.Debug("EasyMode configuration fetched from API and cached for session.");
+                _logger.Debug("EasyMode configuration fetched from API and cached for session");
             }
             finally
             {
@@ -272,7 +272,7 @@ public class EasyModeManager : IDisposable
 
             if (systems == null || systems.Count == 0)
             {
-                _logger.Warning("EasyMode API returned no systems.");
+                _logger.Warning("EasyMode API returned no systems");
                 return null;
             }
 
@@ -288,11 +288,11 @@ public class EasyModeManager : IDisposable
             if (IsConnectivityError(ex))
             {
                 _logger.Information(ex,
-                    "EasyMode configuration could not be loaded from the API due to a connectivity issue. Falling back to local/default configuration.");
+                    "EasyMode configuration could not be loaded from the API due to a connectivity issue. Falling back to local/default configuration");
             }
             else
             {
-                _logger.Error(ex, "An error occurred while loading EasyMode configuration from the API.");
+                _logger.Error(ex, "An error occurred while loading EasyMode configuration from the API");
             }
 
             return null;
@@ -339,7 +339,7 @@ public class EasyModeManager : IDisposable
 
             if (string.IsNullOrEmpty(fallbackUrl))
             {
-                _logger.Debug("No fallback URL configured for EasyMode XML.");
+                _logger.Debug("No fallback URL configured for EasyMode XML");
                 return null;
             }
 
@@ -359,7 +359,7 @@ public class EasyModeManager : IDisposable
 
             if (string.IsNullOrWhiteSpace(xmlContent))
             {
-                _logger.Debug("Fallback URL returned empty XML content.");
+                _logger.Debug("Fallback URL returned empty XML content");
                 return null;
             }
 
@@ -373,7 +373,7 @@ public class EasyModeManager : IDisposable
         }
         catch (OperationCanceledException)
         {
-            _logger.Debug("Fallback XML download timed out (30 seconds).");
+            _logger.Debug("Fallback XML download timed out (30 seconds)");
             return null;
         }
         catch (Exception ex)
@@ -386,11 +386,11 @@ public class EasyModeManager : IDisposable
             if (IsConnectivityError(ex))
             {
                 _logger.Information(ex,
-                    "EasyMode configuration could not be loaded from the Cloudflare fallback URL due to a connectivity issue.");
+                    "EasyMode configuration could not be loaded from the Cloudflare fallback URL due to a connectivity issue");
             }
             else
             {
-                _logger.Error(ex, "An error occurred while loading EasyMode configuration from the fallback URL.");
+                _logger.Error(ex, "An error occurred while loading EasyMode configuration from the fallback URL");
             }
 
             return null;

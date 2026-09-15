@@ -420,7 +420,7 @@ internal class ZipService
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Failed to enumerate stale update backups.");
+            Log.Warning(ex, "Failed to enumerate stale update backups");
         }
     }
 

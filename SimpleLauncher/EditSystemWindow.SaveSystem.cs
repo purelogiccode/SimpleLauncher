@@ -360,7 +360,7 @@ internal partial class EditSystemWindow
         catch (Exception ex)
         {
             // Notify developer
-            _logger.Error(ex, "Error saving system configuration.");
+            _logger.Error(ex, "Error saving system configuration");
         }
     }
 

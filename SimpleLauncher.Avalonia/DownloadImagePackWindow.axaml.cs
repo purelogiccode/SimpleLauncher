@@ -54,7 +54,7 @@ public partial class DownloadImagePackWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[DownloadImagePackWindowLoadedAsync] Error initializing EasyModeManager.");
+            _logger.Error(ex, "[DownloadImagePackWindowLoadedAsync] Error initializing EasyModeManager");
         }
     }
 
@@ -80,7 +80,7 @@ public partial class DownloadImagePackWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in method CloseWindowRoutineAsync.");
+            _logger.Error(ex, "Error in method CloseWindowRoutineAsync");
         }
         finally
         {
@@ -94,7 +94,7 @@ public partial class DownloadImagePackWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error re-closing DownloadImagePackWindow after pre-close routine.");
+            _logger.Error(ex, "Error re-closing DownloadImagePackWindow after pre-close routine");
         }
     }
 

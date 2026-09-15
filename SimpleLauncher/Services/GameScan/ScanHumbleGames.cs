@@ -87,14 +87,14 @@ public class ScanHumbleGames : IGamePlatformScanner
                     }
                     catch (Exception ex)
                     {
-                        logErrors.Error(ex, "Error processing Humble game entry.");
+                        logErrors.Error(ex, "Error processing Humble game entry");
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Humble games.");
+            logErrors.Error(ex, "An error occurred while scanning for Humble games");
         }
     }
 }

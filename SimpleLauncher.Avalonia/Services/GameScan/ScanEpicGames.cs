@@ -93,7 +93,7 @@ public class ScanEpicGames : IGamePlatformScanner
                 }
                 catch (Exception ex)
                 {
-                    logErrors.Error(ex, "Error reading Epic LauncherInstalled.dat. Falling back to manifests.");
+                    logErrors.Error(ex, "Error reading Epic LauncherInstalled.dat. Falling back to manifests");
                 }
             }
 
@@ -169,7 +169,7 @@ public class ScanEpicGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Epic games.");
+            logErrors.Error(ex, "An error occurred while scanning for Epic games");
         }
     }
 

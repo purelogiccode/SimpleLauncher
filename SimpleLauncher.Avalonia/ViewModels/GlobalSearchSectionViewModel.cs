@@ -166,7 +166,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                _logErrors.Error(ex, "Error during the global search operation.");
+                _logErrors.Error(ex, "Error during the global search operation");
                 await _messageBox.GlobalSearchErrorMessageBoxAsync();
                 SearchResults = [];
                 SelectedResult = null;
@@ -180,7 +180,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error in the global search command.");
+            _logErrors.Error(ex, "Error in the global search command");
         }
     }
 
@@ -320,7 +320,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error launching game from the global search results.");
+            _logErrors.Error(ex, "Error launching game from the global search results");
             await _messageBox.ErrorLaunchingGameMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
         }
     }

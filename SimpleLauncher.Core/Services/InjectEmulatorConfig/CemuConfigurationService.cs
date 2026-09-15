@@ -86,7 +86,7 @@ public static class CemuConfigurationService
             using var writer = XmlWriter.Create(configPath, writerSettings);
             doc.Save(writer);
 
-            logger.Debug("[CemuConfig] Injection successful.");
+            logger.Debug("[CemuConfig] Injection successful");
         }
         catch (Exception ex)
         {

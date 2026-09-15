@@ -88,7 +88,7 @@ public class ScanItchioGames : IGamePlatformScanner
                         }
                         catch (Exception ex)
                         {
-                            logErrors.Error(ex, "Error parsing itch.io manifest file.");
+                            logErrors.Error(ex, "Error parsing itch.io manifest file");
                         }
                     }
 
@@ -131,7 +131,7 @@ public class ScanItchioGames : IGamePlatformScanner
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "An error occurred while scanning for Itch.io games.");
+            logErrors.Error(ex, "An error occurred while scanning for Itch.io games");
         }
     }
 }

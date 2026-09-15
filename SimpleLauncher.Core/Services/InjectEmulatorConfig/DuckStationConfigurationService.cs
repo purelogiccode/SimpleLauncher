@@ -181,7 +181,7 @@ public static class DuckStationConfigurationService
         }
         else
         {
-            logger.Debug("[DuckStationConfig] No changes needed.");
+            logger.Debug("[DuckStationConfig] No changes needed");
         }
     }
 

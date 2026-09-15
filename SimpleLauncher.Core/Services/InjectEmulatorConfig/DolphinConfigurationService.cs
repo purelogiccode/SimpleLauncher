@@ -174,7 +174,7 @@ public static class DolphinConfigurationService
         }
         else
         {
-            logger.Debug("[DolphinConfig] No changes needed.");
+            logger.Debug("[DolphinConfig] No changes needed");
         }
     }
 

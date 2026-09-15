@@ -560,7 +560,7 @@ public class LauncherService : ILauncherService
                     {
                         await _messageBox.ApplicationControlPolicyBlockedMessageBoxAsync();
                         // Expected user-environment condition (OS policy blocks the emulator): not a bug.
-                        Log.Information(win32Ex, "Application control policy blocked launching emulator.");
+                        Log.Information(win32Ex, "Application control policy blocked launching emulator");
                         loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
@@ -568,7 +568,7 @@ public class LauncherService : ILauncherService
                     {
                         await _messageBox.ElevationRequiredMessageBoxAsync();
                         // Expected user-environment condition (the emulator requires admin rights): not a bug.
-                        Log.Information(win32Ex, "Elevation required to launch emulator.");
+                        Log.Information(win32Ex, "Elevation required to launch emulator");
                         loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
@@ -714,7 +714,7 @@ public class LauncherService : ILauncherService
                 context.SystemManagerService.Emulators.Count == 0 ||
                 context.EmulatorManager == null)
             {
-                Log.Warning("SystemManagerService or Emulators is null/empty when attempting to launch.");
+                Log.Warning("SystemManagerService or Emulators is null/empty when attempting to launch");
                 await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(LogFilePath());
                 return;
             }
@@ -849,7 +849,7 @@ public class LauncherService : ILauncherService
                 "  Normalized Path Found: {Normalized}\n" +
                 "  Standard File.Exists: {StdFile}, Long Path File.Exists: {LongFile}\n" +
                 "  Standard Directory.Exists: {StdDir}, Long Path Directory.Exists: {LongDir}\n" +
-                "  This may indicate a Unicode normalization or path handling issue.",
+                "  This may indicate a Unicode normalization or path handling issue",
                 context.FilePath, standardPath, longPath, normalizedPath ?? "N/A",
                 standardFileExists, longFileExists, standardDirExists, longDirExists);
         }
@@ -1245,7 +1245,7 @@ public class LauncherService : ILauncherService
         // Ignore RetroArch "File open/read error" — not actionable
         if (combinedOutput.Contains("File open/read error", StringComparison.OrdinalIgnoreCase))
         {
-            Log.Debug("Ignored exit code {ExitCode} due to 'File open/read error' in output.", exitCode);
+            Log.Debug("Ignored exit code {ExitCode} due to 'File open/read error' in output", exitCode);
             return;
         }
 
@@ -1262,7 +1262,7 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("mkdir(", StringComparison.OrdinalIgnoreCase) &&
                 combinedOutput.Contains("Permission denied", StringComparison.OrdinalIgnoreCase):
             {
-                Log.Debug("RetroArch mkdir permission denied due to special characters in path.");
+                Log.Debug("RetroArch mkdir permission denied due to special characters in path");
                 Log.Warning(
                     "RetroArch special characters error.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
@@ -1282,7 +1282,7 @@ public class LauncherService : ILauncherService
             // RetroArch generic parameter issues
             case true:
             {
-                Log.Debug("RetroArch parameter issues detected.");
+                Log.Debug("RetroArch parameter issues detected");
                 Log.Warning(
                     "RetroArch parameter issue.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
@@ -1308,7 +1308,7 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("WRONG LENGTH", StringComparison.OrdinalIgnoreCase) ||
                 combinedOutput.Contains("Required files are missing", StringComparison.OrdinalIgnoreCase):
             {
-                Log.Debug("MAME ROM set error detected.");
+                Log.Debug("MAME ROM set error detected");
                 Log.Warning(
                     "MAME ROM set error.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
@@ -1330,7 +1330,7 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("Unknown system", StringComparison.OrdinalIgnoreCase) ||
                 combinedOutput.Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase):
             {
-                Log.Debug("MAME Unknown system error detected.");
+                Log.Debug("MAME Unknown system error detected");
                 Log.Warning(
                     "MAME Unknown system error.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
@@ -1352,7 +1352,7 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("Unable to load image", StringComparison.OrdinalIgnoreCase) ||
                 combinedOutput.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase):
             {
-                Log.Debug("MAME Unable to load image error detected.");
+                Log.Debug("MAME Unable to load image error detected");
                 Log.Warning(
                     "MAME Unable to load image error.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
@@ -1373,19 +1373,19 @@ public class LauncherService : ILauncherService
             case true when
                 stderr.Contains("Warning: unknown option in INI", StringComparison.OrdinalIgnoreCase):
             {
-                Log.Debug("MAME unknown option in INI detected. Attempting to restore mame.ini from sample.");
+                Log.Debug("MAME unknown option in INI detected. Attempting to restore mame.ini from sample");
                 var restored = MameConfigurationService.RestoreMameIniFromSample(emulatorPath, Log.Logger);
                 if (restored)
-                    Log.Debug("mame.ini restored successfully. User should retry.");
+                    Log.Debug("mame.ini restored successfully. User should retry");
                 else
-                    Log.Debug("Failed to restore mame.ini from sample.");
+                    Log.Debug("Failed to restore mame.ini from sample");
 
                 return;
             }
         }
 
         // Generic fallback — any other non-zero exit code
-        Log.Debug("Exit code {ExitCode} detected for {Emulator}.", exitCode, emulatorName);
+        Log.Debug("Exit code {ExitCode} detected for {Emulator}", exitCode, emulatorName);
         Log.Warning(
             "Emulator exited with error.\n" +
             "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
@@ -1562,7 +1562,7 @@ public class LauncherService : ILauncherService
             using var protocolKey = Registry.ClassesRoot.OpenSubKey(protocol.ToLowerInvariant());
             if (protocolKey == null)
             {
-                Log.Debug("[IsProtocolRegistered] Protocol key '{Protocol}' not found in HKEY_CLASSES_ROOT.",
+                Log.Debug("[IsProtocolRegistered] Protocol key '{Protocol}' not found in HKEY_CLASSES_ROOT",
                     protocol.ToLowerInvariant());
                 return false;
             }
@@ -1579,18 +1579,18 @@ public class LauncherService : ILauncherService
             var command = shellOpenCommandKey.GetValue(null) as string;
             if (string.IsNullOrWhiteSpace(command))
             {
-                Log.Debug("[IsProtocolRegistered] Command handler is empty for protocol '{Protocol}'.",
+                Log.Debug("[IsProtocolRegistered] Command handler is empty for protocol '{Protocol}'",
                     protocol.ToLowerInvariant());
                 return false;
             }
 
-            Log.Debug("[IsProtocolRegistered] Protocol '{Protocol}' is registered with command: '{Command}'.",
+            Log.Debug("[IsProtocolRegistered] Protocol '{Protocol}' is registered with command: '{Command}'",
                 protocol.ToLowerInvariant(), command);
             return true;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error checking if protocol '{Protocol}' is registered.", protocol);
+            Log.Error(ex, "Error checking if protocol '{Protocol}' is registered", protocol);
             return false;
         }
     }

@@ -46,7 +46,7 @@ public static class EncryptDuckStationToken
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "Failed to encrypt DuckStation token.");
+            logErrors.Error(ex, "Failed to encrypt DuckStation token");
             return "";
         }
     }

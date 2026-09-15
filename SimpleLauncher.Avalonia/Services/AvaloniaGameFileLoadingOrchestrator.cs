@@ -57,7 +57,7 @@ public class AvaloniaGameFileLoadingOrchestrator
     public void InvalidateSystem(string systemName)
     {
         _cache.Invalidate(systemName);
-        _logger.Debug("[AvaloniaGameFileLoadingOrchestrator] Invalidated game file cache for '{System}'.", systemName);
+        _logger.Debug("[AvaloniaGameFileLoadingOrchestrator] Invalidated game file cache for '{System}'", systemName);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public class AvaloniaGameFileLoadingOrchestrator
     public void InvalidateAll()
     {
         _cache.Clear();
-        _logger.Debug("[AvaloniaGameFileLoadingOrchestrator] Cleared all game file caches.");
+        _logger.Debug("[AvaloniaGameFileLoadingOrchestrator] Cleared all game file caches");
     }
 
     /// <summary>

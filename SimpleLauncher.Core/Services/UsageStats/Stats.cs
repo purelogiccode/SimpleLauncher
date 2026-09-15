@@ -41,7 +41,7 @@ public class Stats
 
                 // Notify developer
                 _logger.Error(new InvalidOperationException("API Key is missing or empty in the configuration file."),
-                    "Stats API Key missing.");
+                    "Stats API Key missing");
 
                 return;
             }
@@ -56,7 +56,7 @@ public class Stats
                 // Notify developer
                 _logger.Error(
                     new InvalidOperationException("Stats API URL is missing or empty in the configuration file."),
-                    "Stats API URL missing.");
+                    "Stats API URL missing");
 
                 return;
             }
@@ -69,7 +69,7 @@ public class Stats
             // Notify developer
             // Catch any other errors during loading (e.g., invalid JSON format)
             _isApiEnabled = false;
-            _logger.Error(ex, "Error loading Stats API configuration from appsettings.json.");
+            _logger.Error(ex, "Error loading Stats API configuration from appsettings.json");
         }
     }
 
@@ -85,7 +85,7 @@ public class Stats
         if (!_isApiEnabled)
         {
             // Expected condition (API key/URL not configured): not a bug, keep it out of the bug report service.
-            _logger.Information("Stats API call skipped: API not enabled.");
+            _logger.Information("Stats API call skipped: API not enabled");
 
             return;
         }
@@ -112,7 +112,7 @@ public class Stats
             // Notify developer
             // This indicates a logic error if _isApiEnabled is true but _httpClient is null
             _logger.Error(new InvalidOperationException("HttpClient is null when attempting Stats API call."),
-                "Stats API call failed: HttpClient not initialized.");
+                "Stats API call failed: HttpClient not initialized");
 
             return false;
         }

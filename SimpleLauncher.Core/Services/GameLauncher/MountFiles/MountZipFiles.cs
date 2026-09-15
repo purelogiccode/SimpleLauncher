@@ -1060,13 +1060,13 @@ public class MountZipFiles : IMountZipFiles
             }
 
             _logger.Debug(
-                "[MountZipFiles.GetAvailableDriveLetter] No available drive letters found between D: and Z:.");
+                "[MountZipFiles.GetAvailableDriveLetter] No available drive letters found between D: and Z:");
             return null;
         }
         catch (Exception ex)
         {
             _logger.Debug($"[MountZipFiles.GetAvailableDriveLetter] Error enumerating drives: {ex.Message}");
-            logErrors.Error(ex, "Error enumerating available drive letters for ZIP mounting.");
+            logErrors.Error(ex, "Error enumerating available drive letters for ZIP mounting");
             return null;
         }
     }

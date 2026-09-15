@@ -75,7 +75,7 @@ public static class Rpcs3ConfigurationService
 
         var updatedYaml = serializer.Serialize(yamlObject);
         File.WriteAllText(configPath, updatedYaml, new UTF8Encoding(false));
-        logger.Debug("[RPCS3Config] Injection successful.");
+        logger.Debug("[RPCS3Config] Injection successful");
         return;
 
         // Helper to navigate and set values

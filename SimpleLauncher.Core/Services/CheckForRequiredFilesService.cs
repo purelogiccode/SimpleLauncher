@@ -54,7 +54,7 @@ public class CheckForRequiredFilesService
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, "Failed to check for required files.");
+            logErrors.Error(ex, "Failed to check for required files");
         }
     }
 }

@@ -55,7 +55,7 @@ public static class XeniaConfigurationService
             // Log the issue instead of throwing to prevent crash when samples are missing
             // or no config files exist. Xenia will use its default settings.
             logger.Debug(
-                "[XeniaConfig] WARNING: No configuration files found to inject into. Expected xenia.config.toml or xenia-canary.config.toml in emulator directory or Documents\\Xenia. Xenia will use default settings.");
+                "[XeniaConfig] WARNING: No configuration files found to inject into. Expected xenia.config.toml or xenia-canary.config.toml in emulator directory or Documents\\Xenia. Xenia will use default settings");
         }
     }
 
@@ -140,7 +140,7 @@ public static class XeniaConfigurationService
         try
         {
             File.WriteAllText(configPath, updatedToml);
-            logger.Debug("[XeniaConfig] Injected configuration changes.");
+            logger.Debug("[XeniaConfig] Injected configuration changes");
             return true;
         }
         catch (Exception ex)

@@ -197,7 +197,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             IsLoading = false;
-            _logger.Error(ex, "Error initializing image pack downloader.");
+            _logger.Error(ex, "Error initializing image pack downloader");
             await _messageBox.ImagePackDownloaderUnavailableMessageBoxAsync();
             IsSystemDropdownEnabled = false;
         }
@@ -226,7 +226,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error populating system dropdown.");
+            _logger.Error(ex, "Error populating system dropdown");
             SystemNames.Clear();
         }
     }
@@ -311,13 +311,13 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
                 if (!_disposed)
                 {
                     EndOperation();
-                    _logger.Error(ex, "Error in DownloadImagePackButtonClickAsync.");
+                    _logger.Error(ex, "Error in DownloadImagePackButtonClickAsync");
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Critical error in DownloadImagePackButtonClickAsync.");
+            _logger.Error(ex, "Critical error in DownloadImagePackButtonClickAsync");
             EndOperation();
         }
     }
@@ -551,7 +551,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error opening the download link.");
+            _logger.Error(ex, "Error opening the download link");
 
             await _messageBox.CouldNotOpenTheDownloadLinkMessageBoxAsync();
         }
@@ -570,7 +570,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
 
         IsLoading = false;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in DownloadImagePackWindow.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in DownloadImagePackWindow");
         (Application.Current.MainWindow as MainWindow)?.UpdateStatusBarService.UpdateContent(
             "Emergency reset performed.");
     }
@@ -593,7 +593,7 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error closing the Add System window.");
+            _logger.Error(ex, "Error closing the Add System window");
         }
     }
 

@@ -83,7 +83,7 @@ internal static class ApplicationStats
         }
         catch (OperationCanceledException)
         {
-            Log.Information("ApplicationStats API call timed out.");
+            Log.Information("ApplicationStats API call timed out");
         }
         catch (Exception ex)
         {

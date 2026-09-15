@@ -233,7 +233,7 @@ public class AvaloniaContextMenuService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[AvaloniaContextMenuService] Error checking RetroAchievements system support.");
+            _logger.Error(ex, "[AvaloniaContextMenuService] Error checking RetroAchievements system support");
             return false;
         }
     }
@@ -246,7 +246,7 @@ public class AvaloniaContextMenuService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[AvaloniaContextMenuService] Error executing a context menu action.");
+            _logger.Error(ex, "[AvaloniaContextMenuService] Error executing a context menu action");
         }
     }
 

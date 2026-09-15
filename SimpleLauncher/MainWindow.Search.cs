@@ -24,13 +24,13 @@ public partial class MainWindow
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in the method SearchButtonClickAsync.");
+                _logger.Error(ex, "Error in the method SearchButtonClickAsync");
                 await _messageBox.MainWindowSearchEngineErrorMessageBoxAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method SearchButtonClickAsync.");
+            _logger.Error(ex, "Error in the method SearchButtonClickAsync");
         }
     }
 
@@ -49,13 +49,13 @@ public partial class MainWindow
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in the method SearchTextBoxKeyDownAsync.");
+                _logger.Error(ex, "Error in the method SearchTextBoxKeyDownAsync");
                 await _messageBox.MainWindowSearchEngineErrorMessageBoxAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method SearchTextBoxKeyDownAsync.");
+            _logger.Error(ex, "Error in the method SearchTextBoxKeyDownAsync");
         }
     }
 

@@ -146,7 +146,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the FavoritesPageLoadedAsync method.");
+            _logger.Error(ex, "Error in the FavoritesPageLoadedAsync method");
         }
     }
 
@@ -225,7 +225,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
             if (emulatorManager == null)
             {
                 // Expected condition (system has no emulators configured; user is notified below).
-                _logger.Information("emulatorManager is null.");
+                _logger.Information("emulatorManager is null");
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -271,7 +271,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "There was an error in the right-click context menu.");
+            _logger.Error(ex, "There was an error in the right-click context menu");
             await _messageBox.RightClickContextMenuErrorMessageBoxAsync();
         }
     }
@@ -303,7 +303,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
             if (selectedSystemManager == null)
             {
                 // Expected condition (favorite references a removed system; user is notified below).
-                _logger.Information("[LaunchGameFromFavoritesAsync] selectedSystemManager is null.");
+                _logger.Information("[LaunchGameFromFavoritesAsync] selectedSystemManager is null");
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -329,7 +329,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
             var emulatorManager = selectedSystemManager.Emulators.FirstOrDefault();
             if (emulatorManager == null)
             {
-                _logger.Information("[LaunchGameFromFavoritesAsync] emulatorManager is null.");
+                _logger.Information("[LaunchGameFromFavoritesAsync] emulatorManager is null");
                 await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
                 return;
@@ -359,7 +359,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method MouseDoubleClick.");
+            _logger.Error(ex, "Error in the method MouseDoubleClick");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
         }
@@ -384,7 +384,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the SetPreviewImageOnSelectionChangedAsync method.");
+            _logger.Error(ex, "Error in the SetPreviewImageOnSelectionChangedAsync method");
         }
     }
 
@@ -429,7 +429,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error handling key press in FavoritesDataGrid.");
+            _logger.Error(ex, "Error handling key press in FavoritesDataGrid");
         }
     }
 
@@ -438,7 +438,7 @@ internal partial class FavoritesPage : ILoadingState, IDisposable
         _playSoundEffects.PlayNotificationSound();
         LoadingOverlay.Visibility = Visibility.Collapsed;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in FavoritesPage.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in FavoritesPage");
         _mainWindow.UpdateStatusBarService.UpdateContent("Emergency reset performed.");
     }
 }

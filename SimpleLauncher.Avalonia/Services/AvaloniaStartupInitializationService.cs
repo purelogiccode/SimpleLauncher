@@ -85,7 +85,7 @@ public class AvaloniaStartupInitializationService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to initialize the status bar timer.");
+            _logger.Error(ex, "Failed to initialize the status bar timer");
         }
     }
 
@@ -100,12 +100,12 @@ public class AvaloniaStartupInitializationService
             if (!CheckIfDirectoryIsWritableService.IsWritableDirectory(AppContext.BaseDirectory, _logger))
             {
                 await _messageBox.MoveToWritableFolderMessageBoxAsync();
-                _logger.Debug("Application does not have write access.");
+                _logger.Debug("Application does not have write access");
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to check directory write access.");
+            _logger.Error(ex, "Failed to check directory write access");
         }
     }
 
@@ -119,11 +119,11 @@ public class AvaloniaStartupInitializationService
         try
         {
             await _requiredFiles.CheckFilesAsync(_configuration, _logger);
-            _logger.Debug("Required files were checked.");
+            _logger.Debug("Required files were checked");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method CheckRequiredFilesAsync.");
+            _logger.Error(ex, "Error in the method CheckRequiredFilesAsync");
         }
     }
 
@@ -135,11 +135,11 @@ public class AvaloniaStartupInitializationService
         try
         {
             PaginationReset?.Invoke();
-            _logger.Debug("Pagination was set.");
+            _logger.Debug("Pagination was set");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to reset pagination defaults.");
+            _logger.Error(ex, "Failed to reset pagination defaults");
         }
     }
 
@@ -162,7 +162,7 @@ public class AvaloniaStartupInitializationService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to initialize the gamepad controller.");
+            _logger.Error(ex, "Failed to initialize the gamepad controller");
         }
     }
 }

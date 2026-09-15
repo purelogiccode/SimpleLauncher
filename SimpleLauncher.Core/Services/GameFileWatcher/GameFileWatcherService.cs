@@ -166,7 +166,7 @@ public sealed class GameFileWatcherService : IDisposable
             CancelPendingDebounceLocked();
         }
 
-        _logger.Debug("[GameFileWatcherService] Stopped all watchers.");
+        _logger.Debug("[GameFileWatcherService] Stopped all watchers");
     }
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)

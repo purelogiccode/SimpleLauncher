@@ -183,7 +183,7 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in SystemButtonClickAsync.");
+                _logger.Error(ex, "Error in SystemButtonClickAsync");
                 await _messageBox.InvalidSystemConfigMessageBoxAsync();
 
                 _host.SystemComboBox.SelectedItem = null;
@@ -202,7 +202,7 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in SystemButtonClickAsync.");
+            _logger.Error(ex, "Error in SystemButtonClickAsync");
         }
     }
 
@@ -227,7 +227,7 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in DeleteSystemFromContextMenuAsync.");
+            _logger.Error(ex, "Error in DeleteSystemFromContextMenuAsync");
         }
     }
 
@@ -252,7 +252,7 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in EditSystemFromContextMenu.");
+            _logger.Error(ex, "Error in EditSystemFromContextMenu");
         }
     }
 
@@ -388,7 +388,7 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in SystemComboBoxSelectionChangedAsync.");
+                _logger.Error(ex, "Error in SystemComboBoxSelectionChangedAsync");
             }
         }
         catch (OperationCanceledException)
@@ -397,7 +397,7 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in SystemComboBoxSelectionChangedAsync.");
+            _logger.Error(ex, "Error in SystemComboBoxSelectionChangedAsync");
         }
     }
 

@@ -111,7 +111,7 @@ public class AvaloniaContextMenuFunctions(
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "An error occurred while adding a game to the favorites.");
+            _logErrors.Error(ex, "An error occurred while adding a game to the favorites");
             await _messageBox.ErrorWhileAddingFavoritesMessageBoxAsync();
         }
     }
@@ -145,7 +145,7 @@ public class AvaloniaContextMenuFunctions(
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "An error occurred while removing a game from favorites.");
+            _logErrors.Error(ex, "An error occurred while removing a game from favorites");
             await _messageBox.ErrorWhileRemovingGameFromFavoriteMessageBoxAsync();
         }
     }
@@ -162,7 +162,7 @@ public class AvaloniaContextMenuFunctions(
         {
             // Expected condition (no system/emulator configured); user is notified via the message box.
             _logErrors.Information(
-                "[ContextMenu] Launch requested but no system or emulator is configured for '{System}'.",
+                "[ContextMenu] Launch requested but no system or emulator is configured for '{System}'",
                 context.SelectedSystemName);
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(GetLogFilePath());
             return;
@@ -170,7 +170,7 @@ public class AvaloniaContextMenuFunctions(
 
         if (string.IsNullOrEmpty(context.FilePath))
         {
-            _logErrors.Information("[ContextMenu] Launch requested but FilePath is null or empty.");
+            _logErrors.Information("[ContextMenu] Launch requested but FilePath is null or empty");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(GetLogFilePath());
             return;
         }
@@ -178,7 +178,7 @@ public class AvaloniaContextMenuFunctions(
         var selectedEmulatorName = ResolveEmulatorName(context);
         if (string.IsNullOrEmpty(selectedEmulatorName))
         {
-            _logErrors.Information("[ContextMenu] Launch requested but no emulator name was resolved.");
+            _logErrors.Information("[ContextMenu] Launch requested but no emulator name was resolved");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(GetLogFilePath());
             return;
         }
@@ -207,12 +207,12 @@ public class AvaloniaContextMenuFunctions(
                                             StringComparison.OrdinalIgnoreCase))
         {
             _logErrors.Error(ex,
-                "Win32Exception: No default application configured for opening web links (Video Link).");
+                "Win32Exception: No default application configured for opening web links (Video Link)");
             await _messageBox.NoDefaultBrowserConfiguredMessageBoxAsync();
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "There was a problem opening the Video Link.");
+            _logErrors.Error(ex, "There was a problem opening the Video Link");
             context.MainViewModel.StatusText = GetStatus("ErrorOpeningVideoLink", "Error opening video link.");
             await _messageBox.ErrorOpeningVideoLinkMessageBoxAsync();
         }
@@ -237,12 +237,12 @@ public class AvaloniaContextMenuFunctions(
                                             StringComparison.OrdinalIgnoreCase))
         {
             _logErrors.Error(ex,
-                "Win32Exception: No default application configured for opening web links (Info Link).");
+                "Win32Exception: No default application configured for opening web links (Info Link)");
             await _messageBox.NoDefaultBrowserConfiguredMessageBoxAsync();
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "There was a problem opening the Info Link.");
+            _logErrors.Error(ex, "There was a problem opening the Info Link");
             context.MainViewModel.StatusText = GetStatus("ErrorOpeningInfoLink", "Error opening info link.");
             await _messageBox.ProblemOpeningInfoLinkMessageBoxAsync();
         }
@@ -264,7 +264,7 @@ public class AvaloniaContextMenuFunctions(
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "There was a problem opening the History window.");
+            _logErrors.Error(ex, "There was a problem opening the History window");
             context.MainViewModel.StatusText = GetStatus("ErrorOpeningROMHistory", "Error opening ROM history.");
             await _messageBox.CouldNotOpenHistoryWindowMessageBoxAsync();
         }
@@ -285,7 +285,7 @@ public class AvaloniaContextMenuFunctions(
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(context.FilePath);
             if (string.IsNullOrEmpty(fileNameWithoutExtension))
             {
-                _logErrors.Debug("[RA Service] File name without extension is empty.");
+                _logErrors.Debug("[RA Service] File name without extension is empty");
                 await _messageBox.ErrorMessageBoxAsync();
                 return;
             }
@@ -336,7 +336,7 @@ public class AvaloniaContextMenuFunctions(
             {
                 await _messageBox.SimpleLauncherDoesNotSupportRaHashOfSystemGroupedByFolderMessageBoxAsync();
                 _logErrors.Debug(
-                    "[RA Service] 'Simple Launcher' does not support RetroAchievements hash of systems Grouped by Folder.");
+                    "[RA Service] 'Simple Launcher' does not support RetroAchievements hash of systems Grouped by Folder");
                 return;
             }
 
@@ -350,8 +350,8 @@ public class AvaloniaContextMenuFunctions(
 
             if (string.IsNullOrEmpty(raSystemName))
             {
-                _logErrors.Debug("[RA Service] SystemName is null or empty after matching.");
-                _logErrors.Warning("[RA Service] SystemName is null or empty after matching.");
+                _logErrors.Debug("[RA Service] SystemName is null or empty after matching");
+                _logErrors.Warning("[RA Service] SystemName is null or empty after matching");
 
                 var messageBoxResult = await _messageBox.GameNotSupportedByRetroAchievementsMessageBoxAsync();
                 if (messageBoxResult == MessageBoxResult.Yes)
@@ -381,7 +381,7 @@ public class AvaloniaContextMenuFunctions(
             if (string.Equals(raHashResult.ExtractionErrorMessage, "System selection cancelled by user.",
                     StringComparison.Ordinal))
             {
-                _logErrors.Debug("[RA Service] User cancelled RetroAchievements hashing.");
+                _logErrors.Debug("[RA Service] User cancelled RetroAchievements hashing");
                 return;
             }
 
@@ -613,7 +613,7 @@ public class AvaloniaContextMenuFunctions(
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "[TakeScreenshotOfSelectedWindow] There was a problem saving the screenshot.");
+            _logErrors.Error(ex, "[TakeScreenshotOfSelectedWindow] There was a problem saving the screenshot");
             await _messageBox.CouldNotSaveScreenshotMessageBoxAsync();
         }
     }
@@ -683,7 +683,7 @@ public class AvaloniaContextMenuFunctions(
         if (width <= 0 || height <= 0)
         {
             await _messageBox.CannotScreenshotMinimizedWindowMessageBoxAsync();
-            _logErrors.Debug("Cannot take a screenshot of a minimized window.");
+            _logErrors.Debug("Cannot take a screenshot of a minimized window");
             return;
         }
 
@@ -885,12 +885,12 @@ public class AvaloniaContextMenuFunctions(
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1155) // ERROR_NO_ASSOCIATION
         {
             // No application is associated with the file format (no PDF viewer installed)
-            _logErrors.Error(ex, "There was a problem opening the PDF. No PDF viewer is installed.");
+            _logErrors.Error(ex, "There was a problem opening the PDF. No PDF viewer is installed");
             await _messageBox.NoPdfViewerInstalledMessageBoxAsync();
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "There was a problem opening the PDF.");
+            _logErrors.Error(ex, "There was a problem opening the PDF");
             await couldNotOpenMessage();
         }
     }
@@ -915,7 +915,7 @@ public class AvaloniaContextMenuFunctions(
         }
         catch (Exception ex)
         {
-            _logErrors.Error(ex, "Error removing the favorite entry of a deleted game.");
+            _logErrors.Error(ex, "Error removing the favorite entry of a deleted game");
         }
     }
 
@@ -934,7 +934,7 @@ public class AvaloniaContextMenuFunctions(
             }
             catch (Exception ex)
             {
-                _logErrors.Error(ex, "[ContextMenu] There was a problem reloading the Game List.");
+                _logErrors.Error(ex, "[ContextMenu] There was a problem reloading the Game List");
             }
 
             return Task.CompletedTask;
