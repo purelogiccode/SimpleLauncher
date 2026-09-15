@@ -232,32 +232,61 @@ internal class UpdateService
     }
 
     /// <summary>
-    ///     Downloads the update file, retrying from the secondary server when the primary download fails.
+    ///     Downloads the update file: one immediate retry of the primary source with a
+    ///     short cancellable backoff, then the secondary server.
+    ///     UPD-19: HttpClient.Timeout surfaces as TaskCanceledException with the user
+    ///     token NOT cancelled, so a timeout is correctly treated as a transport
+    ///     failure here — only a genuinely user-cancelled token skips the
+    ///     retry/fallback and rethrows.
     /// </summary>
     private async Task<MemoryStream> DownloadWithFallbackAsync(string assetUrl, string? fallbackAssetUrl,
         CancellationToken cancellationToken)
     {
-        try
+        var hasFallback = !string.IsNullOrEmpty(fallbackAssetUrl) &&
+                          !string.Equals(assetUrl, fallbackAssetUrl, StringComparison.OrdinalIgnoreCase);
+
+        Exception? lastPrimaryError = null;
+        for (var attempt = 1; attempt <= 2; attempt++)
         {
-            return await _downloadService.DownloadToMemoryAsync(assetUrl, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                return await _downloadService.DownloadToMemoryAsync(assetUrl, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // User actually cancelled — don't retry or fall back
+                throw;
+            }
+            catch (Exception ex)
+            {
+                lastPrimaryError = ex;
+                Log.Information(ex, "Download from the primary source failed (attempt {Attempt}/2).", attempt);
+
+                if (attempt == 1)
+                {
+                    LogMessage?.Invoke(this,
+                        new EventArgs<string>(
+                            $"Download from the primary source failed ({ex.Message}). Retrying..."));
+                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                }
+            }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            // User actually cancelled — don't attempt the fallback
-            throw;
-        }
-        catch (Exception ex) when (!string.IsNullOrEmpty(fallbackAssetUrl) &&
-                                   !string.Equals(assetUrl, fallbackAssetUrl, StringComparison.OrdinalIgnoreCase))
+
+        if (hasFallback)
         {
             LogMessage?.Invoke(this,
                 new EventArgs<string>(
-                    $"Download from the primary source failed ({ex.Message}). Retrying from the secondary server..."));
-            Log.Information(ex,
-                "Download from the primary source failed; retrying from the secondary server: {FallbackUrl}",
+                    "Download from the primary source failed. Retrying from the secondary server..."));
+            Log.Information(lastPrimaryError,
+                "Download from the primary source failed twice; retrying from the secondary server: {FallbackUrl}",
                 fallbackAssetUrl);
             DownloadProgressReset?.Invoke(this, EventArgs.Empty);
-            return await _downloadService.DownloadToMemoryAsync(fallbackAssetUrl, cancellationToken);
+            return await _downloadService.DownloadToMemoryAsync(fallbackAssetUrl!, cancellationToken);
         }
+
+        throw lastPrimaryError!;
     }
 
     /// <summary>
@@ -282,7 +311,8 @@ internal class UpdateService
     /// <summary>
     ///     Checks if Dokan is installed and offers to install it if missing.
     /// </summary>
-    public async Task CheckAndInstallDokanAsync()
+    /// <param name="cancellationToken">Token to cancel the Dokan download/install wait.</param>
+    public async Task CheckAndInstallDokanAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -313,8 +343,13 @@ internal class UpdateService
 
             // User chose to install Dokan
             LogMessage?.Invoke(this, new EventArgs<string>("Starting Dokan download and installation..."));
-            await _dokanService.DownloadAndInstallDokanAsync();
+            await _dokanService.DownloadAndInstallDokanAsync(cancellationToken);
             LogMessage?.Invoke(this, new EventArgs<string>("Dokan installer has been launched."));
+        }
+        catch (OperationCanceledException)
+        {
+            // UPD-19: user cancellation is not an error — propagate without a bug report.
+            throw;
         }
         catch (Exception ex)
         {

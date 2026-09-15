@@ -182,7 +182,11 @@ internal partial class GitHubService
         }
         catch (OperationCanceledException)
         {
-            // Expected condition (network timeout): not a bug, keep it out of the bug report service.
+            // UPD-19: a user cancel aborts immediately (no pointless secondary-server
+            // attempt); a 5s-timeout OCE (user token not cancelled) falls through to
+            // the silent secondary-server fallback below. Expected condition either
+            // way — never a bug report.
+            cancellationToken.ThrowIfCancellationRequested();
             Log.Information("GitHub request timed out after {Timeout} seconds", GitHubTimeoutSeconds);
             LogMessage?.Invoke(this,
                 new EventArgs<string>($"GitHub request timed out after {GitHubTimeoutSeconds} seconds."));

@@ -106,12 +106,24 @@ internal class ZipService
                             throw new SecurityException(
                                 $"Zip entry contains an alternate data stream, refusing to extract: {entryKey}");
 
-                        // Skip directory entries
+                        // Validate and sanitize entry path to prevent path traversal attacks.
+                        // The same relative path is resolved under BOTH roots — a ".." that
+                        // escapes the install dir would escape staging too, so both are checked.
+                        // Normalize: remove leading slashes, then combine and resolve
+                        var trimmedEntry = entryKey.TrimStart('/', '\\');
+
+                        // Skip directory entries (created implicitly with their files)
                         if (reader.Entry.IsDirectory)
                             continue;
 
-                        var fileName = Path.GetFileName(entryKey);
-                        if (!string.IsNullOrEmpty(fileName) &&
+                        // UPD-23: only skip updater-owned files at the ARCHIVE ROOT.
+                        // Matching on the bare file name also skipped e.g.
+                        // "subdir/Updater.dll" (overbroad); matching is
+                        // case-insensitive so case/extension variants at the root
+                        // are still covered.
+                        var isRootEntry = !trimmedEntry.Contains('/') && !trimmedEntry.Contains('\\');
+                        var fileName = Path.GetFileName(trimmedEntry);
+                        if (isRootEntry && !string.IsNullOrEmpty(fileName) &&
                             IgnoredFiles.Contains(fileName, StringComparer.OrdinalIgnoreCase))
                         {
                             LogMessage?.Invoke(this,
@@ -119,11 +131,6 @@ internal class ZipService
                             continue;
                         }
 
-                        // Validate and sanitize entry path to prevent path traversal attacks.
-                        // The same relative path is resolved under BOTH roots — a ".." that
-                        // escapes the install dir would escape staging too, so both are checked.
-                        // Normalize: remove leading slashes, then combine and resolve
-                        var trimmedEntry = entryKey.TrimStart('/', '\\');
                         var stagedPath = Path.GetFullPath(Path.Combine(stagingRoot, trimmedEntry));
                         var destinationPath = Path.GetFullPath(Path.Combine(_appDirectory, trimmedEntry));
 
@@ -146,6 +153,16 @@ internal class ZipService
                         if (!string.IsNullOrEmpty(stagingDirectory) && !Directory.Exists(stagingDirectory))
                             Directory.CreateDirectory(stagingDirectory);
 
+                        // UPD-21: fail fast on a full disk instead of burning five
+                        // lock-retries per file and then blaming file locks.
+                        ThrowIfInsufficientSpace(stagingRoot, reader.Entry.Size, entryKey);
+
+                        // Extract with retry logic for locked files
+                        await ExtractFileWithRetryAsync(reader, stagedPath, entryKey, cancellationToken);
+                        stagedFiles.Add((trimmedEntry, stagedPath));
+
+                        // UPD-22: count and announce only AFTER the bytes hit the disk —
+                        // a failed/aborted write must not inflate the progress count.
                         extractedCount++;
 
                         // Report extraction progress (current file only, no percentage)
@@ -155,16 +172,14 @@ internal class ZipService
                             ExtractedCount = extractedCount
                         }));
 
-                        // Extract with retry logic for locked files
-                        await ExtractFileWithRetryAsync(reader, stagedPath, entryKey, cancellationToken);
-                        stagedFiles.Add((trimmedEntry, stagedPath));
-
                         LogMessage?.Invoke(this, new EventArgs<string>($"Extracted: {entryKey}"));
                     }
                     catch (Exception ex)
                     {
+                        // UPD-24: log here with entry context, but report the bug ONCE
+                        // at the UpdateService level — reporting here too spammed the
+                        // bug API twice per file (including for malicious zips).
                         Log.Error(ex, "Error extracting file: {EntryKey}", entryKey);
-                        await BugReportService.ReportBugAsync(ex, $"Error extracting file: {entryKey}");
                         throw;
                     }
                 }
@@ -294,12 +309,13 @@ internal class ZipService
 
     /// <summary>
     ///     Moves a file with retry logic for locked files (same-volume moves are atomic).
+    ///     UPD-21: only transient file LOCK errors are retried — deterministic failures
+    ///     (disk full, ACL, path too long) throw immediately with their real cause
+    ///     instead of burning retries and blaming locks.
     /// </summary>
     private async Task MoveFileWithRetryAsync(string sourcePath, string destinationPath, string entryKey,
         CancellationToken cancellationToken)
     {
-        Exception? lastException = null;
-
         for (var attempt = 1; attempt <= FileWriteRetryAttempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -309,22 +325,31 @@ internal class ZipService
                 File.Move(sourcePath, destinationPath);
                 return; // Success, exit the method
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException &&
-                                       attempt < FileWriteRetryAttempts)
+            catch (IOException ex)
             {
-                // File is likely locked by another process, retry after delay
-                lastException = ex;
+                if (!IsFileLockError(ex) || attempt >= FileWriteRetryAttempts)
+                    throw new IOException(
+                        IsFileLockError(ex)
+                            ? $"Failed to move file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
+                              "The file is locked by another process."
+                            : $"Failed to move file '{entryKey}': {ex.Message}",
+                        ex);
+
+                // File is locked by another process, retry after delay
                 LogMessage?.Invoke(this,
                     new EventArgs<string>(
-                        $"File locked or access denied ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs}ms..."));
+                        $"File locked ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs * attempt}ms..."));
                 await Task.Delay(FileWriteRetryDelayMs * attempt, cancellationToken);
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                // UPD-21: ACL denials are deterministic — fail fast with the real cause.
+                throw new IOException(
+                    $"Cannot move file '{entryKey}': access denied. " +
+                    "Check the install folder permissions and run the updater with sufficient rights.",
+                    ex);
+            }
         }
-
-        if (lastException != null)
-            throw new IOException(
-                $"Failed to move file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
-                "The file may be locked by another process.", lastException);
     }
 
     /// <summary>
@@ -451,6 +476,12 @@ internal class ZipService
     ///     (including Unix setuid/setgid) are never applied (UPD-04).
     ///     UPD-05: the destination is inside the staging directory; the live
     ///     install is only touched later by <see cref="SwapStagedFilesAsync" />.
+    ///     UPD-20: written with <see cref="FileShare.None" /> — a concurrent reader
+    ///     (Explorer, AV scanner, second updater, not-yet-exited app) must never
+    ///     observe or load a half-written binary.
+    ///     UPD-21: only transient file LOCK errors are retried — deterministic
+    ///     failures (disk full, ACL, path too long) throw immediately with their
+    ///     real cause instead of burning retries and blaming locks.
     /// </summary>
     /// <param name="reader">The ZIP reader positioned at the entry to extract.</param>
     /// <param name="destinationPath">The destination file path.</param>
@@ -462,8 +493,6 @@ internal class ZipService
     private async Task ExtractFileWithRetryAsync(IReader reader, string destinationPath, string entryKey,
         CancellationToken cancellationToken = default)
     {
-        Exception? lastException = null;
-
         for (var attempt = 1; attempt <= FileWriteRetryAttempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -478,32 +507,70 @@ internal class ZipService
                     destinationPath,
                     FileMode.Create,
                     FileAccess.Write,
-                    FileShare.ReadWrite | FileShare.Delete,
+                    FileShare.None,
                     FileBufferSize,
                     true);
                 await using var entryStream = reader.OpenEntryStream();
                 await entryStream.CopyToAsync(destinationFileStream, cancellationToken);
                 return; // Success, exit the method
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException &&
-                                       attempt < FileWriteRetryAttempts)
+            catch (IOException ex)
             {
-                // File is likely locked by another process or has permission issues, retry after delay
-                lastException = ex;
+                if (!IsFileLockError(ex) || attempt >= FileWriteRetryAttempts)
+                    throw new IOException(
+                        IsFileLockError(ex)
+                            ? $"Failed to extract file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
+                              "The file is locked by another process."
+                            : $"Failed to write file '{entryKey}': {ex.Message}",
+                        ex);
+
+                // File is locked by another process, retry after delay
                 LogMessage?.Invoke(this,
                     new EventArgs<string>(
-                        $"File locked or access denied ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs}ms..."));
+                        $"File locked ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs * attempt}ms..."));
                 await Task.Delay(FileWriteRetryDelayMs * attempt,
                     cancellationToken); // Increasing delay for each attempt
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                // UPD-21: ACL/read-only denials are deterministic — fail fast with
+                // the real cause instead of burning ~7.5s of retries.
+                throw new IOException(
+                    $"Cannot write file '{entryKey}': access denied. " +
+                    "Check the install folder permissions and run the updater with sufficient rights.",
+                    ex);
+            }
         }
+    }
 
-        // All retry attempts failed
-        if (lastException != null)
-        {
+    /// <summary>
+    ///     True only for transient file-locking failures (another process holds the
+    ///     file): Win32 ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION, surfaced as
+    ///     IOException HResults. Everything else (disk full, ACL, path too long)
+    ///     is deterministic and must fail fast (UPD-21).
+    /// </summary>
+    private static bool IsFileLockError(IOException ex)
+    {
+        return ex.HResult is unchecked((int)0x80070020) or unchecked((int)0x80070021);
+    }
+
+    /// <summary>
+    ///     Throws an <see cref="IOException" /> with real numbers when the drive
+    ///     holding <paramref name="directory" /> cannot fit
+    ///     <paramref name="bytesNeeded" /> plus a safety reserve (UPD-21: fail fast
+    ///     on disk-full instead of retrying every file as "locked").
+    /// </summary>
+    private static void ThrowIfInsufficientSpace(string directory, long bytesNeeded, string entryKey)
+    {
+        if (bytesNeeded <= 0)
+            return; // Unknown size — the write itself will report ENOSPC fail-fast.
+
+        var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(directory))!);
+        const long ReserveBytes = 64L * 1024 * 1024;
+        if (drive.AvailableFreeSpace < bytesNeeded + ReserveBytes)
             throw new IOException(
-                $"Failed to extract file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
-                "The file may be locked by another process or has restricted permissions.", lastException);
-        }
+                $"Insufficient disk space to extract '{entryKey}': need " +
+                $"{DownloadService.FormatBytes(bytesNeeded + ReserveBytes)}, only " +
+                $"{DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
     }
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Win32;
 
 namespace SimpleLauncher.Updater.Services;
@@ -26,6 +27,14 @@ internal class DokanService
     public DokanService(DownloadService downloadService)
     {
         _downloadService = downloadService;
+
+        // UPD-15: subscribe once per instance (paired lifetimes — both services are
+        // created together per MainWindow). Subscribing inside
+        // DownloadAndInstallDokanAsync re-added the handlers on every call,
+        // duplicating progress/log output and rooting this instance via the
+        // longer-lived DownloadService.
+        _downloadService.LogMessage += (_, e) => LogMessage?.Invoke(this, e);
+        _downloadService.ProgressChanged += (_, e) => ProgressChanged?.Invoke(this, e);
     }
 
     /// <summary>
@@ -44,6 +53,9 @@ internal class DokanService
     /// <returns>True if Dokan is detected, false otherwise.</returns>
     public bool IsDokanInstalled()
     {
+        // UPD-25: Dokan is a Windows-only driver — never touch the registry off Windows.
+        if (!OperatingSystem.IsWindows()) return false;
+
         LogMessage?.Invoke(this, new EventArgs<string>("Checking if Dokan is installed..."));
 
         // Check 1: Look for Dokan in installed programs (registry)
@@ -84,8 +96,12 @@ internal class DokanService
     ///     updater so MSIs littered the install dir forever). After the installer exits,
     ///     the MSI is deleted with a short lock-retry; anything left behind sits in temp
     ///     where OS cleanup handles it.
+    ///     UPD-19: cancellable — the user token flows into the download and the
+    ///     installer wait (a user cancel aborts the wait; the MSI keeps running and
+    ///     temp leftovers are reclaimed by OS cleanup).
     /// </summary>
-    public async Task DownloadAndInstallDokanAsync()
+    /// <param name="cancellationToken">Token to cancel the download/install wait.</param>
+    public async Task DownloadAndInstallDokanAsync(CancellationToken cancellationToken = default)
     {
         var downloadUrl = GetDokanDownloadUrl();
         var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
@@ -95,11 +111,9 @@ internal class DokanService
 
         try
         {
-            // Download the MSI file
-            _downloadService.LogMessage += (_, e) => LogMessage?.Invoke(this, e);
-            _downloadService.ProgressChanged += (_, e) => ProgressChanged?.Invoke(this, e);
-
-            await using var memoryStream = await _downloadService.DownloadToMemoryAsync(downloadUrl);
+            // Download the MSI file (UPD-15: event forwarding is wired once in the constructor)
+            await using var memoryStream =
+                await _downloadService.DownloadToMemoryAsync(downloadUrl, cancellationToken);
 
             // Temp-drive free-space guard (UPD-06): the MSI must fit where we stage it.
             var tempDrive = new DriveInfo(Path.GetPathRoot(Path.GetTempPath())!);
@@ -137,13 +151,19 @@ internal class DokanService
 
             // Wait for the installer to finish (bounded — a forgotten wizard must not hang
             // the updater forever), then remove the staged MSI promptly.
-            using var waitCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            // UPD-19: linked to the user token — a user cancel aborts the wait and
+            // propagates (the installer keeps running); a pure 30-minute timeout
+            // just leaves the staged MSI in temp.
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            using var waitCts =
+                CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
             try
             {
                 await process.WaitForExitAsync(waitCts.Token);
             }
             catch (OperationCanceledException)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 LogMessage?.Invoke(this,
                     new EventArgs<string>(
                         "Dokan installer is still running — leaving the staged installer in the temp folder."));
@@ -171,6 +191,11 @@ internal class DokanService
             LogMessage?.Invoke(this,
                 new EventArgs<string>(
                     $"Could not remove the staged installer ({msiPath}) — it is in the temp folder and safe to delete."));
+        }
+        catch (OperationCanceledException)
+        {
+            // UPD-19: user cancellation is not an error — propagate without a bug report.
+            throw;
         }
         catch (Exception ex)
         {
@@ -200,6 +225,7 @@ internal class DokanService
     /// <summary>
     ///     Checks the Windows registry for any Dokan installation entry.
     /// </summary>
+    [SupportedOSPlatform("windows")] // UPD-25: registry access is Windows-only.
     private static bool IsDokanInRegistry()
     {
         // Check both native and WOW64 uninstall registry locations
@@ -210,6 +236,7 @@ internal class DokanService
     /// <summary>
     ///     Checks a specific registry view for Dokan uninstall entries.
     /// </summary>
+    [SupportedOSPlatform("windows")] // UPD-25: registry access is Windows-only.
     private static bool CheckUninstallRegistry(RegistryView registryView)
     {
         try

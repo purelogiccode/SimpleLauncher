@@ -20,9 +20,12 @@ public partial class MainWindow
     /// </summary>
     internal static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromMinutes(5) };
 
-    // Files to exclude during extraction to prevent self-destruction
+    // Files to exclude during extraction to prevent self-destruction.
+    // UPD-23: includes the extensionless single-file host name; ZipService only
+    // honors these at the archive root (case-insensitive).
     private static readonly string[] IgnoredFiles =
     [
+        "Updater",
         "Updater.exe",
         "Updater.pdb",
         "Updater.dll",
@@ -34,6 +37,14 @@ public partial class MainWindow
     private readonly CancellationTokenSource _cts;
 
     private readonly UpdateService _updateService;
+
+    // UPD-18: re-entrancy guard — Loaded can fire more than once.
+    private int _updateStarted;
+
+    // UPD-19: tracks a genuine user cancel (Cancel button / window close) so the
+    // OperationCanceledException catch can tell it apart from a transport timeout,
+    // which surfaces as TaskCanceledException with the token uncancelled.
+    private volatile bool _cancelRequested;
 
     static MainWindow()
     {
@@ -64,9 +75,16 @@ public partial class MainWindow
         var applicationVersion = GetApplicationVersion();
         Log($"Updater version: {applicationVersion}\n\n");
 
-        // Start update process async when window is loaded
+        // Start update process async when window is loaded.
+        // UPD-18: a second Loaded must not start a concurrent extraction/restart.
         _cts = new CancellationTokenSource();
-        Loaded += async (_, _) => await ExecuteUpdateAsync(_cts.Token);
+        Loaded += async (_, _) =>
+        {
+            if (Interlocked.Exchange(ref _updateStarted, 1) == 1)
+                return;
+            await ExecuteUpdateAsync(_cts.Token);
+        };
+        Closed += (_, _) => _cancelRequested = true;
     }
 
     /// <summary>
@@ -174,10 +192,23 @@ public partial class MainWindow
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
                 // Check if Dokan is installed and offer to install it if missing
-                await _updateService.CheckAndInstallDokanAsync();
+                await _updateService.CheckAndInstallDokanAsync(cancellationToken);
 
-                _updateService.RestartMainApplication();
-                Close();
+                // UPD-16: only close on a real restart — a null/failed start must
+                // tell the user to launch manually instead of vanishing.
+                if (_updateService.RestartMainApplication())
+                {
+                    Close();
+                }
+                else
+                {
+                    Log("Update installed, but the application could not be restarted automatically.");
+                    MessageBox.Show(
+                        "Update installed successfully, but Simple Launcher could not be restarted automatically.\n\n" +
+                        "Please start it manually.",
+                        "Restart Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Close();
+                }
             }
             else if (result.RequiresManualUpdate)
             {
@@ -187,10 +218,22 @@ public partial class MainWindow
         }
         catch (OperationCanceledException)
         {
-            Serilog.Log.Information("Update was cancelled by the user");
-            Log("Update was cancelled by the user.");
-            ProgressStatusText.Text = "Cancelled";
-            CancelButton.IsEnabled = false;
+            // UPD-19: a genuine user cancel vs. a transport/timeout cancel
+            // (HttpClient.Timeout leaves the user token uncancelled).
+            if (_cancelRequested)
+            {
+                Serilog.Log.Information("Update was cancelled by the user");
+                Log("Update was cancelled by the user.");
+                ProgressStatusText.Text = "Cancelled";
+                CancelButton.IsEnabled = false;
+            }
+            else
+            {
+                Serilog.Log.Warning("Update timed out waiting for a network response");
+                Log("Update timed out waiting for a network response.");
+                RedirectToDownloadPage(
+                    "The update timed out while contacting the update server.\n\nWould you like to update manually?");
+            }
         }
         catch (Exception ex)
         {
@@ -205,6 +248,7 @@ public partial class MainWindow
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
+        _cancelRequested = true;
         _cts.Cancel();
         CancelButton.IsEnabled = false;
         Log("Cancelling update...");

@@ -35,6 +35,14 @@ public partial class MainWindow : Window
 
     private readonly UpdateService _updateService;
 
+    // UPD-18: re-entrancy guard — Opened can fire more than once.
+    private int _updateStarted;
+
+    // UPD-19: tracks a genuine user cancel (Cancel button / window close) so the
+    // OperationCanceledException catch can tell it apart from a transport timeout,
+    // which surfaces as TaskCanceledException with the token uncancelled.
+    private volatile bool _cancelRequested;
+
     static MainWindow()
     {
         HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SimpleLauncher-Avalonia-Updater");
@@ -69,13 +77,20 @@ public partial class MainWindow : Window
         var applicationVersion = GetApplicationVersion();
         Log($"Updater version: {applicationVersion}\n");
 
-        // Start update process async when window is loaded
+        // Start update process async when window is loaded.
+        // UPD-18: a second Opened must not start a concurrent extraction/restart.
         _cts = new CancellationTokenSource();
-        Opened += async (_, _) => await ExecuteUpdateAsync(_cts.Token);
+        Opened += async (_, _) =>
+        {
+            if (Interlocked.Exchange(ref _updateStarted, 1) == 1)
+                return;
+            await ExecuteUpdateAsync(_cts.Token);
+        };
 
         // UPD-13: release the update cancellation source with the window.
         Closed += (_, _) =>
         {
+            _cancelRequested = true;
             _cts.Cancel();
             _cts.Dispose();
         };
@@ -184,9 +199,20 @@ public partial class MainWindow : Window
                 await DialogHelper.ShowMessageAsync(this, "Update installed successfully.", "Success");
 
                 // Check if Dokan is installed and offer to install it if missing (Windows only)
-                if (OperatingSystem.IsWindows()) await _updateService.CheckAndInstallDokanAsync();
+                if (OperatingSystem.IsWindows())
+                    await _updateService.CheckAndInstallDokanAsync(cancellationToken);
 
-                _updateService.RestartMainApplication();
+                // UPD-16: only close on a real restart — a null/failed start must
+                // tell the user to launch manually instead of vanishing.
+                if (!_updateService.RestartMainApplication())
+                {
+                    Log("Update installed, but the application could not be restarted automatically.");
+                    await DialogHelper.ShowMessageAsync(this,
+                        "Update installed successfully, but Simple Launcher could not be restarted automatically.\n\n" +
+                        "Please start it manually.",
+                        "Restart Failed");
+                }
+
                 Close();
             }
             else if (result.RequiresManualUpdate)
@@ -197,10 +223,22 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            Serilog.Log.Information("Update was cancelled by the user");
-            Log("Update was cancelled by the user.");
-            ProgressStatusText.Text = "Cancelled";
-            CancelButton.IsEnabled = false;
+            // UPD-19: a genuine user cancel vs. a transport/timeout cancel
+            // (HttpClient.Timeout leaves the user token uncancelled).
+            if (_cancelRequested)
+            {
+                Serilog.Log.Information("Update was cancelled by the user");
+                Log("Update was cancelled by the user.");
+                ProgressStatusText.Text = "Cancelled";
+                CancelButton.IsEnabled = false;
+            }
+            else
+            {
+                Serilog.Log.Warning("Update timed out waiting for a network response");
+                Log("Update timed out waiting for a network response.");
+                await RedirectToDownloadPage(
+                    "The update timed out while contacting the update server.\n\nWould you like to update manually?");
+            }
         }
         catch (Exception ex)
         {
@@ -215,6 +253,7 @@ public partial class MainWindow : Window
 
     private void CancelButton_Click(object? sender, RoutedEventArgs e)
     {
+        _cancelRequested = true;
         _cts.Cancel();
         CancelButton.IsEnabled = false;
         Log("Cancelling update...");

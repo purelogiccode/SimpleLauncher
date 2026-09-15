@@ -220,7 +220,19 @@ internal class ProcessService
                 UseShellExecute = true,
                 WorkingDirectory = appDirectory
             };
-            Process.Start(startInfo)?.Dispose();
+
+            // UPD-16: Process.Start can return null (e.g. shell-execute to an existing
+            // instance handler) — that is NOT a successful restart.
+            using var startedProcess = Process.Start(startInfo);
+            if (startedProcess == null)
+            {
+                Log.Warning("Restart of {Executable} reported no new process handle.", executableFileName);
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>(
+                        $"Could not restart {executableFileName}: the process did not start."));
+                return false;
+            }
+
             return true;
         }
         catch (Exception ex)
