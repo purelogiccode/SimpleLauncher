@@ -777,6 +777,14 @@ public class SettingsManagerService : IDisposable
             {
                 await WriteSnapshotAsync(snapshot);
             }
+            catch (Exception ex)
+            {
+                // Settings persistence is best-effort and usually fire-and-forget:
+                // never let a failed background save fault the returned task (it would
+                // surface later as an unobserved task exception / bug report). A
+                // read-only or locked settings.dat is an environment issue, not a bug.
+                _logger.Information(ex, "Failed to save settings");
+            }
             finally
             {
                 try

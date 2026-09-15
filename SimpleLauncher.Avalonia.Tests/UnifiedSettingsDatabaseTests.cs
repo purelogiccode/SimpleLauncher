@@ -273,6 +273,32 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         Assert.Equal(1800L, playTime.PlayTimeSeconds);
     }
 
+    /// <summary>
+    ///     Bug #67097: a settings.dat that carries the read-only attribute made SQLite
+    ///     fail with 'attempt to write a readonly database'. Opening the database must
+    ///     clear the attribute so saves keep working.
+    /// </summary>
+    [Fact]
+    public void ReadOnlyDatabaseFile_IsMadeWritableAndSaveSucceeds()
+    {
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+        File.SetAttributes(_dbPath, File.GetAttributes(_dbPath) | FileAttributes.ReadOnly);
+
+        try
+        {
+            UnifiedSettingsDatabase.SaveAppSettings(
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["Language"] = "fr" }, _dbPath);
+
+            Assert.Equal("fr", UnifiedSettingsDatabase.GetAppSetting("Language", _dbPath));
+            Assert.False(File.GetAttributes(_dbPath).HasFlag(FileAttributes.ReadOnly));
+        }
+        finally
+        {
+            if (File.Exists(_dbPath))
+                File.SetAttributes(_dbPath, File.GetAttributes(_dbPath) & ~FileAttributes.ReadOnly);
+        }
+    }
+
     private string NewTempDbPath()
     {
         var path = Path.Combine(Path.GetTempPath(), "SLDbTest_" + Guid.NewGuid().ToString("N") + ".dat");

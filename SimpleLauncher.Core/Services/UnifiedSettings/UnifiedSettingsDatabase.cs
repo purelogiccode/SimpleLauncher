@@ -161,6 +161,12 @@ public static class UnifiedSettingsDatabase
 
     internal static SqliteConnection CreateOpenConnection(string path)
     {
+        // A settings.dat carrying the Windows read-only attribute (e.g. after a copy,
+        // sync or restore that preserved it) makes SQLite fail with SQLITE_READONLY
+        // ('attempt to write a readonly database') even for the application that owns
+        // it. Clear the attribute (best effort) before opening so reads and writes work.
+        ClearReadOnlyAttributes(path);
+
         var connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = path,
@@ -212,6 +218,31 @@ public static class UnifiedSettingsDatabase
         cmd.Transaction = transaction;
         cmd.CommandText = sql;
         cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    ///     Clears the read-only attribute from the database file and its journal siblings.
+    ///     SQLite reports <c>SQLITE_READONLY</c> when the file attribute is set, which would
+    ///     otherwise make every settings save fail until the user fixes the attribute by hand.
+    /// </summary>
+    internal static void ClearReadOnlyAttributes(string path)
+    {
+        foreach (var candidate in new[] { path, path + "-wal", path + "-shm", path + "-journal" })
+        {
+            try
+            {
+                if (!File.Exists(candidate)) continue;
+                var attributes = File.GetAttributes(candidate);
+                if ((attributes & FileAttributes.ReadOnly) == FileAttributes.None) continue;
+
+                File.SetAttributes(candidate, attributes & ~FileAttributes.ReadOnly);
+                Log.Information("[UnifiedSettings] Cleared the read-only attribute on '{Path}'", candidate);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "[UnifiedSettings] Failed to clear the read-only attribute on '{Path}'", candidate);
+            }
+        }
     }
 
     private static void QuarantineCorruptDatabase(string path)
