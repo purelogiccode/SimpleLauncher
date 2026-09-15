@@ -49,7 +49,14 @@ public class AvaloniaLoadingOverlayService
             }
             else
             {
-                if (_loadingOperationsCount > 0) _loadingOperationsCount--;
+                if (_loadingOperationsCount > 0)
+                {
+                    _loadingOperationsCount--;
+                }
+                else
+                {
+                    Log.Debug("[SetLoadingState] Warning: Attempted to decrement loading count when already at 0");
+                }
             }
 
             shouldShowOverlay = _loadingOperationsCount > 0;

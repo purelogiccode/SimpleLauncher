@@ -213,6 +213,8 @@ public partial class MainWindow : Window, IPaginationHost
         // within the grace period, force-exit so the app can never linger in the background.
         Closed += (_, _) =>
         {
+            Log.Information("Main window closed; cleaning up resources");
+
             // WPF CloseWindowEvents parity: full cleanup on window close — unsubscribe
             // handlers, stop the gamepad, stop the ROM watcher, and kill any lingering
             // CHD mounter processes so no background processes outlive the window.
@@ -324,6 +326,8 @@ public partial class MainWindow : Window, IPaginationHost
             }
         };
         _fileWatcher.GameFilesChanged += _gameFilesChangedHandler;
+
+        Log.Information("Main window initialized");
     }
 
     /// <summary>Favorites page section ViewModel (WPF FavoritesPage equivalent).</summary>
@@ -343,6 +347,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Main window opened; initializing the game library");
+
             InitializeThemeMenu();
 
             await _viewModel.InitializeAsync();
@@ -361,6 +367,7 @@ public partial class MainWindow : Window, IPaginationHost
             // WPF parity: show system selection screen at startup instead of
             // the All Games browser. User picks a system from the grid to begin.
             await ShowSystemSelectionScreenAsync();
+            Log.Debug("DisplaySystemSelectionScreenAsync called");
         }
         catch (Exception ex)
         {
@@ -376,6 +383,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Running first-run experience: no systems configured");
+
             var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
             _loadingOverlay.SetLoadingState(true, scanningText);
             _viewModel.StatusText = scanningText;
@@ -407,6 +416,8 @@ public partial class MainWindow : Window, IPaginationHost
             var welcome = await messageBox.FirstRunWelcomeMessageBoxAsync();
             if (welcome == MessageBoxResult.Yes)
             {
+                Log.Information("User accepted the Easy Mode prompt");
+
                 var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
                 await easyModeWindow.ShowDialog(this);
                 if (easyModeWindow.DataContext is EasyModeViewModel { SystemAdded: true })
@@ -453,6 +464,7 @@ public partial class MainWindow : Window, IPaginationHost
         _settings.BaseTheme = baseTheme;
         _ = _settings.SaveAsync();
         AvaloniaThemeService.ApplyTheme(_settings.BaseTheme, _settings.AccentColor);
+        Log.Information("Base theme changed to {BaseTheme}", baseTheme);
 
         foreach (var child in BaseThemeMenu.Items.OfType<MenuItem>()) child.IsChecked = child == item;
     }
@@ -466,6 +478,7 @@ public partial class MainWindow : Window, IPaginationHost
         _settings.AccentColor = accent;
         _ = _settings.SaveAsync();
         AvaloniaThemeService.ApplyTheme(_settings.BaseTheme, _settings.AccentColor);
+        Log.Information("Accent color changed to {AccentColor}", accent);
 
         foreach (var child in AccentColorMenu.Items.OfType<MenuItem>()) child.IsChecked = child == item;
     }
@@ -530,6 +543,7 @@ public partial class MainWindow : Window, IPaginationHost
                 e.Handled = true;
                 break;
             case Key.F5:
+                Log.Debug("F5 pressed: refreshing the game list");
                 _viewModel.NavigateToAllGamesCommand.Execute(null);
                 RefreshSidebarCounts();
                 ShowToast(_localization.GetString("Refreshed", "Refreshed"),
@@ -565,6 +579,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening Easy Mode window");
+
             var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
             // Avalonia ShowDialog returns immediately without a nested pump — must await it
             // before reading the result (otherwise the SystemAdded refresh below never runs).
@@ -573,6 +589,7 @@ public partial class MainWindow : Window, IPaginationHost
             // If a system was added, refresh the UI and show the updated system list
             if (easyModeWindow.DataContext is EasyModeViewModel { SystemAdded: true })
             {
+                Log.Information("Easy Mode added a system; refreshing the UI");
                 _viewModel.InvalidateAllGameFileCaches();
                 await RefreshAfterSystemConfigurationChangeAsync();
             }
@@ -650,6 +667,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Navigating to the previous page");
             _viewModel.GoToPreviousPage();
             _playSound.PlayNotificationSound();
         }
@@ -663,6 +681,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Navigating to the next page");
             _viewModel.GoToNextPage();
             _playSound.PlayNotificationSound();
         }
@@ -823,6 +842,9 @@ public partial class MainWindow : Window, IPaginationHost
             _lastSortColumn = columnName;
         }
 
+        Log.Debug("Sorting games by {Column} ({Direction})", columnName,
+            _sortAscending ? "ascending" : "descending");
+
         var sorted = columnName switch
         {
             "Favorite" => _sortAscending
@@ -865,7 +887,10 @@ public partial class MainWindow : Window, IPaginationHost
     private void GameDataGrid_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (GameDataGrid.SelectedItem is GameCardViewModel game)
+        {
+            Log.Debug("Game list double-click: launching {Game}", game.FilePath);
             _viewModel.PlayGameCommand.Execute(game);
+        }
     }
 
     private void GameDataGrid_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -930,6 +955,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Home button pressed; resetting the UI");
             await _uiResetService.ResetUiAsync();
             ScrollToTop();
             _playSound.PlayNotificationSound();
@@ -993,6 +1019,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Showing favorite games for the selected system");
             _playSound.PlayNotificationSound();
 
             if (string.IsNullOrEmpty(_viewModel.SelectedSystem))
@@ -1015,6 +1042,7 @@ public partial class MainWindow : Window, IPaginationHost
         {
             _playSound.PlayNotificationSound();
             _viewModel.ToggleMameSortOrder();
+            Log.Debug("MAME sort order toggled to {SortOrder}", _viewModel.MameSortOrder);
             UpdateMameSortOrderButtonToolTip();
         }
         catch (Exception ex)
@@ -1072,6 +1100,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Debug("Letter filter selected: '{Letter}'", letter);
             _playSound.PlayNotificationSound();
             _viewModel.SetLetterFilter(letter);
             UpdateLetterBarSelection(letter);
@@ -1100,10 +1129,12 @@ public partial class MainWindow : Window, IPaginationHost
             switch (e.Delta.Y)
             {
                 case > 0:
+                    Log.Debug("Ctrl+MouseWheel: zooming the card size in");
                     _viewModel.ZoomIn();
                     e.Handled = true;
                     break;
                 case < 0:
+                    Log.Debug("Ctrl+MouseWheel: zooming the card size out");
                     _viewModel.ZoomOut();
                     e.Handled = true;
                     break;
@@ -1133,6 +1164,8 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     private async Task ShowSectionAsync(MainSection section)
     {
+        Log.Debug("Showing section {Section}", section);
+
         // System selection screen is always hidden when a content view is active
         SystemSelectionRoot.IsVisible = false;
 
@@ -1169,6 +1202,7 @@ public partial class MainWindow : Window, IPaginationHost
     private void SearchButton_Click(object? sender, RoutedEventArgs e)
     {
         var query = SearchBox.Text;
+        Log.Debug("Search button clicked for query '{Query}'", query);
         _viewModel.SearchText = query ?? "";
         _viewModel.StatusText = string.IsNullOrEmpty(query)
             ? _localization.GetString("Status.Ready", "Ready")
@@ -1186,6 +1220,7 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     private void SystemComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        Log.Debug("System ComboBox selection changed to '{System}'", SystemComboBox.SelectedItem);
         _ = _systemSelectionOrchestrator.HandleSystemSelectionChangedAsync();
     }
 
@@ -1196,6 +1231,7 @@ public partial class MainWindow : Window, IPaginationHost
     private void EmulatorComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         _viewModel.SelectedEmulatorName = EmulatorComboBox.SelectedItem?.ToString();
+        Log.Debug("Emulator ComboBox selection changed to '{Emulator}'", _viewModel.SelectedEmulatorName);
     }
 
     #endregion
@@ -1265,6 +1301,7 @@ public partial class MainWindow : Window, IPaginationHost
         _viewModel.IsGridView = !_viewModel.IsGridView;
         _settings.ViewMode = _viewModel.IsGridView ? "GridView" : "ListView";
         _ = _settings.SaveAsync();
+        Log.Information("View mode toggled to {ViewMode}", _settings.ViewMode);
         UpdateViewModeCheckMarks();
         _playSound.PlayNotificationSound();
     }
@@ -1287,6 +1324,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.ButtonAspectRatio = newAspectRatio;
             await _settings.SaveAsync();
             UpdateButtonAspectRatioCheckMarks(newAspectRatio);
+            Log.Information("Button aspect ratio toggled to {AspectRatio}", newAspectRatio);
             _viewModel.ReloadGames();
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("ButtonAspectRatio", "Button Aspect Ratio"),
@@ -1706,6 +1744,8 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     private void RetroAchievements_Click(object? sender, RoutedEventArgs e)
     {
+        Log.Information("Opening RetroAchievements window");
+
         var raWindow = App.ServiceProvider.GetRequiredService<RetroAchievementsWindow>();
         if (raWindow.IsVisible)
         {
@@ -1823,6 +1863,7 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             _localization.LoadLanguage(lang);
             UpdateLanguageCheckMarks(lang);
+            Log.Information("Language changed to {Language}", lang);
             _playSound.PlayNotificationSound();
 
             // WPF parity: LanguageMenuService.ChangeLanguageAsync restarts the app so
@@ -1852,6 +1893,7 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             _viewModel.CardWidth = size;
             UpdateThumbnailSizeCheckMarks(size);
+            Log.Information("Thumbnail size changed to {Size}", size);
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("ButtonSizeIcon", "Button Size"),
                 $"{size} {_localization.GetString("Px", "px")}");
@@ -1874,6 +1916,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.ButtonAspectRatio = ratio;
             await _settings.SaveAsync();
             UpdateButtonAspectRatioCheckMarks(ratio);
+            Log.Information("Button aspect ratio changed to {AspectRatio}", ratio);
             _viewModel.ReloadGames();
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("ButtonAspectRatio", "Button Aspect Ratio"), ratio);
@@ -1900,6 +1943,7 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             UpdateGamesPerPageCheckMarks(page);
             _viewModel.ConfigurePagination(page);
+            Log.Information("Games per page changed to {GamesPerPage}", page);
             _viewModel.ReloadGames();
             _playSound.PlayNotificationSound();
             var preferenceSavedTemplate =
@@ -1923,6 +1967,7 @@ public partial class MainWindow : Window, IPaginationHost
 
             _viewModel.IsGridView = string.Equals(item.Name, "GridView", StringComparison.Ordinal);
             _settings.ViewMode = _viewModel.IsGridView ? "GridView" : "ListView";
+            Log.Information("View mode changed to {ViewMode}", _settings.ViewMode);
             _ = _settings.SaveAsync().ContinueWith(t =>
             {
                 if (t.IsFaulted) Log.Warning(t.Exception, "Failed to save view mode preference");
@@ -1954,6 +1999,7 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             UpdateShowGamesCheckMarks(mode);
             _viewModel.ReloadGames();
+            Log.Information("Show games filter changed to {ShowGamesMode}", mode);
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -1981,6 +2027,7 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
             _viewModel.ReloadGames();
+            Log.Information("Filename display mode changed to {FilenameDisplayMode}", mode);
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -1999,6 +2046,7 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
             _viewModel.ReloadGames();
+            Log.Information("Display machine name changed to {DisplayMachineName}", _settings.DisplayMachineName);
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -2029,6 +2077,7 @@ public partial class MainWindow : Window, IPaginationHost
                 _ => 13
             };
             UpdateFilenameCheckMarks();
+            Log.Information("Filename font size changed to {FontSize}", size);
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -2053,6 +2102,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.MachineNameFontSize = size;
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
+            Log.Information("Machine name font size changed to {FontSize}", size);
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -2067,6 +2117,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening link settings window");
+
             var window = App.ServiceProvider.GetRequiredService<SetLinksWindow>();
             await window.ShowDialog(this);
         }
@@ -2080,6 +2132,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening gamepad dead zone settings window");
+
             var window = App.ServiceProvider.GetRequiredService<SetGamepadDeadZoneWindow>();
             await window.ShowDialog(this);
 
@@ -2108,6 +2162,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening fuzzy matching settings window");
+
             var window = App.ServiceProvider.GetRequiredService<SetFuzzyMatchingWindow>();
             await window.ShowDialog(this);
         }
@@ -2121,6 +2177,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening sound configuration window");
+
             var window = App.ServiceProvider.GetRequiredService<SoundConfigurationWindow>();
             await window.ShowDialog(this);
         }
@@ -2134,6 +2192,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening image pack downloader window");
+
             var window = App.ServiceProvider.GetRequiredService<DownloadImagePackWindow>();
             await window.ShowDialog(this);
         }
@@ -2147,6 +2207,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening global statistics window");
+
             var window = App.ServiceProvider.GetRequiredService<GlobalStatsWindow>();
             window.Initialize(_systemManagerService.LoadSystems());
             await window.ShowDialog(this);
@@ -2161,6 +2223,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening About window");
+
             var window = App.ServiceProvider.GetRequiredService<AboutWindow>();
             await window.ShowDialog(this);
         }
@@ -2174,6 +2238,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening support window");
+
             var window = App.ServiceProvider.GetRequiredService<SupportWindow>();
             await window.ShowDialog(this);
         }
@@ -2199,6 +2265,7 @@ public partial class MainWindow : Window, IPaginationHost
             else
                 await _gamePadController.StopAsync();
 
+            Log.Information("Gamepad navigation {State}", item.IsChecked ? "enabled" : "disabled");
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("GamepadSupport", "Gamepad Support"),
                 item.IsChecked
@@ -2220,6 +2287,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.EnableFuzzyMatching = item.IsChecked;
             await _settings.SaveAsync();
             _viewModel.ReloadGames();
+            Log.Information("Fuzzy matching {State}", item.IsChecked ? "enabled" : "disabled");
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -2237,6 +2305,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.EnableAnnotationStripping = item.IsChecked;
             await _settings.SaveAsync();
             _viewModel.ReloadGames();
+            Log.Information("Annotation stripping {State}", item.IsChecked ? "enabled" : "disabled");
             _playSound.PlayNotificationSound();
         }
         catch (Exception ex)
@@ -2262,6 +2331,8 @@ public partial class MainWindow : Window, IPaginationHost
             await _settings.SaveAsync();
             _playSound.PlayNotificationSound();
             var header = item.Header?.ToString() ?? _localization.GetString("Overlaybutton", "Overlay button");
+            Log.Information("Overlay button '{OverlayButton}' {State}", header,
+                isChecked ? "enabled" : "disabled");
             ShowToast(_localization.GetString("OverlayButtonIcon", "Overlay Button"),
                 $"{header} {(isChecked
                     ? _localization.GetString("OverlayEnabled", "enabled")
@@ -2284,6 +2355,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening Expert Mode (Edit System) window");
+
             var selectedSystem = _viewModel.SelectedSystem;
             var systemToPreselect = string.IsNullOrWhiteSpace(selectedSystem) ? null : selectedSystem;
             var factory = App.ServiceProvider.GetRequiredService<Func<string?, EditSystemWindow>>();
@@ -2304,6 +2377,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Scanning for Windows Store games");
             _playSound.PlayNotificationSound();
             var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
             _loadingOverlay.SetLoadingState(true, scanningText);
@@ -2344,6 +2418,10 @@ public partial class MainWindow : Window, IPaginationHost
 
             if (result.SystemWasCreated || result.GamesFound > 0)
             {
+                Log.Information(
+                    "Windows games scan complete: {GamesFound} game(s), {ShortcutsCreated} shortcut(s), system created: {SystemWasCreated}",
+                    result.GamesFound, result.ShortcutsCreated, result.SystemWasCreated);
+
                 var foundText = _localization.GetString("FoundNewMicrosoftWindowsGames",
                     "Found new Microsoft Windows games. Refreshing system list.");
                 _viewModel.StatusText = foundText;
@@ -2393,6 +2471,7 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     private async Task RefreshAfterSystemConfigurationChangeAsync()
     {
+        Log.Debug("Refreshing the UI after a system configuration change");
         await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
         // Refresh the view-model's system snapshot + counts: without this, opening a
         // newly added system filters the stale snapshot and shows 0 games.
@@ -2432,6 +2511,8 @@ public partial class MainWindow : Window, IPaginationHost
         var systems = _systemManagerService.LoadSystems()
             .OrderBy(static s => s.SystemName, StringComparer.Ordinal)
             .ToList();
+
+        Log.Debug("System selection grid loaded {Count} configured system(s)", systems.Count);
 
         if (systems.Count == 0)
         {
@@ -2564,6 +2645,7 @@ public partial class MainWindow : Window, IPaginationHost
         if (string.IsNullOrEmpty(systemName)) return;
 
         _playSound.PlayNotificationSound();
+        Log.Debug("System card clicked: selecting {System}", systemName);
         SystemComboBox.SelectedItem = systemName;
     }
 
@@ -2575,6 +2657,7 @@ public partial class MainWindow : Window, IPaginationHost
         try
         {
             _playSound.PlayNotificationSound();
+            Log.Information("Opening Edit System window for {System}", systemName);
             var factory = App.ServiceProvider.GetRequiredService<Func<string?, EditSystemWindow>>();
             var editWindow = factory(systemName);
             await editWindow.ShowDialog(this);
@@ -2597,6 +2680,7 @@ public partial class MainWindow : Window, IPaginationHost
             var result = await messageBox.AreYouSureDoYouWantToDeleteThisSystemMessageBoxAsync();
             if (result != MessageBoxResult.Yes) return;
 
+            Log.Information("Deleting system {System}", systemName);
             _playSound.PlayNotificationSound();
 
             var writer = App.ServiceProvider.GetRequiredService<ISystemConfigurationWriterService>();
@@ -2620,6 +2704,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening RetroAchievements settings window");
+
             var settingsWindow = App.ServiceProvider.GetRequiredService<RetroAchievementsSettingsWindow>();
             await settingsWindow.ShowDialog(this);
         }
@@ -2633,6 +2719,7 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Rescanning RetroAchievements hashes for the selected system");
             await _viewModel.RescanRetroAchievementsForSelectedSystemAsync();
         }
         catch (Exception ex)
@@ -2649,6 +2736,8 @@ public partial class MainWindow : Window, IPaginationHost
 
         try
         {
+            Log.Information("Opening {Emulator} configuration window", emulatorName);
+
             switch (emulatorName)
             {
                 case "Ares":
@@ -2736,6 +2825,8 @@ public partial class MainWindow : Window, IPaginationHost
 
             tool = toolTag;
 
+            Log.Information("Launching external tool {Tool}", tool);
+
             try
             {
                 _viewModel.StatusText = string.Format(
@@ -2751,6 +2842,7 @@ public partial class MainWindow : Window, IPaginationHost
                         await _externalToolLauncher.BatchConvertIsoToXisoAsync();
                         break;
                     case "BatchConvertToCHD":
+                        Log.Debug("Called BatchConvertToCHD with args: {RomFolder}", romFolder);
                         await _externalToolLauncher.BatchConvertToChdAsync(romFolder);
                         break;
                     case "BatchConvertToCompressedFile":
@@ -2846,6 +2938,8 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            Log.Information("Opening the donation page");
+
             var configuration = App.ServiceProvider.GetRequiredService<IConfiguration>();
             var url = configuration.GetValue<string>("Urls:DonationPage") ?? "https://www.purelogiccode.com/Donate/";
             // AV-15: config-controlled URL — validate the scheme and open via the
@@ -2872,6 +2966,7 @@ public partial class MainWindow : Window, IPaginationHost
 
             // AV-15: open via the cross-platform launcher (shell-execute throws on
             // Linux); the helper falls back to shell-execute where appropriate.
+            Log.Debug("Opening the AppData folder: {Path}", appDataPath);
             if (!await ExternalLinkHelper.TryOpenFolderAsync(appDataPath, GetTopLevel(this)))
                 Log.Error("Unable to open the AppData folder: {Path}", appDataPath);
         }
@@ -2883,6 +2978,7 @@ public partial class MainWindow : Window, IPaginationHost
 
     private void Exit_Click(object? sender, RoutedEventArgs e)
     {
+        Log.Information("Exit requested from the menu; shutting down");
         _playSound.PlayNotificationSound();
 
         // WPF parity: Exit_Click routes through QuitSimpleLauncher.SimpleQuitApplication()

@@ -66,6 +66,9 @@ public class RemoteImage : Image
         try
         {
             var bitmap = await RemoteImageLoader.LoadAsync(url, token).ConfigureAwait(false);
+            if (bitmap is null && !token.IsCancellationRequested)
+                Log.Debug("Remote image load failed for {Url}", url);
+
             if (bitmap is null || token.IsCancellationRequested) return;
 
             // Only apply if the URL is still the current one (fast scrolling / reuse).

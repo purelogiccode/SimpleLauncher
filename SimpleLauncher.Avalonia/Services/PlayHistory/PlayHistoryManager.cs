@@ -52,6 +52,9 @@ public class PlayHistoryManager
             });
         }
 
+        logErrors?.Information("Loaded {Count} play history item(s) from the unified database",
+            manager.PlayHistoryList.Count);
+
         return manager;
     }
 
@@ -125,6 +128,8 @@ public class PlayHistoryManager
             var bytes = File.ReadAllBytes(FilePath);
             var manager = MessagePackSerializer.Deserialize<PlayHistoryManager>(bytes);
             manager._logger = logErrors;
+            logErrors?.Information("Loaded {Count} play history item(s) from playhistory.dat",
+                manager.PlayHistoryList.Count);
             return manager;
         }
         catch (Exception ex)

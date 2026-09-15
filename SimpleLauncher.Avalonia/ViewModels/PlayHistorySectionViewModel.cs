@@ -78,6 +78,8 @@ public partial class PlayHistorySectionViewModel : ObservableObject
             });
 
             ApplySortByDate();
+
+            _logErrors.Information("Loaded {Count} play history item(s)", PlayHistoryList.Count);
         }
         catch (Exception ex)
         {
@@ -146,6 +148,7 @@ public partial class PlayHistorySectionViewModel : ObservableObject
 
                 _playSoundEffects.PlayTrashSound();
                 PlayHistoryList.Remove(item);
+                _logErrors.Debug("Removed history entry: {FileName} ({System})", item.FileName, item.SystemName);
                 SelectedItem = null;
                 SyncToManager();
 
@@ -176,6 +179,7 @@ public partial class PlayHistorySectionViewModel : ObservableObject
 
             _playSoundEffects.PlayTrashSound();
             PlayHistoryList.Clear();
+            _logErrors.Information("Cleared all play history items");
             SelectedItem = null;
             SyncToManager();
 

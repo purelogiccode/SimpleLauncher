@@ -264,6 +264,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     public void ReloadGames()
     {
+        Log.Debug("Reloading the game list");
         LoadAllGames();
     }
 
@@ -289,6 +290,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             _allSystems = systems;
             SystemGameCounts = counts;
+            Log.Debug("Reloaded {SystemCount} system(s) after a configuration change", systems.Count);
         }
         catch (Exception ex)
         {
@@ -402,6 +404,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 .ToList();
         if (systems.Count == 0) return null;
 
+        Log.Debug("Picking a random game from {System}", SelectedSystem);
+
         // Force the Show Games filter to ShowAll and persist it (WPF parity)
         if (!string.Equals(_settings.ShowGames, "ShowAll", StringComparison.OrdinalIgnoreCase))
         {
@@ -452,6 +456,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             if (picked != null)
             {
+                Log.Debug("Random game selected: {Game}", picked.DisplayTitle);
                 StatusText = string.Format(
                     _localization.GetString("Pickedarandomgame", "Picked a random game: {0}"), picked.DisplayTitle);
                 ToolbarTitle =
@@ -540,6 +545,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         CardWidth = newSize;
         _settings.ThumbnailSize = newSize;
         _ = _settings.SaveAsync();
+        Log.Debug("Thumbnail size adjusted to {Size}", newSize);
         StatusText = direction > 0
             ? $"{_localization.GetString("ZoomingIn", "Zooming in...")} {newSize}{_localization.GetString("Px", "px")}"
             : $"{_localization.GetString("ZoomingOut", "Zooming out...")} {newSize}{_localization.GetString("Px", "px")}";
@@ -552,6 +558,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     public void RefreshCurrentView()
     {
+        Log.Debug("Refreshing the current view");
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             _ = ExecuteSearchAsync(SearchText);
@@ -600,6 +607,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Filtering games with RetroAchievements");
+
             // Prevent parallel hash calculations (they would spawn many CLI processes at once)
             if (_raHashScanner.IsScanning)
             {
@@ -721,6 +730,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             return (matched, allGames.Count);
         });
 
+        Log.Debug("RetroAchievements filter matched {MatchedCount} of {TotalCount} game(s)", matched.Count, total);
+
         IsShowingRetroAchievements = true;
         LetterFilter = "";
         ShowGames(matched);
@@ -739,6 +750,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         Dispatcher.UIThread.Post(() =>
         {
+            Log.Information("RetroAchievements hash calculation completed for {System}", systemName);
             var raCompleteTemplate = _localization.GetString("RaHashCalculationComplete",
                 "RetroAchievements hash calculation is complete for {0}.");
             ShowToast(_localization.GetString("RetroAchievements", "RetroAchievements"),
@@ -757,6 +769,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         {
             try
             {
+                Log.Debug("Rescanning RetroAchievements hashes for the selected system");
+
                 if (string.IsNullOrEmpty(SelectedSystem))
                 {
                     ShowToast(_localization.GetString("RetroAchievements", "RetroAchievements"),
@@ -824,6 +838,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         IsLoading = true;
         try
         {
+            Log.Debug("Initializing game library");
+
             // Reconcile favorites against the current system configuration (mirrors the WPF app):
             // entries whose system no longer exists (renamed without migration, or deleted)
             // are dropped so they never linger in the favorites filter.
@@ -848,6 +864,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             _allSystems = systems;
             SystemGameCounts = counts;
+            Log.Information("Game library initialized: {SystemCount} system(s)", systems.Count);
             IsShowingFavorites = false;
             IsShowingRetroAchievements = false;
             IsMixedView = true;
@@ -916,6 +933,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
     private async Task ExecuteSearchAsync(string query)
     {
+        Log.Debug("Executing search for query '{Query}'", query);
+
         // WPF SearchOrchestrator parity: require a selected system AND a non-blank
         // query, and clear prior search results so stale results never persist.
         var validation = _searchOrchestrator?.ValidateAndPrepare(query, SelectedSystem)
@@ -925,6 +944,9 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                                  query.Trim()));
         if (!validation.IsValid)
         {
+            Log.Debug("Search validation failed for query '{Query}' (system selected: {HasSystem})", query,
+                !string.IsNullOrEmpty(SelectedSystem));
+
             _currentBaseGames = [];
             _currentAllGames = [];
             Games.Clear();
@@ -966,6 +988,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Navigating to system {System}", systemName);
             SelectedSystem = systemName;
             IsMixedView = string.IsNullOrEmpty(systemName);
             IsShowingRetroAchievements = false;
@@ -1008,6 +1031,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Navigating to All Games");
             LoadAllGames();
         }
         catch (Exception ex)
@@ -1022,6 +1046,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Navigating to Favorites");
             IsShowingFavorites = true;
             IsShowingRetroAchievements = false;
             LetterFilter = "";
@@ -1060,6 +1085,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Navigating to Favorites of the selected system");
             IsShowingFavorites = true;
             IsShowingRetroAchievements = false;
             LetterFilter = "";
@@ -1110,6 +1136,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Navigating to Recently Played");
             IsShowingRetroAchievements = false;
             LetterFilter = "";
 
@@ -1140,6 +1167,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         try
         {
+            Log.Debug("Navigating to Recently Added");
             IsShowingRetroAchievements = false;
             LetterFilter = "";
 
@@ -1189,6 +1217,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         var isNowFavorite = await _favoritesManager.ToggleAsync(game.FilePath, game.SystemName);
         game.IsFavorite = isNowFavorite;
+        Log.Information("Favorite {Action}: {Game}", isNowFavorite ? "added" : "removed", game.DisplayTitle);
 
         var favoriteName = Path.GetFileName(game.FilePath) ?? game.FilePath;
         if (isNowFavorite)
@@ -1207,6 +1236,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private async Task PlayGameAsync(GameCardViewModel? game)
     {
         if (game is null) return;
+
+        Log.Debug("Playing game {Game}", game.FilePath);
 
         var playTime = await LaunchGameAtPathAsync(game.FilePath, game.SystemName);
         if (playTime.TotalSeconds >= 5)
@@ -1231,6 +1262,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         if (system is null || emulator is null)
         {
+            Log.Information("Cannot launch {Game}: no emulator configured for system '{System}'", filePath,
+                systemName);
             StatusText = string.Format(
                 _localization.GetString("Cannotlaunchnoemulatorconfiguredfor",
                     "Cannot launch: no emulator configured for {0}"), systemName);
@@ -1282,6 +1315,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     public void RefreshFavoritesAndHistory()
     {
+        Log.Debug("Refreshing favorites and play history");
         ApplyFavoritesAndHistory(_currentAllGames);
         ReapplyPagination();
     }
@@ -1297,6 +1331,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         _currentAllGames.Remove(game);
         Games.Remove(game);
+        Log.Debug("Removed game from the current list: {Game}", game.FilePath);
         StatusText = string.Format(
             _localization.GetString("Removedfromview", "Removed from view: {0}"), game.DisplayTitle);
         UpdateGameCount();

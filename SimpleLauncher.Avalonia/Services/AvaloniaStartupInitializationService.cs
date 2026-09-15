@@ -82,6 +82,7 @@ public class AvaloniaStartupInitializationService
                 _statusBarTimer.Stop();
             };
             _statusBarTimer.Start();
+            _logger.Debug("StatusBarTimer was initialized");
         }
         catch (Exception ex)
         {
@@ -97,6 +98,7 @@ public class AvaloniaStartupInitializationService
     {
         try
         {
+            _logger.Debug("Checking if the application directory is writable");
             if (!CheckIfDirectoryIsWritableService.IsWritableDirectory(AppContext.BaseDirectory, _logger))
             {
                 await _messageBox.MoveToWritableFolderMessageBoxAsync();
@@ -159,6 +161,9 @@ public class AvaloniaStartupInitializationService
                 _ = _gamePadController.StartAsync();
             else
                 _ = _gamePadController.StopAsync();
+
+            _logger.Debug("GamePadController was initialized. Navigation enabled: {Enabled}",
+                _settings.EnableGamePadNavigation);
         }
         catch (Exception ex)
         {

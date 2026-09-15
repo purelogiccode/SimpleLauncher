@@ -138,6 +138,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
         _manager?.Dispose();
         _easyModeManager?.Dispose();
 
+        _logger.Debug("EasyModeViewModel disposed: download cancelled and managers released");
+
         _disposed = true;
         GC.SuppressFinalize(this);
     }
@@ -161,6 +163,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
 
             if (_manager is not { Systems.Count: > 0 })
             {
+                _logger.Information("EasyMode configuration is unavailable or empty; disabling the Add System window");
                 await _messageBox.EasyModeUnavailableMessageBoxAsync();
                 // WPF parity: disable all controls when no systems are configured
                 IsContentEnabled = false;
@@ -172,6 +175,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                                    && !string.IsNullOrEmpty(s.Emulators?.Emulator?.EmulatorDownloadLink))
                 .OrderBy(static s => s.SystemName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+
+            _logger.Information("EasyMode loaded {SystemCount} system(s) available for installation", sorted.Count);
 
             Systems = new ObservableCollection<EasyModeSystemConfig>(sorted);
         }
@@ -206,8 +211,11 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             SetDownloadState(EasyModeManager.DownloadType.ImagePack5, DownloadButtonState.Downloaded);
 
             SystemFolderPath = "";
+            _logger.Debug("EasyMode system selection cleared; resetting all component states");
             return;
         }
+
+        _logger.Debug("EasyMode system selected: {SystemName}", value.SystemName);
 
         var emulator = value.Emulators?.Emulator;
 
@@ -252,6 +260,10 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 string.IsNullOrEmpty(coreDownloadLink) ? DownloadButtonState.Downloaded : DownloadButtonState.Idle);
         }
 
+        _logger.Debug("EasyMode component state for {SystemName}: Emulator={EmulatorState}, Core={CoreState}",
+            value.SystemName, GetDownloadState(EasyModeManager.DownloadType.Emulator),
+            GetDownloadState(EasyModeManager.DownloadType.Core));
+
         // Image packs: downloaded only when no download is offered
         SetDownloadState(EasyModeManager.DownloadType.ImagePack1,
             string.IsNullOrEmpty(emulator?.ImagePackDownloadLink)
@@ -276,6 +288,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
 
         // Default folder for the textbox (resolved for display)
         SystemFolderPath = PathHelper.ResolveRelativeToAppDirectory(value.SystemFolder) ?? "";
+        _logger.Debug("EasyMode default system folder for {SystemName}: {Folder}", value.SystemName, SystemFolderPath);
     }
 
     // ── Download commands ─────────────────────────────────────────────
@@ -329,6 +342,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
         if (_disposed) return;
 
         _downloadManager.CancelDownload();
+        _logger.Information("EasyMode download cancellation requested (component: {Component})",
+            _currentDownloadType ?? "none");
         CanStopDownload = false;
         DownloadProgress = 0;
         DownloadStatus = _localization.GetString("Cancelingdownload", "Canceling download...");
@@ -357,6 +372,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             var selectedSystem = SelectedSystem;
             if (selectedSystem == null)
             {
+                _logger.Debug("Add System requested but no system is selected");
                 EndOperation();
                 return;
             }
@@ -364,6 +380,9 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             var systemFolder = !string.IsNullOrWhiteSpace(SystemFolderPath)
                 ? SystemFolderPath
                 : Path.Combine("%BASEFOLDER%", "roms", selectedSystem.SystemName);
+
+            _logger.Information("Adding system to configuration: {SystemName} (folder: {Folder})",
+                selectedSystem.SystemName, systemFolder);
 
             var systemImageFolder = selectedSystem.SystemImageFolder;
 
@@ -402,11 +421,13 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 }
 
                 // Signal success so the window can close
+                _logger.Information("System added to configuration: {SystemName}", selectedSystem.SystemName);
                 SystemAdded = true;
                 RequestClose?.Invoke();
             }
             catch (InvalidOperationException ex)
             {
+                _logger.Information(ex, "Add system validation failed for {SystemName}", selectedSystem.SystemName);
                 DownloadStatus =
                     $"{_localization.GetString("ErrorFailedtoaddsystem", "Error: Failed to add system.")} {ex.Message}";
                 await _messageBox.AddSystemFailedMessageBoxAsync(ex.Message);
@@ -472,10 +493,13 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 _ => (null, null, type)
             };
 
+            _logger.Information("Download requested for {Component} ({DownloadType})", componentName, type);
+
             try
             {
                 if (easyModeExtractPath == null)
                 {
+                    _logger.Debug("No extract path configured for {Component}; nothing to download", componentName);
                     EndOperation();
                     SetDownloadState(type, DownloadButtonState.Idle);
                     return;
@@ -485,6 +509,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
 
                 if (string.IsNullOrEmpty(downloadUrl))
                 {
+                    _logger.Information("No download URL configured for {Component} ({SystemName})", componentName,
+                        selectedSystem.SystemName);
                     DownloadStatus =
                         $"{_localization.GetString("ErrorNodownloadURLfor", "Error: No download URL for")} {componentName}";
                     EndOperation();
@@ -547,6 +573,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 if (success)
                 {
                     EndOperation();
+                    _logger.Information("{Component} downloaded and installed successfully", componentName);
                     DownloadStatus =
                         $"{componentName} {_localization.GetString("hasbeensuccessfullydownloadedandinstalled", "has been successfully downloaded and installed.")}";
                     CanStopDownload = false;
@@ -565,6 +592,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
 
                     if (_downloadManager.IsUserCancellation)
                     {
+                        _logger.Information("Download of {Component} was canceled by the user", componentName);
                         DownloadStatus =
                             $"{_localization.GetString("Downloadof", "Download of")} {componentName} {_localization.GetString("wascanceled", "was canceled.")}";
                         CanStopDownload = false;
@@ -573,6 +601,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                     }
                     else if (_downloadManager.IsFileLockedDuringDownload)
                     {
+                        _logger.Information(
+                            "Download of {Component} failed because a file is locked in the temp folder", componentName);
                         await _messageBox.ShowDownloadFileLockedMessageBoxAsync(_downloadManager.TempFolder);
                         EndOperation();
                     }

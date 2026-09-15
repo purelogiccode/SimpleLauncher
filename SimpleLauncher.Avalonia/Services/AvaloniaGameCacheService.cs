@@ -36,7 +36,15 @@ public sealed class AvaloniaGameCacheService
     {
         lock (_lock)
         {
-            return _cache.TryGetValue(systemName, out var files) ? [.. files] : null;
+            if (_cache.TryGetValue(systemName, out var files))
+            {
+                Log.Debug("[AvaloniaGameCacheService] Cache hit for '{System}'. Count: {Count}", systemName,
+                    files.Count);
+                return [.. files];
+            }
+
+            Log.Debug("[AvaloniaGameCacheService] No cached files for '{System}'", systemName);
+            return null;
         }
     }
 
@@ -50,6 +58,8 @@ public sealed class AvaloniaGameCacheService
         lock (_lock)
         {
             _cache[systemName] = [.. files];
+            Log.Debug("[AvaloniaGameCacheService] SetAllGames for '{System}'. Count: {Count}", systemName,
+                files.Count);
         }
     }
 
@@ -80,7 +90,12 @@ public sealed class AvaloniaGameCacheService
         // deadlocked when the enumerator re-entered the cache.
         lock (_lock)
         {
-            if (_cache.TryGetValue(system.SystemName, out var cached)) return [.. cached];
+            if (_cache.TryGetValue(system.SystemName, out var cached))
+            {
+                Log.Debug("[AvaloniaGameCacheService] Reusing cached list for '{System}'. Count: {Count}",
+                    system.SystemName, cached.Count);
+                return [.. cached];
+            }
         }
 
         var files = enumerateFiles(system).ToList();
@@ -89,9 +104,16 @@ public sealed class AvaloniaGameCacheService
         {
             // A concurrent scan may have populated the entry while we enumerated —
             // prefer the winner instead of overwriting it.
-            if (_cache.TryGetValue(system.SystemName, out var cached)) return [.. cached];
+            if (_cache.TryGetValue(system.SystemName, out var cached))
+            {
+                Log.Debug("[AvaloniaGameCacheService] Reusing cached list for '{System}'. Count: {Count}",
+                    system.SystemName, cached.Count);
+                return [.. cached];
+            }
 
             _cache[system.SystemName] = [.. files];
+            Log.Debug("[AvaloniaGameCacheService] Populated cache for '{System}'. Count: {Count}",
+                system.SystemName, files.Count);
             return files;
         }
     }

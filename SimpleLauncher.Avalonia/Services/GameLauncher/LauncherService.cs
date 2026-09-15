@@ -378,6 +378,12 @@ public class LauncherService : ILauncherService
 
             if (isRetroArch && !launchParameters.Contains("-L", StringComparison.OrdinalIgnoreCase))
             {
+                Log.Debug(
+                    "[LaunchRegularEmulatorAsync] RetroArch parameter should contain -L. Parameter field: {Parameters}",
+                    launchParameters);
+                Log.Information(
+                    "[LaunchRegularEmulatorAsync] RetroArch parameter should contain -L. Parameter field: {Parameters}",
+                    launchParameters);
                 await _messageBox.CustomErrorMessageBoxAsync(
                     "RetroArch parameters must contain \"-L\" pointing to the desired core.\n\n" +
                     "Example: -L \"cores\\snes9x_libretro.dll\"",
@@ -388,6 +394,12 @@ public class LauncherService : ILauncherService
             // WPF parity: block when isXemu and parameters don't contain -dvd_path for ANY file
             if (isXemu && !launchParameters.Contains("-dvd_path", StringComparison.OrdinalIgnoreCase))
             {
+                Log.Debug(
+                    "[LaunchRegularEmulatorAsync] Xemu parameter should contain '-dvd_path'. Parameter field: {Parameters}",
+                    launchParameters);
+                Log.Information(
+                    "[LaunchRegularEmulatorAsync] Xemu parameter should contain '-dvd_path'. Parameter field: {Parameters}",
+                    launchParameters);
                 await _messageBox.CustomErrorMessageBoxAsync(
                     "Xemu parameters must contain \"-dvd_path\" pointing to the disc image.\n\n" +
                     "Example: -dvd_path \"%ROM%\"",
@@ -404,6 +416,8 @@ public class LauncherService : ILauncherService
 
             if (string.IsNullOrWhiteSpace(emulatorPath))
             {
+                Log.Debug("EmulatorLocation is null or empty for emulator '{Emulator}'.", emulatorName);
+                Log.Information("EmulatorLocation is null or empty for emulator '{Emulator}'.", emulatorName);
                 await _messageBox.CustomErrorMessageBoxAsync(
                     _localization.GetString("Noemulatorpathconfigured", "No emulator path configured."),
                     _localization.GetString("LaunchErrorTitle", "Launch Error"));
@@ -445,6 +459,7 @@ public class LauncherService : ILauncherService
                 }
 
                 // Expected user condition (emulator moved/deleted/unconfigured) — Information level.
+                Log.Debug("[LaunchRegularEmulatorAsync] Error: {Message}", msg);
                 Log.Information(msg);
 
                 // Direct, actionable message with the configured path (WPF parity)
@@ -456,6 +471,15 @@ public class LauncherService : ILauncherService
             // %ROMSYSTEMFOLDER%, ...) exactly like the original SimpleLauncher
             var romName = Path.GetFileNameWithoutExtension(actualFilePath);
             var resolvedEmulatorFolderPath = Path.GetDirectoryName(resolvedEmulatorPath) ?? "";
+            if (string.IsNullOrEmpty(resolvedEmulatorFolderPath) ||
+                !Directory.Exists(PathHelper.GetLongPath(resolvedEmulatorFolderPath)))
+            {
+                Log.Information("Could not determine emulator folder path from executable path: '{EmulatorPath}'",
+                    resolvedEmulatorPath);
+                Log.Debug("Could not determine emulator folder path from executable path: '{EmulatorPath}'",
+                    resolvedEmulatorPath);
+            }
+
             var romSystemFolder = PathHelper.FindContainingSystemFolder(
                 selectedSystemManager.SystemFolders,
                 selectedSystemManager.PrimarySystemFolder,
@@ -498,6 +522,12 @@ public class LauncherService : ILauncherService
                     arguments = $"{trimmedParameters}{space}\"{actualFilePath}\"";
                 }
             }
+
+            Log.Debug("LaunchRegularEmulatorAsync:\n\n");
+            Log.Debug("Program Location: {ProgramLocation}", resolvedEmulatorPath);
+            Log.Debug("Arguments: {Arguments}", arguments);
+            Log.Debug("Working Directory: {WorkingDirectory}", resolvedEmulatorFolderPath);
+            Log.Debug("File to launch: {FileToLaunch}", actualFilePath);
 
             Exception? launchException = null;
             var stderrOutput = "";
@@ -655,7 +685,9 @@ public class LauncherService : ILauncherService
             {
                 try
                 {
+                    Log.Debug("Attempting to delete temporary extraction directory: {Path}", cleanupPath);
                     Directory.Delete(cleanupPath, true);
+                    Log.Debug("Successfully deleted temporary extraction directory: {Path}", cleanupPath);
                 }
                 catch (Exception ex)
                 {
@@ -882,6 +914,18 @@ public class LauncherService : ILauncherService
         // investigation but does not block the launch.
         if (standardFileExists != longFileExists || standardDirExists != longDirExists)
         {
+            Log.Debug(
+                "Path validation mismatch detected:\n" +
+                "  Original Path: {Original}\n" +
+                "  Resolved Path: {Resolved}\n" +
+                "  Long Path: {Long}\n" +
+                "  Normalized Path Found: {Normalized}\n" +
+                "  Standard File.Exists: {StdFile}, Long Path File.Exists: {LongFile}\n" +
+                "  Standard Directory.Exists: {StdDir}, Long Path Directory.Exists: {LongDir}\n" +
+                "  This may indicate a Unicode normalization or path handling issue",
+                context.FilePath, standardPath, longPath, normalizedPath ?? "N/A",
+                standardFileExists, longFileExists, standardDirExists, longDirExists);
+
             Log.Error(
                 "Path validation mismatch detected:\n" +
                 "  Original Path: {Original}\n" +
@@ -981,6 +1025,18 @@ public class LauncherService : ILauncherService
             if (!shouldContinue) return;
         }
 
+        var batchWorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? "";
+        if (!string.IsNullOrEmpty(batchWorkingDirectory) && !Directory.Exists(batchWorkingDirectory))
+        {
+            // Expected user condition (batch file folder moved/deleted) — Information level (WPF parity).
+            Log.Information("The working directory for the batch file does not exist: {WorkingDirectory}",
+                batchWorkingDirectory);
+        }
+
+        Log.Debug("RunBatchFileAsync:\n\n");
+        Log.Debug("Command: {Command}", resolvedFilePath);
+        Log.Debug("Working Directory: {WorkingDirectory}\n", batchWorkingDirectory);
+
         Exception? error = null;
         await Task.Run(() =>
         {
@@ -1019,6 +1075,7 @@ public class LauncherService : ILauncherService
                 if (process.ExitCode != 0 && !IsInEmulatorsToSkipList(selectedEmulatorManager.EmulatorName))
                 {
                     Log.Warning("Batch file exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
+                    LogBatchFileContentsOnError(resolvedFilePath);
                     launchFeedback?.ShowToast("Simple Launcher", $"Error: {batchShortName} failed");
                     launchFeedback?.SetStatusText($"Error: {batchShortName} failed");
                     return;
@@ -1029,7 +1086,16 @@ public class LauncherService : ILauncherService
             }
             catch (Exception ex)
             {
+                if (ex is Win32Exception win32Ex)
+                {
+                    if (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(win32Ex))
+                        Log.Information(win32Ex, "Application control policy blocked launching batch file");
+                    else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                        Log.Information(win32Ex, "Elevation required to launch batch file");
+                }
+
                 Log.Error(ex, "Failed to launch {Path}", resolvedFilePath);
+                LogBatchFileContentsOnError(resolvedFilePath);
                 error = ex;
             }
         });
@@ -1113,6 +1179,14 @@ public class LauncherService : ILauncherService
             }
         }
 
+        if (targetUrl is not null)
+            Log.Debug("LaunchShortcutFileAsync (.URL): Shortcut File: {ShortcutFile}, Target URL: {TargetUrl}",
+                resolvedFilePath, targetUrl);
+        else
+            Log.Debug(
+                "LaunchShortcutFileAsync (.LNK): Shortcut File: {ShortcutFile}, Working Directory: {WorkingDirectory}",
+                resolvedFilePath, Path.GetDirectoryName(resolvedFilePath) ?? AppDomain.CurrentDomain.BaseDirectory);
+
         Exception? error = null;
         await Task.Run(() =>
         {
@@ -1131,6 +1205,14 @@ public class LauncherService : ILauncherService
             }
             catch (Exception ex)
             {
+                if (ex is Win32Exception win32Ex)
+                {
+                    if (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(win32Ex))
+                        Log.Information(win32Ex, "Application control policy blocked launching shortcut file");
+                    else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                        Log.Information(win32Ex, "Elevation required to launch shortcut file");
+                }
+
                 Log.Error(ex, "Failed to launch {Path}", resolvedFilePath);
                 error = ex;
             }
@@ -1146,6 +1228,9 @@ public class LauncherService : ILauncherService
         IWindowContext windowContext)
     {
         var startTime = DateTime.Now;
+        Log.Debug("LaunchExecutableAsync:\n\n");
+        Log.Debug("Executable File: {ExecutableFile}", resolvedFilePath);
+        Log.Debug("Working Directory: {WorkingDirectory}\n", Path.GetDirectoryName(resolvedFilePath) ?? "");
         Exception? error = null;
         await Task.Run(() =>
         {
@@ -1168,6 +1253,16 @@ public class LauncherService : ILauncherService
             }
             catch (Exception ex)
             {
+                if (ex is Win32Exception win32Ex)
+                {
+                    if (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(win32Ex))
+                        Log.Information(win32Ex, "Application control policy blocked launching executable");
+                    else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                        Log.Information(win32Ex, "Elevation required to launch executable");
+                    else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
+                        Log.Information(win32Ex, "Invalid executable format: {Path}", resolvedFilePath);
+                }
+
                 Log.Error(ex, "Failed to launch {Path}", resolvedFilePath);
                 error = ex;
             }
@@ -1566,6 +1661,23 @@ public class LauncherService : ILauncherService
         CueFile
     }
 
+    private static void LogBatchFileContentsOnError(string batchFilePath)
+    {
+        try
+        {
+            if (File.Exists(batchFilePath))
+            {
+                var contents = File.ReadAllText(batchFilePath);
+                Log.Debug("Batch file contents for '{BatchFilePath}':\n{Contents}", batchFilePath, contents);
+                Log.Debug("End of batch file contents");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Could not read batch file contents for logging: {BatchFilePath}", batchFilePath);
+        }
+    }
+
     /// <summary>
     ///     Extracts the URL from a .url internet shortcut file (URL=... line).
     /// </summary>
@@ -1632,6 +1744,7 @@ public class LauncherService : ILauncherService
         catch (Exception ex)
         {
             Log.Error(ex, "Error checking if protocol '{Protocol}' is registered", protocol);
+            Log.Debug("[IsProtocolRegistered] Error checking protocol '{Protocol}': {Message}", protocol, ex.Message);
             return false;
         }
     }

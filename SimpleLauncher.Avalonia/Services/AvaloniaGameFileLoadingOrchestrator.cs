@@ -46,6 +46,7 @@ public class AvaloniaGameFileLoadingOrchestrator
         var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var system in systems) counts[system.SystemName] = GetGameFiles(system).Count;
 
+        _logger.Debug("[AvaloniaGameFileLoadingOrchestrator] Computed game counts for {Count} systems", systems.Count);
         return counts;
     }
 
@@ -76,10 +77,16 @@ public class AvaloniaGameFileLoadingOrchestrator
     /// </summary>
     private IEnumerable<string> EnumerateSystemFiles(SystemManagerConfig system)
     {
+        _logger.Debug("[AvaloniaGameFileLoadingOrchestrator] Populating from disk for '{System}'.", system.SystemName);
         foreach (var folder in system.SystemFolders)
         {
             var resolvedFolder = PathHelper.ResolveRelativeToAppDirectory(folder);
-            if (resolvedFolder == null || !Directory.Exists(resolvedFolder)) continue;
+            if (resolvedFolder == null || !Directory.Exists(resolvedFolder))
+            {
+                _logger.Information("[AvaloniaGameFileLoadingOrchestrator] Directory does not exist: '{Folder}'",
+                    resolvedFolder ?? folder);
+                continue;
+            }
 
             var extensions = system.FileFormatsToSearch.Count > 0
                 ? system.FileFormatsToSearch

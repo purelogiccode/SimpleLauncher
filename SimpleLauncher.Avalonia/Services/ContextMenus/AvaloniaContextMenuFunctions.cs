@@ -103,9 +103,15 @@ public class AvaloniaContextMenuFunctions(
 
                 // Keep dependent UI (favorites table hearts, etc.) in sync.
                 context.MainViewModel.RefreshFavoritesAndHistory();
+
+                _logErrors.Information("[ContextMenu] Added '{File}' of system '{System}' to favorites",
+                    context.FileNameWithExtension, context.SelectedSystemName);
             }
             else
             {
+                _logErrors.Debug("[ContextMenu] '{File}' of system '{System}' is already in favorites",
+                    context.FileNameWithExtension, context.SelectedSystemName);
+
                 await _messageBox.GameIsAlreadyInFavoritesMessageBoxAsync(context.FileNameWithExtension);
             }
         }
@@ -127,7 +133,12 @@ public class AvaloniaContextMenuFunctions(
                 f.FileName.Equals(context.FileNameWithExtension, StringComparison.OrdinalIgnoreCase)
                 && f.SystemName.Equals(context.SelectedSystemName, StringComparison.OrdinalIgnoreCase));
 
-            if (favoriteToRemove == null) return;
+            if (favoriteToRemove == null)
+            {
+                _logErrors.Debug("[ContextMenu] No favorite entry found for '{File}' of system '{System}'",
+                    context.FileNameWithExtension, context.SelectedSystemName);
+                return;
+            }
 
             context.FavoritesManager.FavoriteList.Remove(favoriteToRemove);
 
@@ -142,6 +153,9 @@ public class AvaloniaContextMenuFunctions(
 
             context.OnFavoriteRemoved?.Invoke();
             context.MainViewModel.RefreshFavoritesAndHistory();
+
+            _logErrors.Information("[ContextMenu] Removed '{File}' of system '{System}' from favorites",
+                context.FileNameWithExtension, context.SelectedSystemName);
         }
         catch (Exception ex)
         {
@@ -185,6 +199,9 @@ public class AvaloniaContextMenuFunctions(
 
         _playSoundEffects.PlayNotificationSound();
 
+        _logErrors.Information("[ContextMenu] Launching '{File}' with emulator '{Emulator}' (system '{System}')",
+            context.FilePath, selectedEmulatorName, context.SelectedSystemName);
+
         await context.MainViewModel.LaunchGameAtPathAsync(context.FilePath, context.SelectedSystemName);
     }
 
@@ -199,6 +216,7 @@ public class AvaloniaContextMenuFunctions(
 
         try
         {
+            _logErrors.Debug("[ContextMenu] Opening video link: {Url}", searchUrl);
             OpenUrl(searchUrl);
         }
         catch (Win32Exception ex) when (ex.Message.Contains("No application is associated",
@@ -229,6 +247,7 @@ public class AvaloniaContextMenuFunctions(
 
         try
         {
+            _logErrors.Debug("[ContextMenu] Opening info link: {Url}", searchUrl);
             OpenUrl(searchUrl);
         }
         catch (Win32Exception ex) when (ex.Message.Contains("No application is associated",
@@ -261,6 +280,9 @@ public class AvaloniaContextMenuFunctions(
             var historyWindow = App.ServiceProvider.GetRequiredService<RomHistoryWindow>();
             historyWindow.Initialize(romName, context.SelectedSystemName, searchTerm);
             historyWindow.Show(context.OwnerWindow);
+
+            _logErrors.Debug("[ContextMenu] Opened ROM history window for '{File}' (system '{System}')",
+                context.FileNameWithoutExtension, context.SelectedSystemName);
         }
         catch (Exception ex)
         {
@@ -337,6 +359,8 @@ public class AvaloniaContextMenuFunctions(
                 await _messageBox.SimpleLauncherDoesNotSupportRaHashOfSystemGroupedByFolderMessageBoxAsync();
                 _logErrors.Debug(
                     "[RA Service] 'Simple Launcher' does not support RetroAchievements hash of systems Grouped by Folder");
+                _logErrors.Debug(
+                    "[RA Service] Please edit the system settings and disable the 'Group Files by Folder' option");
                 return;
             }
 
@@ -481,12 +505,18 @@ public class AvaloniaContextMenuFunctions(
             || TryFindImage(globalImageDirectory, context.FileNameWithoutExtension, imageExtensions,
                 out foundImagePath))
         {
+            _logErrors.Debug("[ContextMenu] Opening cover image '{ImagePath}' for '{File}'", foundImagePath,
+                context.FileNameWithoutExtension);
+
             var imageViewerWindow = App.ServiceProvider.GetRequiredService<ImageViewerWindow>();
             imageViewerWindow.LoadImagePath(foundImagePath);
             imageViewerWindow.Show(context.OwnerWindow);
         }
         else
         {
+            _logErrors.Debug("[ContextMenu] No cover image found for '{File}' (system '{System}')",
+                context.FileNameWithoutExtension, context.SelectedSystemName);
+
             await _messageBox.ThereIsNoCoverMessageBoxAsync();
         }
     }
@@ -527,9 +557,15 @@ public class AvaloniaContextMenuFunctions(
             var videoPath = Path.Combine(videoDirectory, context.FileNameWithoutExtension + extension);
             if (!File.Exists(videoPath)) continue;
 
+            _logErrors.Debug("[ContextMenu] Playing video '{VideoPath}' for '{File}'", videoPath,
+                context.FileNameWithoutExtension);
+
             OpenUrlOrFile(videoPath);
             return;
         }
+
+        _logErrors.Debug("[ContextMenu] No video file found for '{File}' (system '{System}')",
+            context.FileNameWithoutExtension, context.SelectedSystemName);
 
         await _messageBox.ThereIsNoVideoFileMessageBoxAsync();
     }
@@ -650,6 +686,12 @@ public class AvaloniaContextMenuFunctions(
                 newWindowDetected = true;
                 break;
             }
+
+            if (stopwatch.Elapsed.TotalSeconds % 5 < pollInterval.TotalMilliseconds / 1000.0)
+            {
+                _logErrors.Debug(
+                    $"[Screenshot] Polling... Elapsed: {stopwatch.Elapsed.TotalSeconds:F1}s / {maxWaitTime.TotalSeconds}s");
+            }
         }
 
         stopwatch.Stop();
@@ -727,6 +769,8 @@ public class AvaloniaContextMenuFunctions(
 
                 // Reload the current Game List to reflect the deletion
                 await RefreshCurrentGameListAsync(context);
+
+                _logErrors.Information("[ContextMenu] Deleted game file '{FilePath}'", context.FilePath);
             }
             catch (Exception ex)
             {
@@ -739,6 +783,9 @@ public class AvaloniaContextMenuFunctions(
         }
         else
         {
+            _logErrors.Debug("[ContextMenu] Cannot delete game file because it no longer exists: '{FilePath}'",
+                context.FilePath);
+
             // Notify user the file no longer exists
             await _messageBox.FileNoLongerExistsMessageBoxAsync(context.FileNameWithExtension);
 
@@ -774,6 +821,8 @@ public class AvaloniaContextMenuFunctions(
             if (!File.Exists(coverPath))
             {
                 await _messageBox.FileSuccessfullyDeletedMessageBoxAsync(coverPath);
+
+                _logErrors.Information("[ContextMenu] Deleted cover image '{CoverPath}'", coverPath);
 
                 // Invalidate the cards' cached covers and reload the current Game List
                 await RefreshCurrentGameListAsync(context);
@@ -857,11 +906,17 @@ public class AvaloniaContextMenuFunctions(
             var imagePath = Path.Combine(directory, context.FileNameWithoutExtension + extension);
             if (!File.Exists(imagePath)) continue;
 
+            _logErrors.Debug("[ContextMenu] Opening image '{ImagePath}' for '{File}'", imagePath,
+                context.FileNameWithoutExtension);
+
             var imageViewerWindow = App.ServiceProvider.GetRequiredService<ImageViewerWindow>();
             imageViewerWindow.LoadImagePath(imagePath);
             imageViewerWindow.Show(context.OwnerWindow);
             return;
         }
+
+        _logErrors.Debug("[ContextMenu] No image found for '{File}' in '{Directory}'",
+            context.FileNameWithoutExtension, directory);
 
         await notFoundMessage();
     }
@@ -874,12 +929,18 @@ public class AvaloniaContextMenuFunctions(
 
         if (!File.Exists(pdfPath))
         {
+            _logErrors.Debug("[ContextMenu] No PDF found for '{File}' in '{Directory}'",
+                context.FileNameWithoutExtension, directory);
+
             await notFoundMessage();
             return;
         }
 
         try
         {
+            _logErrors.Debug("[ContextMenu] Opening PDF '{PdfPath}' for '{File}'", pdfPath,
+                context.FileNameWithoutExtension);
+
             OpenUrlOrFile(pdfPath);
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1155) // ERROR_NO_ASSOCIATION
@@ -906,12 +967,20 @@ public class AvaloniaContextMenuFunctions(
                 f.FileName.Equals(context.FileNameWithExtension, StringComparison.OrdinalIgnoreCase)
                 && f.SystemName.Equals(context.SelectedSystemName, StringComparison.OrdinalIgnoreCase));
 
-            if (favoriteToRemove == null) return;
+            if (favoriteToRemove == null)
+            {
+                _logErrors.Debug("[ContextMenu] No favorite entry found to remove for deleted game '{File}'",
+                    context.FileNameWithExtension);
+                return;
+            }
 
             context.FavoritesManager.FavoriteList.Remove(favoriteToRemove);
             await context.FavoritesManager.SaveFavoritesAsync();
             context.OnFavoriteRemoved?.Invoke();
             context.MainViewModel.RefreshFavoritesAndHistory();
+
+            _logErrors.Information("[ContextMenu] Removed favorite entry for deleted game '{File}'",
+                context.FileNameWithExtension);
         }
         catch (Exception ex)
         {
@@ -930,7 +999,10 @@ public class AvaloniaContextMenuFunctions(
             {
                 var mainViewModel = context.MainViewModel;
                 if (!string.IsNullOrEmpty(mainViewModel.SelectedSystem))
+                {
                     mainViewModel.NavigateToSystemCommand.Execute(mainViewModel.SelectedSystem);
+                    _logErrors.Debug("[ContextMenu] Reloaded the current game list");
+                }
             }
             catch (Exception ex)
             {

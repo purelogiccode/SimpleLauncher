@@ -31,7 +31,11 @@ public class AvaloniaQuitSimpleLauncher
     public async Task RestartApplicationAsync(IMessageBoxLibraryService messageBox)
     {
         var processPath = Environment.ProcessPath;
-        if (processPath is null) return;
+        if (processPath is null)
+        {
+            _logger.Debug("[AvaloniaQuitSimpleLauncher] Could not resolve the current process path; restart aborted");
+            return;
+        }
 
         var startInfo = new ProcessStartInfo
         {
@@ -43,6 +47,7 @@ public class AvaloniaQuitSimpleLauncher
 
         try
         {
+            _logger.Debug("[AvaloniaQuitSimpleLauncher] Starting a new application instance for restart");
             Process.Start(startInfo);
         }
         catch (Win32Exception ex) when (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
@@ -67,6 +72,7 @@ public class AvaloniaQuitSimpleLauncher
         }
 
         // Shutdown the current instance
+        _logger.Debug("[AvaloniaQuitSimpleLauncher] New instance started; shutting down the current instance");
         _applicationLifetime.Shutdown();
     }
 
@@ -75,6 +81,7 @@ public class AvaloniaQuitSimpleLauncher
     /// </summary>
     public void SimpleQuitApplication()
     {
+        _logger.Debug("[AvaloniaQuitSimpleLauncher] Application shutdown requested");
         _applicationLifetime.Shutdown();
     }
 
@@ -87,6 +94,7 @@ public class AvaloniaQuitSimpleLauncher
 
         if (!File.Exists(updaterPath))
         {
+            _logger.Information("[AvaloniaQuitSimpleLauncher] Updater not found at '{UpdaterPath}'", updaterPath);
             await messageBox.UpdaterLaunchFailedMessageBoxAsync();
             return;
         }
@@ -101,6 +109,8 @@ public class AvaloniaQuitSimpleLauncher
                 UseShellExecute = true,
                 WorkingDirectory = appDirectory
             };
+            _logger.Debug("[AvaloniaQuitSimpleLauncher] Launching updater '{UpdaterPath}' and shutting down",
+                updaterPath);
             Process.Start(startInfo);
 
             _applicationLifetime.Shutdown();

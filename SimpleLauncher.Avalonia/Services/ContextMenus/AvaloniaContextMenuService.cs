@@ -43,18 +43,27 @@ public class AvaloniaContextMenuService
     public void ShowContextMenu(AvaloniaRightClickContext context, Control placementTarget,
         GameContextMenuCallbacks? extras = null)
     {
+        _logger.Debug("[AvaloniaContextMenuService] Building context menu for '{File}' (system '{System}')",
+            context.FileNameWithExtension, context.SelectedSystemName);
+
         var contextMenu = new ContextMenu
         {
             Placement = PlacementMode.Pointer
         };
 
         // Launch Game Context Menu
-        AddItem(contextMenu, "LaunchGame", "Launch Game", "launch.png",
-            () => _ = SafeAsync(() => _functions.LaunchGameAsync(context)));
+        AddItem(contextMenu, "LaunchGame", "Launch Game", "launch.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "LaunchGame",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.LaunchGameAsync(context));
+        });
 
         // Add To Favorites Context Menu
         AddItem(contextMenu, "AddToFavorites", "Add To Favorites", "heart.png", () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "AddToFavorites", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("AddingToFavorites", "Adding to favorites...");
             _ = SafeAsync(() => _functions.AddToFavoritesAsync(context));
         });
@@ -62,6 +71,8 @@ public class AvaloniaContextMenuService
         // Remove From Favorites Context Menu
         AddItem(contextMenu, "RemoveFromFavorites", "Remove From Favorites", "brokenheart.png", () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "RemoveFromFavorites", context.FileNameWithExtension);
             context.MainViewModel.StatusText =
                 GetStatusOrFallback("RemovingFromFavorites", "Removing from favorites...");
             _ = SafeAsync(() => _functions.RemoveFromFavoritesAsync(context));
@@ -72,14 +83,20 @@ public class AvaloniaContextMenuService
         // View Achievements Context Menu - Only add for supported systems (WPF parity)
         if (IsSystemSupportedForRetroAchievements(context))
         {
-            AddItem(contextMenu, "ViewAchievements", "View Achievements", "trophy.png",
-                () => _ = SafeAsync(() => _functions.OpenRetroAchievementsWindowAsync(context)));
+            AddItem(contextMenu, "ViewAchievements", "View Achievements", "trophy.png", () =>
+            {
+                _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                    "ViewAchievements", context.FileNameWithExtension);
+                _ = SafeAsync(() => _functions.OpenRetroAchievementsWindowAsync(context));
+            });
             contextMenu.Items.Add(new Separator());
         }
 
         // Open Video Link Context Menu
         AddItem(contextMenu, "OpenVideoLink", "Open Video Link", "video.png", () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "OpenVideoLink", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("OpeningVideoLink", "Opening video link...");
             _ = SafeAsync(() => _functions.OpenVideoLinkAsync(context));
         });
@@ -87,6 +104,8 @@ public class AvaloniaContextMenuService
         // Open Info Link Context Menu
         AddItem(contextMenu, "OpenInfoLink", "Open Info Link", "info.png", () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "OpenInfoLink", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("OpeningInfoLink", "Opening info link...");
             _ = SafeAsync(() => _functions.OpenInfoLinkAsync(context));
         });
@@ -94,6 +113,8 @@ public class AvaloniaContextMenuService
         // Open History Context Menu
         AddItem(contextMenu, "OpenROMHistory", "Open ROM History", "romhistory.png", () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "OpenROMHistory", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("OpeningROMHistory", "Opening ROM history...");
             _ = SafeAsync(() => _functions.OpenRomHistoryWindowAsync(context));
         });
@@ -102,32 +123,74 @@ public class AvaloniaContextMenuService
 
         // Media entries (WPF order: cover, title snapshot, gameplay snapshot, cart,
         // video, manual, walkthrough, cabinet, flyer, pcb)
-        AddItem(contextMenu, "Cover", "Cover", "cover.png",
-            () => _ = SafeAsync(() => _functions.OpenCoverAsync(context)));
-        AddItem(contextMenu, "TitleSnapshot", "Title Snapshot", "snapshot.png",
-            () => _ = SafeAsync(() => _functions.OpenTitleSnapshotAsync(context)));
-        AddItem(contextMenu, "GameplaySnapshot", "Gameplay Snapshot", "snapshot.png",
-            () => _ = SafeAsync(() => _functions.OpenGameplaySnapshotAsync(context)));
-        AddItem(contextMenu, "Cart", "Cart", "cart.png",
-            () => _ = SafeAsync(() => _functions.OpenCartAsync(context)));
-        AddItem(contextMenu, "Video", "Video", "video.png",
-            () => _ = SafeAsync(() => _functions.PlayVideoAsync(context)));
-        AddItem(contextMenu, "Manual", "Manual", "manual.png",
-            () => _ = SafeAsync(() => _functions.OpenManualAsync(context)));
-        AddItem(contextMenu, "Walkthrough", "Walkthrough", "walkthrough.png",
-            () => _ = SafeAsync(() => _functions.OpenWalkthroughAsync(context)));
-        AddItem(contextMenu, "Cabinet", "Cabinet", "cabinet.png",
-            () => _ = SafeAsync(() => _functions.OpenCabinetAsync(context)));
-        AddItem(contextMenu, "Flyer", "Flyer", "flyer.png",
-            () => _ = SafeAsync(() => _functions.OpenFlyerAsync(context)));
-        AddItem(contextMenu, "PCB", "PCB", "pcb.png",
-            () => _ = SafeAsync(() => _functions.OpenPcbAsync(context)));
+        AddItem(contextMenu, "Cover", "Cover", "cover.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "Cover",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenCoverAsync(context));
+        });
+        AddItem(contextMenu, "TitleSnapshot", "Title Snapshot", "snapshot.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "TitleSnapshot", context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenTitleSnapshotAsync(context));
+        });
+        AddItem(contextMenu, "GameplaySnapshot", "Gameplay Snapshot", "snapshot.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "GameplaySnapshot", context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenGameplaySnapshotAsync(context));
+        });
+        AddItem(contextMenu, "Cart", "Cart", "cart.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "Cart",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenCartAsync(context));
+        });
+        AddItem(contextMenu, "Video", "Video", "video.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "Video",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.PlayVideoAsync(context));
+        });
+        AddItem(contextMenu, "Manual", "Manual", "manual.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "Manual",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenManualAsync(context));
+        });
+        AddItem(contextMenu, "Walkthrough", "Walkthrough", "walkthrough.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "Walkthrough", context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenWalkthroughAsync(context));
+        });
+        AddItem(contextMenu, "Cabinet", "Cabinet", "cabinet.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "Cabinet",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenCabinetAsync(context));
+        });
+        AddItem(contextMenu, "Flyer", "Flyer", "flyer.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "Flyer",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenFlyerAsync(context));
+        });
+        AddItem(contextMenu, "PCB", "PCB", "pcb.png", () =>
+        {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "PCB",
+                context.FileNameWithExtension);
+            _ = SafeAsync(() => _functions.OpenPcbAsync(context));
+        });
 
         contextMenu.Items.Add(new Separator());
 
         // Take Screenshot Context Menu
         AddItem(contextMenu, "TakeScreenshot", "Take Screenshot", "snapshot.png", async () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "TakeScreenshot", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("TakingScreenshot", "Taking screenshot...");
             await _messageBox.TakeScreenShotMessageBoxAsync();
             await _functions.TakeScreenshotOfSelectedWindowAsync(context);
@@ -136,6 +199,8 @@ public class AvaloniaContextMenuService
         // Delete Game Context Menu
         AddItem(contextMenu, "DeleteGame", "Delete Game", "delete.png", async () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "DeleteGame", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("DeletingGame", "Deleting game...");
             var result =
                 await _messageBox.AreYouSureYouWantToDeleteTheGameMessageBoxAsync(context.FileNameWithExtension);
@@ -150,6 +215,8 @@ public class AvaloniaContextMenuService
         // Delete Cover Image Context Menu
         AddItem(contextMenu, "DeleteCoverImage", "Delete Cover Image", "delete.png", async () =>
         {
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "DeleteCoverImage", context.FileNameWithExtension);
             context.MainViewModel.StatusText = GetStatusOrFallback("DeletingCoverImage", "Deleting cover image...");
             var result =
                 await _messageBox.AreYouSureYouWantToDeleteTheCoverImageMessageBoxAsync(
@@ -172,6 +239,9 @@ public class AvaloniaContextMenuService
                 var menuItem = new MenuItem { Header = $"{glyph} {header}" };
                 menuItem.Click += (_, _) => action(card);
                 contextMenu.Items.Add(menuItem);
+
+                _logger.Debug("[AvaloniaContextMenuService] Adding context menu extra '{Action}' for '{File}'",
+                    resourceKey, card.FilePath);
             }
 
             AddExtra("Context.ShowDetails", "Details", "\u2139", extras.OnShowDetails);
@@ -180,6 +250,8 @@ public class AvaloniaContextMenuService
             AddExtra("Context.ShowInFolder", "Show in Folder", "\uD83D\uDCC2", g => extras.OnShowInFolder(g));
             AddExtra("Context.EditSystem", "Edit System", "\u270F", g => extras.OnEditSystem(g));
         }
+
+        _logger.Debug("[AvaloniaContextMenuService] Showing context menu for '{File}'", context.FileNameWithExtension);
 
         contextMenu.Open(placementTarget);
     }
@@ -229,7 +301,15 @@ public class AvaloniaContextMenuService
         try
         {
             var hasherTool = App.ServiceProvider.GetRequiredService<IRetroAchievementsHasherTool>();
-            return hasherTool.IsSystemSupportedForHashing(context.SelectedSystemName);
+            var isSupported = hasherTool.IsSystemSupportedForHashing(context.SelectedSystemName);
+            if (!isSupported)
+            {
+                _logger.Debug(
+                    "[AvaloniaContextMenuService] RetroAchievements menu item omitted: system '{System}' is not supported",
+                    context.SelectedSystemName);
+            }
+
+            return isSupported;
         }
         catch (Exception ex)
         {

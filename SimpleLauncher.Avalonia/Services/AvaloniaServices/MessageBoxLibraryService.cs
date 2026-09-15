@@ -1093,6 +1093,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ThereWasAnErrorMountingTheFileMessageBoxAsync(int? exitCode = null)
     {
         if (O == null) return Task.CompletedTask;
+        Log.Debug("File mounting error. Exit code: {ExitCode}", exitCode);
         return ShowAsync(O,
             _localization.GetString("Anerroroccurredwhileopeningyourbrowser",
                 "An error occurred while opening your browser."), _localization.GetString("Error", "Error"),
@@ -2915,6 +2916,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task FileIsLockedMessageBoxAsync(string? tempFolderPath)
     {
         if (O == null) return Task.CompletedTask;
+        Log.Debug("File is locked. Temp folder: {TempFolderPath}", tempFolderPath);
         return ShowAsync(O,
             _localization.GetString("ErrorOpeningFolderMessage", "Could not open the temporary folder."),
             _localization.GetString("ErrorOpeningFolderTitle", "Error Opening Folder"), MessageButtons.Ok,
@@ -3076,6 +3078,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ShowDownloadFileLockedMessageBoxAsync(string tempFolderPath)
     {
         if (O == null) return Task.CompletedTask;
+        Log.Debug("Download file is locked. Temp folder: {TempFolderPath}", tempFolderPath);
         var downloadFileLockedMessage = _localization.GetString("DownloadFileLockedMessage",
             "The download could not be completed because the temporary file is locked by another process (e.g., antivirus software).");
         var openTempFolderQuestion = _localization.GetString("OpenTempFolderQuestion",
@@ -3935,6 +3938,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ShowImagePackDownloadErrorMessageBoxAsync(EasyModeSystemConfig selectedSystem)
     {
         if (O == null) return Task.CompletedTask;
+        Log.Debug("Image pack download error for system '{System}'", selectedSystem?.SystemName);
         var erroropeningthedownloadlink =
             _localization.GetString("Erroropeningthedownloadlink", "Error opening the download link.");
         var theerrorwasreportedtothedeveloper = _localization.GetString("Theerrorwasreportedtothedeveloper",
@@ -4100,6 +4104,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task ShowExtractionFailedMessageBoxAsync(string tempFolderPath)
     {
         if (O == null) return Task.CompletedTask;
+        Log.Debug("Extraction failed. Temp folder: {TempFolderPath}", tempFolderPath);
         var extractionFailedMessage = _localization.GetString("ExtractionFailedMessage",
             "The file was downloaded successfully, but automatic extraction failed. This can happen if an antivirus program is scanning or locking the file.");
         var openTempFolderQuestion = _localization.GetString("OpenTempFolderQuestion",

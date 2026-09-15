@@ -59,6 +59,8 @@ public class AvaloniaSystemSelectionOrchestratorService
                 .OrderBy(static name => name, StringComparer.Ordinal)
                 .ToList();
             _host.SetSystemComboBoxItems(sortedSystemNames);
+            _logger.Debug("[AvaloniaSystemSelectionOrchestrator] Loaded {Count} systems into the System ComboBox",
+                sortedSystemNames.Count);
         }
         catch (Exception ex)
         {
@@ -89,12 +91,15 @@ public class AvaloniaSystemSelectionOrchestratorService
             {
                 _host.IsPlayTimeVisible = false;
                 _host.PlayTime = "00:00:00";
+                _logger.Debug("[AvaloniaSystemSelectionOrchestrator] No system selected; play time display was reset");
                 return;
             }
 
             var selectedManager = _systemManager.GetSystem(systemName);
             if (selectedManager == null)
             {
+                _logger.Warning("Selected system or its configuration is null.");
+
                 if (_messageBox is { } invalidConfigMessageBox)
                     await invalidConfigMessageBox.InvalidSystemConfigMessageBoxAsync();
 
@@ -112,6 +117,10 @@ public class AvaloniaSystemSelectionOrchestratorService
                 {
                     var errorMessages = new StringBuilder();
                     foreach (var msg in validationResult.ErrorMessages) errorMessages.Append(msg);
+
+                    _logger.Information(
+                        "[AvaloniaSystemSelectionOrchestrator] System configuration validation found {Count} issue(s) for '{System}'",
+                        validationResult.ErrorMessages.Count, systemName);
 
                     if (_messageBox is { } errorListMessageBox)
                         await errorListMessageBox.ListOfErrorsMessageBoxAsync(errorMessages);
@@ -133,6 +142,9 @@ public class AvaloniaSystemSelectionOrchestratorService
             // WPF parity: reset the MAME sort order to FileName on every system
             // selection so a toggled sort never persists across system switches.
             _host.MameSortOrder = AppConstants.MameSortOrderFileName;
+
+            _logger.Debug("[AvaloniaSystemSelectionOrchestrator] System '{System}' selected; navigating the game browser",
+                systemName);
 
             _host.NavigateToSystem(systemName);
 
@@ -160,6 +172,8 @@ public class AvaloniaSystemSelectionOrchestratorService
     {
         try
         {
+            _logger.Debug("[AvaloniaSystemSelectionOrchestrator] Reloading the UI after a system configuration change");
+
             // Per-system file lists are stale once system.xml changed.
             _loadingOrchestrator.InvalidateAll();
 

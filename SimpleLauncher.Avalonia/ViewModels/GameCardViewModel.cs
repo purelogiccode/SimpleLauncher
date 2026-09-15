@@ -82,6 +82,29 @@ public partial class GameCardViewModel : ObservableObject
 
     [ObservableProperty] public partial string TimesPlayed { get; set; } = "0";
 
+    partial void OnSystemNameChanged(string value)
+    {
+        Log.Debug("Game card created for {GameName} ({SystemName}) at {FilePath}", FileName, value, FilePath);
+    }
+
+    partial void OnCoverPathChanged(string value)
+    {
+        Log.Debug("Cover image {CoverState} for {GameName} ({SystemName}): {CoverPath}",
+            File.Exists(value) ? "found" : "missing", FileName, SystemName, value);
+    }
+
+    partial void OnIsFavoriteChanged(bool value)
+    {
+        Log.Debug("Favorite badge {BadgeState} for {GameName} ({SystemName})",
+            value ? "shown" : "hidden", FileName, SystemName);
+    }
+
+    partial void OnIsRaSupportedChanged(bool value)
+    {
+        Log.Debug("RetroAchievements badge {BadgeState} for {GameName} ({SystemName})",
+            value ? "shown" : "hidden", FileName, SystemName);
+    }
+
     public static bool IsSystemRaSupported(string systemName)
     {
         return !string.IsNullOrEmpty(systemName) && RaSupportedSystems.Contains(systemName);

@@ -47,6 +47,9 @@ public class FavoritesManager
             });
         }
 
+        logErrors?.Information("Loaded {Count} favorite(s) from the unified database",
+            manager.FavoriteList.Count);
+
         return manager;
     }
 
@@ -108,6 +111,8 @@ public class FavoritesManager
                 var bytes = File.ReadAllBytes(DatFilePath);
                 var manager = MessagePackSerializer.Deserialize<FavoritesManager>(bytes);
                 manager._logger = logErrors;
+                logErrors?.Information("Loaded {Count} favorite(s) from favorites.dat",
+                    manager.FavoriteList.Count);
                 return manager;
             }
             catch (Exception ex)
@@ -383,6 +388,7 @@ public class FavoritesManager
             if (FavoriteList.Any(f =>
                     string.Equals(ToBareName(f.FileName), bareName, StringComparison.OrdinalIgnoreCase)))
             {
+                _logger?.Debug("Favorite already present, skipping: {FileName}", bareName);
                 return false;
             }
 
@@ -394,6 +400,7 @@ public class FavoritesManager
         }
 
         await SaveFavoritesAsync();
+        _logger?.Information("Favorite added: {FileName} ({System})", bareName, systemName);
         return true;
     }
 
@@ -408,12 +415,17 @@ public class FavoritesManager
         {
             var toRemove = FavoriteList.FirstOrDefault(f =>
                 string.Equals(ToBareName(f.FileName), bareName, StringComparison.OrdinalIgnoreCase));
-            if (toRemove is null) return false;
+            if (toRemove is null)
+            {
+                _logger?.Debug("Favorite not found for removal: {FileName}", bareName);
+                return false;
+            }
 
             FavoriteList.Remove(toRemove);
         }
 
         await SaveFavoritesAsync();
+        _logger?.Information("Favorite removed: {FileName}", bareName);
         return true;
     }
 

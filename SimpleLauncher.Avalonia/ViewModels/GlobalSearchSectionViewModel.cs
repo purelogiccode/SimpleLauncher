@@ -159,6 +159,9 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
                     NoResultsVisible = true;
                     ResultsCountText = "";
                 }
+
+                _logErrors.Information("Global search for '{SearchTerm}' returned {Count} result(s)", searchTerm,
+                    results.Count);
             }
             catch (OperationCanceledException)
             {
@@ -311,6 +314,9 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
             if (string.IsNullOrEmpty(result.FilePath) || string.IsNullOrEmpty(result.SystemName) ||
                 result.EmulatorManager is null)
             {
+                _logErrors.Information(
+                    "[GlobalSearch] filePath, selectedSystemName or selectedEmulatorManager is null for '{FileName}'",
+                    result.FileName);
                 await _messageBox.ErrorLaunchingGameMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
                 return;
             }

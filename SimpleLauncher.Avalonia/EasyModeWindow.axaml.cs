@@ -73,6 +73,7 @@ public partial class EasyModeWindow : Window, IDisposable
     {
         try
         {
+            Log.Debug("EasyModeWindow opened; loading EasyMode systems");
             await _viewModel.LoadCommand.ExecuteAsync(null);
         }
         catch (Exception ex)
@@ -83,11 +84,13 @@ public partial class EasyModeWindow : Window, IDisposable
 
     private void Window_Closed(object? sender, EventArgs e)
     {
+        Log.Debug("EasyModeWindow closed");
         Dispose();
     }
 
     private void CloseButton_Click(object? sender, RoutedEventArgs e)
     {
+        Log.Debug("EasyModeWindow close button clicked by the user");
         Close();
     }
 
@@ -95,9 +98,18 @@ public partial class EasyModeWindow : Window, IDisposable
     {
         try
         {
+            Log.Debug("Opening the folder browser dialog for the system folder");
             var filePicker = App.ServiceProvider.GetRequiredService<IFilePickerService>();
             var folder = await filePicker.OpenFolderAsync("Choose a folder with ROMs or ISOs for this system");
-            if (!string.IsNullOrEmpty(folder)) _viewModel.SystemFolderPath = folder;
+            if (!string.IsNullOrEmpty(folder))
+            {
+                Log.Information("System folder selected: {Folder}", folder);
+                _viewModel.SystemFolderPath = folder;
+            }
+            else
+            {
+                Log.Debug("Folder browser dialog was canceled or returned no folder");
+            }
         }
         catch (Exception ex)
         {
@@ -107,6 +119,7 @@ public partial class EasyModeWindow : Window, IDisposable
 
     private void EmergencyOverlay_Click(object? sender, RoutedEventArgs e)
     {
+        Log.Debug("[Emergency] User forced overlay dismissal in EasyModeWindow");
         _viewModel.StopDownloadCommand.Execute(null);
         LoadingOverlay.IsVisible = false;
     }

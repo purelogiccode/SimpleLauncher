@@ -167,6 +167,7 @@ public partial class FavoritesSectionViewModel : ObservableObject
             });
 
             Favorites = new ObservableCollection<FavoriteRowViewModel>(rows);
+            _logErrors.Information("Loaded {Count} favorite(s) in the Favorites section", rows.Count);
             SelectedFavorite = null;
             PreviewImagePath = "";
         }
@@ -226,6 +227,8 @@ public partial class FavoritesSectionViewModel : ObservableObject
                 Favorites.Remove(row);
             }
 
+            _logErrors.Information("Removed {Count} favorite(s) in the Favorites section", rows.Count);
+
             SelectedFavorite = null;
             PreviewImagePath = "";
 
@@ -283,6 +286,10 @@ public partial class FavoritesSectionViewModel : ObservableObject
                     await _messageBox.FavoriteFileDoesNotExistAskToDeleteMessageBoxAsync(filePath ??
                         favorite.DisplayName);
                 if (result == MessageBoxResult.Yes) await RemoveFavoritesAsync([favorite]);
+
+                _logErrors.Information(
+                    "[Favorites] File does not exist: {FileName} (system: {System}, resolved path: {Path})",
+                    favorite.StoredFileName, favorite.SystemName, filePath ?? "not found");
 
                 return;
             }
