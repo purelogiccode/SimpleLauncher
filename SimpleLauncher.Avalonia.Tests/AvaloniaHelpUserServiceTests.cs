@@ -120,7 +120,7 @@ public class AvaloniaHelpUserServiceTests
                 .ToList();
             Assert.NotEmpty(linkSpans);
             Assert.All(linkSpans, span => Assert.IsType<Run>(Assert.Single(span.Inlines)));
-            Assert.Contains(linkSpans, span => ((Run)span.Inlines[0]).Text == "Libretro Website");
+            Assert.Contains(linkSpans, span => string.Equals(((Run)span.Inlines[0]).Text, "Libretro Website", StringComparison.Ordinal));
         });
     }
 
