@@ -1103,7 +1103,6 @@
                                             Maximum="800"
                                             Margin="4,0"
                                             VerticalAlignment="Center"
-                                            ValueChanged="ButtonSizeSliderValueChanged"
                                             AutomationProperties.HelpText="{DynamicResource TooltipButtonSizeMenu}" />
                                         <TextBlock
                                             Text="○"

@@ -7,6 +7,7 @@ public class LanguageLaunchProcessTests
 {
     private const string FailedToApplyMarker = "Failed to Apply Language";
     private const string FallbackMarker = "Fallback to English language resources";
+    private const string SliderNullReferenceMarker = "ButtonSizeSliderValueChanged";
 
     [Fact]
     public async Task Launch_AllSupportedLanguages_Succeeds()
@@ -61,6 +62,35 @@ public class LanguageLaunchProcessTests
                 $"Expected the app to start cleanly (English fallback) for unsupported code 'zz', got: {outcome}");
             Assert.Equal(failedBefore, LanguageLaunchTestsBase.CountLogMarker(FailedToApplyMarker));
             Assert.Equal(fallbackBefore, LanguageLaunchTestsBase.CountLogMarker(FallbackMarker));
+        }
+        finally
+        {
+            KillProcess(process);
+        }
+    }
+
+    /// <summary>
+    ///     Regression test: the card size slider's ValueChanged used to be wired in XAML,
+    ///     so it fired while the loader applied Minimum/Maximum — before the MainWindow
+    ///     constructor assigned _settings — and every startup logged a NullReferenceException
+    ///     from ButtonSizeSliderValueChanged.
+    /// </summary>
+    [Fact]
+    public async Task Launch_Startup_DoesNotLogSliderNullReference()
+    {
+        if (Process.GetProcessesByName("SimpleLauncher").Length > 0) return;
+
+        var exe = LanguageLaunchTestsBase.FindAppExecutable();
+        var nullReferencesBefore = LanguageLaunchTestsBase.CountLogMarker(SliderNullReferenceMarker);
+
+        using var process = StartProcess(exe, "--language en");
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(7));
+
+            Assert.False(process.HasExited, "The app exited during startup.");
+            Assert.Equal(nullReferencesBefore,
+                LanguageLaunchTestsBase.CountLogMarker(SliderNullReferenceMarker));
         }
         finally
         {

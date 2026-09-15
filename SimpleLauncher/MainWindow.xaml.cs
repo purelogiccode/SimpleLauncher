@@ -185,7 +185,12 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
         // Load and Apply _settings
         ToggleGamepad.IsChecked = _settings.EnableGamePadNavigation;
         _menuOrchestrator.UpdateThumbnailSizeCheckMarks(_settings.ThumbnailSize);
+
+        // Set the initial value before subscribing to ValueChanged: the XAML loader
+        // raises that event while applying Minimum/Maximum (when _settings is still
+        // null), and the initial assignment must not schedule a reload either.
         CardSizeSlider.Value = _settings.ThumbnailSize;
+        CardSizeSlider.ValueChanged += ButtonSizeSliderValueChanged;
         _menuOrchestrator.UpdateButtonAspectRatioCheckMarks(_settings.ButtonAspectRatio);
         _menuOrchestrator.UpdateNumberOfGamesPerPageCheckMarks(_settings.GamesPerPage);
         _menuOrchestrator.UpdateShowGamesCheckMarks(_settings.ShowGames);
