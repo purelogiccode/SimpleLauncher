@@ -1,8 +1,10 @@
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
-using Avalonia.Layout;
+using Avalonia.Input;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.HelpUser;
@@ -12,8 +14,10 @@ namespace SimpleLauncher.Avalonia.Services;
 /// <summary>
 ///     Provides emulator parameter help text for systems, sourced from parameters.md
 ///     (loaded by the Core <see cref="HelpUserManager" />). Avalonia port of the WPF
-///     <c>HelpUserService</c> — the markdown is rendered by Markdown.Avalonia viewers
-///     (no RichTextBox dependency).
+///     <c>HelpUserService</c>: the same markdown parser (headings to bold, **bold**,
+///     [text](url) and raw URLs) renders into <see cref="SelectableTextBlock" /> inlines,
+///     with links as underlined inline spans (WPF <c>Hyperlink</c> parity) instead of
+///     embedded controls, so text flows and wraps exactly like the WPF RichTextBox.
 /// </summary>
 public class AvaloniaHelpUserService
 {
@@ -313,6 +317,10 @@ public class AvaloniaHelpUserService
     private static readonly Regex RawUrlRegex =
         new(@"\b(?:https?://|www\.)\S+\b", RegexOptions.Compiled, TimeSpan.FromMilliseconds(1000));
 
+    // Clickable link ranges (flattened inline-text offsets) per rendered text block,
+    // plus a flag so the pointer handlers are attached only once per control.
+    private static readonly ConditionalWeakTable<SelectableTextBlock, LinkState> LinkStates = new();
+
     private readonly LocalizationService? _localization;
     private readonly ILogger _logger;
     private readonly HelpUserManager _manager;
@@ -385,6 +393,15 @@ public class AvaloniaHelpUserService
 
         textBlock.TextWrapping = TextWrapping.Wrap;
 
+        // Per-block link map: rebuilt on every update; pointer handlers attached once.
+        var state = LinkStates.GetOrCreateValue(textBlock);
+        state.Links.Clear();
+        EnsurePointerHandlers(textBlock, state);
+
+        // Normalize line endings: the Core parser joins lines with Environment.NewLine,
+        // and Avalonia runs must not receive raw \r (WPF FlowDocument handles both).
+        text = text.Replace("\r\n", "\n").Replace('\r', '\n');
+
         // WPF parity: strip <br> already done in GetHelpText, but keep for direct calls
         text = text.Replace("<br>", string.Empty, StringComparison.Ordinal);
         text = HeadingRegex.Replace(text, static m => $"**{m.Groups[1].Value.Trim()}**");
@@ -397,49 +414,54 @@ public class AvaloniaHelpUserService
         matches.Sort(static (a, b) => a.Match.Index.CompareTo(b.Match.Index));
 
         var inlines = textBlock.Inlines;
-        var lastIndex = 0;
+        var sourceIndex = 0;
+        var emittedLength = 0;
 
         foreach (var (match, type) in matches)
         {
-            if (match.Index > lastIndex)
-            {
-                var plain = text.Substring(lastIndex, match.Index - lastIndex);
-                AddRawUrlsToInlines(inlines, plain);
-            }
+            if (match.Index > sourceIndex)
+                emittedLength += AddPlainText(inlines, text[sourceIndex..match.Index], state);
 
             if (string.Equals(type, "bold", StringComparison.OrdinalIgnoreCase))
             {
+                var value = match.Groups[1].Value;
                 var bold = new Bold();
-                bold.Inlines.Add(new Run(match.Groups[1].Value));
+                bold.Inlines.Add(new Run(value));
                 inlines.Add(bold);
+                emittedLength += value.Length;
             }
             else if (string.Equals(type, "markdownLink", StringComparison.OrdinalIgnoreCase))
             {
                 var linkText = match.Groups["text"].Value;
                 var url = match.Groups["url"].Value;
-                inlines.Add(CreateHyperlinkInline(linkText, url));
+                state.Links.Add(new LinkRange(emittedLength, linkText.Length, url));
+                inlines.Add(CreateLinkInline(linkText));
+                emittedLength += linkText.Length;
             }
 
-            lastIndex = match.Index + match.Length;
+            sourceIndex = match.Index + match.Length;
         }
 
-        if (lastIndex < text.Length)
-        {
-            var remaining = text.Substring(lastIndex);
-            AddRawUrlsToInlines(inlines, remaining);
-        }
+        if (sourceIndex < text.Length)
+            AddPlainText(inlines, text[sourceIndex..], state);
     }
 
-    private static void AddRawUrlsToInlines(InlineCollection inlines, string text)
+    private static int AddPlainText(InlineCollection inlines, string text, LinkState state)
     {
-        if (string.IsNullOrEmpty(text)) return;
+        if (string.IsNullOrEmpty(text)) return 0;
 
         // Preserve line breaks like WPF's FlowDocument: split on \n and insert LineBreak between lines
+        var emitted = 0;
         var lines = text.Split('\n');
         for (var lineIdx = 0; lineIdx < lines.Length; lineIdx++)
         {
             var line = lines[lineIdx];
-            if (lineIdx > 0) inlines.Add(new LineBreak());
+            if (lineIdx > 0)
+            {
+                inlines.Add(new LineBreak());
+                // LineBreak contributes Environment.NewLine to the flattened inline text
+                emitted += Environment.NewLine.Length;
+            }
 
             if (string.IsNullOrEmpty(line)) continue;
 
@@ -449,7 +471,11 @@ public class AvaloniaHelpUserService
 
             foreach (var part in parts)
             {
-                if (!string.IsNullOrEmpty(part)) inlines.Add(new Run(part));
+                if (!string.IsNullOrEmpty(part))
+                {
+                    inlines.Add(new Run(part));
+                    emitted += part.Length;
+                }
 
                 if (matchIndex < matches.Count)
                 {
@@ -457,34 +483,87 @@ public class AvaloniaHelpUserService
                     var navigateUrl = rawUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                         ? rawUrl
                         : "http://" + rawUrl;
-                    inlines.Add(CreateHyperlinkInline(rawUrl, navigateUrl));
+                    state.Links.Add(new LinkRange(emitted, rawUrl.Length, navigateUrl));
+                    inlines.Add(CreateLinkInline(rawUrl));
+                    emitted += rawUrl.Length;
                     matchIndex++;
                 }
             }
         }
+
+        return emitted;
     }
 
-    private static Inline CreateHyperlinkInline(string linkText, string url)
+    /// <summary>
+    ///     Creates an underlined inline link span (WPF <c>Hyperlink</c> parity). The click is
+    ///     handled by the parent text block's pointer handlers (see <see cref="FindLink" />),
+    ///     so the link stays part of the text flow and wraps like regular text.
+    /// </summary>
+    private static Span CreateLinkInline(string linkText)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return new Run(linkText);
+        var span = new Span { TextDecorations = TextDecorations.Underline };
+        span.Inlines.Add(new Run(linkText));
 
-        var linkButton = new HyperlinkButton
+        // Theme-aware link color (same App LinkBrush used by the other Avalonia hyperlinks)
+        span.Bind(TextElement.ForegroundProperty, new DynamicResourceExtension("LinkBrush"));
+        return span;
+    }
+
+    private static void EnsurePointerHandlers(SelectableTextBlock textBlock, LinkState state)
+    {
+        if (state.HandlersAttached) return;
+
+        state.HandlersAttached = true;
+        textBlock.PointerMoved += OnPointerMoved;
+        textBlock.PointerPressed += OnPointerPressed;
+        textBlock.PointerExited += OnPointerExited;
+    }
+
+    private static void OnPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (sender is not SelectableTextBlock textBlock) return;
+
+        if (FindLink(textBlock, e.GetPosition(textBlock)) is not null)
+            textBlock.Cursor = new Cursor(StandardCursorType.Hand);
+        else
+            textBlock.ClearValue(InputElement.CursorProperty);
+    }
+
+    private static void OnPointerExited(object? sender, PointerEventArgs e)
+    {
+        if (sender is SelectableTextBlock textBlock) textBlock.ClearValue(InputElement.CursorProperty);
+    }
+
+    private static void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not SelectableTextBlock textBlock) return;
+        if (!e.GetCurrentPoint(textBlock).Properties.IsLeftButtonPressed) return;
+
+        if (FindLink(textBlock, e.GetPosition(textBlock)) is not { } link) return;
+
+        e.Handled = true;
+        _ = ExternalLinkHelper.TryOpenUrlAsync(link.Url, TopLevel.GetTopLevel(textBlock));
+    }
+
+    /// <summary>
+    ///     Returns the link under the given point, using the text layout's hit testing and
+    ///     the flattened-inline offset ranges captured while the inlines were built.
+    /// </summary>
+    private static LinkRange? FindLink(SelectableTextBlock textBlock, Point point)
+    {
+        if (!LinkStates.TryGetValue(textBlock, out var state) || state.Links.Count == 0) return null;
+
+        var padding = textBlock.Padding;
+        var hit = textBlock.TextLayout.HitTestPoint(new Point(point.X - padding.Left, point.Y - padding.Top));
+        if (!hit.IsInside) return null;
+
+        var position = hit.TextPosition;
+        foreach (var link in state.Links)
         {
-            Content = linkText,
-            NavigateUri = uri,
-            Padding = new Thickness(0),
-            Margin = new Thickness(0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Foreground = new SolidColorBrush(Color.Parse("#4FC3F7")),
-            FontSize = 12,
-            VerticalAlignment = VerticalAlignment.Center
-        };
+            if (position >= link.Start && position < link.Start + link.Length) return link;
+        }
 
-        // Remove default button chrome for inline appearance
-        linkButton.Classes.Add("hyperlink");
-
-        return new InlineUIContainer(linkButton);
+        return null;
     }
 
     /// <summary>
@@ -509,5 +588,16 @@ public class AvaloniaHelpUserService
         var fallback = _localization?.GetString("Noinformationavailableforsystem") ??
                        "No information available for system";
         return system?.SystemHelperText ?? $"{fallback} {systemName}";
+    }
+
+    /// <summary>A clickable link's range in the flattened inline text.</summary>
+    private readonly record struct LinkRange(int Start, int Length, string Url);
+
+    /// <summary>Per-text-block clickable link ranges and pointer-handler state.</summary>
+    private sealed class LinkState
+    {
+        public bool HandlersAttached { get; set; }
+
+        public List<LinkRange> Links { get; } = [];
     }
 }

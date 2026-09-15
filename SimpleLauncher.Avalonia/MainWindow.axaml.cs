@@ -1169,6 +1169,9 @@ public partial class MainWindow : Window, IPaginationHost
         // System selection screen is always hidden when a content view is active
         SystemSelectionRoot.IsVisible = false;
 
+        // WPF parity: the status bar is shown whenever a system/game view is active
+        StatusBarArea.IsVisible = true;
+
         FavoritesSectionRoot.IsVisible = section == MainSection.Favorites;
         PlayHistorySectionRoot.IsVisible = section == MainSection.PlayHistory;
         GlobalSearchSectionRoot.IsVisible = section == MainSection.GlobalSearch;
@@ -2487,9 +2490,11 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     private async Task ShowSystemSelectionScreenAsync()
     {
-        // WPF parity: the top system-selection bar is hidden while the full-screen
-        // system selection grid is shown (SystemSelectionOrchestratorService line-parity).
+        // WPF parity: both the top system-selection bar and the status bar are hidden
+        // while the full-screen system selection grid is shown
+        // (SystemSelectionOrchestratorService lines 115-116).
         TopSystemSelection.IsVisible = false;
+        StatusBarArea.IsVisible = false;
         FavoritesSectionRoot.IsVisible = false;
         PlayHistorySectionRoot.IsVisible = false;
         GlobalSearchSectionRoot.IsVisible = false;

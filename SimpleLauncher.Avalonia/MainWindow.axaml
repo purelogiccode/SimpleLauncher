@@ -1397,7 +1397,7 @@
                 </Border>
 
                 <!-- ═══ STATUS BAR (Bottom) — WPF StatusBarArea parity: StatusText + Pagination + System + PlayTime ═══ -->
-                <Border Grid.Row="2" Background="{DynamicResource BgSecondaryBrush}"
+                <Border x:Name="StatusBarArea" Grid.Row="2" Background="{DynamicResource BgSecondaryBrush}"
                         BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0">
                     <Grid Margin="10,0" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
                         <!-- Left: general status (WPF StatusBarText) -->

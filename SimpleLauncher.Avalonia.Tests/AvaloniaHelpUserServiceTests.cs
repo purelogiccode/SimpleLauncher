@@ -1,4 +1,6 @@
 using Moq;
+using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using SimpleLauncher.Avalonia.Services;
 
 namespace SimpleLauncher.Avalonia.Tests;
@@ -87,6 +89,61 @@ public class AvaloniaHelpUserServiceTests
         var service = CreateService(new LocalizationService());
 
         Assert.Equal("No system name provided.", service.GetHelpText(""));
+    }
+
+    [Fact]
+    public void UpdateHelpTextBlock_RendersWpfStyleInlineLinks()
+    {
+        HeadlessAvalonia.EnsureInitialized();
+        var service = CreateService();
+        var textBlock = HeadlessAvalonia.RunOnUiThread(() => new SelectableTextBlock { Width = 480 });
+
+        HeadlessAvalonia.RunOnUiThread(() => service.UpdateHelpTextBlock(textBlock, "Nintendo 64"));
+
+        HeadlessAvalonia.RunOnUiThread(() =>
+        {
+            var inlines = textBlock.Inlines!;
+            var text = inlines.Text ?? string.Empty;
+
+            // WPF FlowDocument parity: no stray \r (line breaks come from LineBreak inlines),
+            // no embedded control placeholders, no leftover markdown bold markers,
+            // and line structure is preserved.
+            Assert.DoesNotContain('\r', text.Replace("\r\n", string.Empty));
+            Assert.DoesNotContain('\uFFFC', text);
+            Assert.DoesNotContain("**", text);
+            Assert.Contains(inlines, inline => inline is LineBreak);
+
+            // Links are underlined inline spans (WPF Hyperlink parity), never embedded button controls
+            Assert.DoesNotContain(inlines, inline => inline is InlineUIContainer);
+            var linkSpans = inlines.OfType<Span>()
+                .Where(span => span.TextDecorations is { Count: > 0 })
+                .ToList();
+            Assert.NotEmpty(linkSpans);
+            Assert.All(linkSpans, span => Assert.IsType<Run>(Assert.Single(span.Inlines)));
+            Assert.Contains(linkSpans, span => ((Run)span.Inlines[0]).Text == "Libretro Website");
+        });
+    }
+
+    [Fact]
+    public void UpdateHelpTextBlock_ReusesBlockAndReplacesLinks()
+    {
+        HeadlessAvalonia.EnsureInitialized();
+        var service = CreateService();
+        var textBlock = HeadlessAvalonia.RunOnUiThread(() => new SelectableTextBlock { Width = 480 });
+
+        HeadlessAvalonia.RunOnUiThread(() =>
+        {
+            service.UpdateHelpTextBlock(textBlock, "Nintendo 64");
+            var firstText = textBlock.Inlines!.Text;
+            Assert.Contains("Nintendo 64", firstText);
+            Assert.Contains("BizHawk Website", firstText);
+
+            service.UpdateHelpTextBlock(textBlock, "Sega Dreamcast");
+            var secondText = textBlock.Inlines!.Text;
+            Assert.Contains("Sega Dreamcast", secondText);
+            Assert.DoesNotContain("Nintendo 64", secondText);
+            Assert.DoesNotContain("BizHawk Website", secondText);
+        });
     }
 
     [Fact]
