@@ -4,13 +4,18 @@ using System.Windows;
 using MessagePack;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using SimpleLauncher.Services.SystemManager;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Services.PlayHistory;
 
 /// <summary>
-///     Manages play history tracking, persistence, and date format migration using MessagePack serialization.
+///     Manages play history tracking, persistence, and date format migration.
+///     The app persists history in the unified SQLite database
+///     (<c>settings.dat</c> in AppData); the legacy MessagePack <c>playhistory.dat</c>
+///     format is only read during the one-time migration (and as a fallback when no
+///     database exists yet).
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public class PlayHistoryManager
@@ -42,11 +47,87 @@ public class PlayHistoryManager
     /// </summary>
     public static bool IsPortableMode => FileLocation.IsPortableMode;
 
+    /// <summary>Loads play history from the unified database (callers must have verified it is valid).</summary>
+    private static PlayHistoryManager LoadFromDatabase(ILogger? logErrors)
+    {
+        var manager = new PlayHistoryManager { _logger = logErrors! };
+        foreach (var record in UnifiedSettingsDatabase.LoadPlayHistory())
+        {
+            if (string.IsNullOrWhiteSpace(record.FileName))
+                continue;
+            manager.PlayHistoryList.Add(new PlayHistoryItem
+            {
+                FileName = record.FileName,
+                SystemName = record.SystemName ?? "",
+                TimesPlayed = record.TimesPlayed,
+                TotalPlayTime = record.TotalPlayTime,
+                LastPlayDate = record.LastPlayDate ?? "",
+                LastPlayTime = record.LastPlayTime ?? ""
+            });
+        }
+
+        // Migrate old date formats to the new ISO format if needed (legacy parity).
+        manager.MigrateOldDateFormats();
+
+        return manager;
+    }
+
+    /// <summary>Saves a snapshot of the list to the unified database.</summary>
+    private void SaveToDatabase()
+    {
+        List<PlayHistoryRecord> snapshot;
+        lock (_historyLock)
+        {
+            snapshot = PlayHistoryList
+                .Where(static item => !string.IsNullOrWhiteSpace(item.FileName))
+                .Select(static item => new PlayHistoryRecord(
+                    item.FileName,
+                    item.SystemName ?? "",
+                    item.TimesPlayed,
+                    item.TotalPlayTime,
+                    item.LastPlayDate ?? "",
+                    item.LastPlayTime ?? ""))
+                .ToList();
+        }
+
+        UnifiedSettingsDatabase.EnsureCreated();
+        UnifiedSettingsDatabase.SavePlayHistory(snapshot);
+    }
+
     /// <summary>
-    ///     Loads play history from the MessagePack file. If the file doesn't exist, creates and saves a new instance.
+    ///     Loads play history from the unified database when it exists, from the legacy
+    ///     MessagePack file when it does not (pre-migration), or creates a new database-backed instance.
     /// </summary>
     internal static PlayHistoryManager LoadPlayHistory(ILogger? logErrors = null)
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                return LoadFromDatabase(logErrors);
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error loading play history from the unified database; trying the legacy file");
+            }
+        }
+        else if (!File.Exists(FilePath))
+        {
+            // Fresh start with neither a database nor a legacy file: create the
+            // database instead of a legacy playhistory.dat.
+            try
+            {
+                UnifiedSettingsDatabase.EnsureCreated();
+                var fresh = new PlayHistoryManager { _logger = logErrors! };
+                fresh.SaveToDatabase();
+                return fresh;
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error creating play history in the unified database; using a legacy file");
+            }
+        }
+
         if (!File.Exists(FilePath))
         {
             var defaultManager = new PlayHistoryManager { _logger = logErrors! };
@@ -216,10 +297,24 @@ public class PlayHistoryManager
     }
 
     /// <summary>
-    ///     Saves the play history to the MessagePack file asynchronously with retry logic.
+    ///     Saves the play history: to the unified database when it exists, otherwise to
+    ///     the legacy MessagePack file with retry logic.
     /// </summary>
     internal Task SavePlayHistoryAsync()
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                SaveToDatabase();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error(ex, "Error saving play history to the unified database; trying the legacy file");
+            }
+        }
+
         // Serialize and write on a background thread so Thread.Sleep in the
         // retry loop does not block the UI thread.
         return Task.Run(() =>
@@ -234,7 +329,7 @@ public class PlayHistoryManager
                 try
                 {
                     // Notify user
-                    Application.Current.Dispatcher.Invoke(static () =>
+                    Application.Current?.Dispatcher.Invoke(static () =>
                         (Application.Current.MainWindow as MainWindow)?.UpdateStatusBarService.UpdateContent(
                             (string)Application.Current.TryFindResource("SavingPlayHistory") ??
                             "Saving play history..."));

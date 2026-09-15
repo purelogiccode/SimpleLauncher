@@ -8,13 +8,17 @@ using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Services.SystemManager;
 
 /// <summary>
 ///     Represents a system (console/platform) configuration loaded from system.xml, including ROM folders, file formats,
-///     and emulators.
+///     and emulators. The app persists systems in the unified SQLite database
+///     (<c>settings.dat</c> in AppData) when it exists; the legacy <c>system.xml</c>
+///     format is only read during the one-time migration (and as a fallback when no
+///     database exists yet).
 /// </summary>
 public partial class SystemManagerService : ISystemManager
 {
@@ -106,12 +110,26 @@ public partial class SystemManagerService : ISystemManager
     }
 
     /// <summary>
-    ///     Checks whether a system configuration with the specified name exists in system.xml.
+    ///     Checks whether a system configuration with the specified name exists in
+    ///     <c>settings.dat</c> (unified database) or system.xml.
     /// </summary>
     public static bool SystemExists(string systemName, IConfiguration configuration)
     {
         lock (XmlLock)
         {
+            if (UnifiedSettingsDatabase.IsValidDatabase())
+            {
+                try
+                {
+                    return UnifiedSettingsDatabase.SystemExists(systemName);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.Debug($"[SystemManagerService.SystemExists] Could not check settings.dat: {ex.Message}");
+                    return false;
+                }
+            }
+
             var systemXmlPath = GetSystemXmlPath(configuration);
             if (!File.Exists(systemXmlPath)) return false;
 
@@ -167,6 +185,19 @@ public partial class SystemManagerService : ISystemManager
     private static async Task<IList<SystemManagerService>> LoadSystemManagersInternalAsync(IConfiguration configuration,
         ILogger? logErrors = null, IMessageBoxLibraryService? messageBoxLibrary = null)
     {
+        // Unified-database path: single source of truth once migrated.
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                return await Task.Run(LoadSystemsFromDatabase);
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error loading systems from the unified database; trying the legacy file");
+            }
+        }
+
         var systemXmlPath = GetSystemXmlPath(configuration);
 
         if (!File.Exists(systemXmlPath))
@@ -229,7 +260,7 @@ public partial class SystemManagerService : ISystemManager
                         {
                             try
                             {
-                                ValidateSystemConfiguration(sysConfigElement, systemManagers);
+                                systemManagers.Add(ParseSystemConfiguration(sysConfigElement));
                             }
                             catch (Exception ex)
                             {
@@ -262,7 +293,7 @@ public partial class SystemManagerService : ISystemManager
                             try
                             {
                                 var sysConfigElement = XElement.Parse(match.Value);
-                                ValidateSystemConfiguration(sysConfigElement, systemManagers);
+                                systemManagers.Add(ParseSystemConfiguration(sysConfigElement));
                             }
                             catch (Exception innerEx)
                             {
@@ -403,165 +434,305 @@ public partial class SystemManagerService : ISystemManager
                 return []; // Return an empty list
             }
         }
+    }
 
-        static void ValidateSystemConfiguration(XElement sysConfigElement, IList<SystemManagerService> systemManagers)
+    /// <summary>
+    ///     Parses and validates a single &lt;SystemConfig&gt; element. Throws when the
+    ///     configuration is invalid (callers log and skip the entry).
+    ///     Shared by the XML loader and the one-time legacy migration, so both paths
+    ///     enforce identical validation.
+    /// </summary>
+    private static SystemManagerService ParseSystemConfiguration(XElement sysConfigElement)
+    {
+        // Attempt to parse each system configuration.
+        // These validations will only run if SystemManagerService elements exist.
+        var systemName = sysConfigElement.Element("SystemName")?.Value;
+        if (string.IsNullOrEmpty(systemName))
+            throw new InvalidOperationException("Missing or empty 'System Name' in XML.");
+
+        List<string> systemFolders;
+        var systemFoldersElement = sysConfigElement.Element("SystemFolders");
+        if (systemFoldersElement != null)
         {
-            // Attempt to parse each system configuration.
-            // These validations will only run if SystemManagerService elements exist.
-            var systemName = sysConfigElement.Element("SystemName")?.Value;
-            if (string.IsNullOrEmpty(systemName))
-                throw new InvalidOperationException("Missing or empty 'System Name' in XML.");
-
-            List<string> systemFolders;
-            var systemFoldersElement = sysConfigElement.Element("SystemFolders");
-            if (systemFoldersElement != null)
-            {
-                systemFolders = systemFoldersElement.Elements("SystemFolder")
-                    .Select(static f => f.Value)
-                    .Where(static f => !string.IsNullOrWhiteSpace(f))
-                    .ToList();
-            }
-            else
-            {
-                var singleFolder = sysConfigElement.Element("SystemFolder")?.Value;
-                systemFolders = !string.IsNullOrWhiteSpace(singleFolder) ? [singleFolder] : new List<string>();
-            }
-
-            if (systemFolders.Count == 0)
-            {
-                throw new InvalidOperationException(
-                    $"System '{systemName}': At least one 'System Folder' is required in XML.");
-            }
-
-            var systemImageFolder = sysConfigElement.Element("SystemImageFolder")?.Value;
-            if (string.IsNullOrEmpty(systemImageFolder))
-            {
-                throw new InvalidOperationException(
-                    $"System '{systemName}': Missing or empty 'System Image Folder' in XML.");
-            }
-
-            // Validate FileFormatsToSearch
-            var formatsToSearch = sysConfigElement.Element("FileFormatsToSearch")
-                ?.Elements("FormatToSearch")
-                .Select(static e => e.Value.Trim())
-                .Where(static value =>
-                    !string.IsNullOrWhiteSpace(value)) // Ensure no empty or whitespace-only entries
+            systemFolders = systemFoldersElement.Elements("SystemFolder")
+                .Select(static f => f.Value)
+                .Where(static f => !string.IsNullOrWhiteSpace(f))
                 .ToList();
-            if (formatsToSearch == null || formatsToSearch.Count == 0)
+        }
+        else
+        {
+            var singleFolder = sysConfigElement.Element("SystemFolder")?.Value;
+            systemFolders = !string.IsNullOrWhiteSpace(singleFolder) ? [singleFolder] : new List<string>();
+        }
+
+        if (systemFolders.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': At least one 'System Folder' is required in XML.");
+        }
+
+        var systemImageFolder = sysConfigElement.Element("SystemImageFolder")?.Value;
+        if (string.IsNullOrEmpty(systemImageFolder))
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': Missing or empty 'System Image Folder' in XML.");
+        }
+
+        // Validate FileFormatsToSearch
+        var formatsToSearch = sysConfigElement.Element("FileFormatsToSearch")
+            ?.Elements("FormatToSearch")
+            .Select(static e => e.Value.Trim())
+            .Where(static value =>
+                !string.IsNullOrWhiteSpace(value)) // Ensure no empty or whitespace-only entries
+            .ToList();
+        if (formatsToSearch == null || formatsToSearch.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': 'File Extension To Search' should have at least one value.");
+        }
+
+        // Validate ExtractFileBeforeLaunch
+        var extractFileBeforeLaunch = false;
+        var extractElement = sysConfigElement.Element("ExtractFileBeforeLaunch");
+        if (extractElement != null)
+        {
+            if (!bool.TryParse(extractElement.Value, out extractFileBeforeLaunch))
+            {
+                // If parsing fails, we could either throw or default to false.
+                // Given we want it to be optional, defaulting to false is safer.
+                extractFileBeforeLaunch = false;
+            }
+        }
+
+        if (extractFileBeforeLaunch && (!formatsToSearch.All(static f =>
+                f.Equals("zip", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("7z", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("rar", StringComparison.OrdinalIgnoreCase))))
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': When 'Extract File Before Launch' is set to true, 'Extension to Search in the System Folder' must ONLY contain 'zip', '7z', or 'rar'.");
+        }
+
+        // Validate FileFormatsToLaunch
+        var formatsToLaunch = sysConfigElement.Element("FileFormatsToLaunch")
+            ?.Elements("FormatToLaunch")
+            .Select(static e => e.Value.Trim())
+            .Where(static value =>
+                !string.IsNullOrWhiteSpace(value)) // Ensure no empty or whitespace-only entries
+            .ToList();
+        // If ExtractFileBeforeLaunch is true, FileFormatsToLaunch must have values.
+        if (extractFileBeforeLaunch && (formatsToLaunch == null || formatsToLaunch.Count == 0))
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': 'File Extension To Launch' should have at least one value when 'Extract File Before Launch' is set to true.");
+        }
+
+        // Parse GroupByFolder
+        if (!bool.TryParse(sysConfigElement.Element("GroupByFolder")?.Value, out var groupByFolder))
+            groupByFolder = false;
+
+        // Parse DisableRecursiveSearch
+        if (!bool.TryParse(sysConfigElement.Element("DisableRecursiveSearch")?.Value,
+                out var disableRecursiveSearch))
+        {
+            disableRecursiveSearch = false;
+        }
+
+        // Validate emulator configurations
+        var emulators = new List<Emulator>();
+        var emulatorElements = sysConfigElement.Element("Emulators")?.Elements("Emulator").ToList();
+
+        if (emulatorElements == null || emulatorElements.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': Emulators list should not be empty or null."); // Need at least one EmulatorName element
+        }
+
+        foreach (var emulatorElement in emulatorElements)
+        {
+            var emulatorName = emulatorElement.Element("EmulatorName")?.Value;
+            if (string.IsNullOrEmpty(emulatorName))
             {
                 throw new InvalidOperationException(
-                    $"System '{systemName}': 'File Extension To Search' should have at least one value.");
+                    $"System '{systemName}': An 'Emulator Name' should not be empty or null.");
             }
 
-            // Validate ExtractFileBeforeLaunch
-            var extractFileBeforeLaunch = false;
-            var extractElement = sysConfigElement.Element("ExtractFileBeforeLaunch");
-            if (extractElement != null)
+            var emulatorLocation = emulatorElement.Element("EmulatorLocation")?.Value ?? ""; // can be empty
+            var emulatorParameters = emulatorElement.Element("EmulatorParameters")?.Value ?? ""; // can be empty
+
+            // Parse the ReceiveANotificationOnEmulatorError value with default = true
+            // If the element is missing or parsing fails, it defaults to true.
+            var receiveNotification = true; // Default value
+            if (emulatorElement.Element("ReceiveANotificationOnEmulatorError") != null)
             {
-                if (!bool.TryParse(extractElement.Value, out extractFileBeforeLaunch))
+                if (!bool.TryParse(emulatorElement.Element("ReceiveANotificationOnEmulatorError")?.Value,
+                        out receiveNotification))
                 {
-                    // If parsing fails, we could either throw or default to false.
-                    // Given we want it to be optional, defaulting to false is safer.
-                    extractFileBeforeLaunch = false;
+                    receiveNotification = true; // Reset to default if parsing fails
                 }
             }
 
-            if (extractFileBeforeLaunch && (!formatsToSearch.All(static f =>
-                    f.Equals("zip", StringComparison.OrdinalIgnoreCase) ||
-                    f.Equals("7z", StringComparison.OrdinalIgnoreCase) ||
-                    f.Equals("rar", StringComparison.OrdinalIgnoreCase))))
+            emulators.Add(new Emulator
             {
-                throw new InvalidOperationException(
-                    $"System '{systemName}': When 'Extract File Before Launch' is set to true, 'Extension to Search in the System Folder' must ONLY contain 'zip', '7z', or 'rar'.");
-            }
-
-            // Validate FileFormatsToLaunch
-            var formatsToLaunch = sysConfigElement.Element("FileFormatsToLaunch")
-                ?.Elements("FormatToLaunch")
-                .Select(static e => e.Value.Trim())
-                .Where(static value =>
-                    !string.IsNullOrWhiteSpace(value)) // Ensure no empty or whitespace-only entries
-                .ToList();
-            // If ExtractFileBeforeLaunch is true, FileFormatsToLaunch must have values.
-            if (extractFileBeforeLaunch && (formatsToLaunch == null || formatsToLaunch.Count == 0))
-            {
-                throw new InvalidOperationException(
-                    $"System '{systemName}': 'File Extension To Launch' should have at least one value when 'Extract File Before Launch' is set to true.");
-            }
-
-            // Parse GroupByFolder
-            if (!bool.TryParse(sysConfigElement.Element("GroupByFolder")?.Value, out var groupByFolder))
-                groupByFolder = false;
-
-            // Parse DisableRecursiveSearch
-            if (!bool.TryParse(sysConfigElement.Element("DisableRecursiveSearch")?.Value,
-                    out var disableRecursiveSearch))
-            {
-                disableRecursiveSearch = false;
-            }
-
-            // Validate emulator configurations
-            var emulators = new List<Emulator>();
-            var emulatorElements = sysConfigElement.Element("Emulators")?.Elements("Emulator").ToList();
-
-            if (emulatorElements == null || emulatorElements.Count == 0)
-            {
-                throw new InvalidOperationException(
-                    $"System '{systemName}': Emulators list should not be empty or null."); // Need at least one EmulatorName element
-            }
-
-            foreach (var emulatorElement in emulatorElements)
-            {
-                var emulatorName = emulatorElement.Element("EmulatorName")?.Value;
-                if (string.IsNullOrEmpty(emulatorName))
-                {
-                    throw new InvalidOperationException(
-                        $"System '{systemName}': An 'Emulator Name' should not be empty or null.");
-                }
-
-                var emulatorLocation = emulatorElement.Element("EmulatorLocation")?.Value ?? ""; // can be empty
-                var emulatorParameters = emulatorElement.Element("EmulatorParameters")?.Value ?? ""; // can be empty
-
-                // Parse the ReceiveANotificationOnEmulatorError value with default = true
-                // If the element is missing or parsing fails, it defaults to true.
-                var receiveNotification = true; // Default value
-                if (emulatorElement.Element("ReceiveANotificationOnEmulatorError") != null)
-                {
-                    if (!bool.TryParse(emulatorElement.Element("ReceiveANotificationOnEmulatorError")?.Value,
-                            out receiveNotification))
-                    {
-                        receiveNotification = true; // Reset to default if parsing fails
-                    }
-                }
-
-                emulators.Add(new Emulator
-                {
-                    EmulatorName = emulatorName,
-                    EmulatorLocation = emulatorLocation, // Store the raw string
-                    EmulatorParameters = emulatorParameters, // Store the raw string
-                    ReceiveANotificationOnEmulatorError = receiveNotification,
-                    ImagePackDownloadLink = emulatorElement.Element("ImagePackDownloadLink")?.Value ?? "",
-                    ImagePackDownloadLink2 = emulatorElement.Element("ImagePackDownloadLink2")?.Value ?? "",
-                    ImagePackDownloadLink3 = emulatorElement.Element("ImagePackDownloadLink3")?.Value ?? "",
-                    ImagePackDownloadLink4 = emulatorElement.Element("ImagePackDownloadLink4")?.Value ?? "",
-                    ImagePackDownloadLink5 = emulatorElement.Element("ImagePackDownloadLink5")?.Value ?? "",
-                    ImagePackDownloadExtractPath = emulatorElement.Element("ImagePackDownloadExtractPath")?.Value ?? ""
-                });
-            }
-
-            systemManagers.Add(new SystemManagerService
-            {
-                SystemName = systemName,
-                SystemFolders = systemFolders, // Store the raw string
-                SystemImageFolder = systemImageFolder, // Store the raw string
-                ExtractFileBeforeLaunch = extractFileBeforeLaunch,
-                FileFormatsToSearch = formatsToSearch,
-                FileFormatsToLaunch = formatsToLaunch ?? [],
-                Emulators = emulators,
-                GroupByFolder = groupByFolder,
-                DisableRecursiveSearch = disableRecursiveSearch
+                EmulatorName = emulatorName,
+                EmulatorLocation = emulatorLocation, // Store the raw string
+                EmulatorParameters = emulatorParameters, // Store the raw string
+                ReceiveANotificationOnEmulatorError = receiveNotification,
+                ImagePackDownloadLink = emulatorElement.Element("ImagePackDownloadLink")?.Value ?? "",
+                ImagePackDownloadLink2 = emulatorElement.Element("ImagePackDownloadLink2")?.Value ?? "",
+                ImagePackDownloadLink3 = emulatorElement.Element("ImagePackDownloadLink3")?.Value ?? "",
+                ImagePackDownloadLink4 = emulatorElement.Element("ImagePackDownloadLink4")?.Value ?? "",
+                ImagePackDownloadLink5 = emulatorElement.Element("ImagePackDownloadLink5")?.Value ?? "",
+                ImagePackDownloadExtractPath = emulatorElement.Element("ImagePackDownloadExtractPath")?.Value ?? ""
             });
         }
+
+        return new SystemManagerService
+        {
+            SystemName = systemName,
+            SystemFolders = systemFolders, // Store the raw string
+            SystemImageFolder = systemImageFolder, // Store the raw string
+            ExtractFileBeforeLaunch = extractFileBeforeLaunch,
+            FileFormatsToSearch = formatsToSearch,
+            FileFormatsToLaunch = formatsToLaunch ?? [],
+            Emulators = emulators,
+            GroupByFolder = groupByFolder,
+            DisableRecursiveSearch = disableRecursiveSearch
+        };
+    }
+
+    /// <summary>Loads systems from the unified database (callers must have verified it is valid).</summary>
+    private static List<SystemManagerService> LoadSystemsFromDatabase()
+    {
+        var result = new List<SystemManagerService>();
+        foreach (var kvp in UnifiedSettingsDatabase.LoadSystems())
+        {
+            var config = SystemConfigStore.Deserialize(kvp.Key, kvp.Value);
+            if (config is not null)
+                result.Add(FromSystemManagerConfig(config));
+        }
+
+        result.Sort(static (a, b) =>
+            string.Compare(a.SystemName, b.SystemName, StringComparison.OrdinalIgnoreCase));
+        return result;
+    }
+
+    /// <summary>Maps a database system config to a runtime manager instance.</summary>
+    internal static SystemManagerService FromSystemManagerConfig(SystemManagerConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return new SystemManagerService
+        {
+            SystemName = config.SystemName,
+            SystemFolders = config.SystemFolders?.ToList() ?? [],
+            SystemImageFolder = config.SystemImageFolder ?? "",
+            FileFormatsToSearch = config.FileFormatsToSearch?.ToList() ?? [],
+            FileFormatsToLaunch = config.FileFormatsToLaunch?.ToList() ?? [],
+            ExtractFileBeforeLaunch = config.ExtractFileBeforeLaunch,
+            GroupByFolder = config.GroupByFolder,
+            DisableRecursiveSearch = config.DisableRecursiveSearch,
+            Emulators = config.Emulators?.ToList() ?? []
+        };
+    }
+
+    /// <summary>Maps a runtime manager instance to a database system config.</summary>
+    internal static SystemManagerConfig ToSystemManagerConfig(SystemManagerService systemConfig)
+    {
+        ArgumentNullException.ThrowIfNull(systemConfig);
+        return new SystemManagerConfig
+        {
+            SystemName = systemConfig.SystemName,
+            SystemFolders = systemConfig.SystemFolders?.ToList() ?? [],
+            SystemImageFolder = systemConfig.SystemImageFolder ?? "",
+            FileFormatsToSearch = systemConfig.FileFormatsToSearch?.ToList() ?? [],
+            FileFormatsToLaunch = systemConfig.FileFormatsToLaunch?.ToList() ?? [],
+            ExtractFileBeforeLaunch = systemConfig.ExtractFileBeforeLaunch,
+            GroupByFolder = systemConfig.GroupByFolder,
+            DisableRecursiveSearch = systemConfig.DisableRecursiveSearch,
+            Emulators = systemConfig.Emulators?.Select(static e => new Emulator
+            {
+                EmulatorName = e.EmulatorName ?? "",
+                EmulatorLocation = e.EmulatorLocation ?? "",
+                EmulatorParameters = e.EmulatorParameters ?? "",
+                ReceiveANotificationOnEmulatorError = e.ReceiveANotificationOnEmulatorError,
+                ImagePackDownloadLink = e.ImagePackDownloadLink ?? "",
+                ImagePackDownloadLink2 = e.ImagePackDownloadLink2 ?? "",
+                ImagePackDownloadLink3 = e.ImagePackDownloadLink3 ?? "",
+                ImagePackDownloadLink4 = e.ImagePackDownloadLink4 ?? "",
+                ImagePackDownloadLink5 = e.ImagePackDownloadLink5 ?? "",
+                ImagePackDownloadExtractPath = e.ImagePackDownloadExtractPath ?? ""
+            }).ToList() ?? []
+        };
+    }
+
+    /// <summary>
+    ///     Loads systems from an explicit XML file path without any side effects
+    ///     (no database read, no static cache, no user notifications, no file rewrite).
+    ///     Used by the one-time legacy migration and tests.
+    /// </summary>
+    internal static List<SystemManagerService> LoadSystemsFromPath(string xmlPath, ILogger? logErrors = null)
+    {
+        var result = new List<SystemManagerService>();
+        if (!File.Exists(xmlPath)) return result;
+
+        try
+        {
+            var settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null
+            };
+
+            using var reader = XmlReader.Create(xmlPath, settings);
+            var doc = XDocument.Load(reader, LoadOptions.None);
+            if (doc.Root is null) return result;
+
+            foreach (var sysConfigElement in doc.Root.Elements("SystemConfig"))
+            {
+                try
+                {
+                    result.Add(ParseSystemConfiguration(sysConfigElement));
+                }
+                catch (Exception ex)
+                {
+                    var systemName = sysConfigElement.Element("SystemName")?.Value ?? "Unnamed System";
+                    logErrors?.Error(ex, "Invalid system configuration '{SystemName}' in '{Path}'", systemName,
+                        xmlPath);
+                }
+            }
+        }
+        catch (XmlException ex)
+        {
+            logErrors?.Error(ex, "Structural corruption in '{Path}'. Attempting partial recovery", xmlPath);
+
+            try
+            {
+                var rawXml = File.ReadAllText(xmlPath);
+                foreach (Match match in MyRegex().Matches(rawXml))
+                {
+                    try
+                    {
+                        result.Add(ParseSystemConfiguration(XElement.Parse(match.Value)));
+                    }
+                    catch (Exception innerEx)
+                    {
+                        var nameMatch = MyRegex1().Match(match.Value);
+                        var sysName = nameMatch.Success ? nameMatch.Groups[1].Value : "Unknown";
+                        logErrors?.Error(innerEx, "Failed to validate system configuration for '{SystemName}'", sysName);
+                    }
+                }
+            }
+            catch (Exception recoveryEx)
+            {
+                logErrors?.Error(recoveryEx, "Failed to perform regex recovery on '{Path}'", xmlPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            logErrors?.Error(ex, "Failed to parse '{Path}'", xmlPath);
+        }
+
+        return result;
     }
 
     private static async Task RestoreBackupFileAsync(string directoryPath, string systemXmlPath, ILogger logErrors,
@@ -648,11 +819,42 @@ public partial class SystemManagerService : ISystemManager
     }
 
     /// <summary>
-    ///     Asynchronously saves a system configuration to system.xml, creating or updating the entry with retry logic.
+    ///     Asynchronously saves a system configuration, creating or updating the entry.
+    ///     In unified-database mode the system is upserted into <c>settings.dat</c>;
+    ///     otherwise system.xml is used with retry logic.
     /// </summary>
     public static async Task SaveSystemConfigurationAsync(SystemManagerService systemConfig,
         string? originalSystemName = null, ILogger? logErrors = null, IConfiguration? configuration = null)
     {
+        // Unified-database path: upsert the system into settings.dat.
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    lock (XmlLock)
+                    {
+                        UnifiedSettingsDatabase.EnsureCreated();
+                        var identifier = originalSystemName ?? systemConfig.SystemName;
+
+                        // Handle renames: remove the old key when the name changed.
+                        if (!string.Equals(identifier, systemConfig.SystemName, StringComparison.OrdinalIgnoreCase))
+                            UnifiedSettingsDatabase.DeleteSystem(identifier);
+
+                        var config = ToSystemManagerConfig(systemConfig);
+                        UnifiedSettingsDatabase.SaveSystem(systemConfig.SystemName, SystemConfigStore.Serialize(config));
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error saving system configuration to the unified database");
+            }
+
+            return;
+        }
+
         try
         {
             await Task.Run(() =>
@@ -856,11 +1058,34 @@ public partial class SystemManagerService : ISystemManager
     }
 
     /// <summary>
-    ///     Asynchronously deletes a system configuration entry by name from system.xml.
+    ///     Asynchronously deletes a system configuration entry by name.
+    ///     In unified-database mode the row is deleted from <c>settings.dat</c>;
+    ///     otherwise the entry is removed from system.xml.
     /// </summary>
     public static async Task DeleteSystemAsync(string systemNameToDelete, ILogger? logErrors = null,
         IConfiguration? configuration = null)
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    lock (XmlLock)
+                    {
+                        UnifiedSettingsDatabase.EnsureCreated();
+                        UnifiedSettingsDatabase.DeleteSystem(systemNameToDelete);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, $"Error deleting system '{systemNameToDelete}' from the unified database");
+            }
+
+            return;
+        }
+
         try
         {
             await Task.Run(() =>

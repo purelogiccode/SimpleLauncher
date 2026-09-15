@@ -68,6 +68,7 @@ using SimpleLauncher.Services.PlayHistory;
 using SimpleLauncher.Services.QuitOrReinstall;
 using SimpleLauncher.Services.RetroAchievements;
 using SimpleLauncher.Services.SearchOrchestrator;
+using SimpleLauncher.Services.SettingsDatabase;
 using SimpleLauncher.Services.StartupInitialization;
 using SimpleLauncher.Services.SystemConfiguration;
 using SimpleLauncher.Services.SystemImageResolver;
@@ -250,7 +251,10 @@ public partial class App : IDisposable
             var logger = provider.GetRequiredService<ILogger>();
             var messageBox = provider.GetRequiredService<IMessageBoxLibraryService>();
             var credentialProtector = provider.GetRequiredService<ICredentialProtector>();
-            var sm = new SettingsManagerService(config, logger, credentialProtector, messageBox);
+            var sm = new SettingsManagerService(config, logger, credentialProtector, messageBox,
+                // The WPF app persists settings in the unified SQLite database
+                // (settings.dat in AppData), like the Avalonia app.
+                useUnifiedDatabase: true);
             sm.Load();
             return sm;
         });
@@ -649,6 +653,24 @@ public partial class App : IDisposable
             }
         }
         // --- End Single Instance Check ---
+
+        // One-time migration from the legacy files (favorites.dat, playhistory.dat,
+        // settings.xml, system.xml) into the unified SQLite database (settings.dat in
+        // AppData). Idempotent: does nothing when settings.dat is already valid. On
+        // success legacy files are shelved as .bak; on failure they are left untouched
+        // and the managers fall back to reading them. Runs before the first resolve of
+        // SettingsManagerService so the loaded settings come from the database.
+        try
+        {
+            WpfLegacyMigrator.EnsureMigrated(
+                ServiceProvider.GetRequiredService<IConfiguration>(),
+                ServiceProvider.GetRequiredService<ILogger>(),
+                ServiceProvider.GetRequiredService<ICredentialProtector>());
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Legacy settings migration failed; continuing with legacy files");
+        }
 
         base.OnStartup(e);
 

@@ -34,7 +34,8 @@ public class SettingsManagerService : IDisposable
     /// <summary>
     ///     Gets whether this instance persists to the unified SQLite database
     ///     (<c>settings.dat</c> in AppData) instead of the legacy <c>settings.xml</c>.
-    ///     Opt-in per app: the Avalonia app passes <c>true</c>, the WPF app keeps the default <c>false</c>.
+    ///     Opt-in per app: both the WPF and the Avalonia app pass <c>true</c>; the default
+    ///     <c>false</c> keeps the legacy XML backend (used by tests and the migrator).
     /// </summary>
     public bool UseUnifiedDatabase { get; }
     private readonly ReaderWriterLockSlim _settingsLock = new(LockRecursionPolicy.SupportsRecursion);
@@ -80,7 +81,7 @@ public class SettingsManagerService : IDisposable
     /// <param name="messageBox">The message-box service (optional).</param>
     /// <param name="useUnifiedDatabase">
     ///     When true, settings persist to the unified SQLite database (<c>settings.dat</c> in AppData)
-    ///     instead of the legacy <c>settings.xml</c>. Only the Avalonia app opts in; the WPF app keeps XML.
+    ///     instead of the legacy <c>settings.xml</c>. Both the WPF and the Avalonia app opt in.
     /// </param>
     public SettingsManagerService(IConfiguration configuration, ILogger logErrors,
         ICredentialProtector credentialProtector, IMessageBoxLibraryService? messageBox = null,
@@ -1051,7 +1052,7 @@ public class SettingsManagerService : IDisposable
         }
     }
 
-    // ── Unified-database backend (Avalonia opts in via useUnifiedDatabase) ──
+    // ── Unified-database backend (WPF/Avalonia opt in via useUnifiedDatabase) ──
 
     /// <summary>
     ///     Exports the Application section as a key/value dictionary (values use invariant

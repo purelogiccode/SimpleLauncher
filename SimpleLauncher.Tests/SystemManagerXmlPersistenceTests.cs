@@ -10,8 +10,10 @@ namespace SimpleLauncher.Tests;
 
 /// <summary>
 ///     Tests XML persistence of SystemManagerService configurations including loading, saving, updating, renaming, and
-///     deleting system entries.
+///     deleting system entries. The unified database is redirected to a missing temp file so these tests always
+///     exercise the legacy XML paths, even on machines that already have a real settings.dat.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class SystemManagerXmlPersistenceTests : IDisposable
 {
     private readonly IConfiguration _configuration;
@@ -27,6 +29,9 @@ public class SystemManagerXmlPersistenceTests : IDisposable
         _testDirectory = Path.Combine(Path.GetTempPath(), $"SL_SystemXmlTest_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_testDirectory);
         _systemXmlPath = Path.Combine(_testDirectory, "system.xml");
+
+        // Keep the legacy XML paths under test and never touch a real settings.dat.
+        UnifiedTestDatabase.RedirectToMissingDb(_testDirectory);
 
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
@@ -54,6 +59,7 @@ public class SystemManagerXmlPersistenceTests : IDisposable
             // Best-effort cleanup
         }
 
+        UnifiedTestDatabase.ClearRedirect();
         ServiceProviderMock.Restore();
         GC.SuppressFinalize(this);
     }

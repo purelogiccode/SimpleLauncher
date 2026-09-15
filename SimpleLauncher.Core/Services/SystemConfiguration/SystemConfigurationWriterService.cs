@@ -24,7 +24,8 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
     /// <summary>
     ///     Gets whether this instance persists to the unified SQLite database
     ///     (<c>settings.dat</c> in AppData) instead of the legacy <c>system.xml</c>.
-    ///     Opt-in per app: the Avalonia app passes <c>true</c>, the WPF app keeps the default <c>false</c>.
+    ///     Opt-in per app: both the WPF and the Avalonia app pass <c>true</c> where used;
+    ///     the default <c>false</c> keeps the legacy XML backend (used by tests).
     /// </summary>
     public bool UseUnifiedDatabase { get; }
 
@@ -35,7 +36,9 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
     /// <param name="logErrors">The logger for error reporting.</param>
     /// <param name="useUnifiedDatabase">
     ///     When true, systems persist to the unified SQLite database instead of <c>system.xml</c>.
-    ///     Only the Avalonia app opts in; the WPF app keeps XML.
+    ///     Only the Avalonia app uses this Core service; when it opts in, systems persist
+    ///     to the unified SQLite database. The WPF app persists systems through its own
+    ///     <c>SystemManagerService</c>, which also supports the unified database.
     /// </param>
     public SystemConfigurationWriterService(IConfiguration configuration, ILogger logErrors,
         bool useUnifiedDatabase = false)

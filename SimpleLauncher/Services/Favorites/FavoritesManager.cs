@@ -3,12 +3,17 @@ using System.Windows;
 using MessagePack;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 
 namespace SimpleLauncher.Services.Favorites;
 
 /// <summary>
-///     Manages the user's favorite games list with MessagePack serialization,
-///     supporting load, save with atomic file replacement, and retry logic.
+///     Manages the user's favorite games list.
+///     The app persists favorites in the unified SQLite database
+///     (<c>settings.dat</c> in AppData); the legacy MessagePack <c>favorites.dat</c>
+///     format is only read during the one-time migration (and as a fallback when no
+///     database exists yet). Supports load, save with atomic file replacement, and
+///     retry logic for the legacy file.
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public class FavoritesManager
@@ -37,11 +42,75 @@ public class FavoritesManager
     /// </summary>
     public static bool IsPortableMode => FileLocation.IsPortableMode;
 
+    /// <summary>Loads favorites from the unified database (callers must have verified it is valid).</summary>
+    private static FavoritesManager LoadFromDatabase(ILogger? logErrors)
+    {
+        var manager = new FavoritesManager { _logger = logErrors };
+        foreach (var record in UnifiedSettingsDatabase.LoadFavorites())
+        {
+            if (string.IsNullOrWhiteSpace(record.FileName))
+                continue;
+            manager.FavoriteList.Add(new Favorite
+            {
+                FileName = record.FileName,
+                SystemName = record.SystemName ?? ""
+            });
+        }
+
+        return manager;
+    }
+
+    /// <summary>Saves a sorted snapshot of the list to the unified database.</summary>
+    private void SaveToDatabase()
+    {
+        List<FavoriteRecord> snapshot;
+        lock (ListLock)
+        {
+            snapshot = FavoriteList
+                .Where(static fav => !string.IsNullOrWhiteSpace(fav.FileName))
+                .OrderBy(static fav => fav.FileName, StringComparer.OrdinalIgnoreCase)
+                .Select(static fav => new FavoriteRecord(fav.FileName, fav.SystemName ?? ""))
+                .ToList();
+        }
+
+        UnifiedSettingsDatabase.EnsureCreated();
+        UnifiedSettingsDatabase.SaveFavorites(snapshot);
+    }
+
     /// <summary>
-    ///     Loads favorites from the DAT file. If the DAT file doesn't exist, will create a new instance.
+    ///     Loads favorites from the unified database when it exists, from the legacy DAT
+    ///     file when it does not (pre-migration), or creates a new database-backed instance.
     /// </summary>
     public static FavoritesManager LoadFavorites(ILogger? logErrors = null)
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                return LoadFromDatabase(logErrors);
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error loading favorites from the unified database; trying the legacy file");
+            }
+        }
+        else if (!File.Exists(DatFilePath))
+        {
+            // Fresh start with neither a database nor a legacy file: create the
+            // database instead of a legacy favorites.dat.
+            try
+            {
+                UnifiedSettingsDatabase.EnsureCreated();
+                var fresh = new FavoritesManager { _logger = logErrors };
+                fresh.SaveToDatabase();
+                return fresh;
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error creating favorites in the unified database; using a legacy file");
+            }
+        }
+
         if (File.Exists(DatFilePath))
         {
             try
@@ -122,13 +191,26 @@ public class FavoritesManager
     }
 
     /// <summary>
-    ///     Saves the provided favorites to the DAT file.
-    ///     The favorites are ordered by FileName before saving.
+    ///     Saves favorites: to the unified database when it exists, otherwise to the
+    ///     legacy DAT file. The favorites are ordered by FileName before saving.
     /// </summary>
     public Task SaveFavoritesAsync()
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                SaveToDatabase();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error(ex, "Error saving favorites to the unified database; trying the legacy file");
+            }
+        }
+
         // Notify user outside of any lock to prevent potential deadlock
-        Application.Current.Dispatcher.Invoke(static () =>
+        Application.Current?.Dispatcher.Invoke(static () =>
             (Application.Current.MainWindow as MainWindow)?.UpdateStatusBarService.UpdateContent(
                 (string)Application.Current.TryFindResource("SavingFavorites") ?? "Saving favorites..."));
 

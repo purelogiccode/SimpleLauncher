@@ -24,3 +24,26 @@ public sealed record PlayHistoryRecord(
 /// <param name="SystemName">Name of the system.</param>
 /// <param name="PlayTimeSeconds">Total play time in seconds.</param>
 public sealed record SystemPlayTimeRecord(string SystemName, long PlayTimeSeconds);
+
+/// <summary>Outcome of a one-time legacy migration into the unified database.</summary>
+public enum MigrationStatus
+{
+    /// <summary>A valid settings.dat already existed; nothing was done.</summary>
+    AlreadyCurrent,
+
+    /// <summary>Legacy files were imported into a fresh settings.dat and shelved as .bak.</summary>
+    Migrated,
+
+    /// <summary>No legacy files existed; a fresh settings.dat was seeded with defaults.</summary>
+    FreshCreated,
+
+    /// <summary>Migration failed; legacy files were left untouched.</summary>
+    Failed
+}
+
+/// <summary>Result of a legacy migration run.</summary>
+/// <param name="Status">What happened.</param>
+/// <param name="Favorites">Number of favorites imported.</param>
+/// <param name="HistoryEntries">Number of play-history entries imported.</param>
+/// <param name="Systems">Number of systems imported.</param>
+public sealed record MigrationResult(MigrationStatus Status, int Favorites, int HistoryEntries, int Systems);

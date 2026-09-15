@@ -1,17 +1,17 @@
 using MessagePack;
 using Microsoft.Extensions.Configuration;
-using SimpleLauncher.Avalonia.Services.Favorites;
-using SimpleLauncher.Avalonia.Services.PlayHistory;
-using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Core.Services.UnifiedSettings;
+using SimpleLauncher.Services.Favorites;
+using SimpleLauncher.Services.PlayHistory;
+using SimpleLauncher.Services.SystemManager;
 using ILogger = Serilog.ILogger;
 
-namespace SimpleLauncher.Avalonia.Services.SettingsDatabase;
+namespace SimpleLauncher.Services.SettingsDatabase;
 
 /// <summary>
 ///     One-time migration from the legacy files (<c>favorites.dat</c>, <c>playhistory.dat</c>,
@@ -24,8 +24,9 @@ namespace SimpleLauncher.Avalonia.Services.SettingsDatabase;
 ///     paths disappear but the data is recoverable. On failure the database file (if newly
 ///     created) is deleted and legacy files are left untouched, so the app falls back to
 ///     the legacy readers and the next launch retries.
+///     Mirrors <c>AvaloniaLegacyMigrator</c>; both apps share the same database format.
 /// </remarks>
-public static class AvaloniaLegacyMigrator
+public static class WpfLegacyMigrator
 {
     private static readonly Lock MigrationLock = new();
     private static bool _migrationAttempted;
@@ -37,14 +38,13 @@ public static class AvaloniaLegacyMigrator
     public static MigrationResult EnsureMigrated(
         IConfiguration configuration,
         ILogger logger,
-        ICredentialProtector credentialProtector,
-        IMessageBoxLibraryService? messageBox = null)
+        ICredentialProtector credentialProtector)
     {
-        return EnsureMigrated(configuration, logger, credentialProtector, messageBox, null, null);
+        return EnsureMigrated(configuration, logger, credentialProtector, null, null);
     }
 
     /// <summary>
-    ///     Test seam: like <see cref="EnsureMigrated(IConfiguration,ILogger,ICredentialProtector,IMessageBoxLibraryService)" />,
+    ///     Test seam: like <see cref="EnsureMigrated(IConfiguration,ILogger,ICredentialProtector)" />,
     ///     but redirects the database path and the legacy-file folders (both the portable
     ///     folder and the AppData folder) so tests never touch real user data.
     /// </summary>
@@ -52,7 +52,6 @@ public static class AvaloniaLegacyMigrator
         IConfiguration configuration,
         ILogger logger,
         ICredentialProtector credentialProtector,
-        IMessageBoxLibraryService? messageBox,
         string? dbPathOverride,
         string? legacyFolderOverride)
     {
@@ -186,7 +185,9 @@ public static class AvaloniaLegacyMigrator
             FindNewestLegacyFile(Path.Combine(portableFolder, "settings.xml"),
                 Path.Combine(appDataFolder, "settings.xml")),
             FindNewestLegacyFile(
-                legacyFolderOverride is not null ? Path.Combine(legacyFolderOverride, Path.GetFileName(portableSystemXml)) : portableSystemXml,
+                legacyFolderOverride is not null
+                    ? Path.Combine(legacyFolderOverride, Path.GetFileName(portableSystemXml))
+                    : portableSystemXml,
                 Path.Combine(appDataFolder, "system.xml")));
     }
 
@@ -287,10 +288,10 @@ public static class AvaloniaLegacyMigrator
             return [];
         try
         {
-            // Null message box: corruption dialogs are skipped during migration.
             // Explicit path: no cache, no database reads, no file rewrites.
-            var service = new SystemManagerService(configuration, null);
-            return service.LoadSystemsFromPath(systemXmlPath);
+            return SystemManagerService.LoadSystemsFromPath(systemXmlPath, logger)
+                .Select(SystemManagerService.ToSystemManagerConfig)
+                .ToList();
         }
         catch (Exception ex)
         {

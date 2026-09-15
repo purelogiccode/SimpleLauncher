@@ -11,6 +11,7 @@ using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using SimpleLauncher.Interfaces;
 using SimpleLauncher.Services.Favorites;
 using SimpleLauncher.Services.LoadImages;
@@ -485,17 +486,29 @@ internal partial class EditSystemWindow : ILoadingState
         _settings.Emulator5Expanded = Emulator5Expander.IsExpanded;
         _settings.SaveAsync();
 
-        // Create a backup file
-        var appFolderPath = AppDomain.CurrentDomain.BaseDirectory;
-        var sourceFilePath = Path.Combine(appFolderPath, "system.xml");
-        var backupFileName = $"system_backup{DateTime.Now:yyyyMMdd_HHmmss}.xml";
-        var backupFilePath = Path.Combine(appFolderPath, backupFileName);
-
-        if (!File.Exists(sourceFilePath)) return;
-
+        // Create a backup of the system configuration before closing:
+        // settings.dat in the database path, system.xml in the legacy path.
         try
         {
-            File.Copy(sourceFilePath, backupFilePath, true);
+            if (UnifiedSettingsDatabase.IsValidDatabase())
+            {
+                var dbPath = UnifiedSettingsDatabase.GetDatabasePath();
+                var dbFolder = Path.GetDirectoryName(dbPath);
+                if (dbFolder is not null && File.Exists(dbPath))
+                {
+                    var backupFileName = $"settings_backup{DateTime.Now:yyyyMMdd_HHmmss}.dat";
+                    File.Copy(dbPath, Path.Combine(dbFolder, backupFileName), true);
+                }
+
+                return;
+            }
+
+            var appFolderPath = AppDomain.CurrentDomain.BaseDirectory;
+            var sourceFilePath = Path.Combine(appFolderPath, "system.xml");
+            if (!File.Exists(sourceFilePath)) return;
+
+            var backupXmlFileName = $"system_backup{DateTime.Now:yyyyMMdd_HHmmss}.xml";
+            File.Copy(sourceFilePath, Path.Combine(appFolderPath, backupXmlFileName), true);
         }
         catch (Exception ex)
         {

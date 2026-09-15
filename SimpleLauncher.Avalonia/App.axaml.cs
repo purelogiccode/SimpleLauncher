@@ -556,7 +556,7 @@ public class App : Application, IDisposable
                 sp.GetRequiredService<ICredentialProtector>(),
                 sp.GetRequiredService<IMessageBoxLibraryService>(),
                 // Avalonia persists settings in the unified SQLite database
-                // (settings.dat in AppData); the WPF app keeps settings.xml.
+                // (settings.dat in AppData), like the WPF app.
                 useUnifiedDatabase: true);
             // Load settings once at startup — same as the WPF app. Without this the
             // in-memory defaults would overwrite the persisted settings on the first save.
@@ -593,7 +593,7 @@ public class App : Application, IDisposable
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetRequiredService<ILogger>(),
                 // Avalonia persists systems in the unified SQLite database
-                // (settings.dat in AppData); the WPF app keeps system.xml.
+                // (settings.dat in AppData), like the WPF app.
                 useUnifiedDatabase: true));
         services.AddSingleton<ISystemConfigurationWriterService>(sp =>
             sp.GetRequiredService<SystemConfigurationWriterService>());

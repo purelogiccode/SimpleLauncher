@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 namespace SimpleLauncher.Core.Services.UnifiedSettings;
 
 /// <summary>
-///     Unified SQLite store for SimpleLauncher user data (Avalonia first, WPF later).
+///     Unified SQLite store for SimpleLauncher user data (used by the WPF and Avalonia apps).
 ///     Replaces favorites.dat, playhistory.dat, settings.xml and system.xml with a
 ///     single <c>settings.dat</c> SQLite database inside the AppData folder.
 /// </summary>
