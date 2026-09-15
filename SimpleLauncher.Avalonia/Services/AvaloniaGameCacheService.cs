@@ -71,15 +71,26 @@ public sealed class AvaloniaGameCacheService
     ///     system is not cached yet.
     /// </summary>
     /// <param name="system">The system configuration.</param>
-    /// <param name="enumerateFiles">The file enumeration function (called under the cache lock).</param>
+    /// <param name="enumerateFiles">The file enumeration function (invoked outside the cache lock — never re-enter the cache from it).</param>
     public List<string> GetCachedOrScan(SystemManagerConfig system,
         Func<SystemManagerConfig, IEnumerable<string>> enumerateFiles)
     {
+        // AV-19: fast path under the lock, disk I/O outside of it. Holding the
+        // lock across enumeration blocked every reader for the whole scan and
+        // deadlocked when the enumerator re-entered the cache.
         lock (_lock)
         {
             if (_cache.TryGetValue(system.SystemName, out var cached)) return [.. cached];
+        }
 
-            var files = enumerateFiles(system).ToList();
+        var files = enumerateFiles(system).ToList();
+
+        lock (_lock)
+        {
+            // A concurrent scan may have populated the entry while we enumerated —
+            // prefer the winner instead of overwriting it.
+            if (_cache.TryGetValue(system.SystemName, out var cached)) return [.. cached];
+
             _cache[system.SystemName] = [.. files];
             return files;
         }

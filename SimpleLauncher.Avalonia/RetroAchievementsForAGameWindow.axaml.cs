@@ -30,6 +30,12 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
     private int _gameId;
     private string _gameTitleForDisplay = "";
 
+    // AV-21: generation counter invalidates superseded tab loads (rapid tab
+    // switches overlap; only the latest load may touch the UI), and _isClosed
+    // guards UI updates after the window closed mid-load.
+    private int _loadGeneration;
+    private bool _isClosed;
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="RetroAchievementsForAGameWindow" /> class.
     /// </summary>
@@ -56,6 +62,19 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             localization.GetString("ClickHereIfTheLoadingScreenIsStuckToReturnToTheMainMenu"));
 
         Opened += AchievementsWindow_Opened;
+        Closed += (_, _) =>
+        {
+            _isClosed = true;
+            _loadGeneration++; // Invalidate any load still in flight.
+        };
+    }
+
+    /// <summary>
+    ///     Whether the given load is still the latest one and the window is alive.
+    /// </summary>
+    private bool IsCurrentLoad(int generation)
+    {
+        return !_isClosed && IsLoaded && generation == _loadGeneration;
     }
 
     /// <summary>
@@ -345,6 +364,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             _playSoundEffects.PlayNotificationSound();
             await settingsWindow.ShowDialog(this);
 
+            // AV-21: the window may have closed while the settings dialog was open.
+            if (_isClosed || !IsLoaded) return;
+
             // Reload current tab using Tag instead of Header
             if (TabControl.SelectedItem is TabItem selectedTab)
             {
@@ -385,6 +407,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
 
     private async Task LoadGameAchievementsAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching game achievements...");
 
         SetLoadingState(true);
@@ -409,6 +432,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             // Use the injected service
             var (progress, achievements) =
                 await _raService.GetGameInfoAndUserProgressAsync(_gameId, _settings.RaUsername, _settings.RaApiKey);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
 
             if (progress != null && achievements is { Count: > 0 })
             {
@@ -441,12 +467,18 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (RaUnauthorizedException)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoAchievementsOverlay.IsVisible = true;
             NoAchievementsMessage.Text = L("RaErrorUnauthorized",
                 "RetroAchievements credentials invalid. Please check your username and API key in settings.");
         }
         catch (Exception ex)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoAchievementsOverlay.IsVisible = true;
             NoAchievementsMessage.Text = L("RaErrorLoadingAchievements",
                 "An error occurred while loading achievements. Please try again.");
@@ -454,13 +486,15 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         finally
         {
-            SetLoadingState(false);
+            // AV-21: only the current load owns the loading overlay.
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
             await Task.Yield();
         }
     }
 
     private async Task LoadGameInfoAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching extended game info...");
 
         SetLoadingState(true);
@@ -483,6 +517,10 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         {
             // Use the injected service
             var gameInfo = await _raService.GetGameExtendedAsync(_gameId, _settings.RaUsername, _settings.RaApiKey);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
             if (gameInfo != null)
             {
                 // Load game icon (for header and the new image section)
@@ -588,12 +626,18 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (RaUnauthorizedException)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoGameInfoOverlay.IsVisible = true;
             NoGameInfoMessage.Text = L("RaErrorUnauthorized",
                 "RetroAchievements credentials invalid. Please check your username and API key in settings.");
         }
         catch (Exception ex)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoGameInfoOverlay.IsVisible = true;
             NoGameInfoMessage.Text = L("RaErrorLoadingGameInfo",
                 "An error occurred while loading game info. Please try again.");
@@ -601,13 +645,15 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         finally
         {
-            SetLoadingState(false);
+            // AV-21: only the current load owns the loading overlay.
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
             await Task.Yield();
         }
     }
 
     private async Task LoadGameRankingAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching game rankings...");
 
         SetLoadingState(true);
@@ -653,6 +699,10 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             // Load Latest Masters (t=1)
             var latestMasters =
                 await _raService.GetGameRankAndScoreAsync(_gameId, _settings.RaUsername, _settings.RaApiKey, true);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
             if (latestMasters is { Count: > 0 })
             {
                 for (var i = 0; i < latestMasters.Count; i++) latestMasters[i].Rank = i + 1; // Assign display rank
@@ -674,6 +724,10 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
 
             // Load High Scores (t=0, default)
             var rankings = await _raService.GetGameRankAndScoreAsync(_gameId, _settings.RaUsername, _settings.RaApiKey);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
             if (rankings is { Count: > 0 })
             {
                 for (var i = 0; i < rankings.Count; i++) rankings[i].Rank = i + 1; // Assign display rank
@@ -696,6 +750,10 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             // Load User Rank and Score (for the current user)
             var userGameRankAndScoreList =
                 await _raService.GetUserGameRankAndScoreAsync(_gameId, _settings.RaUsername, _settings.RaApiKey);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
             if (userGameRankAndScoreList is { Count: > 0 })
             {
                 var userData = userGameRankAndScoreList[0];
@@ -726,6 +784,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (RaUnauthorizedException)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             // Apply unauthorized message to all relevant overlays
             var unauthorizedMessage = L("RaErrorUnauthorized",
                 "RetroAchievements credentials invalid. Please check your username and API key in settings.");
@@ -738,6 +799,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (Exception ex)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             _logger.Error(ex, $"Failed to load game ranking tab for game ID: {_gameId}");
             // Show error state
             LatestMastersDataGrid.ItemsSource = null;
@@ -755,17 +819,19 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             NoLatestMastersMessage.Text = L("RaErrorLoadingLatestMasters",
                 "Error loading latest masters. Please try again.");
             NoHighScoresOverlay.IsVisible = true;
-            NoHighScoresMessage.Text = L("RaErrorLoadingHighScores", "Error loading high scores. Please try again.");
+            NoHighScoresMessage.Text = L("RaErrorLoadingHighScores",
+                "Error loading high scores. Please try again.");
         }
         finally
         {
-            SetLoadingState(false);
+            // AV-21: only the current load owns the loading overlay.
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
             await Task.Yield();
         }
     }
-
     private async Task LoadUserProfileAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching user profile...");
 
         SetLoadingState(true);
@@ -794,6 +860,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             // Fetch detailed recently played games separately (max 50 games)
             var recentlyPlayedGames =
                 await _raService.GetUserRecentlyPlayedGamesAsync(_settings.RaUsername, _settings.RaApiKey, 50);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
 
             if (userProfile != null)
             {
@@ -882,6 +951,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (RaUnauthorizedException)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoProfileOverlay.IsVisible = true;
             NoProfileMainMessage.Text = L("RaErrorUnauthorized",
                 "RetroAchievements credentials invalid. Please check your username and API key in settings.");
@@ -890,6 +962,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (Exception ex)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoProfileOverlay.IsVisible = true;
             NoProfileMainMessage.Text = L("RaErrorLoadingUserProfile", "An error occurred while loading user profile.");
             NoProfileSubMessage.Text =
@@ -898,13 +973,15 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         finally
         {
-            SetLoadingState(false);
+            // AV-21: only the current load owns the loading overlay.
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
             await Task.Yield();
         }
     }
 
     private async Task LoadUnlocksByDateAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching earned achievements by date...");
 
         SetLoadingState(true);
@@ -944,6 +1021,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
                 await _raService.GetAchievementsEarnedBetweenAsync(_settings.RaUsername, _settings.RaApiKey, fromDate,
                     toDate);
 
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
             if (unlocks is { Count: > 0 })
             {
                 UnlocksDataGrid.ItemsSource = unlocks;
@@ -967,12 +1047,18 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (RaUnauthorizedException)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoUnlocksOverlay.IsVisible = true;
             NoUnlocksMessage.Text = L("RaErrorUnauthorized",
                 "RetroAchievements credentials invalid. Please check your username and API key in settings.");
         }
         catch (Exception ex)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             UnlocksDataGrid.ItemsSource = null;
             TotalUnlocksInRangeText.Text = "0";
             TotalPointsEarnedInRangeText.Text = "0";
@@ -983,9 +1069,14 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         finally
         {
-            SetLoadingState(false);
+            // AV-21: only the current load owns the loading overlay and button state.
+            if (IsCurrentLoad(generation))
+            {
+                SetLoadingState(false);
+                FetchUnlocksButton.IsEnabled = true; // Re-enable button
+            }
+
             await Task.Yield();
-            FetchUnlocksButton.IsEnabled = true; // Re-enable button
         }
     }
 
@@ -1038,6 +1129,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
 
     private async Task LoadUserProgressAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching user completion progress...");
 
         SetLoadingState(true);
@@ -1062,6 +1154,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         {
             var userProgressList =
                 await _raService.GetUserCompletionProgressAsync(_settings.RaUsername, _settings.RaApiKey);
+
+            // AV-21: superseded by a newer tab load, or closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
 
             if (userProgressList is { Count: > 0 })
             {
@@ -1091,6 +1186,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (RaUnauthorizedException)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoUserProgressOverlay.IsVisible = true;
             NoUserProgressMainMessage.Text = L("RaErrorUnauthorized",
                 "RetroAchievements credentials invalid. Please check your username and API key in settings.");
@@ -1099,6 +1197,9 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         catch (Exception ex)
         {
+            // AV-21: a stale load must not paint error state over the current tab.
+            if (!IsCurrentLoad(generation)) return;
+
             NoUserProgressOverlay.IsVisible = true;
             NoUserProgressMainMessage.Text = L("RaErrorLoadingUserProgress",
                 "An error occurred while loading user completion progress.");
@@ -1108,7 +1209,8 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
         }
         finally
         {
-            SetLoadingState(false);
+            // AV-21: only the current load owns the loading overlay.
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
             await Task.Yield();
         }
     }

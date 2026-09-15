@@ -22,6 +22,12 @@ public partial class RetroAchievementsWindow : Window
     private readonly IResourceProvider _resourceProvider;
     private readonly RetroAchievementsViewModel _viewModel;
 
+    // AV-21: generation counter invalidates superseded tab loads (rapid tab
+    // switches overlap; only the latest load may touch the UI), and _isClosed
+    // guards UI updates after the window closed mid-load.
+    private int _loadGeneration;
+    private bool _isClosed;
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="RetroAchievementsWindow" /> class.
     /// </summary>
@@ -55,6 +61,19 @@ public partial class RetroAchievementsWindow : Window
         DataContext = _viewModel;
 
         Opened += RetroAchievementsWindow_Opened;
+        Closed += (_, _) =>
+        {
+            _isClosed = true;
+            _loadGeneration++; // Invalidate any load still in flight.
+        };
+    }
+
+    /// <summary>
+    ///     Whether the given load is still the latest one and the window is alive.
+    /// </summary>
+    private bool IsCurrentLoad(int generation)
+    {
+        return !_isClosed && IsLoaded && generation == _loadGeneration;
     }
 
     private void TabControl_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -102,10 +121,14 @@ public partial class RetroAchievementsWindow : Window
 
     private async Task LoadUserProfileAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching user profile...");
         SetLoadingState(true);
 
         await _viewModel.LoadUserProfileAsync();
+
+        // AV-21: superseded by a newer tab load, or the window closed mid-load.
+        if (!IsCurrentLoad(generation)) return;
 
         // Toggle overlays
         UserProfilePanel.IsVisible = !_viewModel.NoProfileVisible;
@@ -150,6 +173,7 @@ public partial class RetroAchievementsWindow : Window
 
     private async Task LoadUnlocksByDateAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching earned achievements by date...");
         SetLoadingState(true);
 
@@ -158,6 +182,9 @@ public partial class RetroAchievementsWindow : Window
         ToDatePicker.SelectedDate = ToDateTimeOffset(_viewModel.ToDate);
 
         await _viewModel.LoadUnlocksByDateAsync();
+
+        // AV-21: superseded by a newer tab load, or the window closed mid-load.
+        if (!IsCurrentLoad(generation)) return;
 
         // Bind unlocks data
         UnlocksDataGrid.ItemsSource = _viewModel.Unlocks;
@@ -184,6 +211,9 @@ public partial class RetroAchievementsWindow : Window
             _viewModel.ToDate = ToDatePicker.SelectedDate?.DateTime;
 
             await _viewModel.FetchUnlocksCommand.ExecuteAsync(null);
+            // AV-21: the window may have closed while fetching.
+            if (_isClosed || !IsLoaded) return;
+
             UnlocksDataGrid.ItemsSource = _viewModel.Unlocks;
             TotalUnlocksInRangeText.Text = _viewModel.TotalUnlocksInRange;
             TotalPointsEarnedInRangeText.Text = _viewModel.TotalPointsEarnedInRange;
@@ -205,6 +235,9 @@ public partial class RetroAchievementsWindow : Window
             _logger.Debug("Resetting dates and fetching unlocks...");
 
             await _viewModel.ResetDatesCommand.ExecuteAsync(null);
+            // AV-21: the window may have closed while fetching.
+            if (_isClosed || !IsLoaded) return;
+
             UnlocksDataGrid.ItemsSource = _viewModel.Unlocks;
             TotalUnlocksInRangeText.Text = _viewModel.TotalUnlocksInRange;
             TotalPointsEarnedInRangeText.Text = _viewModel.TotalPointsEarnedInRange;
@@ -223,10 +256,14 @@ public partial class RetroAchievementsWindow : Window
 
     private async Task LoadUserProgressAsync()
     {
+        var generation = ++_loadGeneration;
         _logger.Debug("Fetching user completion progress...");
         SetLoadingState(true);
 
         await _viewModel.LoadUserProgressAsync();
+
+        // AV-21: superseded by a newer tab load, or the window closed mid-load.
+        if (!IsCurrentLoad(generation)) return;
 
         // Bind user progress data
         UserProgressDataGrid.ItemsSource = _viewModel.UserProgress;
@@ -275,6 +312,9 @@ public partial class RetroAchievementsWindow : Window
             var settingsWindow = App.ServiceProvider.GetRequiredService<RetroAchievementsSettingsWindow>();
             _playSoundEffects.PlayNotificationSound();
             await settingsWindow.ShowDialog(this);
+
+            // AV-21: the window may have closed while the settings dialog was open.
+            if (_isClosed || !IsLoaded) return;
 
             // Reload current tab
             if (TabControl.SelectedItem is TabItem selectedTab)

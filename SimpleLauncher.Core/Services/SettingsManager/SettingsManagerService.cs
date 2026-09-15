@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
@@ -30,6 +30,12 @@ public class SettingsManagerService : IDisposable
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly ReaderWriterLockSlim _settingsLock = new(LockRecursionPolicy.SupportsRecursion);
+
+    // AV-24: serializes concurrent SaveAsync calls. Every save snapshots under
+    // the read lock but shares one temp path for the atomic write+move — without
+    // serialization overlapping saves interleave temp writes and the loser can
+    // overwrite a newer snapshot (lost toggles) or fail the move mid-shutdown.
+    private readonly SemaphoreSlim _saveSemaphore = new(1, 1);
 
     private readonly HashSet<string> _validAccentColors =
     [
@@ -269,6 +275,7 @@ public class SettingsManagerService : IDisposable
         _disposed = true;
 
         _settingsLock?.Dispose();
+        _saveSemaphore?.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -643,6 +650,8 @@ public class SettingsManagerService : IDisposable
 
     /// <summary>
     ///     Asynchronously saves the current settings to the XML configuration file with retry logic.
+    ///     Concurrent calls are serialized (AV-24) so overlapping saves can neither
+    ///     interleave on the shared temp path nor overwrite a newer snapshot.
     /// </summary>
     public Task SaveAsync()
     {
@@ -660,6 +669,35 @@ public class SettingsManagerService : IDisposable
 
         return Task.Run(async () =>
         {
+            try
+            {
+                await _saveSemaphore.WaitAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+                return; // Service is shutting down; the save cannot proceed.
+            }
+
+            try
+            {
+                await WriteSnapshotAsync(snapshot);
+            }
+            finally
+            {
+                try
+                {
+                    _saveSemaphore.Release();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Disposed mid-save during shutdown — nothing left to release to.
+                }
+            }
+        });
+    }
+
+    private async Task WriteSnapshotAsync(SettingsManagerService snapshot)
+    {
             var tempPath = _fileLocation.TempFilePath;
             const int maxRetries = 3;
             var retryDelayMs = 500;
@@ -754,8 +792,7 @@ public class SettingsManagerService : IDisposable
             }
 
             if (_messageBox != null) await _messageBox.FailedToSaveSettingsMessageBoxAsync();
-        });
-    }
+        }
 
     private static XElement BuildXElement(SettingsManagerService s)
     {

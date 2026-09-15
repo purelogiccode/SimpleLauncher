@@ -313,17 +313,17 @@ public partial class AvaloniaCheckForUpdatesService
             logWindow = TryResolveUpdateLogWindow();
             if (logWindow is not null)
             {
-                await RunOnUiThreadAsync(() =>
-                {
-                    logWindow.Show();
-                    logWindow.Log("Starting update process...");
-                });
+                await RunOnUiThreadAsync(logWindow.Show);
+                // AV-25: awaited — burst callers keep ordering and observe failures.
+                await logWindow.LogAsync("Starting update process...");
             }
 
             if (owner is not null)
                 await RunOnUiThreadAsync(owner.Hide);
 
-            logWindow?.Log($"Launching {UpdaterExecutableName} (auto-downloads from the release assets if needed)...");
+            if (logWindow is not null)
+                await logWindow.LogAsync(
+                    $"Launching {UpdaterExecutableName} (auto-downloads from the release assets if needed)...");
 
             // Give the log window a moment to paint before the process exits (WPF parity).
             if (logWindow is not null) await Task.Delay(500);
@@ -332,22 +332,27 @@ public partial class AvaloniaCheckForUpdatesService
 
             // If we reach here, LaunchUpdaterAndShutdownAsync returned without shutting the
             // application down (the update failed — an error was already shown to the user).
-            logWindow?.Log("Updater launch failed.");
-            if (!string.IsNullOrEmpty(releasePackageUrl))
+            if (logWindow is not null)
             {
-                logWindow?.Log($"Please download the update package manually from: {releasePackageUrl}");
-            }
-            else
-            {
-                logWindow?.Log(
-                    $"The update package URL was not found. Please visit the GitHub releases page for {RepoOwners[0]}/{RepoName}.");
+                await logWindow.LogAsync("Updater launch failed.");
+                if (!string.IsNullOrEmpty(releasePackageUrl))
+                {
+                    await logWindow.LogAsync(
+                        $"Please download the update package manually from: {releasePackageUrl}");
+                }
+                else
+                {
+                    await logWindow.LogAsync(
+                        $"The update package URL was not found. Please visit the GitHub releases page for {RepoOwners[0]}/{RepoName}.");
+                }
             }
         }
         catch (Exception ex)
         {
             const string contextMessage = "There was an error preparing for the application update.";
             _logger.Error(ex, contextMessage);
-            logWindow?.Log($"An unexpected error occurred during the update process: {ex.Message}");
+            if (logWindow is not null)
+                await logWindow.LogAsync($"An unexpected error occurred during the update process: {ex.Message}");
             await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
         }
         finally

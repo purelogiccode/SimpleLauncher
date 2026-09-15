@@ -67,12 +67,24 @@ internal class ZipService
 
             try
             {
-                // Skip directory entries
-                if (reader.Entry.IsDirectory)
-                    continue;
-
                 // Skip entries without keys
                 if (string.IsNullOrEmpty(entryKey))
+                    continue;
+
+                // UPD-04: reject symbolic-link entries at the archive level. SharpCompress
+                // surfaces the link target; materializing links would let a later entry
+                // (or a FileMode.Create write) escape AppDirectory through the link.
+                if (!string.IsNullOrEmpty(reader.Entry.LinkTarget))
+                    throw new SecurityException($"Zip entry is a symbolic link, refusing to extract: {entryKey}");
+
+                // UPD-04: reject Windows alternate data streams. Entry keys are relative,
+                // so any ':' can only be an ADS (e.g. "file.exe:hidden").
+                if (entryKey.Contains(':'))
+                    throw new SecurityException(
+                        $"Zip entry contains an alternate data stream, refusing to extract: {entryKey}");
+
+                // Skip directory entries
+                if (reader.Entry.IsDirectory)
                     continue;
 
                 var fileName = Path.GetFileName(entryKey);
@@ -89,10 +101,21 @@ internal class ZipService
                 var destinationPath = Path.GetFullPath(Path.Combine(_appDirectory, trimmedEntry));
                 var appDirectoryFullPath = Path.GetFullPath(_appDirectory);
 
+                // UPD-03: the containment prefix must end in a separator — without it,
+                // e.g. "C:\AppEvil\pwn.exe" passes StartsWith("C:\App") and escapes.
+                if (!appDirectoryFullPath.EndsWith(Path.DirectorySeparatorChar))
+                    appDirectoryFullPath += Path.DirectorySeparatorChar;
+
                 // Security check: ensure the resolved destination path is within AppDirectory
                 // This is the actual guard — it catches all traversal attempts including encoded or multi-level ".."
                 if (!destinationPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
                     throw new SecurityException($"Zip entry attempts to escape target directory: {entryKey}");
+
+                // UPD-04: refuse to write through (or overwrite) a reparse point / symlink
+                // planted by an earlier entry of this same archive or a previous run —
+                // FileMode.Create would otherwise follow it outside AppDirectory even
+                // though this entry's own path passed the containment check above.
+                ThrowIfPathContainsLink(destinationPath, entryKey);
 
                 var destinationDirectory = Path.GetDirectoryName(destinationPath);
 
@@ -133,7 +156,54 @@ internal class ZipService
     }
 
     /// <summary>
+    ///     Throws when <paramref name="destinationPath" /> itself, or any existing
+    ///     component of its directory chain, is a symbolic link, junction, or other
+    ///     reparse point (UPD-04). Checked immediately before the write so an entry
+    ///     extracted earlier in this same pass cannot redirect a later one.
+    /// </summary>
+    /// <exception cref="SecurityException">A link was found on the destination path.</exception>
+    private static void ThrowIfPathContainsLink(string destinationPath, string entryKey)
+    {
+        // The final component (may exist from a previous run).
+        if (IsLink(destinationPath))
+            throw new SecurityException($"Zip entry targets a symbolic link, refusing to extract: {entryKey}");
+
+        // Each existing ancestor directory.
+        var directory = Path.GetDirectoryName(destinationPath);
+        while (!string.IsNullOrEmpty(directory))
+        {
+            if (IsLink(directory))
+                throw new SecurityException(
+                    $"Zip entry path traverses a symbolic link, refusing to extract: {entryKey}");
+
+            directory = Path.GetDirectoryName(directory);
+        }
+    }
+
+    private static bool IsLink(string path)
+    {
+        try
+        {
+            // LinkTarget uses lstat semantics: detects symlinks/junctions on both
+            // platforms, including dangling ones that Exists checks would miss.
+            if (new FileInfo(path).LinkTarget != null || new DirectoryInfo(path).LinkTarget != null)
+                return true;
+
+            // Unix GetAttributes stats the link target, so this only fires on Windows —
+            // kept for junctions/mount points LinkTarget may not report.
+            return (File.GetAttributes(path) & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
+        }
+        catch
+        {
+            // Path does not exist (yet) — nothing to follow.
+            return false;
+        }
+    }
+
+    /// <summary>
     ///     Extracts a file from the ZIP reader with retry logic for locked files.
+    ///     Files are created with default ACLs/mode — archive permission bits
+    ///     (including Unix setuid/setgid) are never applied (UPD-04).
     /// </summary>
     /// <param name="reader">The ZIP reader positioned at the entry to extract.</param>
     /// <param name="destinationPath">The destination file path.</param>

@@ -2945,12 +2945,31 @@ public partial class MainWindow : Window, IPaginationHost
 
     private async Task DismissToastAsync(Border toast)
     {
-        await Task.Delay(5000);
-        await Dispatcher.UIThread.InvokeAsync(() =>
+        // AV-23: the whole body is guarded — if MainWindow closes within the
+        // 5s delay, the continuation must not touch the detached ToastStack
+        // (previously an unobserved exception on a dead visual).
+        try
         {
-            ToastStack.Children.Remove(toast);
-            if (ToastStack.Children.Count == 0) ToastStack.IsVisible = false;
-        });
+            await Task.Delay(5000);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                try
+                {
+                    if (!IsLoaded) return;
+
+                    ToastStack.Children.Remove(toast);
+                    if (ToastStack.Children.Count == 0) ToastStack.IsVisible = false;
+                }
+                catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+                {
+                    // Window closed mid-dismissal — the toast dies with it.
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Toast auto-dismissal skipped.");
+        }
     }
 
     #endregion

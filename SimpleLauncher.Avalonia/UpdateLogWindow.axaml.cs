@@ -25,10 +25,30 @@ public partial class UpdateLogWindow : Window
 
     /// <summary>
     ///     Appends a log message to the update log display.
+    ///     Awaitable (AV-25) so burst callers preserve ordering and observe
+    ///     failures; messages for a closed window are dropped silently.
     /// </summary>
     /// <param name="message">The message to append.</param>
-    public void Log(string message)
+    public Task LogAsync(string message)
     {
-        Dispatcher.UIThread.InvokeAsync(() => _viewModel.AppendLog(message));
+        try
+        {
+            return Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                try
+                {
+                    if (IsLoaded) _viewModel.AppendLog(message);
+                }
+                catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+                {
+                    // Window closed mid-log — drop the message.
+                }
+            }).GetTask();
+        }
+        catch
+        {
+            // Dispatcher shut down — drop the message.
+            return Task.CompletedTask;
+        }
     }
 }
