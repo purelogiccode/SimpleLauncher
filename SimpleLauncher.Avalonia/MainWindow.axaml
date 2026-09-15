@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ext="using:SimpleLauncher.Avalonia.Extensions"
         xmlns:vm="using:SimpleLauncher.Avalonia.ViewModels"
-        Title="{Binding ToolbarTitle}"
+        Title="Simple Launcher"
         Height="800" Width="1280"
         MinHeight="650" MinWidth="1050"
         WindowStartupLocation="CenterScreen"

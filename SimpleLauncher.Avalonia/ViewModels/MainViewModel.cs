@@ -131,8 +131,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private bool _suppressSearchReload;
 
-    [ObservableProperty] public partial string ToolbarTitle { get; set; } = "SimpleLauncher";
-
     public MainViewModel(
         FavoritesManager favoritesManager,
         PlayHistoryManager playHistoryManager,
@@ -459,8 +457,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 Log.Debug("Random game selected: {Game}", picked.DisplayTitle);
                 StatusText = string.Format(
                     _localization.GetString("Pickedarandomgame", "Picked a random game: {0}"), picked.DisplayTitle);
-                ToolbarTitle =
-                    $"{_localization.GetString("App.Title", "SimpleLauncher")} — {SelectedSystem} (1 {_localization.GetString("Game", "game")})";
             }
             else
             {
@@ -738,8 +734,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         var raMatchTemplate =
             _localization.GetString("OfgameswithRetroAchievements", "{0} of {1} games with RetroAchievements");
         StatusText = string.Format(CultureInfo.InvariantCulture, raMatchTemplate, matched.Count, total);
-        ToolbarTitle =
-            $"{_localization.GetString("App.Title", "SimpleLauncher")} — {_localization.GetString("RetroAchievements", "RetroAchievements")}";
     }
 
     /// <summary>
@@ -874,7 +868,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             _currentAllGames = [];
             ShowGames([]);
             StatusText = _localization.GetString("Status.AllGames", "All Games");
-            ToolbarTitle = _localization.GetString("App.Title", "SimpleLauncher");
         }
         catch (Exception ex)
         {
@@ -1011,13 +1004,9 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             var games = ScanGames(systems);
             ApplyFavoritesAndHistory(games);
             ShowGames(games);
-            var count = games.Count;
             StatusText = string.IsNullOrEmpty(systemName)
                 ? _localization.GetString("Status.AllGames", "All Games")
                 : systemName;
-            ToolbarTitle = string.IsNullOrEmpty(systemName)
-                ? _localization.GetString("App.Title", "SimpleLauncher")
-                : $"{_localization.GetString("App.Title", "SimpleLauncher")} — {systemName} ({count} {(count == 1 ? _localization.GetString("Game", "game") : _localization.GetString("GamePlural", "games"))})";
         }
         catch (Exception ex)
         {
@@ -1066,8 +1055,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             ShowGames(favorites);
             StatusText = _localization.GetString("Status.Favorites", "Favorites");
-            ToolbarTitle =
-                $"{_localization.GetString("App.Title", "SimpleLauncher")} — {_localization.GetString("Toolbar.Favorites", "Favorites")}";
         }
         catch (Exception ex)
         {
@@ -1114,14 +1101,10 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             if (string.IsNullOrEmpty(SelectedSystem))
             {
                 StatusText = _localization.GetString("Status.Favorites", "Favorites");
-                ToolbarTitle =
-                    $"{_localization.GetString("App.Title", "SimpleLauncher")} — {_localization.GetString("Toolbar.Favorites", "Favorites")}";
             }
             else
             {
                 StatusText = $"{_localization.GetString("Status.Favorites", "Favorites")} — {SelectedSystem}";
-                ToolbarTitle =
-                    $"{_localization.GetString("App.Title", "SimpleLauncher")} — {SelectedSystem} {_localization.GetString("Toolbar.Favorites", "Favorites")}";
             }
         }
         catch (Exception ex)
@@ -1152,8 +1135,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             ShowGames(recent);
             StatusText = _localization.GetString("Status.RecentlyPlayed", "Recently Played");
-            ToolbarTitle =
-                $"{_localization.GetString("App.Title", "SimpleLauncher")} — {_localization.GetString("Toolbar.RecentlyPlayed", "Recently Played")}";
         }
         catch (Exception ex)
         {
@@ -1194,8 +1175,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             ShowGames(recent);
             StatusText = _localization.GetString("Status.RecentlyAdded", "Recently Added");
-            ToolbarTitle =
-                $"{_localization.GetString("App.Title", "SimpleLauncher")} — {_localization.GetString("Status.RecentlyAdded", "Recently Added")}";
         }
         catch (Exception ex)
         {
@@ -1445,7 +1424,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             ApplyFavoritesAndHistory(games);
             ShowGames(games);
             StatusText = _localization.GetString("Status.AllGames", "All Games");
-            ToolbarTitle = _localization.GetString("App.Title", "SimpleLauncher");
         }
         catch (Exception ex)
         {
