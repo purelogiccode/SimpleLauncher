@@ -60,7 +60,10 @@ public partial class RetroAchievementsWindow : Window
 
         DataContext = _viewModel;
 
-        Opened += RetroAchievementsWindow_Opened;
+        // Loaded (not Opened): IsCurrentLoad requires IsLoaded, and Avalonia raises
+        // Opened before the window reaches the Loaded state. The no-credentials path
+        // completes synchronously, which would otherwise leave the loading overlay stuck.
+        Loaded += RetroAchievementsWindow_Loaded;
         Closed += (_, _) =>
         {
             _isClosed = true;
@@ -107,7 +110,7 @@ public partial class RetroAchievementsWindow : Window
         }
     }
 
-    private void RetroAchievementsWindow_Opened(object? sender, EventArgs e)
+    private void RetroAchievementsWindow_Loaded(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -115,7 +118,7 @@ public partial class RetroAchievementsWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in RetroAchievementsWindow_Opened");
+            _logger.Error(ex, "Error in RetroAchievementsWindow_Loaded");
         }
     }
 
