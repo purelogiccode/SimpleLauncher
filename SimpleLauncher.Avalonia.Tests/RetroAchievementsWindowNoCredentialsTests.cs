@@ -92,13 +92,17 @@ public class RetroAchievementsWindowNoCredentialsTests
         prop!.GetSetMethod(true)!.Invoke(null, [new FakeWindowServiceProvider(resourceProvider, messageBox)]);
     }
 
-    private sealed class FakeWindowServiceProvider(IResourceProvider resourceProvider,
+    private sealed class FakeWindowServiceProvider(
+        IResourceProvider resourceProvider,
         IMessageBoxLibraryService messageBox) : IServiceProvider
     {
+        private readonly IResourceProvider _resourceProvider = resourceProvider;
+        private readonly IMessageBoxLibraryService _messageBox = messageBox;
+
         public object? GetService(Type serviceType)
         {
-            if (serviceType == typeof(IResourceProvider)) return resourceProvider;
-            if (serviceType == typeof(IMessageBoxLibraryService)) return messageBox;
+            if (serviceType == typeof(IResourceProvider)) return _resourceProvider;
+            if (serviceType == typeof(IMessageBoxLibraryService)) return _messageBox;
             if (serviceType == typeof(LocalizationService)) return new LocalizationService();
             return null;
         }
