@@ -567,18 +567,33 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
         // This prevents race conditions when multiple threads try to recreate the token
         var oldCts = Interlocked.Exchange(ref _cancellationSource, new CancellationTokenSource());
 
-        // Cancel the old instance but do NOT dispose it.
-        // Disposing here would cause ObjectDisposedException in any code
-        // still holding a reference to the old token (TOCTOU race).
-        // The GC will collect the old CTS when no references remain.
         try
         {
             oldCts.Cancel();
         }
         catch (ObjectDisposedException)
         {
-            // Token was already disposed, ignore
+            // Token was already disposed, nothing left to do
+            return;
         }
+
+        // Dispose the old CTS after a grace period instead of inline or never:
+        // in-flight operations may still hold its token across awaits (immediate
+        // Dispose would throw ObjectDisposedException in them), but never disposing
+        // leaks a kernel handle per navigation (WPF-11). Cancellation is already
+        // signaled, so holders unwind promptly and the 5s bound only caps handle
+        // lifetime. Process exit reclaims anything still pending at shutdown.
+        _ = Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(static (_, state) =>
+        {
+            try
+            {
+                ((CancellationTokenSource)state!).Dispose();
+            }
+            catch
+            {
+                // Best effort; the GC reclaims the rest
+            }
+        }, oldCts, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
 
     /// <summary>
@@ -789,12 +804,19 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
 
             if (historyItem == null) return;
 
-            // Update in the UI thread to ensure UI refreshes
-            Dispatcher.Invoke(() =>
+            // Post to the UI thread without blocking the launcher background thread.
+            // BeginInvoke (not Invoke) so a busy/disposing UI can never deadlock this
+            // caller, and the update is skipped if the window is already gone (WPF-16).
+            if (_isDisposed) return;
+
+            Dispatcher.BeginInvoke(() =>
             {
-                // Find and update the specific item
+                if (_isDisposed) return;
+
+                // Find and update the specific item (null-safe: placeholders may
+                // carry a null FilePath)
                 var gameItem = GameListItems.FirstOrDefault(item =>
-                    item.FilePath.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(item.FilePath, fileName, StringComparison.OrdinalIgnoreCase));
 
                 if (gameItem != null)
                 {
@@ -807,8 +829,9 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
                     // Update times played
                     gameItem.TimesPlayed = historyItem.TimesPlayed.ToString(CultureInfo.InvariantCulture);
 
-                    // Force refresh of DataGrid
-                    GameDataGrid.Items.Refresh();
+                    // No Items.Refresh(): the item raises PropertyChanged, which updates
+                    // the grid. Refresh() is redundant and throws InvalidOperationException
+                    // when the grid is mid-render.
                 }
             });
         }

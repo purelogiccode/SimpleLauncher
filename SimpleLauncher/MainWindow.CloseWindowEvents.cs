@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
+using SimpleLauncher.Core.Interfaces;
 
 namespace SimpleLauncher;
 
@@ -52,6 +54,18 @@ public partial class MainWindow
             // Dispose F8 global hotkey
             _globalHotkeyService?.Dispose();
 
+            // Unsubscribe singleton-held handlers even when Dispose runs without the
+            // deferred Closing path (DI teardown, App.OnExit); otherwise singletons
+            // keep this window alive (WPF-01). Safe to repeat after UnsubscribeEventHandlers.
+            try
+            {
+                UnsubscribeEventHandlers();
+            }
+            catch (Exception ex)
+            {
+                Log.Debug($"Error unsubscribing handlers during Dispose: {ex.Message}");
+            }
+
             // Clean up collections
             GameListItems?.Clear();
             GameDataGrid?.ItemsSource = null;
@@ -85,14 +99,42 @@ public partial class MainWindow
 
                 try
                 {
-                    await SaveApplicationSettings();
+                    // Bound the save so a hung write cannot strand the window forever (WPF-13).
+                    await SaveApplicationSettings().WaitAsync(TimeSpan.FromSeconds(10));
+                }
+                catch (TimeoutException ex)
+                {
+                    Log.Error($"Timed out saving settings during close: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
                     Log.Error($"Error saving settings during close: {ex.Message}");
                 }
 
-                Close();
+                try
+                {
+                    // Cancel any running hash scan here (async, UI still pumps) so
+                    // App.OnExit's synchronous backstop rarely has anything to wait
+                    // for and can never deadlock the exit thread (WPF-23).
+                    var scanner = App.ServiceProvider
+                        .GetService<IRetroAchievementsHashScanner>();
+                    if (scanner is not null)
+                        await scanner.CancelScanAndWaitAsync(TimeSpan.FromSeconds(10));
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error canceling hash scan during close: {ex.Message}");
+                }
+
+                try
+                {
+                    Close();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error closing window after deferred save: {ex.Message}");
+                }
+
                 return;
             }
 

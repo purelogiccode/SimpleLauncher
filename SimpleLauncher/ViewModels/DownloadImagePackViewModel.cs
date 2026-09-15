@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.DownloadService;
 using SimpleLauncher.Core.Services.EasyMode;
 using SimpleLauncher.Core.Services.PlaySound;
@@ -541,7 +542,12 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         {
             _playSoundEffects.PlayNotificationSound();
 
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            // Allowlist http(s) only: download links must never reach a shell handler (WPF-04).
+            if (!UrlHelper.TryOpenHttpUrlInBrowser(url))
+            {
+                _logger.Information($"Blocked non-web or unloadable download link: {url}");
+                await _messageBox.CouldNotOpenTheDownloadLinkMessageBoxAsync();
+            }
         }
         catch (Exception ex)
         {

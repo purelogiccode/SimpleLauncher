@@ -28,6 +28,15 @@ public partial class UpdateLogWindow
     /// <param name="message">The message to append.</param>
     public void Log(string message)
     {
-        Dispatcher.Invoke(() => _viewModel.AppendLog(message));
+        // BeginInvoke (not Invoke): Log is called from background update threads and
+        // must never block on the UI thread or throw during shutdown (WPF-17).
+        try
+        {
+            Dispatcher.BeginInvoke(() => _viewModel.AppendLog(message));
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+        {
+            Serilog.Log.Debug($"UpdateLogWindow Log dropped during shutdown: {ex.Message}");
+        }
     }
 }

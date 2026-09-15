@@ -1,6 +1,7 @@
-using System.Diagnostics;
+using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Navigation;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.ViewModels;
 
 namespace SimpleLauncher;
@@ -12,6 +13,7 @@ public partial class RomHistoryWindow
 {
     private readonly ILogger _logger;
     private readonly RequestNavigateEventHandler _requestNavigateHandler;
+    private bool _handlersWired;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RomHistoryWindow" /> class.
@@ -26,10 +28,21 @@ public partial class RomHistoryWindow
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _requestNavigateHandler = OnHyperlinkRequestNavigate;
 
-        Loaded += (_, _) => HistoryMarkdownViewer.AddHandler(Hyperlink.RequestNavigateEvent, _requestNavigateHandler);
+        // Subscribe only once: repeated Loaded events would otherwise stack duplicate
+        // handlers and launch N processes per click (WPF-25).
+        Loaded += (_, _) =>
+        {
+            if (_handlersWired) return;
+
+            _handlersWired = true;
+            HistoryMarkdownViewer.AddHandler(Hyperlink.RequestNavigateEvent, _requestNavigateHandler);
+        };
 
         Closed += (_, _) =>
+        {
             HistoryMarkdownViewer.RemoveHandler(Hyperlink.RequestNavigateEvent, _requestNavigateHandler);
+            _handlersWired = false;
+        };
 
         Loaded += async (_, _) =>
         {
@@ -59,17 +72,13 @@ public partial class RomHistoryWindow
 
     private void OnHyperlinkRequestNavigate(object sender, RequestNavigateEventArgs e)
     {
-        try
+        // Allowlist http(s) only: markdown links must never reach a shell handler (WPF-04).
+        if (!UrlHelper.TryOpenHttpUrlInBrowser(e.Uri.AbsoluteUri))
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = e.Uri.AbsoluteUri,
-                UseShellExecute = true
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.Debug($"Failed to open link: {e.Uri} - {ex.Message}");
+            _logger.Warning($"Blocked non-web or unloadable history link: {e.Uri.AbsoluteUri}");
+            System.Windows.MessageBox.Show(
+                $"The link could not be opened because it is not a valid web address:\n{e.Uri.AbsoluteUri}",
+                "Could Not Open Link", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         e.Handled = true;

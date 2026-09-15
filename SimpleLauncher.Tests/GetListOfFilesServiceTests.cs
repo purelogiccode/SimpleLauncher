@@ -148,10 +148,11 @@ public class GetListOfFilesServiceTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies that groupByFolder overrides disableRecursiveSearch and enables recursive search.
+    ///     Verifies that disableRecursiveSearch means top-level only even when groupByFolder is set
+    ///     (the flag must not be overridden; see CORE-28 and IGetListOfFilesService docs).
     /// </summary>
     [Fact]
-    public async Task GetFilesAsyncGroupByFolderOverridesDisableRecursiveSearch()
+    public async Task GetFilesAsyncDisableRecursiveSearchWinsOverGroupByFolder()
     {
         var subDir = Path.Combine(_testDirectory, "subdir");
         Directory.CreateDirectory(subDir);
@@ -159,10 +160,26 @@ public class GetListOfFilesServiceTests : IDisposable
         File.WriteAllText(Path.Combine(_testDirectory, "game1.zip"), "fake");
         File.WriteAllText(Path.Combine(subDir, "game2.zip"), "fake");
 
-        // disableRecursiveSearch=true, groupByFolder=true => doRecurse=true (overrides)
+        // disableRecursiveSearch=true means top-level only, regardless of groupByFolder
         var result = await _service.GetFilesAsync(_testDirectory, ["zip"], true, true);
 
-        Assert.Equal(2, result.Count);
+        Assert.Single(result);
+        Assert.Contains("game1.zip", result[0], StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Verifies that configured extensions with a leading dot still match files (CORE-28).
+    /// </summary>
+    [Fact]
+    public async Task GetFilesAsyncExtensionWithLeadingDotMatches()
+    {
+        File.WriteAllText(Path.Combine(_testDirectory, "game.zip"), "fake");
+        File.WriteAllText(Path.Combine(_testDirectory, "game.nes"), "fake");
+
+        var result = await _service.GetFilesAsync(_testDirectory, [".zip"], false, false);
+
+        Assert.Single(result);
+        Assert.EndsWith(".zip", result[0], StringComparison.Ordinal);
     }
 
     /// <summary>

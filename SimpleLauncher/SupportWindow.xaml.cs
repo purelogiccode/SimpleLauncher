@@ -73,18 +73,27 @@ public partial class SupportWindow : ILoadingState
     /// <param name="message">Optional message to display while loading.</param>
     public void SetLoadingState(bool isLoading, string? message = null)
     {
-        Dispatcher.Invoke(() =>
+        // BeginInvoke (not Invoke): callers include background continuations, and a sync
+        // block here deadlocks on reentrancy and throws once the dispatcher shuts down (WPF-17).
+        try
         {
-            LoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
-
-            MainContentGrid?.IsEnabled = !isLoading;
-
-            if (isLoading)
+            Dispatcher.BeginInvoke(() =>
             {
-                LoadingOverlay.Content =
-                    message ?? (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-            }
-        });
+                LoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+
+                MainContentGrid?.IsEnabled = !isLoading;
+
+                if (isLoading)
+                {
+                    LoadingOverlay.Content =
+                        message ?? (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+                }
+            });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+        {
+            Log.Debug($"SupportWindow SetLoadingState dropped during shutdown: {ex.Message}");
+        }
     }
 
     private void OnCloseRequested(object? sender, EventArgs e)

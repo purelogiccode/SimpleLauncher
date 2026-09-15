@@ -13,6 +13,7 @@ public class ParameterResolverService : IParameterResolverService
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
         WriteIndented = false
     };
 
@@ -45,12 +46,19 @@ public class ParameterResolverService : IParameterResolverService
         httpRequest.Headers.Add("X-Api-Key", apiKey);
         httpRequest.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response;
         string responseBody;
+        bool success;
+        int statusCode;
         try
         {
-            response = await client.SendAsync(httpRequest);
-            responseBody = await response.Content.ReadAsStringAsync();
+            // Bound the call so a black-holed API cannot hang the launch flow forever (CORE-20).
+            // The response is disposed before returning (CORE-19); only the body and
+            // status are captured for use below.
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var response = await client.SendAsync(httpRequest, cts.Token);
+            responseBody = await response.Content.ReadAsStringAsync(cts.Token);
+            success = response.IsSuccessStatusCode;
+            statusCode = (int)response.StatusCode;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
@@ -60,7 +68,7 @@ public class ParameterResolverService : IParameterResolverService
             return null;
         }
 
-        if (response.IsSuccessStatusCode)
+        if (success)
         {
             try
             {
@@ -76,7 +84,7 @@ public class ParameterResolverService : IParameterResolverService
         }
 
         var apiException =
-            new InvalidOperationException($"ParameterResolver API returned {(int)response.StatusCode}: {responseBody}");
+            new InvalidOperationException($"ParameterResolver API returned {statusCode}: {responseBody}");
         // A non-success response (e.g. 400 validation errors from empty user input) is an expected
         // user-error condition; log at Information so it is never reported as a bug.
         _logger.Information(apiException, "ParameterResolver API error");

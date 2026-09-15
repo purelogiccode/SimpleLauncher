@@ -71,9 +71,11 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
 
                     if (root != null)
                     {
+                        // OrdinalIgnoreCase to match SystemExists: "nes" must find "NES"
+                        // instead of adding a duplicate node (CORE-26).
                         var existingSystem = root.Elements("SystemConfig")
                             .FirstOrDefault(el => string.Equals(el.Element("SystemName")?.Value, systemIdentifier,
-                                StringComparison.Ordinal));
+                                StringComparison.OrdinalIgnoreCase));
 
                         if (existingSystem != null)
                             UpdateSystemXElement(existingSystem, systemConfig);
@@ -188,9 +190,11 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
                         return;
                     }
 
+                    // OrdinalIgnoreCase to match SystemExists, so Delete("nes") removes "NES" (CORE-26).
                     var systemNode = xmlDoc.Root?.Descendants("SystemConfig")
                         .FirstOrDefault(el =>
-                            string.Equals(el.Element("SystemName")?.Value, systemName, StringComparison.Ordinal));
+                            string.Equals(el.Element("SystemName")?.Value, systemName,
+                                StringComparison.OrdinalIgnoreCase));
 
                     if (systemNode != null)
                     {

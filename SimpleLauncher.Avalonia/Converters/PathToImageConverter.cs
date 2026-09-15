@@ -19,15 +19,21 @@ public class PathToImageConverter : IValueConverter
 
     private const int LruCapacity = 1500;
 
+    // Path comparer: Windows/macOS file systems are (usually) case-insensitive, but Linux
+    // is case-sensitive — OrdinalIgnoreCase there would collide "Game.PNG" with a
+    // different file "game.png" and serve the wrong cover (AV-03).
+    private static readonly StringComparer PathComparer =
+        OperatingSystem.IsLinux() ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
+
     // Weak cache: allows GC to reclaim unused images
     private static readonly ConcurrentDictionary<string, WeakReference<Bitmap>> WeakCache =
-        new(StringComparer.OrdinalIgnoreCase);
+        new(PathComparer);
 
     // Strong LRU cache: keeps recent images alive
     private static readonly LinkedList<(string Path, Bitmap Img)> LruList = new();
 
     private static readonly Dictionary<string, LinkedListNode<(string Path, Bitmap Img)>> LruIndex =
-        new(StringComparer.OrdinalIgnoreCase);
+        new(PathComparer);
 
     private static readonly Lock LruLock = new();
 
@@ -53,8 +59,9 @@ public class PathToImageConverter : IValueConverter
             }
         }
 
-        // Load asynchronously via binding
-        // Return placeholder immediately; the binding system will update when loaded
+        // NOTE: IValueConverter is synchronous, so the first load of each image does
+        // disk I/O + decode on the UI thread. Covers are small local files decoded at
+        // 300px, and every later bind is served from the caches above (AV-03).
         var image = LoadImage(path);
         return image ?? GetPlaceholder();
     }
@@ -65,16 +72,20 @@ public class PathToImageConverter : IValueConverter
     }
 
     /// <summary>
-    ///     Clears all caches.
+    ///     Clears all caches, promptly releasing native memory of images nothing else
+    ///     references. Bitmaps still shown by live views are left valid for the GC (AV-03).
     /// </summary>
     public static void ClearCache()
     {
-        WeakCache.Clear();
         lock (LruLock)
         {
+            foreach (var entry in LruList) DisposeIfUnreferenced(entry.Path, entry.Img);
+
             LruList.Clear();
             LruIndex.Clear();
         }
+
+        WeakCache.Clear();
     }
 
     private static Bitmap? LoadImage(string path)
@@ -96,12 +107,15 @@ public class PathToImageConverter : IValueConverter
                 if (LruIndex.TryGetValue(path, out var existing))
                 {
                     LruList.Remove(existing);
+                    LruIndex.Remove(path);
+                    DisposeIfUnreferenced(path, existing.Value.Img);
                 }
                 else if (LruList.Count >= LruCapacity)
                 {
                     var oldest = LruList.Last!;
                     LruIndex.Remove(oldest.Value.Path);
                     LruList.RemoveLast();
+                    DisposeIfUnreferenced(oldest.Value.Path, oldest.Value.Img);
                 }
 
                 var node = LruList.AddFirst((path, image));
@@ -121,6 +135,30 @@ public class PathToImageConverter : IValueConverter
     {
         LruList.Remove(node);
         LruList.AddFirst(node);
+    }
+
+    /// <summary>
+    ///     Disposes an evicted bitmap only when nothing else can reach it. If the weak-cache
+    ///     entry is already dead, no live view holds a reference, so prompt disposal releases
+    ///     native memory now instead of waiting for finalization. Bitmaps with a live weak
+    ///     target are left alone: disposing them would crash views still showing them with
+    ///     ObjectDisposedException on the next render (the grid is not virtualized) — the GC
+    ///     reclaims those once views drop them (AV-03). Callers must hold <see cref="LruLock" />.
+    /// </summary>
+    private static void DisposeIfUnreferenced(string path, Bitmap bitmap)
+    {
+        try
+        {
+            if (WeakCache.TryGetValue(path, out var weak) && !weak.TryGetTarget(out _))
+            {
+                WeakCache.TryRemove(path, out _);
+                bitmap.Dispose();
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed; nothing to do.
+        }
     }
 
     /// <summary>

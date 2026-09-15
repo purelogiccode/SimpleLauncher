@@ -695,11 +695,20 @@ public partial class App : IDisposable
                     var updateHistoryWindow = ServiceProvider.GetRequiredService<UpdateHistoryWindow>();
                     updateHistoryWindow.ShowDialog();
                 }
-                catch (SystemException ex)
+                catch (Exception ex)
                 {
-                    // Notify developer
-                    const string contextMessage = "Error showing UpdateHistoryWindow with -whatsnew argument.";
-                    ServiceProvider.GetRequiredService<ILogger>().Error(ex, contextMessage);
+                    // Broad catch: a disposed provider or torn-down dispatcher raises
+                    // InvalidOperationException/ObjectDisposedException, not SystemException
+                    // (WPF-24). A failing -whatsnew dialog must never crash shutdown.
+                    try
+                    {
+                        ServiceProvider.GetRequiredService<ILogger>().Error(ex,
+                            "Error showing UpdateHistoryWindow with -whatsnew argument.");
+                    }
+                    catch
+                    {
+                        // Provider itself is gone; nothing left to log to
+                    }
                 }
             }));
         }
@@ -732,7 +741,9 @@ public partial class App : IDisposable
         {
             try
             {
-                await messageBox.FailedToStartSimpleLauncherMessageBoxAsync();
+                // Bound the dialog: if it can never complete, shutdown must still proceed (WPF-23).
+                await messageBox.FailedToStartSimpleLauncherMessageBoxAsync()
+                    .WaitAsync(TimeSpan.FromSeconds(60));
             }
             catch (Exception ex)
             {
@@ -740,7 +751,15 @@ public partial class App : IDisposable
             }
 
             _singleInstanceMutex?.Dispose();
-            Shutdown();
+
+            try
+            {
+                Shutdown();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to shut down after startup failure.");
+            }
         }
         catch (Exception ex)
         {

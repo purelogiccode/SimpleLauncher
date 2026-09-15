@@ -72,20 +72,26 @@ public class RetroAchievementsHashStore : IRetroAchievementsHashStore
     {
         var filePath = GetSystemHashFilePath(systemName);
 
-        try
+        // Read under the same lock writers hold so a concurrent scan can never
+        // observe a half-written file (CORE-25). Writes are atomic (temp+move),
+        // so a missing temp file here simply means "no scan yet".
+        lock (_fileLock)
         {
-            if (!File.Exists(filePath)) return null;
+            try
+            {
+                if (!File.Exists(filePath)) return null;
 
-            var json = File.ReadAllText(filePath);
-            if (string.IsNullOrWhiteSpace(json)) return null;
+                var json = File.ReadAllText(filePath);
+                if (string.IsNullOrWhiteSpace(json)) return null;
 
-            var data = JsonSerializer.Deserialize<RaSystemHashes>(json, JsonOptions);
-            return data;
-        }
-        catch (Exception ex)
-        {
-            _logger.Debug($"[RA Hash Store] Failed to load hash file for '{systemName}': {ex.Message}");
-            return null;
+                var data = JsonSerializer.Deserialize<RaSystemHashes>(json, JsonOptions);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"[RA Hash Store] Failed to load hash file for '{systemName}': {ex.Message}");
+                return null;
+            }
         }
     }
 
@@ -105,7 +111,13 @@ public class RetroAchievementsHashStore : IRetroAchievementsHashStore
 
                 var filePath = GetSystemHashFilePath(systemHashes.SystemName);
                 var json = JsonSerializer.Serialize(systemHashes, JsonOptions);
-                File.WriteAllText(filePath, json);
+
+                // Atomic write: readers (under the same lock, or crashing mid-write)
+                // never see a truncated file (CORE-25). Same-directory temp keeps the
+                // move on one volume so it stays atomic.
+                var tempPath = filePath + ".tmp";
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, filePath, true);
 
                 _logger.Debug(
                     $"[RA Hash Store] Saved {systemHashes.Hashes.Count} hashes for '{systemHashes.SystemName}' to {filePath}.");

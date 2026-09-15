@@ -39,7 +39,17 @@ public partial class ToastNotificationWindow : IDisposable
         _isDisposed = true;
         _dismissTimer.Stop();
         _dismissTimer.Tick -= DismissTimer_Tick;
-        Close();
+
+        // Close can throw when the window is already closing/closed (WPF-19).
+        try
+        {
+            Close();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Log.Debug($"ToastNotificationWindow Dispose: Close failed: {ex.Message}");
+        }
+
         GC.SuppressFinalize(this);
     }
 
@@ -50,7 +60,22 @@ public partial class ToastNotificationWindow : IDisposable
     /// <param name="message">The toast message.</param>
     public void ShowToast(string title, string message)
     {
-        if (_isDisposed || !Application.Current.Dispatcher.CheckAccess()) return;
+        if (_isDisposed) return;
+
+        // Marshal background-thread toasts to the UI thread instead of dropping them (WPF-19).
+        if (!Application.Current.Dispatcher.CheckAccess())
+        {
+            try
+            {
+                Application.Current.Dispatcher.BeginInvoke(() => ShowToast(title, message));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+            {
+                Log.Debug($"ToastNotificationWindow ShowToast dropped during shutdown: {ex.Message}");
+            }
+
+            return;
+        }
 
         _dismissTimer.Stop();
 
@@ -76,8 +101,19 @@ public partial class ToastNotificationWindow : IDisposable
     {
         _dismissTimer.Stop();
 
-        var fadeOut = new DoubleAnimation(Opacity, 0, new Duration(TimeSpan.FromMilliseconds(300)));
-        fadeOut.Completed += (_, _) => Hide();
+        var fadeOut = new DoubleAnimation(Opacity, 0, new Duration(TimeSpan.FromMilliseconds(300)))
+        {
+            // Stop (not HoldEnd): a held clock stays in the timing tree and roots this
+            // window via the Completed closure (WPF-19).
+            FillBehavior = FillBehavior.Stop
+        };
+        EventHandler? completed = null;
+        completed = (_, _) =>
+        {
+            fadeOut.Completed -= completed;
+            Hide();
+        };
+        fadeOut.Completed += completed;
         BeginAnimation(OpacityProperty, fadeOut);
     }
 

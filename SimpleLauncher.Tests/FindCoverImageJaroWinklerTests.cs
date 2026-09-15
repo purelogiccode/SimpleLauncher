@@ -113,13 +113,14 @@ public class FindCoverImageJaroWinklerTests
     }
 
     /// <summary>
-    ///     Verifies that a single matching character returns 0.0 (edge case for minimum length).
+    ///     Verifies that identical single characters score 1.0 (the match window is clamped
+    ///     at zero; see CORE-31).
     /// </summary>
     [Fact]
     public void JaroWinklerSingleCharacterMatch()
     {
         var result = FindCoverImageService.CalculateJaroWinklerSimilarity("a", "a");
-        Assert.Equal(0.0, result, 10);
+        Assert.Equal(1.0, result, 10);
     }
 
     /// <summary>

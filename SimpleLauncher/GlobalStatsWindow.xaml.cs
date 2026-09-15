@@ -43,11 +43,17 @@ internal partial class GlobalStatsWindow : IDisposable
         };
     }
 
+    private bool _disposed;
+
     /// <summary>
     ///     Disposes of resources used by the window.
     /// </summary>
     public void Dispose()
     {
+        if (_disposed) return;
+
+        _disposed = true;
+
         if (_emergencyReturnButton != null)
         {
             _emergencyReturnButton.Click -= EmergencyOverlayRelease_Click;
@@ -73,16 +79,24 @@ internal partial class GlobalStatsWindow : IDisposable
 
     private void GlobalStatsWindow_Closing(object? sender, CancelEventArgs e)
     {
-        // Unsubscribe events
-        if (_closeRequestedHandler != null)
+        // When idle the view model lets the close through (it never cancels e): tear
+        // down exactly once here. While processing, the command cancels e and prompts;
+        // a confirmed close returns via CloseRequested -> Close() -> this handler, at
+        // which point IsProcessing is false and no re-prompt occurs (WPF-21).
+        if (!_viewModel.IsProcessing)
         {
-            _viewModel.CloseRequested -= _closeRequestedHandler;
-            _closeRequestedHandler = null;
+            // Unsubscribe events
+            if (_closeRequestedHandler != null)
+            {
+                _viewModel.CloseRequested -= _closeRequestedHandler;
+                _closeRequestedHandler = null;
+            }
+
+            Dispose();
+            return;
         }
 
-        // Execute the closing command
+        // Execute the closing command (async prompt; must not Dispose yet)
         if (_viewModel.ClosingCommand.CanExecute(e)) _viewModel.ClosingCommand.Execute(e);
-
-        Dispose();
     }
 }

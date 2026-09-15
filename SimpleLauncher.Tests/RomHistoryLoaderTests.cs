@@ -114,25 +114,31 @@ public class RomHistoryLoaderTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies that FindEntry throws XmlException when the XML file is malformed.
+    ///     Verifies that FindEntry returns null (instead of throwing to the UI) when the XML
+    ///     file is malformed (CORE-29).
     /// </summary>
     [Fact]
-    public void FindEntryCorruptedXmlThrowsXmlException()
+    public void FindEntryCorruptedXmlReturnsNull()
     {
         const string xml = "<database><entry><unclosed>";
         var path = CreateHistoryXml(xml);
 
-        Assert.Throws<XmlException>(() => RomHistoryLoader.FindEntry(path, "anything"));
+        var result = RomHistoryLoader.FindEntry(path, "anything");
+
+        Assert.Null(result);
     }
 
     /// <summary>
-    ///     Verifies that FindEntry throws FileNotFoundException when the XML file does not exist.
+    ///     Verifies that FindEntry returns null (instead of throwing to the UI) when the XML
+    ///     file does not exist (CORE-29).
     /// </summary>
     [Fact]
-    public void FindEntryMissingFileThrowsFileNotFoundException()
+    public void FindEntryMissingFileReturnsNull()
     {
         var missingPath = Path.Combine(_tempDir, "does_not_exist.xml");
 
-        Assert.Throws<FileNotFoundException>(() => RomHistoryLoader.FindEntry(missingPath, "anything"));
+        var result = RomHistoryLoader.FindEntry(missingPath, "anything");
+
+        Assert.Null(result);
     }
 }

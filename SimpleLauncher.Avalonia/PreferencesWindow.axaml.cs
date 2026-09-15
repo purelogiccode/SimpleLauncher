@@ -103,23 +103,44 @@ public partial class PreferencesWindow : Window
         Close();
     }
 
-    private void OpenEasyMode_Click(object? sender, RoutedEventArgs e)
+    private async void OpenEasyMode_Click(object? sender, RoutedEventArgs e)
     {
-        var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
-        easyModeWindow.ShowDialog(this);
+        try
+        {
+            var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
+            await easyModeWindow.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to open EasyMode window");
+        }
     }
 
-    private void OpenEditSystem_Click(object? sender, RoutedEventArgs e)
+    private async void OpenEditSystem_Click(object? sender, RoutedEventArgs e)
     {
-        // Factory allows a pre-selected system name to be passed (null = no pre-selection)
-        var editSystemWindow = App.ServiceProvider.GetRequiredService<Func<string?, EditSystemWindow>>()(null);
-        editSystemWindow.ShowDialog(this);
+        try
+        {
+            // Factory allows a pre-selected system name to be passed (null = no pre-selection)
+            var editSystemWindow = App.ServiceProvider.GetRequiredService<Func<string?, EditSystemWindow>>()(null);
+            await editSystemWindow.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to open EditSystem window");
+        }
     }
 
-    private void DownloadImagePack_Click(object? sender, RoutedEventArgs e)
+    private async void DownloadImagePack_Click(object? sender, RoutedEventArgs e)
     {
-        var imagePackWindow = App.ServiceProvider.GetRequiredService<DownloadImagePackWindow>();
-        imagePackWindow.ShowDialog(this);
+        try
+        {
+            var imagePackWindow = App.ServiceProvider.GetRequiredService<DownloadImagePackWindow>();
+            await imagePackWindow.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to open DownloadImagePack window");
+        }
     }
 
     private async void CheckUpdates_Click(object? sender, RoutedEventArgs e)

@@ -142,6 +142,7 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
         {
             _logger.Debug($"[RA Hasher Tool] File not found at {filePath}");
             logErrors.Information($"[RA Hasher Tool] File not found at {filePath}");
+            loadingState?.SetLoadingState(false);
             return new RaHashResult(null, null, false, "Game file not found.");
         }
 
@@ -149,6 +150,7 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
         {
             _logger.Debug("[RA Hasher Tool] SystemName is null or empty.");
             logErrors.Information("[RA Hasher Tool] SystemName is null or empty.");
+            loadingState?.SetLoadingState(false);
             return new RaHashResult(null, null, false, "System name is missing.");
         }
 
@@ -157,6 +159,7 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
         if (systemId is <= 0 or > RetroAchievementsConstants.MaxConsoleId)
         {
             _logger.Debug($"[RA Hasher Tool] System '{systemName}' is not supported for RetroAchievements hashing.");
+            loadingState?.SetLoadingState(false);
             return new RaHashResult(null, null, false,
                 $"System '{systemName}' is not supported for RetroAchievements hashing.");
         }
@@ -186,6 +189,7 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
                     $"Failed to extract or find a suitable file in archive for hashing: {filePath}.";
                 logErrors.Information($"[RA Hasher Tool] {extractionErrorMessage}");
                 _logger.Debug($"[RA Hasher Tool] {extractionErrorMessage}");
+                loadingState?.SetLoadingState(false);
                 return new RaHashResult(null, tempExtractionPath, isExtractionSuccessful, extractionErrorMessage);
             }
 

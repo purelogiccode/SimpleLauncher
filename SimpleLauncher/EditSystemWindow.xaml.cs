@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -510,13 +511,25 @@ internal partial class EditSystemWindow : ILoadingState
             _playSoundEffects.PlayNotificationSound();
             var searchUrl = _configuration.GetValue<string>("WikiParametersUrl") ??
                             "https://github.com/purelogiccode/SimpleLauncher/wiki/parameters/";
+
+            // The URL comes from editable configuration: allowlist http(s) before it can
+            // reach a shell handler (WPF-04).
+            if (!UrlHelper.IsHttpUrl(searchUrl))
+            {
+                _logger.Information($"Blocked non-web help URL from configuration: {searchUrl}");
+                await _messageBox.ErrorOpeningUrlMessageBoxAsync();
+                return;
+            }
+
             try
             {
-                Process.Start(new ProcessStartInfo
+                using (Process.Start(new ProcessStartInfo
+                       {
+                           FileName = searchUrl,
+                           UseShellExecute = true
+                       }))
                 {
-                    FileName = searchUrl,
-                    UseShellExecute = true
-                });
+                }
             }
             catch (Win32Exception ex) // Catch Win32Exception specifically
             {
@@ -589,6 +602,17 @@ internal partial class EditSystemWindow : ILoadingState
                 return;
             }
 
+            // The system name becomes a file name under images/systems: sanitize it so
+            // "..", separators, reserved device names, or overlong names cannot escape
+            // that folder or throw (WPF-06).
+            var safeSystemName = GetSafeSystemImageFileName(systemName);
+            if (string.IsNullOrEmpty(safeSystemName))
+            {
+                await _messageBox.FailedToCopySystemImageMessageBoxAsync(
+                    $"The system name '{systemName}' cannot be used as an image file name.");
+                return;
+            }
+
             var dialog = new OpenFileDialog
             {
                 DefaultExt = ".png",
@@ -613,7 +637,7 @@ internal partial class EditSystemWindow : ILoadingState
             {
                 if (!Directory.Exists(imagesSystemsDir)) Directory.CreateDirectory(imagesSystemsDir);
 
-                var destFilePath = Path.Combine(imagesSystemsDir, $"{systemName}{extension}");
+                var destFilePath = Path.Combine(imagesSystemsDir, $"{safeSystemName}{extension}");
                 SystemImagePreview.Source = null; // Release any file lock before overwriting
 
                 const int maxRetries = 3;
@@ -656,9 +680,43 @@ internal partial class EditSystemWindow : ILoadingState
         }
     }
 
+    /// <summary>
+    ///     Reduces a raw system name to a file name safe under the images/systems folder.
+    ///     Returns null when nothing usable remains (WPF-06).
+    /// </summary>
+    private static string? GetSafeSystemImageFileName(string systemName)
+    {
+        if (string.IsNullOrWhiteSpace(systemName)) return null;
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var builder = new StringBuilder(systemName.Trim().Length);
+        foreach (var c in systemName.Trim())
+            builder.Append(Array.IndexOf(invalid, c) < 0 ? c : '_');
+
+        var safe = builder.ToString().Trim().Trim('.');
+        if (string.IsNullOrEmpty(safe)) return null;
+
+        // Reserved DOS device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9, ...) cannot be
+        // created as files even with an extension.
+        var stem = safe.Split('.')[0].ToUpperInvariant();
+        if (stem is "CON" or "PRN" or "AUX" or "NUL" or "CONIN$" or "CONOUT$" ||
+            (stem.Length == 4 && (stem.StartsWith("COM", StringComparison.Ordinal) ||
+                                  stem.StartsWith("LPT", StringComparison.Ordinal)) &&
+             char.IsDigit(stem[3])))
+        {
+            safe = "_" + safe;
+        }
+
+        // Cap length so the final path stays well under MAX_PATH.
+        if (safe.Length > 100) safe = safe[..100].TrimEnd('.');
+
+        return string.IsNullOrEmpty(safe) ? null : safe;
+    }
+
     private void UpdateSystemImagePreview()
     {
-        var systemName = SystemNameTextBox.Text.Trim();
+        // Same sanitization as the copy path so preview resolves the stored file (WPF-06).
+        var systemName = GetSafeSystemImageFileName(SystemNameTextBox.Text.Trim());
         var imagesSystemsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", "systems");
         string? imagePath = null;
 

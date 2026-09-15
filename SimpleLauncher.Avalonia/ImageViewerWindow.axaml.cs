@@ -10,6 +10,8 @@ public partial class ImageViewerWindow : Window, IDisposable
 {
     private readonly ImageViewerViewModel _viewModel;
 
+    private bool _disposed;
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="ImageViewerWindow" /> class.
     /// </summary>
@@ -21,16 +23,26 @@ public partial class ImageViewerWindow : Window, IDisposable
         _viewModel = viewModel;
         DataContext = _viewModel;
 
-        Closing += (_, _) => Dispose();
+        Closing += OnClosing;
     }
 
     /// <summary>
-    ///     Disposes the bitmap held by the ViewModel to free unmanaged memory.
+    ///     Clears the bound image (disposing its bitmap) so a late render can never touch
+    ///     a disposed <c>Bitmap</c> still set as <c>Image.Source</c> (AV-02).
     /// </summary>
     public void Dispose()
     {
-        _viewModel.ImageSource?.Dispose();
+        if (_disposed) return;
+
+        _disposed = true;
+        Closing -= OnClosing;
+        _viewModel.ClearImage();
         GC.SuppressFinalize(this);
+    }
+
+    private void OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        Dispose();
     }
 
     /// <summary>

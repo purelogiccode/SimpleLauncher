@@ -60,8 +60,14 @@ public partial class GlobalStatsWindow : Window, IDisposable
         _viewModel.Initialize(systemManagers);
     }
 
+    // Set once the user confirms closing during processing: the re-entrant Close()
+    // below then proceeds without prompting again (AV-09).
+    private bool _forceClose;
+
     private async void GlobalStatsWindow_Closing(object? sender, WindowClosingEventArgs e)
     {
+        if (_forceClose) return;
+
         try
         {
             // Processing is active - cancel the close and ask the user to confirm
@@ -70,7 +76,11 @@ public partial class GlobalStatsWindow : Window, IDisposable
                 e.Cancel = true;
 
                 var allowClose = await _viewModel.RequestCloseAsync();
-                if (allowClose) Close();
+                if (allowClose)
+                {
+                    _forceClose = true;
+                    Close();
+                }
             }
         }
         catch (Exception ex)

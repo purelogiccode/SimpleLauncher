@@ -244,7 +244,11 @@ public class ExternalToolLauncherService : IExternalToolLauncher
                 if (Directory.Exists(resolvedWorkingDirectory)) psi.WorkingDirectory = resolvedWorkingDirectory;
             }
 
-            Process.Start(psi);
+            // The returned Process owns a native handle — dispose it. May be null
+            // when UseShellExecute launches without a process object (CORE-31).
+            using (Process.Start(psi))
+            {
+            }
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223 || ex.NativeErrorCode == 5 ||
                                         (uint)ex.HResult == 0x800704C7)

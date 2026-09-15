@@ -105,7 +105,7 @@ public class RomHistoryViewModelTests
     }
 
     [Fact]
-    public async Task LoadHistory_CorruptXml_ShowsError()
+    public async Task LoadHistory_CorruptXml_PromptsForOnlineSearch()
     {
         var historyDat = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.dat");
         var historyXml = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.xml");
@@ -114,11 +114,15 @@ public class RomHistoryViewModelTests
         try
         {
             var vm = CreateVm(out var messageBox);
+            messageBox.Setup(m => m.SearchOnlineForRomHistoryMessageBoxAsync()).ReturnsAsync(CoreMessageBoxResult.No);
             vm.Initialize("game.nes", "NES", "game");
 
             await vm.LoadRomHistoryAsync();
 
-            messageBox.Verify(m => m.ErrorLoadingRomHistoryMessageBoxAsync(), Times.Once);
+            // A corrupt database is treated as "no entry" and falls back gracefully
+            // instead of throwing to the UI (CORE-29).
+            messageBox.Verify(m => m.ErrorLoadingRomHistoryMessageBoxAsync(), Times.Never);
+            messageBox.Verify(m => m.SearchOnlineForRomHistoryMessageBoxAsync(), Times.Once);
         }
         finally
         {

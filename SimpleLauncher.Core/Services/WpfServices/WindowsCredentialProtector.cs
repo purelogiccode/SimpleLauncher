@@ -66,9 +66,10 @@ public class WindowsCredentialProtector : ICredentialProtector
 
             return PortableUnprotect(protectedData);
         }
-        catch (CryptographicException)
+        catch (Exception ex) when (ex is CryptographicException or FormatException)
         {
-            // Data may be corrupted or from a different user/machine
+            // Data may be corrupted, truncated, or from a different user/machine.
+            // FormatException covers non-Base64 garbage in settings (CORE-31).
             return null;
         }
     }

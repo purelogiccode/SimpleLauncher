@@ -192,6 +192,23 @@ public partial class MainWindow : Window, IPaginationHost
             }
         };
 
+        // Start the hash-scan drain at close initiation (not after): App.Dispose's
+        // bounded backstop wait then usually returns immediately instead of blocking
+        // shutdown on the exit thread (AV-11). Fire-and-forget is safe — the method
+        // observes all exceptions internally.
+        Closing += (_, _) =>
+        {
+            try
+            {
+                var scanner = App.ServiceProvider?.GetService<IRetroAchievementsHashScanner>();
+                if (scanner is not null) _ = scanner.CancelScanAndWaitAsync(TimeSpan.FromSeconds(10));
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Error starting hash scan drain on close");
+            }
+        };
+
         // Failsafe shutdown watchdog: if normal shutdown has not terminated the process
         // within the grace period, force-exit so the app can never linger in the background.
         Closed += (_, _) =>
@@ -222,7 +239,10 @@ public partial class MainWindow : Window, IPaginationHost
             _shutdownWatchdogCts = new CancellationTokenSource();
             var token = _shutdownWatchdogCts.Token;
 
-            _ = Task.Delay(TimeSpan.FromSeconds(5), token).ContinueWith(_ =>
+            // 30s grace: must cover App.Dispose's bounded drains (10s hash-scan drain
+            // plus saves). A 5s watchdog truncates healthy shutdowns mid-drain and
+            // orphans CLI hash processes (AV-12).
+            _ = Task.Delay(TimeSpan.FromSeconds(30), token).ContinueWith(_ =>
             {
                 try
                 {
@@ -571,7 +591,12 @@ public partial class MainWindow : Window, IPaginationHost
     {
         var win = App.ServiceProvider.GetRequiredService<T>();
         initialize(win);
-        win.ShowDialog(this);
+
+        // Observed fire-and-forget: dialog faults must never go unobserved (AV-07).
+        win.ShowDialog(this).ContinueWith(t =>
+        {
+            if (t.IsFaulted) Log.Error(t.Exception, $"Error in injected config dialog {typeof(T).Name}.");
+        }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
     }
 
     #endregion
@@ -1452,9 +1477,13 @@ public partial class MainWindow : Window, IPaginationHost
     private void OpenGameDetail(GameCardViewModel game)
     {
         // GameDetailWindow takes per-game constructor arguments (game + main VM),
-        // so it is created manually — DI cannot resolve it.
+        // so it is created manually — DI cannot resolve it. Sync signature required by
+        // the Action delegate; faults are observed via continuation (AV-07).
         var window = new GameDetailWindow(game, _viewModel);
-        window.ShowDialog(this);
+        window.ShowDialog(this).ContinueWith(t =>
+        {
+            if (t.IsFaulted) Log.Error(t.Exception, "Error in GameDetail dialog.");
+        }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
     }
 
     private static T? FindParent<T>(Visual child) where T : Visual
@@ -2019,12 +2048,12 @@ public partial class MainWindow : Window, IPaginationHost
 
     // ── Phase 4.1 windows ──
 
-    private void EditLinks_Click(object? sender, RoutedEventArgs e)
+    private async void EditLinks_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<SetLinksWindow>();
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2032,28 +2061,27 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void SetGamepadDeadZone_Click(object? sender, RoutedEventArgs e)
+    private async void SetGamepadDeadZone_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<SetGamepadDeadZoneWindow>();
-            window.ShowDialog(this).ContinueWith(_ =>
+            await window.ShowDialog(this);
+
+            // Apply the new dead zone values to the running controller
+            _gamePadController.DeadZoneX = _settings.DeadZoneX;
+            _gamePadController.DeadZoneY = _settings.DeadZoneY;
+            if (_settings.EnableGamePadNavigation)
             {
-                // Apply the new dead zone values to the running controller
-                _gamePadController.DeadZoneX = _settings.DeadZoneX;
-                _gamePadController.DeadZoneY = _settings.DeadZoneY;
-                if (_settings.EnableGamePadNavigation)
-                {
-                    _gamePadController.StopAsync();
-                    _gamePadController.StartAsync();
-                }
-                else
-                {
-                    // WPF parity: also stop the controller when gamepad navigation is off,
-                    // in case anything (e.g. the settings dialog) left it running.
-                    _gamePadController.StopAsync();
-                }
-            }, TaskScheduler.FromCurrentSynchronizationContext());
+                await _gamePadController.StopAsync();
+                await _gamePadController.StartAsync();
+            }
+            else
+            {
+                // WPF parity: also stop the controller when gamepad navigation is off,
+                // in case anything (e.g. the settings dialog) left it running.
+                await _gamePadController.StopAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -2061,12 +2089,12 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void SetFuzzyMatchingThreshold_Click(object? sender, RoutedEventArgs e)
+    private async void SetFuzzyMatchingThreshold_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<SetFuzzyMatchingWindow>();
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2074,12 +2102,12 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void SoundConfiguration_Click(object? sender, RoutedEventArgs e)
+    private async void SoundConfiguration_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<SoundConfigurationWindow>();
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2087,12 +2115,12 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void DownloadImagePack_Click(object? sender, RoutedEventArgs e)
+    private async void DownloadImagePack_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<DownloadImagePackWindow>();
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2100,13 +2128,13 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void GlobalStats_Click(object? sender, RoutedEventArgs e)
+    private async void GlobalStats_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<GlobalStatsWindow>();
             window.Initialize(_systemManagerService.LoadSystems());
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2114,12 +2142,12 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void About_Click(object? sender, RoutedEventArgs e)
+    private async void About_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<AboutWindow>();
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2127,12 +2155,12 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void Support_Click(object? sender, RoutedEventArgs e)
+    private async void Support_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var window = App.ServiceProvider.GetRequiredService<SupportWindow>();
-            window.ShowDialog(this);
+            await window.ShowDialog(this);
         }
         catch (Exception ex)
         {
@@ -2570,12 +2598,12 @@ public partial class MainWindow : Window, IPaginationHost
 
     // ── RetroAchievements ──
 
-    private void RetroAchievementsSettings_Click(object? sender, RoutedEventArgs e)
+    private async void RetroAchievementsSettings_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var settingsWindow = App.ServiceProvider.GetRequiredService<RetroAchievementsSettingsWindow>();
-            settingsWindow.ShowDialog(this);
+            await settingsWindow.ShowDialog(this);
         }
         catch (Exception ex)
         {

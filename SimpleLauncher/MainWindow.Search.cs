@@ -69,9 +69,14 @@ public partial class MainWindow
                            "Searching... Please wait.";
         SetLoadingState(true, searchingMsg);
 
+        // The CTS instance marks the load generation: only the latest load may hide
+        // the overlay in the finally below (WPF-15).
+        CancellationTokenSource? activeCts = null;
+
         try
         {
             CancelAndRecreateToken();
+            activeCts = _cancellationSource;
             ResetPaginationButtons();
 
             var searchQuery = SearchTextBox.Text.Trim();
@@ -108,7 +113,10 @@ public partial class MainWindow
         }
         finally
         {
-            SetLoadingState(false);
+            // A stale search finishing after a newer pagination/system load started
+            // must not clear that load's overlay (WPF-15).
+            if (activeCts is not null && !_isDisposed && ReferenceEquals(activeCts, _cancellationSource))
+                SetLoadingState(false);
         }
     }
 }

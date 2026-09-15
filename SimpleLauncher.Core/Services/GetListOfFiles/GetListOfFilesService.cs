@@ -23,7 +23,7 @@ public class GetListOfFilesService : IGetListOfFilesService
     ///     Gets the list of files in the given directory that match the configured file extensions.
     /// </summary>
     /// <param name="directoryPath">The directory to scan for files.</param>
-    /// <param name="fileExtensions">The list of file extensions (without dots) to include.</param>
+    /// <param name="fileExtensions">The list of file extensions to include (a leading dot is tolerated).</param>
     /// <param name="disableRecursiveSearch">Whether recursive folder search is disabled.</param>
     /// <param name="groupByFolder">Whether the system groups games by folder.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
@@ -43,11 +43,18 @@ public class GetListOfFilesService : IGetListOfFilesService
                     return new List<string>();
                 }
 
-                var extensionsSet = new HashSet<string>(fileExtensions, StringComparer.OrdinalIgnoreCase);
+                // Normalize configured extensions: callers may supply ".zip" (with dot)
+                // while enumeration strips the dot ("zip") — without this nothing matches (CORE-28).
+                var extensionsSet = new HashSet<string>(
+                    fileExtensions.Select(static e => e.TrimStart('.')),
+                    StringComparer.OrdinalIgnoreCase);
                 var foundFiles = new List<string>();
                 var restrictedFolders = new List<string>();
 
-                var doRecurse = !(disableRecursiveSearch && !groupByFolder);
+                // The contract (see IGetListOfFilesService) is: disableRecursiveSearch
+                // means top-level directory only. The previous expression recursed when
+                // groupByFolder was true despite the flag (CORE-28).
+                var doRecurse = !disableRecursiveSearch;
                 EnumerateFilesRecursive(directoryPath, extensionsSet, foundFiles, restrictedFolders, doRecurse,
                     cancellationToken);
 

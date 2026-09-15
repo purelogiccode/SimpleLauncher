@@ -21,9 +21,32 @@ public static class RomHistoryLoader
     {
         var datFilePath = Path.ChangeExtension(historyFilePath, ".dat");
 
-        if (File.Exists(datFilePath)) return FindEntryFromDat(datFilePath, romName);
+        // A .dat deleted between the check and the read, or a corrupt one, must fall
+        // back to XML instead of throwing to the UI (CORE-29). A successful read —
+        // even with no match — returns directly so a miss doesn't pay for a full
+        // XML parse.
+        if (File.Exists(datFilePath))
+        {
+            try
+            {
+                return FindEntryFromDat(datFilePath, romName);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug($"[RomHistoryLoader] Failed to read '{datFilePath}', falling back to XML: {ex.Message}");
+            }
+        }
 
-        return FindEntryFromXml(historyFilePath, romName);
+        try
+        {
+            return FindEntryFromXml(historyFilePath, romName);
+        }
+        catch (Exception ex)
+        {
+            // Missing or unreadable XML means "no entry", not an exception for the UI (CORE-29).
+            Log.Debug($"[RomHistoryLoader] Failed to read '{historyFilePath}': {ex.Message}");
+            return null;
+        }
     }
 
     private static XElement? FindEntryFromDat(string datFilePath, string romName)
@@ -31,7 +54,7 @@ public static class RomHistoryLoader
         var binaryData = File.ReadAllBytes(datFilePath);
         var history = MessagePackSerializer.Deserialize<HistoryData>(binaryData);
 
-        if (history.Entries == null) return null;
+        if (history?.Entries == null) return null;
 
         foreach (var entry in history.Entries)
         {

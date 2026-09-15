@@ -111,7 +111,20 @@ public class MountXisoFiles : IMountXisoFiles
             var contextMessage = $"Error during ISO mount process for {resolvedIsoFilePath}.\nException: {ex.Message}";
             logErrors.Error(ex, contextMessage);
 
-            if (!mountProcess.HasExited)
+            // HasExited throws InvalidOperationException when Start() itself failed
+            // (no process associated) — treat that as "nothing to kill" so the
+            // original error isn't masked (CORE-31).
+            bool hasExited;
+            try
+            {
+                hasExited = mountProcess.HasExited;
+            }
+            catch (InvalidOperationException)
+            {
+                hasExited = true;
+            }
+
+            if (!hasExited)
             {
                 try
                 {

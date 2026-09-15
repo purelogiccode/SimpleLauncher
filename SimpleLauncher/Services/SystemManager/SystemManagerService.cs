@@ -147,8 +147,9 @@ public partial class SystemManagerService : ISystemManager
     {
         // Synchronous facade (used by non-async callers such as MainWindow ctor, EmulatorPathResolver and tests).
         // The lambda is executed on the thread pool so that any internal awaits never capture the UI
-        // SynchronizationContext; a message box, when provided, still marshals back to the UI via its own
-        // dispatcher-invocation, so this can neither deadlock nor freeze the UI.
+        // SynchronizationContext. Dialogs shown from the pool thread run on that thread
+        // (WpfMessageDialogService never hops to the dispatcher), so a UI thread blocked
+        // here cannot deadlock against a pool thread waiting for the UI (WPF-02).
         return Task.Run(() =>
                 LoadSystemManagersInternalAsync(configuration, logErrors, messageBoxLibrary))
             .GetAwaiter().GetResult();

@@ -18,9 +18,17 @@ public class RemoteImage : Image
     public static readonly StyledProperty<string?> UrlProperty =
         AvaloniaProperty.Register<RemoteImage, string?>(nameof(Url));
 
+    private CancellationTokenSource? _loadCts;
+
     static RemoteImage()
     {
         UrlProperty.Changed.AddClassHandler<RemoteImage>(static (image, e) => image.OnUrlChanged(e));
+    }
+
+    public RemoteImage()
+    {
+        // Abort wasted downloads for recycled/scrolled-away items (AV-05).
+        DetachedFromVisualTree += (_, _) => CancelPendingLoad();
     }
 
     /// <summary>
@@ -35,22 +43,61 @@ public class RemoteImage : Image
     private void OnUrlChanged(AvaloniaPropertyChangedEventArgs e)
     {
         var url = e.GetNewValue<string?>();
+        CancelPendingLoad();
+
+        // NOTE: the previous Source is intentionally NOT disposed here: it may be a
+        // loader-cached bitmap shared with other views, and disposing it would poison
+        // the cache and crash those views. Unreferenced bitmaps are reclaimed via the
+        // weak cache/finalization (AV-05).
         Source = RemoteImageLoader.GetCached(url);
 
-        if (string.IsNullOrWhiteSpace(url))
+        if (Source is not null || string.IsNullOrWhiteSpace(url))
             return;
 
-        _ = LoadAsync(url);
+        // Capture the token struct now: the CTS may be disposed by a later URL change
+        // while this load is still in flight (AV-05).
+        var cts = new CancellationTokenSource();
+        _loadCts = cts;
+        _ = LoadAsync(url, cts.Token);
     }
 
-    private async Task LoadAsync(string url)
+    private async Task LoadAsync(string url, CancellationToken token)
     {
-        var bitmap = await RemoteImageLoader.LoadAsync(url);
-
-        // Only apply if the URL is still the current one (fast scrolling / reuse).
-        await Dispatcher.UIThread.InvokeAsync(() =>
+        try
         {
-            if (string.Equals(Url, url, StringComparison.OrdinalIgnoreCase)) Source = bitmap;
-        });
+            var bitmap = await RemoteImageLoader.LoadAsync(url, token).ConfigureAwait(false);
+            if (bitmap is null || token.IsCancellationRequested) return;
+
+            // Only apply if the URL is still the current one (fast scrolling / reuse).
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!token.IsCancellationRequested &&
+                    string.Equals(Url, url, StringComparison.OrdinalIgnoreCase)) Source = bitmap;
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a URL change or detach; expected.
+        }
+        catch (InvalidOperationException)
+        {
+            // Dispatcher shut down mid-load; nothing left to update.
+        }
+    }
+
+    private void CancelPendingLoad()
+    {
+        var cts = Interlocked.Exchange(ref _loadCts, null);
+        if (cts is null) return;
+
+        try
+        {
+            cts.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        cts.Dispose();
     }
 }

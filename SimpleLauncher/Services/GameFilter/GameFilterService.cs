@@ -82,9 +82,15 @@ public partial class GameFilterService : IGameFilterService
 
             if (string.Equals(startLetter, "#", StringComparison.Ordinal))
             {
-                return files.Where(static file => !string.IsNullOrEmpty(file) &&
-                                                  file.Length > 0 &&
-                                                  char.IsDigit(Path.GetFileName(file)[0])).ToList();
+                // Guard the file NAME length, not the path length: "C:\roms\" has a
+                // non-empty path but an empty file name, and [0] would throw (WPF-14).
+                return files.Where(static file =>
+                {
+                    if (string.IsNullOrEmpty(file)) return false;
+
+                    var name = Path.GetFileName(file);
+                    return name.Length > 0 && char.IsDigit(name[0]);
+                }).ToList();
             }
 
             return files.Where(file => !string.IsNullOrEmpty(file) &&

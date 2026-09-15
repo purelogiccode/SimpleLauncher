@@ -9,6 +9,7 @@ namespace SimpleLauncher;
 /// </summary>
 public partial class FlashOverlayWindow : IDisposable
 {
+    private readonly EventHandler _closeRequestedHandler;
     private readonly FlashOverlayViewModel _viewModel;
     private CancellationTokenSource? _cts;
 
@@ -21,15 +22,15 @@ public partial class FlashOverlayWindow : IDisposable
         InitializeComponent();
 
         _viewModel = viewModel;
-        _viewModel.CloseRequested += (_, _) => Close();
+
+        // Named handler so it can be removed on teardown; the anonymous version kept
+        // this window alive via the longer-lived view model (WPF-20).
+        _closeRequestedHandler = (_, _) => Close();
+        _viewModel.CloseRequested += _closeRequestedHandler;
 
         DataContext = _viewModel;
 
-        Closing += (_, _) =>
-        {
-            _cts?.Cancel();
-            Dispose();
-        };
+        Closing += (_, _) => Dispose();
     }
 
     /// <summary>
@@ -37,8 +38,23 @@ public partial class FlashOverlayWindow : IDisposable
     /// </summary>
     public void Dispose()
     {
-        _cts?.Dispose();
-        _cts = null;
+        // Cancel before dispose so an in-flight delay observes cancellation
+        // (OperationCanceledException) instead of disposal (WPF-20).
+        var cts = Interlocked.Exchange(ref _cts, null);
+        if (cts is not null)
+        {
+            try
+            {
+                cts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
+            cts.Dispose();
+        }
+
+        _viewModel.CloseRequested -= _closeRequestedHandler;
         GC.SuppressFinalize(this);
     }
 
@@ -47,7 +63,22 @@ public partial class FlashOverlayWindow : IDisposable
     /// </summary>
     public async Task ShowFlashAsync()
     {
-        _cts = new CancellationTokenSource();
+        // Replace (don't orphan) the previous CTS; a repeat call cancels the earlier
+        // flash, which tolerates the disposal below via its catch filter (WPF-20).
+        var cts = new CancellationTokenSource();
+        var previousCts = Interlocked.Exchange(ref _cts, cts);
+        if (previousCts is not null)
+        {
+            try
+            {
+                previousCts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
+            previousCts.Dispose();
+        }
 
         // Set the window size and position
         Left = 0;
@@ -69,10 +100,11 @@ public partial class FlashOverlayWindow : IDisposable
 
         try
         {
-            // Wait for the animation to complete
-            await Task.Delay(600, _cts.Token);
+            // Wait for the animation to complete. ObjectDisposedException is expected
+            // when a repeat ShowFlashAsync or Dispose retires this call's CTS mid-delay.
+            await Task.Delay(600, cts.Token);
         }
-        catch (OperationCanceledException)
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
         {
             return;
         }

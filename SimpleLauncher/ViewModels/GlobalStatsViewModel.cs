@@ -28,6 +28,10 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _cancellationTokenSource = new();
     private bool _forceClose;
     private GlobalStatsData _globalStats = new();
+
+    // Set once a stats run completes: GlobalStatsData is a class, so a null check cannot
+    // tell "never ran" from "ran" — without this an empty default report could be saved.
+    private bool _hasStats;
     private string _infoText = "";
     private bool _isBusyOverlayVisible;
     private bool _isCancelOverlayVisible;
@@ -71,10 +75,31 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
     /// <summary>Gets the command invoked when the window is closing.</summary>
     public IAsyncRelayCommand<CancelEventArgs?> ClosingCommand { get; }
 
+    private bool _disposed;
+
     /// <summary>Releases resources used by this ViewModel.</summary>
     public void Dispose()
     {
-        _cancellationTokenSource?.Dispose();
+        CancellationTokenSource? cts;
+        lock (_processingLock)
+        {
+            if (_disposed) return;
+
+            _disposed = true;
+            cts = _cancellationTokenSource;
+            _cancellationTokenSource = null;
+        }
+
+        // Cancel first so in-flight work observes cancellation instead of disposal.
+        try
+        {
+            cts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        cts?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -100,16 +125,12 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
     private async Task StartAsync()
     {
-        try
+        CancellationTokenSource currentCts;
+        lock (_processingLock)
         {
-            if (IsProcessing) return;
-
-            if (_systemManagers is null or { Count: 0 })
-            {
-                InfoText = _resourceProvider.GetString("GlobalStatsNoSystems",
-                    "No systems are configured. Please add systems before calculating global statistics.");
-                return;
-            }
+            // Single-flight plus teardown guard: concurrent starts and a racing
+            // Dispose can otherwise use a CTS being disposed (WPF-21).
+            if (IsProcessing || _disposed) return;
 
             IsProcessing = true;
             _forceClose = false;
@@ -119,8 +140,20 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             // ReSharper disable once ConstantConditionalAccessQualifier
             oldCts?.Dispose();
 
+            currentCts = _cancellationTokenSource!;
+        }
+
+        try
+        {
             try
             {
+                if (_systemManagers is null or { Count: 0 })
+                {
+                    InfoText = _resourceProvider.GetString("GlobalStatsNoSystems",
+                        "No systems are configured. Please add systems before calculating global statistics.");
+                    return;
+                }
+
                 IsStartButtonVisible = false;
                 IsSaveButtonVisible = false;
                 IsBusyOverlayVisible = true;
@@ -128,7 +161,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
                 await Task.Yield();
 
-                await ProcessGlobalStatsAsync(_cancellationTokenSource.Token);
+                await ProcessGlobalStatsAsync(currentCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -138,8 +171,10 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "An error occurred while calculating Global Statistics.");
-                if (!_forceClose)
+                // A torn-down VM racing in-flight work is shutdown noise, not a bug.
+                if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics.");
+
+                if (!_forceClose && !_disposed)
                 {
                     try
                     {
@@ -155,9 +190,19 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             }
             finally
             {
-                IsProcessing = false;
-                _cancellationTokenSource?.Dispose();
-                _cancellationTokenSource = null;
+                CancellationTokenSource? ownedCts;
+                lock (_processingLock)
+                {
+                    IsProcessing = false;
+                    // Only clear the field if no newer run or Dispose replaced it.
+                    ownedCts = ReferenceEquals(_cancellationTokenSource, currentCts)
+                        ? _cancellationTokenSource
+                        : null;
+                    if (ownedCts is not null) _cancellationTokenSource = null;
+                }
+
+                // CTS.Dispose is idempotent: safe even if Dispose() already disposed it.
+                ownedCts?.Dispose();
 
                 // Close window if user requested it during processing
                 if (_forceClose) CloseRequested?.Invoke(this, EventArgs.Empty);
@@ -165,7 +210,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An error occurred while calculating Global Statistics.");
+            if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics.");
             ResetUiAfterProcessing();
         }
     }
@@ -177,6 +222,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         _globalStats = CalculateGlobalStats(systemStatsList);
+        _hasStats = true;
         cancellationToken.ThrowIfCancellationRequested();
 
         var dispatcher = Application.Current?.Dispatcher;
@@ -318,7 +364,8 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         return new GlobalStatsData
         {
             TotalSystems = systemStats.Count,
-            TotalEmulators = _systemManagers.Sum(static c => c.Emulators.Count),
+            // Emulators is null-forgiving but can be null at runtime (deserialization skew).
+            TotalEmulators = _systemManagers.Sum(static c => c.Emulators?.Count ?? 0),
             TotalGames = systemStats.Sum(static s => s.NumberOfFiles),
             TotalImages = systemStats.Sum(static s => s.NumberOfImages),
             TotalDiskSize = systemStats.Sum(static s => s.TotalDiskSize),
@@ -352,7 +399,8 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
     private async Task SaveReportAsync()
     {
-        if (_globalStats == null) return;
+        // Gate on _hasStats so an empty default report cannot be saved when stats never ran.
+        if (!_hasStats) return;
 
         var saveFileDialog = new SaveFileDialog
         {
@@ -422,16 +470,32 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             bool needsConfirmation;
             lock (_processingLock)
             {
-                if (!IsProcessing)
+                // Window disposal is owned by the window itself; never Dispose here while
+                // the prompt below may still be awaiting (WPF-21).
+                if (_disposed || !IsProcessing)
                 {
                     // Not processing, allow normal close
-                    Dispose();
                     return;
                 }
 
-                // Processing is active - cancel the close and ask user to confirm
-                e!.Cancel = true;
-                needsConfirmation = true;
+                if (e is null)
+                {
+                    // No event to defer: cancel processing and let the close proceed.
+                    _forceClose = true;
+                    needsConfirmation = false;
+                }
+                else
+                {
+                    // Processing is active - cancel the close and ask user to confirm
+                    e.Cancel = true;
+                    needsConfirmation = true;
+                }
+            }
+
+            if (e is null)
+            {
+                Cancel();
+                return;
             }
 
             if (needsConfirmation)
@@ -439,7 +503,11 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
                 var result = await _messageBox.DoYouWantToCancelAndCloseMessageBoxAsync();
                 if (result == MessageBoxResult.Yes)
                 {
-                    _forceClose = true;
+                    lock (_processingLock)
+                    {
+                        _forceClose = true;
+                    }
+
                     Cancel();
                 }
             }

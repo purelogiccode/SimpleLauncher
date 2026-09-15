@@ -48,6 +48,11 @@ public class FindCoverImageService : IFindCoverImageService
     {
         var imageExtensions = _configuration.GetValue<string[]>("ImageExtensions") ?? [".png", ".jpg", ".jpeg"];
 
+        // ROM-derived name: strip any directory components so "../../evil" cannot
+        // escape the image folder via Path.Combine (CORE-30).
+        fileNameWithoutExtension =
+            Path.GetFileName(fileNameWithoutExtension ?? string.Empty) ?? string.Empty;
+
         string resolvedImageFolder;
         if (string.IsNullOrEmpty(systemImageFolder))
         {
@@ -221,7 +226,9 @@ public class FindCoverImageService : IFindCoverImageService
         var len1 = s1.Length;
         var len2 = s2.Length;
 
-        var matchDistance = Math.Max(len1, len2) / 2 - 1;
+        // Clamp the match window at zero: for 1-char names the raw formula yields -1,
+        // so identical "a"/"a" would score 0.0 (CORE-31).
+        var matchDistance = Math.Max(0, Math.Max(len1, len2) / 2 - 1);
         var matches = 0;
         var s1Matches = new bool[len1];
         var s2Matches = new bool[len2];

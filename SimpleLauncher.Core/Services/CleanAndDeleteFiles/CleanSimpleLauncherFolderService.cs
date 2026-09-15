@@ -253,7 +253,11 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
                 filesToDelete = FilesToDeleteIfCurrentArchitectureIsArm64;
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(currentArchitecture));
+                // Unknown architectures (e.g. X86) have no arch-specific files to
+                // clean; no-op instead of aborting startup cleanup (CORE-31).
+                Log.Debug(
+                    $"[CleanSimpleLauncherFolderService] No arch-specific files to clean for {currentArchitecture}.");
+                return;
         }
 
         foreach (var file in filesToDelete) DeleteFileSafely(file);
@@ -272,7 +276,11 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
                 foldersToDelete = DirectoriesToDeleteIfCurrentArchitectureIsArm64;
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(currentArchitecture));
+                // Unknown architectures (e.g. X86) have no arch-specific folders to
+                // clean; no-op instead of aborting startup cleanup (CORE-31).
+                Log.Debug(
+                    $"[CleanSimpleLauncherFolderService] No arch-specific folders to clean for {currentArchitecture}.");
+                return;
         }
 
         foreach (var folder in foldersToDelete) _deleteFilesService.TryDeleteDirectory(folder);

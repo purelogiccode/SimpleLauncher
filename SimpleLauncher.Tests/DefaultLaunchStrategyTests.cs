@@ -65,7 +65,9 @@ public class DefaultLaunchStrategyTests
         var context = new LaunchContext
         {
             ResolvedFilePath = @"C:\roms\game.bat",
-            EmulatorName = "DOSBox-X"
+            EmulatorName = "DOSBox-X",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -87,7 +89,9 @@ public class DefaultLaunchStrategyTests
         var context = new LaunchContext
         {
             ResolvedFilePath = @"C:\roms\game.lnk",
-            EmulatorName = "Mesen"
+            EmulatorName = "Mesen",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -109,7 +113,9 @@ public class DefaultLaunchStrategyTests
         var context = new LaunchContext
         {
             ResolvedFilePath = @"C:\roms\game.url",
-            EmulatorName = "Mesen"
+            EmulatorName = "Mesen",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -131,7 +137,9 @@ public class DefaultLaunchStrategyTests
         var context = new LaunchContext
         {
             ResolvedFilePath = @"C:\roms\game.exe",
-            EmulatorName = "Mesen"
+            EmulatorName = "Mesen",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -172,7 +180,10 @@ public class DefaultLaunchStrategyTests
             ResolvedFilePath = $@"C:\roms\game{extension}",
             EmulatorName = "Mesen",
             SystemName = "NES",
-            Parameters = "--fullscreen"
+            Parameters = "--fullscreen",
+            SystemManagerService = new Mock<ISystemManager>().Object,
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -199,7 +210,9 @@ public class DefaultLaunchStrategyTests
         var context = new LaunchContext
         {
             ResolvedFilePath = @"C:\roms\GAME.BAT",
-            EmulatorName = "DOSBox-X"
+            EmulatorName = "DOSBox-X",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -221,7 +234,9 @@ public class DefaultLaunchStrategyTests
         var context = new LaunchContext
         {
             ResolvedFilePath = @"C:\roms\Game.Exe",
-            EmulatorName = "Mesen"
+            EmulatorName = "Mesen",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
         };
 
         await strategy.ExecuteAsync(context, launcherMock.Object);
@@ -230,5 +245,66 @@ public class DefaultLaunchStrategyTests
             context.ResolvedFilePath,
             context.EmulatorManager!,
             context.WindowContext!), Times.Once);
+    }
+
+    /// <summary>
+    ///     Verifies that a null EmulatorManager fails with an explicit error instead of a
+    ///     NullReferenceException (CORE-30).
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncNullEmulatorManagerThrowsInvalidOperationException()
+    {
+        var strategy = CreateStrategy();
+        var launcherMock = new Mock<ILauncherService>();
+        var context = new LaunchContext
+        {
+            ResolvedFilePath = @"C:\roms\game.bat",
+            EmulatorName = "DOSBox-X",
+            WindowContext = new Mock<IWindowContext>().Object
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            strategy.ExecuteAsync(context, launcherMock.Object));
+    }
+
+    /// <summary>
+    ///     Verifies that a null WindowContext fails with an explicit error instead of a
+    ///     NullReferenceException (CORE-30).
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncNullWindowContextThrowsInvalidOperationException()
+    {
+        var strategy = CreateStrategy();
+        var launcherMock = new Mock<ILauncherService>();
+        var context = new LaunchContext
+        {
+            ResolvedFilePath = @"C:\roms\game.exe",
+            EmulatorName = "Mesen",
+            EmulatorManager = new Emulator()
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            strategy.ExecuteAsync(context, launcherMock.Object));
+    }
+
+    /// <summary>
+    ///     Verifies that a ROM launch with a null SystemManagerService fails with an explicit
+    ///     error instead of a NullReferenceException (CORE-30).
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsyncNullSystemManagerServiceThrowsInvalidOperationException()
+    {
+        var strategy = CreateStrategy();
+        var launcherMock = new Mock<ILauncherService>();
+        var context = new LaunchContext
+        {
+            ResolvedFilePath = @"C:\roms\game.nes",
+            EmulatorName = "Mesen",
+            EmulatorManager = new Emulator(),
+            WindowContext = new Mock<IWindowContext>().Object
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            strategy.ExecuteAsync(context, launcherMock.Object));
     }
 }

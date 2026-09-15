@@ -67,10 +67,35 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
     /// <summary>Gets the command to save the statistics report to a file.</summary>
     public IAsyncRelayCommand SaveReportCommand { get; }
 
+    private bool _disposed;
+
+    // Set once a stats run completes: GlobalStatsData is a class, so a null check cannot
+    // tell "never ran" from "ran" — without this an empty default report could be saved (AV-10).
+    private bool _hasStats;
+
     /// <summary>Releases resources used by this ViewModel.</summary>
     public void Dispose()
     {
-        _cancellationTokenSource?.Dispose();
+        CancellationTokenSource? cts;
+        lock (_processingLock)
+        {
+            if (_disposed) return;
+
+            _disposed = true;
+            cts = _cancellationTokenSource;
+            _cancellationTokenSource = null;
+        }
+
+        // Cancel first so in-flight work observes cancellation instead of disposal (AV-10).
+        try
+        {
+            cts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        cts?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -96,16 +121,12 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
     private async Task StartAsync()
     {
-        try
+        CancellationTokenSource currentCts;
+        lock (_processingLock)
         {
-            if (IsProcessing) return;
-
-            if (_systemManagers is null or { Count: 0 })
-            {
-                InfoText = _resourceProvider.GetString("GlobalStatsNoSystems",
-                    "No systems are configured. Please add systems before calculating global statistics.");
-                return;
-            }
+            // Single-flight plus teardown guard: concurrent starts and a racing
+            // Dispose can otherwise use a CTS being disposed (AV-10).
+            if (IsProcessing || _disposed) return;
 
             IsProcessing = true;
             _forceClose = false;
@@ -114,8 +135,20 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             var oldCts = Interlocked.Exchange(ref _cancellationTokenSource, new CancellationTokenSource());
             oldCts?.Dispose();
 
+            currentCts = _cancellationTokenSource!;
+        }
+
+        try
+        {
             try
             {
+                if (_systemManagers is null or { Count: 0 })
+                {
+                    InfoText = _resourceProvider.GetString("GlobalStatsNoSystems",
+                        "No systems are configured. Please add systems before calculating global statistics.");
+                    return;
+                }
+
                 IsStartButtonVisible = false;
                 IsSaveButtonVisible = false;
                 IsBusyOverlayVisible = true;
@@ -123,7 +156,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
                 await Task.Yield();
 
-                await ProcessGlobalStatsAsync(_cancellationTokenSource.Token);
+                await ProcessGlobalStatsAsync(currentCts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -133,8 +166,10 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "An error occurred while calculating Global Statistics.");
-                if (!_forceClose)
+                // A torn-down VM racing in-flight work is shutdown noise, not a bug.
+                if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics.");
+
+                if (!_forceClose && !_disposed)
                 {
                     try
                     {
@@ -150,9 +185,19 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
             }
             finally
             {
-                IsProcessing = false;
-                _cancellationTokenSource?.Dispose();
-                _cancellationTokenSource = null;
+                CancellationTokenSource? ownedCts;
+                lock (_processingLock)
+                {
+                    IsProcessing = false;
+                    // Only clear the field if no newer run or Dispose replaced it.
+                    ownedCts = ReferenceEquals(_cancellationTokenSource, currentCts)
+                        ? _cancellationTokenSource
+                        : null;
+                    if (ownedCts is not null) _cancellationTokenSource = null;
+                }
+
+                // CTS.Dispose is idempotent: safe even if Dispose() already disposed it.
+                ownedCts?.Dispose();
 
                 // Close window if user requested it during processing
                 if (_forceClose) CloseRequested?.Invoke(this, EventArgs.Empty);
@@ -160,7 +205,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An error occurred while calculating Global Statistics.");
+            if (!_disposed) _logger.Error(ex, "An error occurred while calculating Global Statistics.");
             ResetUiAfterProcessing();
         }
     }
@@ -172,6 +217,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         _globalStats = CalculateGlobalStats(systemStatsList);
+        _hasStats = true;
         cancellationToken.ThrowIfCancellationRequested();
 
         await Dispatcher.UIThread.InvokeAsync(() =>
@@ -304,7 +350,8 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         return new GlobalStatsData
         {
             TotalSystems = systemStats.Count,
-            TotalEmulators = _systemManagers.Sum(static c => c.Emulators.Count),
+            // Emulators is null-forgiving but can be null at runtime (deserialization skew) (AV-10).
+            TotalEmulators = _systemManagers.Sum(static c => c.Emulators?.Count ?? 0),
             TotalGames = systemStats.Sum(static s => s.NumberOfFiles),
             TotalImages = systemStats.Sum(static s => s.NumberOfImages),
             TotalDiskSize = systemStats.Sum(static s => s.TotalDiskSize),
@@ -338,7 +385,9 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
     private async Task SaveReportAsync()
     {
-        if (_globalStats == null) return;
+        // _globalStats is a class defaulted to new(): a null check can never detect
+        // "stats never ran". Gate on _hasStats so an empty report cannot be saved (AV-10).
+        if (!_hasStats) return;
 
         var savePath = await _filePicker.SaveFileAsync("Save Global Stats Report", "Text documents (.txt)|*.txt");
         if (string.IsNullOrEmpty(savePath)) return;

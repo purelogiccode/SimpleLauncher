@@ -37,7 +37,9 @@ public class RetroAchievementsManager
                 {
                     // The root object in the .dat file is a List<RaGameInfo>,
                     // so we deserialize that directly and wrap it in our manager.
-                    manager.AllGames = MessagePackSerializer.Deserialize<List<RaGameInfo>>(bytes);
+                    // A nil root (version skew) deserializes to null — fall back to empty (CORE-24).
+                    manager.AllGames =
+                        MessagePackSerializer.Deserialize<List<RaGameInfo>>(bytes) ?? [];
                 }
             }
             catch (Exception ex)
@@ -73,10 +75,15 @@ public class RetroAchievementsManager
     private void PopulateHashLookup()
     {
         _hashToGameInfoLookup = new Dictionary<string, RaGameInfo>(StringComparer.OrdinalIgnoreCase);
-        foreach (var game in AllGames)
+        foreach (var game in AllGames ?? [])
         {
+            // Entries from a skewed .dat version may be null or carry a null hash list (CORE-24).
+            if (game?.Hashes == null) continue;
+
             foreach (var hash in game.Hashes)
             {
+                if (string.IsNullOrEmpty(hash)) continue;
+
                 // Add the hash to the dictionary. If a hash maps to multiple games,
                 // we'll just take the first one encountered. This is a simplification.
                 // RetroAchievements API usually handles this by returning the primary game.

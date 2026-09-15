@@ -1,7 +1,7 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services;
 
 namespace SimpleLauncher.Avalonia.ViewModels;
 
@@ -48,13 +48,21 @@ public class ImageViewerViewModel : ObservableObject
     /// <param name="imagePath">The path to the image file.</param>
     public async Task LoadImageFromPathAsync(string? imagePath)
     {
+        // Explicit guard: a null path is "no image", not an exception-driven dialog (AV-01).
+        if (string.IsNullOrWhiteSpace(imagePath))
+        {
+            ReplaceImageSource(null);
+            return;
+        }
+
         try
         {
-            var imageData = await File.ReadAllBytesAsync(imagePath!);
-            await using var ms = new MemoryStream(imageData);
-            var bitmap = Bitmap.DecodeToWidth(ms, 1200);
+            // Decode straight from the file stream: no intermediate byte[] doubling memory (AV-01).
+            await using var fs = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read,
+                bufferSize: 8192, useAsync: true);
+            var bitmap = Bitmap.DecodeToWidth(fs, 1200);
 
-            ImageSource = bitmap;
+            ReplaceImageSource(bitmap);
             ErrorMessage = "";
         }
         catch (Exception ex)
@@ -64,9 +72,9 @@ public class ImageViewerViewModel : ObservableObject
             _logger.Error(ex, contextMessage);
 
             // Notify user
-            await _messageBox.ImageViewerErrorMessageBoxAsync();
+            await ShowLoadErrorAsync();
 
-            ImageSource = null;
+            ReplaceImageSource(null);
         }
     }
 
@@ -74,24 +82,70 @@ public class ImageViewerViewModel : ObservableObject
     ///     Loads an image from a URI (local or web).
     /// </summary>
     /// <param name="imageUri">The URI of the image.</param>
-    public async Task LoadImageFromUri(Uri imageUri)
+    public async Task LoadImageFromUri(Uri? imageUri)
     {
+        if (imageUri is null || !UrlHelper.IsHttpUrl(imageUri.AbsoluteUri))
+        {
+            ReplaceImageSource(null);
+            return;
+        }
+
         try
         {
-            if (imageUri != null)
-            {
-                ImageSource = await RemoteImageLoader.LoadAsync(imageUri.ToString());
-                ErrorMessage = "";
-            }
-            else
-            {
-                ImageSource = null;
-            }
+            // Download a private copy: loader-cached bitmaps are shared with other views
+            // and must never be disposed by ReplaceImageSource (AV-05).
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var imageData = await httpClient.GetByteArrayAsync(imageUri);
+            await using var ms = new MemoryStream(imageData);
+            ReplaceImageSource(Bitmap.DecodeToWidth(ms, 1200));
+            ErrorMessage = "";
         }
         catch (Exception ex)
         {
             _logger.Error(ex, $"Failed to load image from URI in ImageViewerWindow: {imageUri}");
-            ImageSource = null;
+            ReplaceImageSource(null);
+        }
+    }
+
+    /// <summary>
+    ///     Clears the bound image, disposing the previous bitmap.
+    /// </summary>
+    public void ClearImage()
+    {
+        ReplaceImageSource(null);
+    }
+
+    /// <summary>
+    ///     Swaps the bound bitmap, disposing the previous one so native memory is never
+    ///     leaked across loads (AV-01).
+    /// </summary>
+    private void ReplaceImageSource(Bitmap? bitmap)
+    {
+        var old = _imageSource;
+        ImageSource = bitmap;
+        try
+        {
+            old?.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed (e.g. by window teardown racing a load); nothing to do.
+        }
+    }
+
+    /// <summary>
+    ///     Shows the load-error dialog without ever faulting the caller's task, so
+    ///     fire-and-forget callers cannot produce unobserved exceptions.
+    /// </summary>
+    private async Task ShowLoadErrorAsync()
+    {
+        try
+        {
+            await _messageBox.ImageViewerErrorMessageBoxAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to show the image viewer error dialog.");
         }
     }
 }

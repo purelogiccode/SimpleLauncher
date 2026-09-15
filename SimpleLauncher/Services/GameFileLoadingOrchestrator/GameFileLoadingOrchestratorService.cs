@@ -183,7 +183,16 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         }
         finally
         {
-            _host.Dispatcher.Invoke(() => _host.SetLoadingState(false));
+            // BeginInvoke (not Invoke): this finally runs on pool threads and during
+            // close; blocking on a busy/disposed UI thread hangs or throws (WPF-17).
+            try
+            {
+                _ = _host.Dispatcher.BeginInvoke(() => _host.SetLoadingState(false));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+            {
+                _logger.Debug($"[LoadGameFilesAsync] SetLoadingState dropped during shutdown: {ex.Message}");
+            }
         }
     }
 
@@ -195,31 +204,89 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         return _gameCacheService.InvalidateAsync(cancellationToken);
     }
 
+    private readonly Lock _watcherReloadLock = new();
+    private CancellationTokenSource? _watcherReloadCts;
+
     /// <summary>
     ///     Handles file system change notifications for a system by invalidating caches and reloading game files.
+    ///     Invoked as an event handler from the watcher debounce's pool thread (hence async void):
+    ///     the reload itself is marshaled to the UI thread like every other load path, coalesced so
+    ///     overlapping reloads never fight pagination/search, and cancellable (WPF-03).
     /// </summary>
     public async void OnGameFilesChangedAsync(string systemName)
     {
+        CancellationToken token;
+        lock (_watcherReloadLock)
+        {
+            // A newer change supersedes any reload still running from an earlier change.
+            var oldCts = _watcherReloadCts;
+            oldCts?.Cancel();
+            if (oldCts is not null) DisposeCtsAfterGracePeriod(oldCts);
+
+            _watcherReloadCts = new CancellationTokenSource();
+            token = _watcherReloadCts.Token;
+        }
+
         try
         {
-            var currentSystem = _host.SystemComboBox.SelectedItem?.ToString();
-            if (!string.Equals(currentSystem, systemName, StringComparison.OrdinalIgnoreCase))
+            token.ThrowIfCancellationRequested();
+
+            // The load pipeline touches UI controls throughout and is not thread-safe,
+            // so run it on the UI thread exactly like button-initiated loads.
+            var inner = await _host.Dispatcher.InvokeAsync(async () =>
             {
+                token.ThrowIfCancellationRequested();
+
+                var currentSystem = _host.SystemComboBox.SelectedItem?.ToString();
+                if (!string.Equals(currentSystem, systemName, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.Debug(
+                        $"[OnGameFilesChangedAsync] Ignoring change for system '{systemName}' (current: '{currentSystem}').");
+                    return;
+                }
+
                 _logger.Debug(
-                    $"[OnGameFilesChangedAsync] Ignoring change for system '{systemName}' (current: '{currentSystem}').");
-                return;
-            }
+                    $"[OnGameFilesChangedAsync] File change detected for system '{systemName}'. Reloading game list.");
 
-            _logger.Debug(
-                $"[OnGameFilesChangedAsync] File change detected for system '{systemName}'. Reloading game list.");
-
-            await InvalidateGameFileCachesAsync();
-            await LoadGameFilesAsync(cancellationToken: CancellationToken.None);
+                await InvalidateGameFileCachesAsync(token);
+                await LoadGameFilesAsync(cancellationToken: token);
+            });
+            await inner;
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer change or shut down; expected.
+            _logger.Debug($"[OnGameFilesChangedAsync] Reload for system '{systemName}' was superseded.");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+        {
+            // Dispatcher shut down mid-reload; nothing left to update.
+            _logger.Debug($"[OnGameFilesChangedAsync] Reload for system '{systemName}' aborted: {ex.Message}");
         }
         catch (Exception ex)
         {
-            _logger.Debug($"[OnGameFilesChangedAsync] Error reloading game list: {ex.Message}");
+            _logger.Error(ex, $"[OnGameFilesChangedAsync] Error reloading game list for system '{systemName}'.");
         }
+    }
+
+    /// <summary>
+    ///     Disposes a superseded CTS after a grace period instead of inline: the cancelled
+    ///     reload may still hold its token across awaits, where immediate disposal would
+    ///     throw ObjectDisposedException (same pattern as MainWindow.CancelAndRecreateToken).
+    /// </summary>
+    private static void DisposeCtsAfterGracePeriod(CancellationTokenSource cts)
+    {
+        _ = Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(static (_, state) =>
+        {
+            try
+            {
+                ((CancellationTokenSource)state!).Dispose();
+            }
+            catch
+            {
+                // Best effort; the GC reclaims the rest
+            }
+        }, cts, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
 
     /// <summary>
@@ -353,7 +420,10 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
                             var filesInFolder = await _getListOfFiles.GetFilesAsync(resolvedSystemFolderPath,
                                 selectedManager.FileFormatsToSearch, selectedManager.DisableRecursiveSearch,
                                 selectedManager.GroupByFolder, token);
-                            foreach (var file in filesInFolder) uniqueFiles.TryAdd(Path.GetFileName(file), file);
+                            // Key by full path, not file name: two folders may contain
+                            // different dumps with the same name (WPF-07).
+                            foreach (var file in filesInFolder)
+                                uniqueFiles.TryAdd(Path.GetFullPath(file), file);
                         }
 
                         allFiles = uniqueFiles.Values.ToList();
@@ -382,7 +452,9 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
                             var filesInFolder = await _getListOfFiles.GetFilesAsync(resolvedSystemFolderPath,
                                 selectedManager.FileFormatsToSearch, selectedManager.DisableRecursiveSearch,
                                 selectedManager.GroupByFolder, token);
-                            foreach (var file in filesInFolder) uniqueFiles.TryAdd(Path.GetFileName(file), file);
+                            // Key by full path, not file name (see above, WPF-07).
+                            foreach (var file in filesInFolder)
+                                uniqueFiles.TryAdd(Path.GetFullPath(file), file);
                         }
 
                         allFiles = uniqueFiles.Values.ToList();

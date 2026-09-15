@@ -104,7 +104,7 @@ public partial class GameDetailWindow : Window
     ///     Opens the full-size cover in the ImageViewerWindow (parity with the WPF
     ///     "Open Cover" context-menu action).
     /// </summary>
-    private void CoverImage_PointerPressed(object? sender, PointerPressedEventArgs e)
+    private async void CoverImage_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         try
         {
@@ -112,7 +112,7 @@ public partial class GameDetailWindow : Window
 
             var viewer = App.ServiceProvider.GetRequiredService<ImageViewerWindow>();
             viewer.LoadImagePath(_game.CoverPath);
-            viewer.ShowDialog(this);
+            await viewer.ShowDialog(this);
         }
         catch (Exception ex)
         {

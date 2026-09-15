@@ -278,12 +278,12 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
     {
         if (_disposed) return;
 
-        _downloadManager.DownloadProgressChanged -= DownloadManager_ProgressChanged;
-        _downloadManager?.Dispose();
-        _manager?.Dispose();
-        _easyModeManager?.Dispose();
-
         _disposed = true;
+
+        // Unsubscribe only: _downloadManager and _easyModeManager are injected DI
+        // dependencies, not owned by this window. Disposing them here breaks the next
+        // open when the container hands out a shared instance (WPF-08).
+        _downloadManager.DownloadProgressChanged -= DownloadManager_ProgressChanged;
     }
 
     /// <summary>
@@ -293,19 +293,33 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
     /// <param name="message">Optional message to display on the loading overlay.</param>
     public void SetLoadingState(bool isLoading, string? message = null)
     {
-        Dispatcher.Invoke(() =>
+        // BeginInvoke (not Invoke): callers include background continuations and
+        // close-time finally blocks; blocking here deadlocks on reentrancy and throws
+        // once the window is disposed or the dispatcher shuts down (WPF-17).
+        if (_disposed) return;
+
+        try
         {
-            LoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
-
-            // Ensure the main content area is disabled to prevent Tab-key navigation
-            MainContentGrid?.IsEnabled = !isLoading;
-
-            if (isLoading)
+            Dispatcher.BeginInvoke(() =>
             {
-                LoadingOverlay.Content =
-                    message ?? (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-            }
-        });
+                if (_disposed) return;
+
+                LoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+
+                // Ensure the main content area is disabled to prevent Tab-key navigation
+                MainContentGrid?.IsEnabled = !isLoading;
+
+                if (isLoading)
+                {
+                    LoadingOverlay.Content =
+                        message ?? (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+                }
+            });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+        {
+            Log.Debug($"EasyModeWindow SetLoadingState dropped during shutdown: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -367,7 +381,28 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        // Properties are set from download continuations on pool threads: marshal to the
+        // UI thread like MainWindow does, or bindings throw cross-thread (WPF-12).
+        if (_disposed) return;
+
+        if (Dispatcher.CheckAccess())
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        else
+        {
+            try
+            {
+                Dispatcher.BeginInvoke(() =>
+                {
+                    if (!_disposed) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+                });
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+            {
+                Log.Debug($"EasyModeWindow OnPropertyChanged dropped during shutdown: {ex.Message}");
+            }
+        }
     }
 
     private async void EasyModeWindowLoadedAsync(object sender, RoutedEventArgs e)
@@ -1376,10 +1411,16 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
         try
         {
             _playSoundEffects.PlayNotificationSound();
-            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri)
+
+            // Allowlist http(s) only: hyperlink URIs must never reach a shell handler (WPF-04).
+            if (!UrlHelper.TryOpenHttpUrlInBrowser(e.Uri.AbsoluteUri))
             {
-                UseShellExecute = true
-            });
+                _logger.Information($"Blocked non-web or unloadable hyperlink: {e.Uri.AbsoluteUri}");
+                await _messageBox.CouldNotOpenTheDownloadLinkMessageBoxAsync();
+                e.Handled = true;
+                return;
+            }
+
             e.Handled = true;
         }
         catch (Exception ex)

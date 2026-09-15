@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Interfaces;
@@ -326,7 +327,15 @@ public class SettingsManagerService : IDisposable
         {
             try
             {
-                settings = XElement.Load(_fileLocation.FilePath);
+                // Harden against XXE: prohibit DTDs and external resolution, matching
+                // SystemConfigurationWriterService and EasyModeManager (CORE-27).
+                var readerSettings = new XmlReaderSettings
+                {
+                    DtdProcessing = DtdProcessing.Prohibit,
+                    XmlResolver = null
+                };
+                using var reader = XmlReader.Create(_fileLocation.FilePath, readerSettings);
+                settings = XElement.Load(reader);
             }
             catch (Exception ex)
             {

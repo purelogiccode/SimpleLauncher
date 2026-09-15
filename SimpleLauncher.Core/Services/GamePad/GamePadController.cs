@@ -111,7 +111,7 @@ public class GamePadController : IDisposable
 
         _inputSimulator = new InputSimulator();
         _mouseSimulator = _inputSimulator.Mouse;
-        _timer = new Timer(_ => UpdateAsync(), null, Timeout.Infinite, Timeout.Infinite);
+        _timer = new Timer(OnTimerTick, null, Timeout.Infinite, Timeout.Infinite);
     }
 
     /// <summary>
@@ -292,7 +292,22 @@ public class GamePadController : IDisposable
         }
     }
 
-    private async void UpdateAsync()
+    /// <summary>
+    ///     Timer callback. Must stay synchronous <c>void</c> (TimerCallback signature);
+    ///     it forwards to <see cref="UpdateAsync" /> fire-and-forget. All exceptions are
+    ///     already observed inside <see cref="UpdateAsync" />, so the task cannot fault
+    ///     unobserved — the continuation below is a backstop for future regressions (CORE-10).
+    /// </summary>
+    private void OnTimerTick(object? state)
+    {
+        _ = UpdateAsync().ContinueWith(static (t, s) =>
+        {
+            if (t.IsFaulted && s is GamePadController self)
+                self._logger.Error(t.Exception, "Error in method UpdateAsync (timer backstop)");
+        }, this, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+    }
+
+    private async Task UpdateAsync()
     {
         try
         {

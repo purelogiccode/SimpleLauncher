@@ -58,8 +58,22 @@ public partial class DownloadImagePackWindow : Window, IDisposable
         }
     }
 
+    // Set once the pre-close routine has run: the re-entrant Close() below then proceeds.
+    private bool _closeConfirmed;
+
     private async void CloseWindowRoutineAsync(object? sender, WindowClosingEventArgs e)
     {
+        if (_closeConfirmed)
+        {
+            Dispose();
+            return;
+        }
+
+        // No deferral on this event: cancel the close, await the in-flight save/cancel
+        // routine first, then re-close. Closing immediately would dispose the
+        // DownloadManager/scope while the routine still uses them (AV-08).
+        e.Cancel = true;
+
         try
         {
             await _viewModel.CloseWindowRoutineAsync();
@@ -71,6 +85,16 @@ public partial class DownloadImagePackWindow : Window, IDisposable
         finally
         {
             Dispose();
+        }
+
+        _closeConfirmed = true;
+        try
+        {
+            Close();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error re-closing DownloadImagePackWindow after pre-close routine.");
         }
     }
 

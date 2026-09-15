@@ -17,8 +17,7 @@ public class WpfMessageDialogService : IMessageDialogService
         const System.Windows.MessageBoxButton wpfButtons = System.Windows.MessageBoxButton.OK;
         const System.Windows.MessageBoxImage wpfIcon = (System.Windows.MessageBoxImage)(int)MessageBoxImage.Information;
 
-        Application.Current.Dispatcher.Invoke(() =>
-            System.Windows.MessageBox.Show(message, title, wpfButtons, wpfIcon));
+        ShowOnCallingThread(message, title, wpfButtons, wpfIcon);
 
         return Task.CompletedTask;
     }
@@ -29,8 +28,7 @@ public class WpfMessageDialogService : IMessageDialogService
         const System.Windows.MessageBoxButton wpfButtons = System.Windows.MessageBoxButton.OK;
         const System.Windows.MessageBoxImage wpfIcon = (System.Windows.MessageBoxImage)(int)MessageBoxImage.Warning;
 
-        Application.Current.Dispatcher.Invoke(() =>
-            System.Windows.MessageBox.Show(message, title, wpfButtons, wpfIcon));
+        ShowOnCallingThread(message, title, wpfButtons, wpfIcon);
 
         return Task.CompletedTask;
     }
@@ -41,8 +39,7 @@ public class WpfMessageDialogService : IMessageDialogService
         const System.Windows.MessageBoxButton wpfButtons = System.Windows.MessageBoxButton.OK;
         const System.Windows.MessageBoxImage wpfIcon = (System.Windows.MessageBoxImage)(int)MessageBoxImage.Error;
 
-        Application.Current.Dispatcher.Invoke(() =>
-            System.Windows.MessageBox.Show(message, title, wpfButtons, wpfIcon));
+        ShowOnCallingThread(message, title, wpfButtons, wpfIcon);
 
         return Task.CompletedTask;
     }
@@ -75,9 +72,22 @@ public class WpfMessageDialogService : IMessageDialogService
         var wpfButtons = (System.Windows.MessageBoxButton)(int)buttons;
         var wpfIcon = (System.Windows.MessageBoxImage)(int)icon;
 
-        var wpfResult = Application.Current.Dispatcher.Invoke(() =>
-            System.Windows.MessageBox.Show(message, title, wpfButtons, wpfIcon));
+        var wpfResult = ShowOnCallingThread(message, title, wpfButtons, wpfIcon);
 
         return (MessageBoxResult)(int)wpfResult;
+    }
+
+    /// <summary>
+    ///     Shows a Win32 message box on the calling thread. Win32 MessageBox pumps its own
+    ///     modal loop and is thread-agnostic, so no dispatcher hop is needed — and none is
+    ///     safe: marshaling via <c>Dispatcher.Invoke</c> deadlocks when the UI thread is
+    ///     blocked in a sync-over-async wait (e.g. <c>SystemManagerService.LoadSystemManagers</c>
+    ///     from the MainWindow ctor) while the pool thread needs the UI for the dialog (WPF-02).
+    ///     On the UI thread this behaves exactly as before.
+    /// </summary>
+    private static System.Windows.MessageBoxResult ShowOnCallingThread(string message, string title,
+        System.Windows.MessageBoxButton buttons, System.Windows.MessageBoxImage icon)
+    {
+        return System.Windows.MessageBox.Show(message, title, buttons, icon);
     }
 }

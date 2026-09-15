@@ -135,7 +135,12 @@ public class App : Application, IDisposable
             var gamePadController = ServiceProvider?.GetService<GamePadController>();
             if (gamePadController is not null)
             {
-                _ = gamePadController.StopAsync();
+                // Observe faults but don't block: Dispose would destroy the controller
+                // while an awaited StopAsync is still in flight (AV-11).
+                _ = gamePadController.StopAsync().ContinueWith(static t =>
+                {
+                    if (t.IsFaulted) Log.Debug(t.Exception, "Failed to stop the gamepad controller on shutdown.");
+                }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
                 gamePadController.Dispose();
             }
         }

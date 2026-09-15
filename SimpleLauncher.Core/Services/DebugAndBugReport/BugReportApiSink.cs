@@ -35,6 +35,7 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     });
 
     private readonly CancellationTokenSource _cts = new();
+    private readonly Lock _disposeLock = new();
     private IConfiguration _configuration = null!;
     private IDeleteFilesService _deleteFilesService = null!;
     private bool _disposed;
@@ -66,9 +67,34 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (_disposed) return;
+        lock (_disposeLock)
+        {
+            if (_disposed) return;
 
-        _disposed = true;
+            _disposed = true;
+        }
+
+        // Stop accepting new events and let the consumer drain what is already
+        // queued, then exit its read loop cleanly (CORE-14).
+        _channel.Writer.TryComplete();
+
+        try
+        {
+            // Wait for the consumer — including in-flight uploads, each bounded by
+            // their own 30s timeout — so reports are not orphaned mid-upload.
+            // The wait is bounded so shutdown can never hang forever.
+            // (_processTask is null when Initialize was never called.)
+            _processTask?.Wait(TimeSpan.FromSeconds(35));
+        }
+        catch (AggregateException ex) when (ex.InnerExceptions.All(static e => e is OperationCanceledException))
+        {
+            // Cancellation during shutdown is expected.
+        }
+        catch (Exception)
+        {
+            // Shutdown must never throw.
+        }
+
         _cts.Cancel();
         _cts.Dispose();
     }
@@ -79,6 +105,8 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     /// <param name="logEvent">The log event to emit.</param>
     public void Emit(LogEvent logEvent)
     {
+        if (_disposed) return;
+
         if (logEvent.Level < LogEventLevel.Warning) return;
 
         _channel.Writer.TryWrite(logEvent);
@@ -114,17 +142,24 @@ public class BugReportApiSink : ILogEventSink, IDisposable
 
     private async Task ProcessQueueAsync(CancellationToken cancellationToken)
     {
-        while (await _channel.Reader.WaitToReadAsync(cancellationToken))
+        try
         {
-            while (_channel.Reader.TryRead(out var logEvent))
-                try
-                {
-                    await SendReportAsync(logEvent);
-                }
-                catch
-                {
-                    WriteCriticalError(logEvent);
-                }
+            while (await _channel.Reader.WaitToReadAsync(cancellationToken))
+            {
+                while (_channel.Reader.TryRead(out var logEvent))
+                    try
+                    {
+                        await SendReportAsync(logEvent);
+                    }
+                    catch
+                    {
+                        WriteCriticalError(logEvent);
+                    }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutdown via Dispose; the channel completion path above is the normal exit.
         }
     }
 
@@ -139,11 +174,14 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         var apiKey = AppConstants.GetApiKey();
         if (string.IsNullOrEmpty(apiKey)) return;
 
+        // Config-controlled file names are reduced to bare file names so an absolute
+        // path or ".." escape in configuration cannot redirect writes outside the
+        // log folder (CORE-18).
         var errorLogPath = Path.Combine(_logFolder,
-            _configuration.GetValue<string>("LogPathForAdmin") ?? "error.log");
+            GetSafeLogFileName(_configuration.GetValue<string>("LogPathForAdmin"), "error.log"));
 
         var userLogPath = Path.Combine(_logFolder,
-            _configuration.GetValue<string>("LogPath") ?? "error_user.log");
+            GetSafeLogFileName(_configuration.GetValue<string>("LogPath"), "error_user.log"));
 
         if (errorLogPath != null)
         {
@@ -171,7 +209,8 @@ public class BugReportApiSink : ILogEventSink, IDisposable
                 stackTrace = BuildStackTrace(logEvent)
             };
 
-            var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            using var jsonContent =
+                new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var apiUrl = _configuration.GetValue<string>("BugReportApiUrl") ??
@@ -197,12 +236,26 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         }
     }
 
+    /// <summary>
+    ///     Reduces a config-controlled log file value to a bare file name confined to the
+    ///     log folder. Absolute paths and directory components (including ".." escapes)
+    ///     are stripped; blank results fall back to <paramref name="fallback" /> (CORE-18).
+    /// </summary>
+    private static string GetSafeLogFileName(string? configuredValue, string fallback)
+    {
+        var name = string.IsNullOrWhiteSpace(configuredValue)
+            ? fallback
+            : Path.GetFileName(configuredValue.Trim());
+
+        return string.IsNullOrWhiteSpace(name) ? fallback : name;
+    }
+
     private void WriteCriticalError(LogEvent logEvent)
     {
         try
         {
             var criticalLogPath = Path.Combine(_logFolder,
-                _configuration?.GetValue<string>("LogPathCritical") ?? "critical_error.log");
+                GetSafeLogFileName(_configuration?.GetValue<string>("LogPathCritical"), "critical_error.log"));
             var report = BuildReport(logEvent) +
                          "\n--------------------------------------------------------------------------------------------------------------\n\n\n";
 

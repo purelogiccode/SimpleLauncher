@@ -206,13 +206,14 @@ public class EasyModeManager : IDisposable
 
     private async Task<EasyModeManager?> LoadFromApiAsync()
     {
+        // Get cache duration from configuration (default to 60 minutes)
+        var cacheDurationMinutes =
+            _configuration.GetValue("EasyModeCacheDurationMinutes", DefaultCacheDurationMinutes);
+
+        // Fast path: serve valid cached data while holding the lock only for the check.
         await CacheLock.WaitAsync();
         try
         {
-            // Get cache duration from configuration (default to 60 minutes)
-            var cacheDurationMinutes =
-                _configuration.GetValue("EasyModeCacheDurationMinutes", DefaultCacheDurationMinutes);
-
             // Check if we have valid cached data
             if (_apiCache.Manager != null &&
                 DateTime.UtcNow - _apiCache.Timestamp < TimeSpan.FromMinutes(cacheDurationMinutes))
@@ -221,23 +222,33 @@ public class EasyModeManager : IDisposable
                     $"Returning EasyMode configuration from session cache (valid for {cacheDurationMinutes} minutes).");
                 return _apiCache.Manager;
             }
-
-            // Cache miss or expired, fetch from API
-            _logger.Debug("EasyMode session cache miss or expired. Fetching from API...");
-            var manager = await FetchFromApiAsync();
-
-            if (manager is { Systems.Count: > 0 })
-            {
-                _apiCache = (manager, DateTime.UtcNow);
-                _logger.Debug("EasyMode configuration fetched from API and cached for session.");
-            }
-
-            return manager;
         }
         finally
         {
             CacheLock.Release();
         }
+
+        // Cache miss or expired: fetch WITHOUT holding the global lock so concurrent
+        // callers never serialize on 30s of network I/O (CORE-22). Concurrent fetches
+        // may overlap; last write wins the cache, which is harmless (same endpoint).
+        _logger.Debug("EasyMode session cache miss or expired. Fetching from API...");
+        var manager = await FetchFromApiAsync();
+
+        if (manager is { Systems.Count: > 0 })
+        {
+            await CacheLock.WaitAsync();
+            try
+            {
+                _apiCache = (manager, DateTime.UtcNow);
+                _logger.Debug("EasyMode configuration fetched from API and cached for session.");
+            }
+            finally
+            {
+                CacheLock.Release();
+            }
+        }
+
+        return manager;
     }
 
     private async Task<EasyModeManager?> FetchFromApiAsync()
@@ -251,11 +262,11 @@ public class EasyModeManager : IDisposable
 
             // Use a CancellationToken with a timeout (30 seconds to accommodate users with slower connections or VPN)
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var response = await client.GetAsync($"api/Systems/{platformConfigurationId}", cts.Token);
+            using var response = await client.GetAsync($"api/Systems/{platformConfigurationId}", cts.Token);
 
             response.EnsureSuccessStatusCode();
 
-            var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+            await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
             var systems =
                 await JsonSerializer.DeserializeAsync<List<EasyModeSystemConfig>>(stream, JsonOptions, cts.Token);
 
@@ -339,7 +350,7 @@ public class EasyModeManager : IDisposable
 
             // Use a CancellationToken with a timeout (30 seconds)
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var response = await client.GetAsync(fallbackUrl, cts.Token);
+            using var response = await client.GetAsync(fallbackUrl, cts.Token);
 
             response.EnsureSuccessStatusCode();
 

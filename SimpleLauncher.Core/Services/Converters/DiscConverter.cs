@@ -110,7 +110,6 @@ public class DiscConverter : IDiscConverter
         catch (Exception ex)
         {
             _logger.Error(ex, "[ConvertChdToIso] Error converting CHD to ISO.");
-            _logger.Error(ex, "[ConvertChdToIso] Error converting CHD to ISO.");
             return null;
         }
     }
@@ -199,7 +198,6 @@ public class DiscConverter : IDiscConverter
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[ConvertChdToCueBin] Error converting CHD to CUE/BIN.");
             _logger.Error(ex, "[ConvertChdToCueBin] Error converting CHD to CUE/BIN.");
             return null;
         }
@@ -354,7 +352,6 @@ public class DiscConverter : IDiscConverter
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO.");
             _logger.Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO.");
             return null;
         }

@@ -18,10 +18,17 @@ public partial class AboutWindow : Window
         InitializeComponent();
 
         viewModel.CloseRequested += (_, _) => Close();
-        viewModel.OpenUpdateHistoryRequested += (_, _) =>
+        viewModel.OpenUpdateHistoryRequested += async (_, _) =>
         {
-            var updateHistoryWindow = App.ServiceProvider.GetRequiredService<UpdateHistoryWindow>();
-            updateHistoryWindow.ShowDialog(this);
+            try
+            {
+                var updateHistoryWindow = App.ServiceProvider.GetRequiredService<UpdateHistoryWindow>();
+                await updateHistoryWindow.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to open update history window");
+            }
         };
         viewModel.GetOwnerWindow = () => this;
 

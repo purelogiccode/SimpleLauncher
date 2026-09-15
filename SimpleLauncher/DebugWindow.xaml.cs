@@ -38,50 +38,57 @@ public partial class DebugWindow
     /// </summary>
     internal static void Initialize()
     {
+        DebugWindow window;
         lock (InstanceLock)
         {
             if (Instance != null)
             {
-                Instance.Show();
-                Instance.WindowState = WindowState.Normal;
-                Instance.Activate();
-                return;
+                window = Instance;
             }
-
-            var viewModel = App.ServiceProvider.GetRequiredService<DebugViewModel>();
-
-            var window = new DebugWindow
+            else
             {
-                _viewModel = viewModel,
-                DataContext = viewModel
-            };
+                var viewModel = App.ServiceProvider.GetRequiredService<DebugViewModel>();
 
-            // NOTE: deliberately NOT setting window.Owner. An owned window is pinned above
-            // its owner by Win32, which made the debug window float permanently in front of
-            // the main window and other apps' windows. Keep it a normal top-level window.
-
-            PropertyChangedEventHandler logTextPropertyChangedHandler = (_, args) =>
-            {
-                if (string.Equals(args.PropertyName, nameof(DebugViewModel.LogText), StringComparison.Ordinal))
+                var created = new DebugWindow
                 {
-                    if (Instance is { IsLoaded: true } debugWindow)
+                    _viewModel = viewModel,
+                    DataContext = viewModel
+                };
+
+                // NOTE: deliberately NOT setting window.Owner. An owned window is pinned above
+                // its owner by Win32, which made the debug window float permanently in front of
+                // the main window and other apps' windows. Keep it a normal top-level window.
+
+                PropertyChangedEventHandler logTextPropertyChangedHandler = (_, args) =>
+                {
+                    if (string.Equals(args.PropertyName, nameof(DebugViewModel.LogText), StringComparison.Ordinal))
                     {
-                        debugWindow.Dispatcher.BeginInvoke(() =>
+                        if (Instance is { IsLoaded: true } debugWindow)
                         {
-                            if (debugWindow.IsLoaded) debugWindow.LogTextBox?.ScrollToEnd();
-                        });
+                            debugWindow.Dispatcher.BeginInvoke(() =>
+                            {
+                                if (debugWindow.IsLoaded) debugWindow.LogTextBox?.ScrollToEnd();
+                            });
+                        }
                     }
-                }
-            };
+                };
 
-            viewModel.PropertyChanged += logTextPropertyChangedHandler;
+                // Subscribed exactly once per window lifetime; ShutdownWindow unsubscribes
+                // before teardown so recreates never stack handlers (WPF-18).
+                viewModel.PropertyChanged += logTextPropertyChangedHandler;
 
-            window._viewModel = viewModel;
-            window._logTextPropertyChangedHandler = logTextPropertyChangedHandler;
-            Instance = window;
-
-            Instance.Show();
+                created._viewModel = viewModel;
+                created._logTextPropertyChangedHandler = logTextPropertyChangedHandler;
+                Instance = created;
+                window = created;
+            }
         }
+
+        // Show outside the lock: Show() pumps window messages, and any reentrant code
+        // must be able to take InstanceLock (System.Threading.Lock is non-reentrant) (WPF-18).
+        window.Show();
+        window.WindowState = WindowState.Normal;
+        window.Activate();
     }
 
     /// <summary>

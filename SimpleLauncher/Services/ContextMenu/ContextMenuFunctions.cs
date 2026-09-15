@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CleanAndDeleteFiles;
 using SimpleLauncher.Core.Services.GameItemFactory;
 using SimpleLauncher.Core.Services.GamePad;
@@ -213,13 +214,26 @@ public class ContextMenuFunctions : IContextMenuFunctions
 
         var searchUrl = $"{settings.VideoUrl}{Uri.EscapeDataString($"{searchTerm} {systemName}")}";
 
+        // The URL prefix comes from an editable setting: allowlist http(s) before it can
+        // reach a shell handler (WPF-05).
+        if (!UrlHelper.IsHttpUrl(searchUrl))
+        {
+            logErrors.Information($"Blocked non-web video URL (check the VideoUrl setting): {searchUrl}");
+            mainWindow.UpdateStatusBarService.UpdateContent(
+                (string)Application.Current.TryFindResource("ErrorOpeningVideoLink") ?? "Error opening video link.");
+            await messageBox.ErrorOpeningVideoLinkMessageBoxAsync();
+            return;
+        }
+
         try
         {
-            Process.Start(new ProcessStartInfo
+            using (Process.Start(new ProcessStartInfo
+                   {
+                       FileName = searchUrl,
+                       UseShellExecute = true
+                   }))
             {
-                FileName = searchUrl,
-                UseShellExecute = true
-            });
+            }
         }
         // Catch Win32Exception specifically for "No application associated" error
         catch (Win32Exception ex) when (ex.Message.Contains("No hay ninguna aplicación asociada",
@@ -266,13 +280,26 @@ public class ContextMenuFunctions : IContextMenuFunctions
 
         var searchUrl = $"{settings.InfoUrl}{Uri.EscapeDataString($"{searchTerm} {systemName}")}";
 
+        // The URL prefix comes from an editable setting: allowlist http(s) before it can
+        // reach a shell handler (WPF-05).
+        if (!UrlHelper.IsHttpUrl(searchUrl))
+        {
+            logErrors.Information($"Blocked non-web info URL (check the InfoUrl setting): {searchUrl}");
+            mainWindow.UpdateStatusBarService.UpdateContent(
+                (string)Application.Current.TryFindResource("ErrorOpeningInfoLink") ?? "Error opening info link.");
+            await messageBox.ProblemOpeningInfoLinkMessageBoxAsync();
+            return;
+        }
+
         try
         {
-            Process.Start(new ProcessStartInfo
+            using (Process.Start(new ProcessStartInfo
+                   {
+                       FileName = searchUrl,
+                       UseShellExecute = true
+                   }))
             {
-                FileName = searchUrl,
-                UseShellExecute = true
-            });
+            }
         }
         // Catch Win32Exception specifically for "No application associated" error
         catch (Win32Exception ex) when (ex.Message.Contains("No hay ninguna aplicación asociada",

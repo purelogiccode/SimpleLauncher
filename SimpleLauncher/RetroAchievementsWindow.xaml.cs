@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Services.RetroAchievements;
@@ -78,11 +79,20 @@ public partial class RetroAchievementsWindow : ILoadingState
     /// <param name="message">Optional message to display while loading.</param>
     public void SetLoadingState(bool isLoading, string? message = null)
     {
-        Dispatcher.Invoke(() =>
+        // BeginInvoke (not Invoke): loaders run on background threads and close-time
+        // callers may race disposal; never block here (WPF-17).
+        try
         {
-            LoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
-            if (isLoading) LoadingOverlay.Content = message;
-        });
+            Dispatcher.BeginInvoke(() =>
+            {
+                LoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+                if (isLoading) LoadingOverlay.Content = message;
+            });
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+        {
+            Log.Debug($"RetroAchievementsWindow SetLoadingState dropped during shutdown: {ex.Message}");
+        }
     }
 
     private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -136,13 +146,21 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
     }
 
+    // Marks the load generation: only the latest overlapping load may hide the
+    // shared overlay in its finally (WPF-09).
+    private int _loadGeneration;
+
     private async Task LoadUserProfileAsync()
     {
+        var generation = Interlocked.Increment(ref _loadGeneration);
+
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent(
             (string)Application.Current.TryFindResource("FetchingUserProfile") ?? "Fetching user profile...");
         SetLoadingState(true);
 
-        await _viewModel.LoadUserProfileAsync();
+        try
+        {
+            await _viewModel.LoadUserProfileAsync();
 
         // Toggle overlays
         UserProfilePanel.Visibility = _viewModel.NoProfileVisible ? Visibility.Collapsed : Visibility.Visible;
@@ -152,7 +170,6 @@ public partial class RetroAchievementsWindow : ILoadingState
         {
             NoProfileMainMessage.Text = _viewModel.NoProfileMainMessage;
             NoProfileSubMessage.Text = _viewModel.NoProfileSubMessage;
-            SetLoadingState(false);
             return;
         }
 
@@ -184,22 +201,33 @@ public partial class RetroAchievementsWindow : ILoadingState
 
         // Bind recently played games
         UserProfileRecentlyPlayed.ItemsSource = _viewModel.RecentlyPlayedGames;
-
-        SetLoadingState(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading RetroAchievements user profile.");
+        }
+        finally
+        {
+            if (generation == Volatile.Read(ref _loadGeneration)) SetLoadingState(false);
+        }
     }
 
     private async Task LoadUnlocksByDateAsync()
     {
+        var generation = Interlocked.Increment(ref _loadGeneration);
+
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent(
             (string)Application.Current.TryFindResource("FetchingEarnedAchievementsByDate") ??
             "Fetching earned achievements by date...");
         SetLoadingState(true);
 
-        // Sync DatePickers with ViewModel
-        FromDatePicker.SelectedDate = _viewModel.FromDate;
-        ToDatePicker.SelectedDate = _viewModel.ToDate;
+        try
+        {
+            // Sync DatePickers with ViewModel
+            FromDatePicker.SelectedDate = _viewModel.FromDate;
+            ToDatePicker.SelectedDate = _viewModel.ToDate;
 
-        await _viewModel.LoadUnlocksByDateAsync();
+            await _viewModel.LoadUnlocksByDateAsync();
 
         // Bind unlocks data
         UnlocksDataGrid.ItemsSource = _viewModel.Unlocks;
@@ -213,8 +241,15 @@ public partial class RetroAchievementsWindow : ILoadingState
         if (_viewModel.NoUnlocksVisible) NoUnlocksMessage.Text = _viewModel.NoUnlocksMessage;
 
         FetchUnlocksButton.IsEnabled = _viewModel.FetchUnlocksEnabled;
-
-        SetLoadingState(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading RetroAchievements unlocks by date.");
+        }
+        finally
+        {
+            if (generation == Volatile.Read(ref _loadGeneration)) SetLoadingState(false);
+        }
     }
 
     private async void FetchUnlocksClickAsync(object sender, RoutedEventArgs e)
@@ -267,33 +302,50 @@ public partial class RetroAchievementsWindow : ILoadingState
 
     private async Task LoadUserProgressAsync()
     {
+        var generation = Interlocked.Increment(ref _loadGeneration);
+
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent(
             (string)Application.Current.TryFindResource("FetchingUserCompletionProgress") ??
             "Fetching user completion progress...");
         SetLoadingState(true);
 
-        await _viewModel.LoadUserProgressAsync();
-
-        // Bind user progress data
-        UserProgressDataGrid.ItemsSource = _viewModel.UserProgress;
-
-        // Toggle overlay
-        NoUserProgressOverlay.Visibility = _viewModel.NoUserProgressVisible ? Visibility.Visible : Visibility.Collapsed;
-        if (_viewModel.NoUserProgressVisible)
+        try
         {
-            NoUserProgressMainMessage.Text = _viewModel.NoUserProgressMainMessage;
-            NoUserProgressSubMessage.Text = _viewModel.NoUserProgressSubMessage;
-        }
+            await _viewModel.LoadUserProgressAsync();
 
-        SetLoadingState(false);
+            // Bind user progress data
+            UserProgressDataGrid.ItemsSource = _viewModel.UserProgress;
+
+            // Toggle overlay
+            NoUserProgressOverlay.Visibility = _viewModel.NoUserProgressVisible ? Visibility.Visible : Visibility.Collapsed;
+            if (_viewModel.NoUserProgressVisible)
+            {
+                NoUserProgressMainMessage.Text = _viewModel.NoUserProgressMainMessage;
+                NoUserProgressSubMessage.Text = _viewModel.NoUserProgressSubMessage;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error loading RetroAchievements user progress.");
+        }
+        finally
+        {
+            if (generation == Volatile.Read(ref _loadGeneration)) SetLoadingState(false);
+        }
     }
 
-    private async void OpenUrlInBrowserAsync(string url)
+    private async Task OpenUrlInBrowserAsync(string url)
     {
         try
         {
             _playSoundEffects.PlayNotificationSound();
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+
+            // Allowlist http(s) only: profile URLs must never reach a shell handler (WPF-04).
+            if (!UrlHelper.TryOpenHttpUrlInBrowser(url))
+            {
+                _logger.Information($"Blocked non-web or unloadable URL: {url}");
+                await _messageBox.UnableToOpenLinkMessageBoxAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -302,10 +354,11 @@ public partial class RetroAchievementsWindow : ILoadingState
         }
     }
 
-    private void ViewProfileOnRaButton_Click(object sender, RoutedEventArgs e)
+    private async void ViewProfileOnRaButton_Click(object sender, RoutedEventArgs e)
     {
         var url = _viewModel.GetProfileUrl();
-        if (!string.IsNullOrWhiteSpace(url)) OpenUrlInBrowserAsync(url);
+        // Awaited: dropping the Task would leave Process.Start failures unobserved (WPF-10).
+        if (!string.IsNullOrWhiteSpace(url)) await OpenUrlInBrowserAsync(url);
     }
 
     private void OpenRaSettings_Click(object sender, RoutedEventArgs e)

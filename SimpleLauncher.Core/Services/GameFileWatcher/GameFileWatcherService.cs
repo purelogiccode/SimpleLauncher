@@ -13,8 +13,14 @@ public sealed class GameFileWatcherService : IDisposable
     private readonly Lock _lock = new();
     private readonly ILogger _logger;
     private readonly Dictionary<FileSystemWatcher, WatcherTag> _watchers = new();
-    private CancellationTokenSource? _debounceCts = new();
-    private bool _disposed;
+    private CancellationTokenSource? _debounceCts;
+    private volatile bool _disposed;
+
+    // Bumped every time the pending debounce is cancelled or replaced.
+    // The delayed task only raises GameFilesChanged when its captured generation
+    // is still current, so a debounce can never fire after StopWatching/Dispose (CORE-13).
+    // Guarded by _lock.
+    private int _debounceGeneration;
 
     /// <summary>
     ///     Initializes a new instance of <see cref="GameFileWatcherService" />.
@@ -36,9 +42,12 @@ public sealed class GameFileWatcherService : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (_disposed) return;
+        lock (_lock)
+        {
+            if (_disposed) return;
 
-        _disposed = true;
+            _disposed = true;
+        }
 
         StopWatching();
     }
@@ -151,9 +160,12 @@ public sealed class GameFileWatcherService : IDisposable
             }
 
             _watchers.Clear();
+
+            // Cancel while still holding _lock so a concurrent OnFileChanged cannot
+            // publish a new debounce between the clear and the cancel (CORE-13).
+            CancelPendingDebounceLocked();
         }
 
-        CancelPendingDebounce();
         _logger.Debug("[GameFileWatcherService] Stopped all watchers.");
     }
 
@@ -189,45 +201,95 @@ public sealed class GameFileWatcherService : IDisposable
 
     private void OnWatcherError(object sender, ErrorEventArgs e)
     {
-        _logger.Debug($"[GameFileWatcherService] Watcher error: {e.GetException().Message}");
+        // GetException() is null for buffer-overflow notifications — never dereference it (CORE-12).
+        var message = e.GetException()?.Message ?? "unknown error (no exception details)";
+        _logger.Debug($"[GameFileWatcherService] Watcher error: {message}");
     }
 
     private void DebounceAndRaiseEvent(string systemName)
     {
+        CancellationToken token;
+        int generation;
+        TimeSpan delay;
+
         lock (_lock)
         {
-            CancelPendingDebounce();
+            if (_disposed) return;
+
+            CancelPendingDebounceLocked();
 
             var cts = new CancellationTokenSource();
             _debounceCts = cts;
-            var token = cts.Token;
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(DebounceDelay, token);
-
-                    if (!token.IsCancellationRequested)
-                    {
-                        _logger.Debug(
-                            $"[GameFileWatcherService] Debounce complete. Raising GameFilesChanged for system '{systemName}'.");
-                        GameFilesChanged?.Invoke(this, new EventArgs<string>(systemName));
-                    }
-                }
-                catch (TaskCanceledException)
-                {
-                    // Expected when debounce is reset by another file change
-                }
-            }, token);
+            token = cts.Token;
+            generation = ++_debounceGeneration;
+            delay = DebounceDelay;
         }
+
+        // Run outside _lock: the delay outlives the file event, and invoking
+        // subscriber handlers under the lock would risk deadlocks.
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(delay, token);
+
+                lock (_lock)
+                {
+                    // Suppress stale debounces: cancelled, superseded by a newer change,
+                    // or orphaned by StopWatching/Dispose (CORE-13).
+                    if (_disposed || token.IsCancellationRequested || generation != _debounceGeneration)
+                        return;
+                }
+
+                _logger.Debug(
+                    $"[GameFileWatcherService] Debounce complete. Raising GameFilesChanged for system '{systemName}'.");
+                GameFilesChanged?.Invoke(this, new EventArgs<string>(systemName));
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when debounce is reset by another file change
+            }
+            catch (ObjectDisposedException)
+            {
+                // Expected when the CTS is disposed by StopWatching/Dispose mid-delay.
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"[GameFileWatcherService] Debounce task failed: {ex.Message}");
+            }
+        }, CancellationToken.None);
     }
 
     private void CancelPendingDebounce()
     {
-        var oldCts = Interlocked.Exchange(ref _debounceCts, null);
-        // ReSharper disable once ConstantConditionalAccessQualifier
-        oldCts?.Cancel();
+        lock (_lock)
+        {
+            CancelPendingDebounceLocked();
+        }
+    }
+
+    /// <summary>
+    ///     Cancels and disposes the pending debounce. Caller must hold <see cref="_lock" />
+    ///     (System.Threading.Lock is non-reentrant, so this never locks itself).
+    /// </summary>
+    private void CancelPendingDebounceLocked()
+    {
+        // Invalidate any in-flight debounce task before cancelling, so it can never
+        // raise GameFilesChanged after this point even if the cancel lands late (CORE-13).
+        _debounceGeneration++;
+
+        var oldCts = _debounceCts;
+        _debounceCts = null;
+
+        try
+        {
+            oldCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed; nothing to cancel.
+        }
+
         oldCts?.Dispose();
     }
 

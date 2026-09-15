@@ -203,6 +203,10 @@ public static partial class PathHelper
         string basePath;
         var remainingPath = path;
 
+        // Inputs anchored at the app directory (placeholder or relative) must resolve
+        // inside it; explicitly absolute paths are the caller's responsibility (CORE-17).
+        var mustStayInAppDirectory = true;
+
         if (path.StartsWith(BaseFolderPlaceholder, StringComparison.OrdinalIgnoreCase))
         {
             basePath = AppDomain.CurrentDomain.BaseDirectory;
@@ -212,6 +216,7 @@ public static partial class PathHelper
         else if (Path.IsPathRooted(path))
         {
             basePath = "";
+            mustStayInAppDirectory = false;
         }
         else
         {
@@ -221,7 +226,17 @@ public static partial class PathHelper
         try
         {
             var combinedPath = Path.Combine(basePath, remainingPath);
-            return Path.GetFullPath(combinedPath);
+            var fullPath = Path.GetFullPath(combinedPath);
+
+            if (mustStayInAppDirectory &&
+                !IsPathContainedInBaseFolder(fullPath, AppDomain.CurrentDomain.BaseDirectory))
+            {
+                Log.Debug(
+                    $"[PathHelper] Rejected path '{path}': resolves outside the application directory.");
+                return null;
+            }
+
+            return fullPath;
         }
         catch (Exception ex)
         {
@@ -242,6 +257,11 @@ public static partial class PathHelper
     /// <returns>The absolute path of the log file.</returns>
     public static string ResolveLogFilePath(string? logFileName)
     {
+        if (string.IsNullOrWhiteSpace(logFileName)) logFileName = "error_user.log";
+
+        // Config-controlled value: strip any directory components so an absolute path
+        // or ".." escape cannot redirect the log file outside the data folder (CORE-18).
+        logFileName = Path.GetFileName(logFileName.Trim());
         if (string.IsNullOrWhiteSpace(logFileName)) logFileName = "error_user.log";
 
         return Path.Combine(
@@ -351,6 +371,18 @@ public static partial class PathHelper
         if (string.IsNullOrWhiteSpace(path) ||
             path.StartsWith(@"\\?\", StringComparison.OrdinalIgnoreCase) ||
             path.StartsWith(@"\\.\", StringComparison.OrdinalIgnoreCase))
+        {
+            return path;
+        }
+
+        // The \\?\ prefix is only valid on fully-qualified absolute paths. Prefixing a
+        // relative path (e.g. "images\default.png") produces an invalid path that makes
+        // File.Exists return false, so relative paths are returned untouched (CORE-16).
+        try
+        {
+            if (!Path.IsPathFullyQualified(path)) return path;
+        }
+        catch
         {
             return path;
         }

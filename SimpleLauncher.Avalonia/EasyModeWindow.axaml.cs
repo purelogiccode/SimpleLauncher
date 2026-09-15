@@ -40,7 +40,18 @@ public partial class EasyModeWindow : Window, IDisposable
             if (string.Equals(args.PropertyName, nameof(EasyModeViewModel.IsLoading),
                     StringComparison.OrdinalIgnoreCase))
             {
-                LoadingOverlay.IsVisible = _viewModel.IsLoading;
+                // IsLoading can be set from background tasks: marshal to the UI thread (AV-06).
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    LoadingOverlay.IsVisible = _viewModel.IsLoading;
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (!_disposed) LoadingOverlay.IsVisible = _viewModel.IsLoading;
+                    });
+                }
             }
         };
         _viewModel.PropertyChanged += _onViewModelPropertyChanged;

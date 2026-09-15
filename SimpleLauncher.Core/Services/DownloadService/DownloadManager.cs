@@ -23,6 +23,11 @@ public class DownloadManager : IDisposable
     private readonly HttpClient _httpClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly Lock _lock = new();
+
+    // Serializes DownloadFileAsync so a second call cannot Reset/dispose the
+    // CancellationTokenSource while a first download is still using it (CORE-08).
+    // Only one download owns the shared CTS and the shared status flags at a time.
+    private readonly SemaphoreSlim _downloadGate = new(1, 1);
     private readonly ILogger _logger;
     private readonly IResourceProvider _resourceProvider;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -132,6 +137,15 @@ public class DownloadManager : IDisposable
 
         _httpClient?.Dispose();
 
+        try
+        {
+            _downloadGate.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignore - already disposed.
+        }
+
         GC.SuppressFinalize(this);
     }
 
@@ -199,12 +213,26 @@ public class DownloadManager : IDisposable
     /// <returns>The path to the downloaded file, or null if the download failed.</returns>
     internal async Task<string?> DownloadFileAsync(string downloadUrl, string? fileName = null)
     {
-        // Reset the cancellation token source at the beginning of every download attempt.
-        ResetCancellationToken();
+        // Serialize downloads so a second call can never Reset/dispose the shared
+        // CancellationTokenSource while a first download still owns its token (CORE-08).
+        try
+        {
+            await _downloadGate.WaitAsync();
+        }
+        catch (ObjectDisposedException)
+        {
+            throw new ObjectDisposedException(nameof(DownloadManager));
+        }
 
-        IsDownloadCompleted = false;
-        IsUserCancellation = false;
-        IsFileLockedDuringDownload = false;
+        try
+        {
+            // Reset the cancellation token source at the beginning of every download attempt.
+            // Safe here: the gate guarantees no other download is using the old CTS.
+            ResetCancellationToken();
+
+            IsDownloadCompleted = false;
+            IsUserCancellation = false;
+            IsFileLockedDuringDownload = false;
 
         // Determine a safe file name confined to TempFolder (CORE-05).
         // Both the caller-supplied fileName and the URL-derived name are untrusted:
@@ -233,7 +261,7 @@ public class DownloadManager : IDisposable
         switch (diskSpaceCheckResult)
         {
             case false:
-                OnProgressChanged(new DownloadProgressEventArgs
+                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
                 {
                     ProgressPercentage = 0,
                     StatusMessage = GetResourceString("InsufficientdiskspaceinSimpleLauncherHDD",
@@ -241,7 +269,7 @@ public class DownloadManager : IDisposable
                 });
                 throw new IOException("Insufficient disk space in 'Simple Launcher' HDD.");
             case null:
-                OnProgressChanged(new DownloadProgressEventArgs
+                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
                 {
                     ProgressPercentage = 0,
                     StatusMessage = GetResourceString("CannotCheckDiskSpace",
@@ -299,7 +327,7 @@ public class DownloadManager : IDisposable
                 }
 
                 var delay = RetryBaseDelayMs * (int)Math.Pow(2, currentRetry - 1);
-                OnProgressChanged(new DownloadProgressEventArgs
+                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
                 {
                     ProgressPercentage = 0,
                     StatusMessage = $"Download error. Retrying ({currentRetry}/{RetryMaxAttempts})..."
@@ -316,7 +344,19 @@ public class DownloadManager : IDisposable
             }
         }
 
-        return null;
+            return null;
+        }
+        finally
+        {
+            try
+            {
+                _downloadGate.Release();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Manager was disposed while the download was finishing; nothing to release.
+            }
+        }
     }
 
 
@@ -429,7 +469,7 @@ public class DownloadManager : IDisposable
                     ? $"{FormatFileSize.FormatToHumanReadable(totalBytesRead)} of {FormatFileSize.FormatToHumanReadable(totalBytes.Value)}"
                     : $"{FormatFileSize.FormatToHumanReadable(totalBytesRead)}";
 
-                OnProgressChanged(new DownloadProgressEventArgs
+                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
                 {
                     BytesReceived = totalBytesRead,
                     TotalBytesToReceive = totalBytes,
@@ -445,7 +485,7 @@ public class DownloadManager : IDisposable
         if (!totalBytes.HasValue || totalBytesRead >= totalBytes.Value)
         {
             IsDownloadCompleted = true;
-            OnProgressChanged(new DownloadProgressEventArgs
+            await RaiseProgressChangedAsync(new DownloadProgressEventArgs
             {
                 BytesReceived = totalBytesRead,
                 TotalBytesToReceive = totalBytes,
@@ -566,10 +606,30 @@ public class DownloadManager : IDisposable
 
     /// <summary>
     ///     Raises the DownloadProgressChanged event.
+    ///     NOTE: invoked on the caller's thread. Download-path callers must go through
+    ///     <see cref="RaiseProgressChangedAsync" /> so UI subscribers always run on the
+    ///     dispatcher thread (CORE-09). ExtractFileAsync already marshals explicitly.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected virtual void OnProgressChanged(DownloadProgressEventArgs e)
     {
         DownloadProgressChanged?.Invoke(this, e);
+    }
+
+    /// <summary>
+    ///     Marshals a progress event to the UI dispatcher thread (CORE-09).
+    ///     Progress reporting is best-effort: a dispatcher failure (e.g. shutdown)
+    ///     must never fail the download itself, so it is logged and swallowed.
+    /// </summary>
+    private async Task RaiseProgressChangedAsync(DownloadProgressEventArgs e)
+    {
+        try
+        {
+            await _dispatcherService.InvokeAsync(() => OnProgressChanged(e));
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[DownloadManager] Progress dispatch failed: {ex.Message}");
+        }
     }
 }
