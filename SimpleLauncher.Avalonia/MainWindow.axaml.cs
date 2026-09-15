@@ -1412,10 +1412,25 @@ public partial class MainWindow : Window, IPaginationHost
         {
             if (OperatingSystem.IsWindows())
             {
+                // AV-14: FilePath originates from scanned game files and may contain
+                // double quotes. Strip quoting/control characters so a crafted path
+                // cannot break out of the /select:"..." argument and inject extra
+                // explorer.exe arguments.
+                var sanitizedPath = (game.FilePath ?? "")
+                    .Replace("\"", "", StringComparison.Ordinal)
+                    .Replace("\r", "", StringComparison.Ordinal)
+                    .Replace("\n", "", StringComparison.Ordinal);
+                if (string.IsNullOrWhiteSpace(sanitizedPath))
+                {
+                    ShowToast(_localization.GetString("Context.ShowInFolder", "Show in Folder"),
+                        _localization.GetString("Foldernotfound", "Folder not found."));
+                    return;
+                }
+
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "explorer.exe",
-                    Arguments = $"/select,\"{game.FilePath}\"",
+                    Arguments = $"/select,\"{sanitizedPath}\"",
                     UseShellExecute = true
                 });
             }
@@ -2824,13 +2839,16 @@ public partial class MainWindow : Window, IPaginationHost
 
     // ── Donate / AppData / Exit ──
 
-    private void Donate_Click(object? sender, RoutedEventArgs e)
+    private async void Donate_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
             var configuration = App.ServiceProvider.GetRequiredService<IConfiguration>();
             var url = configuration.GetValue<string>("Urls:DonationPage") ?? "https://www.purelogiccode.com/Donate/";
-            Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            // AV-15: config-controlled URL — validate the scheme and open via the
+            // cross-platform launcher instead of assuming Windows shell-execute.
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, GetTopLevel(this)))
+                Log.Error("Unable to open the donation link from the menu: invalid or unreachable URL.");
         }
         catch (Exception ex)
         {
@@ -2838,7 +2856,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private void OpenAppDataPath_Click(object? sender, RoutedEventArgs e)
+    private async void OpenAppDataPath_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -2849,7 +2867,10 @@ public partial class MainWindow : Window, IPaginationHost
                 return;
             }
 
-            Process.Start(new ProcessStartInfo { FileName = appDataPath, UseShellExecute = true });
+            // AV-15: open via the cross-platform launcher (shell-execute throws on
+            // Linux); the helper falls back to shell-execute where appropriate.
+            if (!await ExternalLinkHelper.TryOpenFolderAsync(appDataPath, GetTopLevel(this)))
+                Log.Error("Unable to open the AppData folder: {Path}", appDataPath);
         }
         catch (Exception ex)
         {

@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Microsoft.Extensions.DependencyInjection;
+using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
 
@@ -65,11 +65,19 @@ public partial class RetroAchievementsSettingsWindow : Window
         OpenControlPanel("https://retroachievements.org/controlpanel.php");
     }
 
-    private static void OpenControlPanel(string url)
+    private void OpenControlPanel(string url)
+    {
+        _ = OpenControlPanelAsync(url);
+    }
+
+    private async Task OpenControlPanelAsync(string url)
     {
         try
         {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            // AV-15: validate the http(s) scheme and open via the cross-platform
+            // launcher instead of assuming Windows shell-execute.
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, TopLevel.GetTopLevel(this)))
+                Log.Debug("Failed to open RetroAchievements control panel: invalid or unreachable URL.");
         }
         catch (Exception ex)
         {

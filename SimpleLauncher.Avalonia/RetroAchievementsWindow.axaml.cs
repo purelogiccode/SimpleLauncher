@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Microsoft.Extensions.DependencyInjection;
@@ -248,7 +247,13 @@ public partial class RetroAchievementsWindow : Window
         try
         {
             _playSoundEffects.PlayNotificationSound();
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            // AV-15: validate the http(s) scheme and open via the cross-platform
+            // launcher instead of assuming Windows shell-execute.
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, TopLevel.GetTopLevel(this)))
+            {
+                _logger.Error("Unable to open URL: invalid or unreachable URL.");
+                await _messageBox.UnableToOpenLinkMessageBoxAsync();
+            }
         }
         catch (Exception ex)
         {

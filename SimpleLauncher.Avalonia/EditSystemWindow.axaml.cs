@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -254,10 +253,10 @@ public partial class EditSystemWindow : Window
                 }
 
                 var resolvedSystemFolder = PathHelper.ResolveRelativeToAppDirectory(SystemFolderTextBox.Text);
-                TryCreateDefaultFolder(resolvedSystemFolder, Path.Combine(".", "roms", SystemNameTextBox.Text));
+                TryCreateDefaultFolder(resolvedSystemFolder, Path.Combine(".", "roms", GetSafeSystemFileName()));
 
                 var resolvedSystemImageFolder = PathHelper.ResolveRelativeToAppDirectory(SystemImageFolderTextBox.Text);
-                TryCreateDefaultFolder(resolvedSystemImageFolder, Path.Combine(".", "images", SystemNameTextBox.Text));
+                TryCreateDefaultFolder(resolvedSystemImageFolder, Path.Combine(".", "images", GetSafeSystemFileName()));
 
                 UpdateSystemImagePreview();
 
@@ -342,6 +341,16 @@ public partial class EditSystemWindow : Window
             return;
         }
 
+        // Defense in depth (AV-13): only ever auto-create folders inside the app
+        // directory, even if a crafted system name slipped into the default pattern.
+        var appBase = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory);
+        var fullTarget = Path.GetFullPath(resolvedCurrentPath);
+        if (!fullTarget.StartsWith(appBase + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.Error("Refusing to auto-create folder outside the app directory: {Path}", resolvedCurrentPath);
+            return;
+        }
+
         try
         {
             Directory.CreateDirectory(resolvedCurrentPath);
@@ -350,6 +359,32 @@ public partial class EditSystemWindow : Window
         {
             _logger.Error(ex, "Unable to create default folder: {Path}", resolvedCurrentPath);
         }
+    }
+
+    /// <summary>
+    ///     Returns the system name sanitized for use as a file/folder name segment.
+    ///     Prevents directory traversal (AV-13): raw <c>SystemNameTextBox.Text</c> must
+    ///     never be passed to <c>Path.Combine</c>, since values like <c>../../evil</c>
+    ///     or rooted paths would escape <c>images/systems</c> (and the default
+    ///     <c>roms/</c> / <c>images/</c> patterns).
+    /// </summary>
+    private string GetSafeSystemFileName()
+    {
+        return SanitizeInputSystemName.SanitizeFolderName(SystemNameTextBox.Text?.Trim() ?? "");
+    }
+
+    /// <summary>
+    ///     Resolves <c>images/systems/&lt;systemName&gt;&lt;ext&gt;</c> and returns
+    ///     <c>null</c> when the resolved path would escape the images directory.
+    /// </summary>
+    private static string? TryResolveSystemImagePath(string imagesSystemsDir, string safeSystemName, string extension)
+    {
+        var candidate = Path.GetFullPath(Path.Combine(imagesSystemsDir, $"{safeSystemName}{extension}"));
+        var baseDirFull = Path.GetFullPath(imagesSystemsDir);
+        if (!candidate.StartsWith(baseDirFull + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return candidate;
     }
 
     // ── Add / Delete / Close ──────────────────────────────────────────
@@ -709,7 +744,16 @@ public partial class EditSystemWindow : Window
             {
                 if (!Directory.Exists(imagesSystemsDir)) Directory.CreateDirectory(imagesSystemsDir);
 
-                var destFilePath = Path.Combine(imagesSystemsDir, $"{systemName}{extension}");
+                var safeSystemName = GetSafeSystemFileName();
+                var destFilePath = TryResolveSystemImagePath(imagesSystemsDir, safeSystemName, extension);
+                if (destFilePath is null)
+                {
+                    _logger.Error("Refusing to copy system image outside the images directory for system name: {SystemName}",
+                        systemName);
+                    await _messageBox.FailedToCopySystemImageMessageBoxAsync(systemName);
+                    return;
+                }
+
                 SystemImagePreview.Source = null; // Release any file lock before overwriting
 
                 const int maxRetries = 3;
@@ -760,10 +804,11 @@ public partial class EditSystemWindow : Window
 
         if (!string.IsNullOrEmpty(systemName))
         {
+            var safeSystemName = GetSafeSystemFileName();
             foreach (var ext in new[] { ".png", ".jpg", ".jpeg" })
             {
-                var path = Path.Combine(imagesSystemsDir, $"{systemName}{ext}");
-                if (File.Exists(path))
+                var path = TryResolveSystemImagePath(imagesSystemsDir, safeSystemName, ext);
+                if (path is not null && File.Exists(path))
                 {
                     imagePath = path;
                     break;
@@ -797,17 +842,11 @@ public partial class EditSystemWindow : Window
             _playSoundEffects.PlayNotificationSound();
             var searchUrl = _configuration.GetValue<string>("WikiParametersUrl")
                             ?? "https://github.com/purelogiccode/SimpleLauncher/wiki/parameters/";
-            try
+            // AV-15: config-controlled URL — validate the scheme and open via the
+            // cross-platform launcher instead of assuming Windows shell-execute.
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(searchUrl, TopLevel.GetTopLevel(this)))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = searchUrl,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error in method HelpLink_ClickAsync");
+                _logger.Error("Unable to open help URL: invalid or unreachable URL.");
                 await _messageBox.ErrorOpeningUrlMessageBoxAsync();
             }
         }
