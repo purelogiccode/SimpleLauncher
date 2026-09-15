@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using SimpleLauncher.Core;
 using SimpleLauncher.Core.Services;
 
@@ -293,11 +294,79 @@ public partial class MainWindow
             }
 
             await _menuOrchestrator.HandleButtonSizeAsync(newSize);
+            SyncCardSizeSlider();
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error in the method ButtonSizeClickAsync");
         }
+    }
+
+    /// <summary>
+    ///     Debounce interval (milliseconds) of the top-bar card size slider: the game list
+    ///     is reloaded once after the user stops dragging instead of on every value change.
+    /// </summary>
+    private const int CardSizeSliderDebounceMilliseconds = 350;
+
+    private DispatcherTimer? _cardSizeSliderDebounceTimer;
+
+    /// <summary>
+    ///     Slider twin of the "Set Button Size" menu: resizes the game buttons once the
+    ///     user stops dragging. The actual resize runs through the same menu orchestrator
+    ///     path so settings, check marks and the status bar stay in sync.
+    /// </summary>
+    private void ButtonSizeSliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_cardSizeSliderDebounceTimer is null)
+        {
+            _cardSizeSliderDebounceTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(CardSizeSliderDebounceMilliseconds)
+            };
+            _cardSizeSliderDebounceTimer.Tick += CardSizeSliderDebounceTimerTick;
+        }
+
+        // Restart the debounce on every change, then skip the reload when the slider
+        // already matches the applied size (startup and programmatic syncs).
+        _cardSizeSliderDebounceTimer.Stop();
+
+        var size = (int)Math.Round(e.NewValue);
+        if (size == _settings.ThumbnailSize) return;
+
+        _cardSizeSliderDebounceTimer.Start();
+    }
+
+    private async void CardSizeSliderDebounceTimerTick(object? sender, EventArgs e)
+    {
+        try
+        {
+            _cardSizeSliderDebounceTimer?.Stop();
+
+            try
+            {
+                var newSize = (int)Math.Round(CardSizeSlider.Value);
+                if (newSize == _settings.ThumbnailSize) return;
+
+                await _menuOrchestrator.HandleButtonSizeAsync(newSize);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in the method CardSizeSliderDebounceTimerTick");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error in the method CardSizeSliderDebounceTimerTick");
+        }
+    }
+
+    /// <summary>
+    ///     Keeps the slider handle in sync when the thumbnail size changes elsewhere
+    ///     (Set Button Size menu, zoom buttons, Ctrl+Mouse wheel).
+    /// </summary>
+    private void SyncCardSizeSlider()
+    {
+        CardSizeSlider.Value = _settings.ThumbnailSize;
     }
 
     private async void ButtonAspectRatioClickAsync(object sender, RoutedEventArgs e)
@@ -639,6 +708,7 @@ public partial class MainWindow
         try
         {
             await _menuOrchestrator.HandleZoomInAsync();
+            SyncCardSizeSlider();
         }
         catch (OperationCanceledException)
         {
@@ -654,6 +724,7 @@ public partial class MainWindow
         try
         {
             await _menuOrchestrator.HandleZoomOutAsync();
+            SyncCardSizeSlider();
         }
         catch (OperationCanceledException)
         {

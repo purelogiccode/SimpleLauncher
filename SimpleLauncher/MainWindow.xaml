@@ -956,6 +956,7 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel x:Name="LetterNumberMenu"
@@ -1079,6 +1080,37 @@
                                         <Image Source="pack://application:,,,/images/sort-az.png" Width="27"
                                                Height="27" AutomationProperties.Name="{DynamicResource SortAzIcon}" />
                                     </Button>
+
+                                    <!-- Slider twin of the "Set Button Size" menu (game thumbnail size) -->
+                                    <StackPanel
+                                        Grid.Row="1"
+                                        Grid.RowSpan="2"
+                                        Grid.Column="7"
+                                        Margin="8,10,0,0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        ToolTip="{DynamicResource TooltipButtonSizeMenu}"
+                                        AutomationProperties.Name="{DynamicResource SetButtonSize}">
+                                        <TextBlock
+                                            Text="◉"
+                                            FontSize="10"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource MahApps.Brushes.Gray5}" />
+                                        <Slider
+                                            x:Name="CardSizeSlider"
+                                            Width="80"
+                                            Minimum="50"
+                                            Maximum="800"
+                                            Margin="4,0"
+                                            VerticalAlignment="Center"
+                                            ValueChanged="ButtonSizeSliderValueChanged"
+                                            AutomationProperties.HelpText="{DynamicResource TooltipButtonSizeMenu}" />
+                                        <TextBlock
+                                            Text="○"
+                                            FontSize="10"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource MahApps.Brushes.Gray5}" />
+                                    </StackPanel>
                                 </Grid>
                             </Border>
 

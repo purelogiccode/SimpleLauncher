@@ -185,6 +185,7 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
         // Load and Apply _settings
         ToggleGamepad.IsChecked = _settings.EnableGamePadNavigation;
         _menuOrchestrator.UpdateThumbnailSizeCheckMarks(_settings.ThumbnailSize);
+        CardSizeSlider.Value = _settings.ThumbnailSize;
         _menuOrchestrator.UpdateButtonAspectRatioCheckMarks(_settings.ButtonAspectRatio);
         _menuOrchestrator.UpdateNumberOfGamesPerPageCheckMarks(_settings.GamesPerPage);
         _menuOrchestrator.UpdateShowGamesCheckMarks(_settings.ShowGames);
@@ -649,9 +650,11 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
                     {
                         case > 0:
                             await _menuOrchestrator.HandleZoomInAsync();
+                            SyncCardSizeSlider();
                             break;
                         case < 0:
                             await _menuOrchestrator.HandleZoomOutAsync();
+                            SyncCardSizeSlider();
                             break;
                     }
 
