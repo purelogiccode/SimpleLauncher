@@ -305,10 +305,10 @@ public class AvaloniaHelpUserService
         { "Zeebo", "Zeebo" }
     };
 
-    private static readonly Regex HeadingRegex = new(@"^##\s*(.*?)$", RegexOptions.Multiline | RegexOptions.Compiled | RegexOptions.ExplicitCapture,
+    private static readonly Regex HeadingRegex = new(@"^##\s*(?<text>.*?)$", RegexOptions.Multiline | RegexOptions.Compiled | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 
-    private static readonly Regex BoldRegex = new(@"\*\*(.*?)\*\*", RegexOptions.Compiled | RegexOptions.ExplicitCapture,
+    private static readonly Regex BoldRegex = new(@"\*\*(?<text>.*?)\*\*", RegexOptions.Compiled | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 
     private static readonly Regex MarkdownLinkRegex = new(@"\[(?<text>[^\]]+?)\]\((?<url>https?://\S+?)\)",
@@ -370,7 +370,7 @@ public class AvaloniaHelpUserService
         // "## Heading" to "**Heading**" so Markdown.Avalonia renders it as bold like WPF's
         // FlowDocument (WPF HeadingRegex -> **bold**). Keeps **bold**, [text](url) and raw URLs intact.
         var text = GetSystemDetails(canonicalName).Replace("<br>", string.Empty, StringComparison.Ordinal);
-        return HeadingRegex.Replace(text, static m => $"**{m.Groups[1].Value.Trim()}**");
+        return HeadingRegex.Replace(text, static m => $"**{m.Groups["text"].Value.Trim()}**");
     }
 
     /// <summary>
@@ -404,7 +404,7 @@ public class AvaloniaHelpUserService
 
         // WPF parity: strip <br> already done in GetHelpText, but keep for direct calls
         text = text.Replace("<br>", string.Empty, StringComparison.Ordinal);
-        text = HeadingRegex.Replace(text, static m => $"**{m.Groups[1].Value.Trim()}**");
+        text = HeadingRegex.Replace(text, static m => $"**{m.Groups["text"].Value.Trim()}**");
 
         var matches = new List<(Match Match, string Type)>();
         foreach (Match m in BoldRegex.Matches(text)) matches.Add((m, "bold"));
@@ -424,7 +424,7 @@ public class AvaloniaHelpUserService
 
             if (string.Equals(type, "bold", StringComparison.OrdinalIgnoreCase))
             {
-                var value = match.Groups[1].Value;
+                var value = match.Groups["text"].Value;
                 var bold = new Bold();
                 bold.Inlines.Add(new Run(value));
                 inlines.Add(bold);

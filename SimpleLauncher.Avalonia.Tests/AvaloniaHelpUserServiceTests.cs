@@ -147,6 +147,35 @@ public class AvaloniaHelpUserServiceTests
     }
 
     [Fact]
+    public void UpdateHelpTextBlock_PreservesBoldAndHeadingText()
+    {
+        HeadlessAvalonia.EnsureInitialized();
+        var service = CreateService();
+        var textBlock = HeadlessAvalonia.RunOnUiThread(() => new SelectableTextBlock { Width = 480 });
+
+        HeadlessAvalonia.RunOnUiThread(() => service.UpdateHelpTextBlock(textBlock, "Microsoft Windows"));
+
+        HeadlessAvalonia.RunOnUiThread(() =>
+        {
+            var inlines = textBlock.Inlines!;
+            var text = inlines.Text ?? string.Empty;
+
+            // parameters.md wraps placeholders/labels in **bold**: a captured-group regression
+            // previously swallowed the inner text and dropped every bold/heading segment.
+            Assert.Contains("%BASEFOLDER%", text);
+            Assert.Contains("System Folder (Example):", text);
+            Assert.Contains("Emulator Name:", text);
+            Assert.DoesNotContain("****", text);
+
+            var boldTexts = inlines.OfType<Bold>()
+                .SelectMany(bold => bold.Inlines.OfType<Run>())
+                .Select(run => run.Text)
+                .ToList();
+            Assert.Contains("%BASEFOLDER%", boldTexts);
+        });
+    }
+
+    [Fact]
     public void AllLocaleFiles_ContainSystemHelpKeys()
     {
         // The System Help panel (EditSystemWindow right column) needs these keys
