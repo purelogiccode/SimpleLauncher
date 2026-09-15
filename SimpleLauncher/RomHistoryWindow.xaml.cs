@@ -76,7 +76,7 @@ public partial class RomHistoryWindow
         if (!UrlHelper.TryOpenHttpUrlInBrowser(e.Uri.AbsoluteUri))
         {
             _logger.Warning($"Blocked non-web or unloadable history link: {e.Uri.AbsoluteUri}");
-            System.Windows.MessageBox.Show(
+            MessageBox.Show(
                 $"The link could not be opened because it is not a valid web address:\n{e.Uri.AbsoluteUri}",
                 "Could Not Open Link", MessageBoxButton.OK, MessageBoxImage.Warning);
         }

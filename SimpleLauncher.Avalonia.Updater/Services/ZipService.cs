@@ -220,10 +220,10 @@ internal class ZipService
         foreach (var (_, stagedPath) in stagedFiles) stagedBytes += new FileInfo(stagedPath).Length;
 
         var drive = new DriveInfo(Path.GetPathRoot(appDirectoryFullPath)!);
-        const long ReserveBytes = 64L * 1024 * 1024;
-        if (drive.AvailableFreeSpace < stagedBytes + ReserveBytes)
+        const long reserveBytes = 64L * 1024 * 1024;
+        if (drive.AvailableFreeSpace < stagedBytes + reserveBytes)
             throw new IOException(
-                $"Insufficient disk space for update: need {DownloadService.FormatBytes(stagedBytes + ReserveBytes)}, " +
+                $"Insufficient disk space for update: need {DownloadService.FormatBytes(stagedBytes + reserveBytes)}, " +
                 $"only {DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
 
         LogMessage?.Invoke(this,
@@ -385,7 +385,7 @@ internal class ZipService
             if (Directory.Exists(directory))
             {
                 Directory.Delete(directory, true);
-                LogMessage?.Invoke(this, new EventArgs<string>($"Removed stale update staging directory."));
+                LogMessage?.Invoke(this, new EventArgs<string>("Removed stale update staging directory."));
             }
         }
         catch (Exception ex)
@@ -398,7 +398,7 @@ internal class ZipService
     ///     Deletes stale <c>.updbak</c> files left by a previously interrupted swap.
     ///     The live files are already in place, so orphaned backups are safe to remove.
     /// </summary>
-    private void CleanupStaleBackups(string appDirectoryFullPath)
+    private static void CleanupStaleBackups(string appDirectoryFullPath)
     {
         try
         {
@@ -565,11 +565,11 @@ internal class ZipService
             return; // Unknown size — the write itself will report ENOSPC fail-fast.
 
         var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(directory))!);
-        const long ReserveBytes = 64L * 1024 * 1024;
-        if (drive.AvailableFreeSpace < bytesNeeded + ReserveBytes)
+        const long reserveBytes = 64L * 1024 * 1024;
+        if (drive.AvailableFreeSpace < bytesNeeded + reserveBytes)
             throw new IOException(
                 $"Insufficient disk space to extract '{entryKey}': need " +
-                $"{DownloadService.FormatBytes(bytesNeeded + ReserveBytes)}, only " +
+                $"{DownloadService.FormatBytes(bytesNeeded + reserveBytes)}, only " +
                 $"{DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
     }
 }

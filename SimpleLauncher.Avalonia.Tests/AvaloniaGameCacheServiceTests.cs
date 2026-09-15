@@ -110,18 +110,21 @@ public class AvaloniaGameCacheServiceTests
         // AV-19: disk enumeration must run outside the cache lock — a reader
         // probing an unrelated system must return while a scan is in flight.
         var cache = new AvaloniaGameCacheService();
-        using var scanStarted = new ManualResetEventSlim(false);
-        using var releaseScan = new ManualResetEventSlim(false);
+        // TaskCompletionSources instead of reset events: they are not IDisposable, so
+        // the scan lambda can never observe a synchronization primitive disposed by
+        // the outer scope when a wait times out or an assertion fails early.
+        var scanStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseScan = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var system = System("NES", @"C:\roms\nes");
 
         var scanTask = Task.Run(() => cache.GetCachedOrScan(system, _ =>
         {
-            scanStarted.Set();
-            releaseScan.Wait(TimeSpan.FromSeconds(30));
+            scanStarted.SetResult();
+            releaseScan.Task.Wait(TimeSpan.FromSeconds(30));
             return (IEnumerable<string>)["mario.zip"];
         }));
 
-        Assert.True(await Task.Run(() => scanStarted.Wait(TimeSpan.FromSeconds(30))));
+        Assert.True(await Task.Run(() => scanStarted.Task.Wait(TimeSpan.FromSeconds(30))));
 
         // Unrelated readers must not be blocked by the in-flight scan.
         await Task.Run(() =>
@@ -131,7 +134,7 @@ public class AvaloniaGameCacheServiceTests
             Assert.Equal(0, cache.CachedSystemCount);
         }).WaitAsync(TimeSpan.FromSeconds(10));
 
-        releaseScan.Set();
+        releaseScan.SetResult();
         var result = await scanTask.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.Single(result);
     }

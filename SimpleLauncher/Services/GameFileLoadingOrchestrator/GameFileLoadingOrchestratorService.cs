@@ -215,20 +215,20 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
     /// </summary>
     public async void OnGameFilesChangedAsync(string systemName)
     {
-        CancellationToken token;
-        lock (_watcherReloadLock)
-        {
-            // A newer change supersedes any reload still running from an earlier change.
-            var oldCts = _watcherReloadCts;
-            oldCts?.Cancel();
-            if (oldCts is not null) DisposeCtsAfterGracePeriod(oldCts);
-
-            _watcherReloadCts = new CancellationTokenSource();
-            token = _watcherReloadCts.Token;
-        }
-
         try
         {
+            CancellationToken token;
+            lock (_watcherReloadLock)
+            {
+                // A newer change supersedes any reload still running from an earlier change.
+                var oldCts = _watcherReloadCts;
+                oldCts?.Cancel();
+                if (oldCts is not null) DisposeCtsAfterGracePeriod(oldCts);
+
+                _watcherReloadCts = new CancellationTokenSource();
+                token = _watcherReloadCts.Token;
+            }
+
             token.ThrowIfCancellationRequested();
 
             // The load pipeline touches UI controls throughout and is not thread-safe,

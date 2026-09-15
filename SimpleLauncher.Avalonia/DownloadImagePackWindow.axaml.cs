@@ -63,38 +63,38 @@ public partial class DownloadImagePackWindow : Window, IDisposable
 
     private async void CloseWindowRoutineAsync(object? sender, WindowClosingEventArgs e)
     {
-        if (_closeConfirmed)
-        {
-            Dispose();
-            return;
-        }
-
-        // No deferral on this event: cancel the close, await the in-flight save/cancel
-        // routine first, then re-close. Closing immediately would dispose the
-        // DownloadManager/scope while the routine still uses them (AV-08).
-        e.Cancel = true;
-
         try
         {
-            await _viewModel.CloseWindowRoutineAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error in method CloseWindowRoutineAsync");
-        }
-        finally
-        {
-            Dispose();
-        }
+            if (_closeConfirmed)
+            {
+                Dispose();
+                return;
+            }
 
-        _closeConfirmed = true;
-        try
-        {
+            // No deferral on this event: cancel the close, await the in-flight save/cancel
+            // routine first, then re-close. Closing immediately would dispose the
+            // DownloadManager/scope while the routine still uses them (AV-08).
+            e.Cancel = true;
+
+            try
+            {
+                await _viewModel.CloseWindowRoutineAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in method CloseWindowRoutineAsync");
+            }
+            finally
+            {
+                Dispose();
+            }
+
+            _closeConfirmed = true;
             Close();
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error re-closing DownloadImagePackWindow after pre-close routine");
+            _logger.Error(ex, "Error closing DownloadImagePackWindow after pre-close routine");
         }
     }
 

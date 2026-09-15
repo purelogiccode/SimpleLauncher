@@ -76,7 +76,7 @@ public partial class RetroAchievementsSettingsWindow : Window
         {
             // AV-15: validate the http(s) scheme and open via the cross-platform
             // launcher instead of assuming Windows shell-execute.
-            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, TopLevel.GetTopLevel(this)))
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, GetTopLevel(this)))
                 Log.Debug("Failed to open RetroAchievements control panel: invalid or unreachable URL");
         }
         catch (Exception ex)

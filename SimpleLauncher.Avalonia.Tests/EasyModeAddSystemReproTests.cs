@@ -136,7 +136,5 @@ public sealed class EasyModeAddSystemReproTests : IDisposable
         {
             // ignored
         }
-
-        GC.SuppressFinalize(this);
     }
 }

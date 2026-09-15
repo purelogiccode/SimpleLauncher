@@ -66,10 +66,10 @@ public partial class GlobalStatsWindow : Window, IDisposable
 
     private async void GlobalStatsWindow_Closing(object? sender, WindowClosingEventArgs e)
     {
-        if (_forceClose) return;
-
         try
         {
+            if (_forceClose) return;
+
             // Processing is active - cancel the close and ask the user to confirm
             if (_viewModel.IsProcessing)
             {

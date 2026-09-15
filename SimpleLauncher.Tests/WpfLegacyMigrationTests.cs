@@ -177,7 +177,8 @@ public sealed class WpfLegacyMigrationTests : IDisposable
             MessagePackSerializer.Serialize(manager));
     }
 
-    private void WriteLegacySettingsXml()    {
+    private void WriteLegacySettingsXml()
+    {
         File.WriteAllText(Path.Combine(_legacyFolder, "settings.xml"), """
             <Settings>
               <Application>

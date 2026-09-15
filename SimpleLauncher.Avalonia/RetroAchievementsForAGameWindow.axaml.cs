@@ -271,7 +271,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             _playSoundEffects.PlayNotificationSound();
             // AV-15: validate the http(s) scheme and open via the cross-platform
             // launcher instead of assuming Windows shell-execute.
-            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, TopLevel.GetTopLevel(this)))
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(url, GetTopLevel(this)))
             {
                 _logger.Error("Unable to open URL: invalid or unreachable URL");
                 await _messageBox.UnableToOpenLinkMessageBoxAsync();

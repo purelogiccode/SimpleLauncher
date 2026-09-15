@@ -10,6 +10,11 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// </summary>
 public class ImageViewerViewModel : ObservableObject
 {
+    private static readonly HttpClient HttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private string _errorMessage = "";
@@ -94,8 +99,7 @@ public class ImageViewerViewModel : ObservableObject
         {
             // Download a private copy: loader-cached bitmaps are shared with other views
             // and must never be disposed by ReplaceImageSource (AV-05).
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-            var imageData = await httpClient.GetByteArrayAsync(imageUri);
+            var imageData = await HttpClient.GetByteArrayAsync(imageUri);
             await using var ms = new MemoryStream(imageData);
             ReplaceImageSource(Bitmap.DecodeToWidth(ms, 1200));
             ErrorMessage = "";

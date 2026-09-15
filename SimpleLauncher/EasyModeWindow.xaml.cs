@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -1417,8 +1416,6 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
             {
                 _logger.Information($"Blocked non-web or unloadable hyperlink: {e.Uri.AbsoluteUri}");
                 await _messageBox.CouldNotOpenTheDownloadLinkMessageBoxAsync();
-                e.Handled = true;
-                return;
             }
 
             e.Handled = true;

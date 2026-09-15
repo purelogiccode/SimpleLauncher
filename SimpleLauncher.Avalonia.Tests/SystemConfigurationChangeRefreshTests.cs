@@ -10,15 +10,11 @@ using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
-using SimpleLauncher.Core.Services.ExtractFiles;
-using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 using SimpleLauncher.Core.Services.GameLauncher.Strategies;
 using SimpleLauncher.Core.Services.GamePad;
-using SimpleLauncher.Core.Services.ParameterResolver;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.RetroAchievements;
 using SimpleLauncher.Core.Services.SettingsManager;
-using SimpleLauncher.Core.Services.UnifiedSettings;
 using SimpleLauncher.Core.Services.UsageStats;
 
 namespace SimpleLauncher.Avalonia.Tests;
@@ -181,7 +177,5 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
         {
             // best effort cleanup
         }
-
-        GC.SuppressFinalize(this);
     }
 }

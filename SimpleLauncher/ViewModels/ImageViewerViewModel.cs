@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SimpleLauncher.Core.Interfaces;
@@ -11,6 +10,11 @@ namespace SimpleLauncher.ViewModels;
 /// </summary>
 public class ImageViewerViewModel : ObservableObject
 {
+    private static readonly HttpClient HttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private string _errorMessage = "";
@@ -90,8 +94,7 @@ public class ImageViewerViewModel : ObservableObject
         {
             // Download off the UI thread with a timeout: BitmapImage(Uri) would fetch
             // synchronously on the caller (UI) thread with no timeout.
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-            var imageData = await httpClient.GetByteArrayAsync(imageUri);
+            var imageData = await HttpClient.GetByteArrayAsync(imageUri);
             SetImageFromBytes(imageData);
             ErrorMessage = "";
         }

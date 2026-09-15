@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -356,9 +355,16 @@ public partial class RetroAchievementsWindow : ILoadingState
 
     private async void ViewProfileOnRaButton_Click(object sender, RoutedEventArgs e)
     {
-        var url = _viewModel.GetProfileUrl();
-        // Awaited: dropping the Task would leave Process.Start failures unobserved (WPF-10).
-        if (!string.IsNullOrWhiteSpace(url)) await OpenUrlInBrowserAsync(url);
+        try
+        {
+            var url = _viewModel.GetProfileUrl();
+            // Awaited: dropping the Task would leave Process.Start failures unobserved (WPF-10).
+            if (!string.IsNullOrWhiteSpace(url)) await OpenUrlInBrowserAsync(url);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error opening the RetroAchievements profile");
+        }
     }
 
     private void OpenRaSettings_Click(object sender, RoutedEventArgs e)

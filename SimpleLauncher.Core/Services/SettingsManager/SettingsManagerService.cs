@@ -893,7 +893,7 @@ public class SettingsManagerService : IDisposable
             }
 
             if (_messageBox != null) await _messageBox.FailedToSaveSettingsMessageBoxAsync();
-        }
+    }
 
     private static XElement BuildXElement(SettingsManagerService s)
     {

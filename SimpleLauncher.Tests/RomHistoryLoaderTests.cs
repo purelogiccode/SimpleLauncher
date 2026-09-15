@@ -1,4 +1,3 @@
-using System.Xml;
 using SimpleLauncher.Core.Services.RomHistory;
 using Xunit;
 

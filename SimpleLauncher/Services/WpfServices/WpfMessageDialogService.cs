@@ -1,4 +1,3 @@
-using System.Windows;
 using SimpleLauncher.Core.Interfaces;
 using MessageBoxButton = SimpleLauncher.Core.Models.MessageBoxButton;
 using MessageBoxImage = SimpleLauncher.Core.Models.MessageBoxImage;

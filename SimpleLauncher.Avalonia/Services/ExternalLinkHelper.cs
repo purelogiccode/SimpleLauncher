@@ -55,7 +55,7 @@ public static class ExternalLinkHelper
             }
         }
 
-        return TryShellOpen(url!.Trim());
+        return TryShellOpen(url.Trim());
     }
 
     /// <summary>

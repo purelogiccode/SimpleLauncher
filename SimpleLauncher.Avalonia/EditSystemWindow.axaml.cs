@@ -859,7 +859,7 @@ public partial class EditSystemWindow : Window
                             ?? "https://github.com/purelogiccode/SimpleLauncher/wiki/parameters/";
             // AV-15: config-controlled URL — validate the scheme and open via the
             // cross-platform launcher instead of assuming Windows shell-execute.
-            if (!await ExternalLinkHelper.TryOpenUrlAsync(searchUrl, TopLevel.GetTopLevel(this)))
+            if (!await ExternalLinkHelper.TryOpenUrlAsync(searchUrl, GetTopLevel(this)))
             {
                 _logger.Error("Unable to open help URL: invalid or unreachable URL");
                 await _messageBox.ErrorOpeningUrlMessageBoxAsync();

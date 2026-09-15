@@ -60,7 +60,11 @@ public class RetroAchievementsHashStore : IRetroAchievementsHashStore
         }
         catch (Exception ex)
         {
-            _logger.Debug($"[RA Hash Store] Error checking hash file for '{systemName}': {ex.Message}");
+            lock (_fileLock)
+            {
+                _logger.Debug($"[RA Hash Store] Error checking hash file for '{systemName}': {ex.Message}");
+            }
+
             return false;
         }
     }
