@@ -437,26 +437,25 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent(
             (string)Application.Current.TryFindResource("FetchingGameAchievements") ?? "Fetching game achievements...");
 
-        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-        LoadingOverlay.Visibility = Visibility.Visible;
-        await Task.Yield();
-
-        NoAchievementsOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        AchievementsDataGrid.ItemsSource = null; // Clear previous data
-
         if (string.IsNullOrWhiteSpace(_settings.RaUsername) || string.IsNullOrWhiteSpace(_settings.RaApiKey))
         {
             NoAchievementsOverlay.Visibility = Visibility.Visible;
             NoAchievementsMessage.Text = (string)Application.Current.TryFindResource("RaErrorCredentialsNotSet") ??
                                          "RetroAchievements username or API key is not set. Configure in settings.";
-            LoadingOverlay.Visibility = Visibility.Collapsed;
             await Task.Yield();
 
             return;
         }
 
+        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+        LoadingOverlay.Visibility = Visibility.Visible;
         try
         {
+            await Task.Yield();
+
+            NoAchievementsOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            AchievementsDataGrid.ItemsSource = null; // Clear previous data
+
             // Use the injected service
             var (progress, achievements) =
                 await _raService.GetGameInfoAndUserProgressAsync(_gameId, _settings.RaUsername, _settings.RaApiKey);
@@ -526,25 +525,24 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
             (string)Application.Current.TryFindResource("FetchingExtendedGameInfo") ??
             "Fetching extended game info...");
 
-        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-        LoadingOverlay.Visibility = Visibility.Visible;
-        NoGameInfoOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        GameInfoAchievementsSection.Visibility = Visibility.Collapsed;
-        await Task.Yield();
-
         if (string.IsNullOrWhiteSpace(_settings.RaUsername) || string.IsNullOrWhiteSpace(_settings.RaApiKey))
         {
             NoGameInfoOverlay.Visibility = Visibility.Visible;
             NoGameInfoMessage.Text = (string)Application.Current.TryFindResource("RaErrorCredentialsNotSet") ??
                                      "RetroAchievements username or API key is not set. Configure in settings.";
-            LoadingOverlay.Visibility = Visibility.Collapsed;
             await Task.Yield();
 
             return;
         }
 
+        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+        LoadingOverlay.Visibility = Visibility.Visible;
         try
         {
+            NoGameInfoOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            GameInfoAchievementsSection.Visibility = Visibility.Collapsed;
+            await Task.Yield();
+
             // Use the injected service
             var gameInfo = await _raService.GetGameExtendedAsync(_gameId, _settings.RaUsername, _settings.RaApiKey);
             if (gameInfo != null)
@@ -730,23 +728,7 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent(
             (string)Application.Current.TryFindResource("FetchingGameRankings") ?? "Fetching game rankings...");
 
-        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-        LoadingOverlay.Visibility = Visibility.Visible;
-        NoUserRankOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        NoLatestMastersOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        NoHighScoresOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        await Task.Yield();
-
-        // Clear previous data
-        LatestMastersDataGrid.ItemsSource = null;
-        HighScoresDataGrid.ItemsSource = null;
-
-        // Reset user info
-        UserRankText.Text = (string)Application.Current.TryFindResource("RaStatusNotApplicable") ?? "N/A";
-        UserScoreText.Text = (string)Application.Current.TryFindResource("RaStatusNotApplicable") ?? "N/A";
-        UserLastAwardText.Text = (string)Application.Current.TryFindResource("RaStatusNotApplicable") ?? "N/A";
-
-        // Check credentials first
+        // Check credentials first (no overlay flash when they are missing)
         if (string.IsNullOrWhiteSpace(_settings.RaUsername) || string.IsNullOrWhiteSpace(_settings.RaApiKey))
         {
             LatestMastersDataGrid.ItemsSource = null;
@@ -764,14 +746,29 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
             NoHighScoresMessage.Text = (string)Application.Current.TryFindResource("RaErrorCredentialsNotSet") ??
                                        "RetroAchievements username or API key is not set. Configure in settings.";
 
-            LoadingOverlay.Visibility = Visibility.Collapsed;
             await Task.Yield();
 
             return;
         }
 
+        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+        LoadingOverlay.Visibility = Visibility.Visible;
         try
         {
+            NoUserRankOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            NoLatestMastersOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            NoHighScoresOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            await Task.Yield();
+
+            // Clear previous data
+            LatestMastersDataGrid.ItemsSource = null;
+            HighScoresDataGrid.ItemsSource = null;
+
+            // Reset user info
+            UserRankText.Text = (string)Application.Current.TryFindResource("RaStatusNotApplicable") ?? "N/A";
+            UserScoreText.Text = (string)Application.Current.TryFindResource("RaStatusNotApplicable") ?? "N/A";
+            UserLastAwardText.Text = (string)Application.Current.TryFindResource("RaStatusNotApplicable") ?? "N/A";
+
             // Load Latest Masters (t=1)
             var latestMasters =
                 await _raService.GetGameRankAndScoreAsync(_gameId, _settings.RaUsername, _settings.RaApiKey, true);
@@ -900,12 +897,6 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
         (Owner as MainWindow)?.UpdateStatusBarService.UpdateContent(
             (string)Application.Current.TryFindResource("FetchingUserProfile") ?? "Fetching user profile...");
 
-        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-        LoadingOverlay.Visibility = Visibility.Visible;
-        NoProfileOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        UserProfileRecentlyPlayed.ItemsSource = null; // Clear previous data
-        await Task.Yield();
-
         if (string.IsNullOrWhiteSpace(_settings.RaUsername) || string.IsNullOrWhiteSpace(_settings.RaApiKey))
         {
             NoProfileOverlay.Visibility = Visibility.Visible;
@@ -913,14 +904,19 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
                                         "RetroAchievements username or API key is not set.";
             NoProfileSubMessage.Text = (string)Application.Current.TryFindResource("RaInfoConfigureCredentials") ??
                                        "Please configure your credentials in the RetroAchievements settings.";
-            LoadingOverlay.Visibility = Visibility.Collapsed;
             await Task.Yield();
 
             return;
         }
 
+        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+        LoadingOverlay.Visibility = Visibility.Visible;
         try
         {
+            NoProfileOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            UserProfileRecentlyPlayed.ItemsSource = null; // Clear previous data
+            await Task.Yield();
+
             // Fetch main user profile
             var userProfile = await _raService.GetUserProfileAsync(_settings.RaUsername, _settings.RaApiKey);
 
@@ -1059,39 +1055,37 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
             (string)Application.Current.TryFindResource("FetchingEarnedAchievementsByDate") ??
             "Fetching earned achievements by date...");
 
-        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-        LoadingOverlay.Visibility = Visibility.Visible;
-        FetchUnlocksButton.IsEnabled = false; // Disable button during fetch
-        NoUnlocksOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
-        UnlocksDataGrid.ItemsSource = null; // Clear previous data
-        TotalUnlocksInRangeText.Text = "0";
-        TotalPointsEarnedInRangeText.Text = "0";
-        await Task.Yield();
-
         if (string.IsNullOrWhiteSpace(_settings.RaUsername) || string.IsNullOrWhiteSpace(_settings.RaApiKey))
         {
             // Display specific message for missing credentials
             NoUnlocksOverlay.Visibility = Visibility.Visible;
             NoUnlocksMessage.Text = (string)Application.Current.TryFindResource("RaErrorCredentialsNotSet") ??
                                     "RetroAchievements username or API key is not set. Configure in settings.";
-            LoadingOverlay.Visibility = Visibility.Collapsed;
-            FetchUnlocksButton.IsEnabled = true; // Re-enable button
             await Task.Yield();
 
             return;
         }
 
-        // Set default dates if not already set
-        if (FromDatePicker.SelectedDate == null)
-            FromDatePicker.SelectedDate = DateTime.Today.AddMonths(-1); // Default to last month
-
-        if (ToDatePicker.SelectedDate == null) ToDatePicker.SelectedDate = DateTime.Today; // Default to today
-
-        var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddMonths(-1);
-        var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
-
+        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+        LoadingOverlay.Visibility = Visibility.Visible;
         try
         {
+            FetchUnlocksButton.IsEnabled = false; // Disable button during fetch
+            NoUnlocksOverlay.Visibility = Visibility.Collapsed; // Hide overlay initially
+            UnlocksDataGrid.ItemsSource = null; // Clear previous data
+            TotalUnlocksInRangeText.Text = "0";
+            TotalPointsEarnedInRangeText.Text = "0";
+            await Task.Yield();
+
+            // Set default dates if not already set
+            if (FromDatePicker.SelectedDate == null)
+                FromDatePicker.SelectedDate = DateTime.Today.AddMonths(-1); // Default to last month
+
+            if (ToDatePicker.SelectedDate == null) ToDatePicker.SelectedDate = DateTime.Today; // Default to today
+
+            var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddMonths(-1);
+            var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
+
             var unlocks =
                 await _raService.GetAchievementsEarnedBetweenAsync(_settings.RaUsername, _settings.RaApiKey, fromDate,
                     toDate);
@@ -1202,12 +1196,6 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
             (string)Application.Current.TryFindResource("FetchingUserCompletionProgress") ??
             "Fetching user completion progress...");
 
-        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
-        LoadingOverlay.Visibility = Visibility.Visible;
-        NoUserProgressOverlay.Visibility = Visibility.Collapsed;
-        UserProgressDataGrid.ItemsSource = null; // Clear previous data
-        await Task.Yield();
-
         if (string.IsNullOrWhiteSpace(_settings.RaUsername) || string.IsNullOrWhiteSpace(_settings.RaApiKey))
         {
             NoUserProgressOverlay.Visibility = Visibility.Visible;
@@ -1216,14 +1204,19 @@ public partial class RetroAchievementsForAGameWindow : ILoadingState
                 "RetroAchievements username or API key is not set.";
             NoUserProgressSubMessage.Text = (string)Application.Current.TryFindResource("RaInfoConfigureCredentials") ??
                                             "Please configure your credentials in the RetroAchievements settings.";
-            LoadingOverlay.Visibility = Visibility.Collapsed;
             await Task.Yield();
 
             return;
         }
 
+        LoadingOverlay.Content = (string)Application.Current.TryFindResource("Loading") ?? "Loading...";
+        LoadingOverlay.Visibility = Visibility.Visible;
         try
         {
+            NoUserProgressOverlay.Visibility = Visibility.Collapsed;
+            UserProgressDataGrid.ItemsSource = null; // Clear previous data
+            await Task.Yield();
+
             var userProgressList =
                 await _raService.GetUserCompletionProgressAsync(_settings.RaUsername, _settings.RaApiKey);
 

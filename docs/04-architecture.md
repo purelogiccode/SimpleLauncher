@@ -104,6 +104,16 @@ instance (which restores and foregrounds its window) and then exits immediately 
 WPF copy launched while the Avalonia app is running, and vice versa. `--restarting` bypasses the
 guard so the update/reinstall restart cannot be mistaken for a second launch.
 
+**Loading-overlay invariant (both apps):** every `SetLoadingState(true)` / overlay-show call must
+be paired with a close **inside a `finally`**, so exceptions and early returns can never leave the
+overlay stuck. `LoadingOverlayService`/`AvaloniaLoadingOverlayService` are reference-counted, so
+shows and closes must stay balanced even when a flow advances the message text through several
+stages (mounting → extracting → launching): the launch pipeline owns one show for the whole
+operation, stage messages use either a balanced nested show/hide pair or the status bar, and the
+window/view-model-level overlays (`EasyModeWindow`, `EditSystemWindow`, `RetroAchievements*`,
+`DownloadImagePack`, `Support`) close theirs in `finally` as well. Multi-load windows additionally
+guard the close with a load generation so a stale load cannot clear a newer load's overlay.
+
 `StartupInitializationService.InitializeAsync` (`Services\StartupInitialization\StartupInitializationService.cs:59-72`) order:
 1. Status-bar timer (`StatusBarTimeoutSeconds`, default 3 s) — `:74-88`
 2. Theme/language menu state — `:90-98`

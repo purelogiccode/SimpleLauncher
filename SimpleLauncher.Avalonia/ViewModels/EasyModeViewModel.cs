@@ -153,27 +153,33 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
     {
         IsLoading = true;
         LoadingMessage = "Loading configuration...";
-        await Task.Yield();
-
-        _manager = await _easyModeManager.LoadAsync();
-
-        IsLoading = false;
-
-        if (_manager is not { Systems.Count: > 0 })
+        try
         {
-            await _messageBox.EasyModeUnavailableMessageBoxAsync();
-            // WPF parity: disable all controls when no systems are configured
-            IsContentEnabled = false;
-            return;
+            await Task.Yield();
+
+            _manager = await _easyModeManager.LoadAsync();
+
+            if (_manager is not { Systems.Count: > 0 })
+            {
+                await _messageBox.EasyModeUnavailableMessageBoxAsync();
+                // WPF parity: disable all controls when no systems are configured
+                IsContentEnabled = false;
+                return;
+            }
+
+            var sorted = _manager.Systems
+                .Where(static s => s.IsValid()
+                                   && !string.IsNullOrEmpty(s.Emulators?.Emulator?.EmulatorDownloadLink))
+                .OrderBy(static s => s.SystemName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            Systems = new ObservableCollection<EasyModeSystemConfig>(sorted);
         }
-
-        var sorted = _manager.Systems
-            .Where(static s => s.IsValid()
-                               && !string.IsNullOrEmpty(s.Emulators?.Emulator?.EmulatorDownloadLink))
-            .OrderBy(static s => s.SystemName, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        Systems = new ObservableCollection<EasyModeSystemConfig>(sorted);
+        finally
+        {
+            // Closed on every path (including exceptions) so the overlay cannot stick.
+            IsLoading = false;
+        }
     }
 
     // ── System selection (ports SystemNameDropdown_SelectionChanged) ──
@@ -527,9 +533,15 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                         IsLoading = true;
                     });
 
-                    success = await _downloadManager.ExtractFileAsync(downloadedFile, destinationPath);
-
-                    await Dispatcher.UIThread.InvokeAsync(() => IsLoading = false);
+                    try
+                    {
+                        success = await _downloadManager.ExtractFileAsync(downloadedFile, destinationPath);
+                    }
+                    finally
+                    {
+                        // Closed on every path (including exceptions) so the overlay cannot stick.
+                        await Dispatcher.UIThread.InvokeAsync(() => IsLoading = false);
+                    }
                 }
 
                 if (success)

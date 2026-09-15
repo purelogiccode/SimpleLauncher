@@ -81,10 +81,12 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
     {
         _updateStatusBarService.UpdateContent((string)Application.Current.TryFindResource("Loading") ?? "Loading...");
 
-        await _host.SetUiBeforeLoadGameFilesAsync();
-
         try
         {
+            // Inside the try: the finally below is what closes the loading overlay shown
+            // by callers, so an exception here must not bypass it.
+            await _host.SetUiBeforeLoadGameFilesAsync();
+
             cancellationToken.ThrowIfCancellationRequested();
 
             if (_host.SystemComboBox.SelectedItem == null)

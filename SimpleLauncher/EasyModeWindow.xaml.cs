@@ -420,29 +420,35 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
     {
         SetLoadingState(true,
             (string)Application.Current.TryFindResource("Loadingconfiguration") ?? "Loading configuration...");
-        await Task.Yield(); // Allow UI to render the loading overlay
-
-        _manager = await _easyModeManager.LoadAsync();
-
-        SetLoadingState(false);
-
-        if (_manager is not { Systems.Count: > 0 })
+        try
         {
-            await _messageBox.EasyModeUnavailableMessageBoxAsync();
-            SystemNameDropdown.IsEnabled = false;
-            SystemFolderTextBox.IsEnabled = false;
-            DownloadEmulatorButton.IsEnabled = false;
-            DownloadCoreButton.IsEnabled = false;
-            DownloadImagePackButton1.IsEnabled = false;
-            DownloadImagePackButton2.IsEnabled = false;
-            DownloadImagePackButton3.IsEnabled = false;
-            DownloadImagePackButton4.IsEnabled = false;
-            DownloadImagePackButton5.IsEnabled = false;
-            AddSystemButton.IsEnabled = false;
-            return;
-        }
+            await Task.Yield(); // Allow UI to render the loading overlay
 
-        PopulateSystemDropdown();
+            _manager = await _easyModeManager.LoadAsync();
+
+            if (_manager is not { Systems.Count: > 0 })
+            {
+                await _messageBox.EasyModeUnavailableMessageBoxAsync();
+                SystemNameDropdown.IsEnabled = false;
+                SystemFolderTextBox.IsEnabled = false;
+                DownloadEmulatorButton.IsEnabled = false;
+                DownloadCoreButton.IsEnabled = false;
+                DownloadImagePackButton1.IsEnabled = false;
+                DownloadImagePackButton2.IsEnabled = false;
+                DownloadImagePackButton3.IsEnabled = false;
+                DownloadImagePackButton4.IsEnabled = false;
+                DownloadImagePackButton5.IsEnabled = false;
+                AddSystemButton.IsEnabled = false;
+                return;
+            }
+
+            PopulateSystemDropdown();
+        }
+        finally
+        {
+            // Closed on every path (including exceptions) so the overlay cannot stick.
+            SetLoadingState(false);
+        }
     }
 
     /// <summary>
@@ -1004,8 +1010,16 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
                     LoadingOverlay.Visibility = Visibility.Visible;
                     await Task.Yield();
 
-                    success = await _downloadManager.ExtractFileAsync(downloadedFile, destinationPath);
-                    LoadingOverlay.Visibility = Visibility.Collapsed;
+                    try
+                    {
+                        success = await _downloadManager.ExtractFileAsync(downloadedFile, destinationPath);
+                    }
+                    finally
+                    {
+                        // Closed on every path (including exceptions) so the overlay cannot stick.
+                        LoadingOverlay.Visibility = Visibility.Collapsed;
+                    }
+
                     await Task.Yield();
                 }
 

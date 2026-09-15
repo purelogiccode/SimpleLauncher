@@ -125,50 +125,56 @@ public partial class RetroAchievementsWindow : Window
         _logger.Debug("Fetching user profile...");
         SetLoadingState(true);
 
-        await _viewModel.LoadUserProfileAsync();
-
-        // AV-21: superseded by a newer tab load, or the window closed mid-load.
-        if (!IsCurrentLoad(generation)) return;
-
-        // Toggle overlays
-        UserProfilePanel.IsVisible = !_viewModel.NoProfileVisible;
-        NoProfileOverlay.IsVisible = _viewModel.NoProfileVisible;
-
-        if (_viewModel.NoProfileVisible)
+        try
         {
-            NoProfileMainMessage.Text = _viewModel.NoProfileMainMessage;
-            NoProfileSubMessage.Text = _viewModel.NoProfileSubMessage;
-            SetLoadingState(false);
-            return;
+            await _viewModel.LoadUserProfileAsync();
+
+            // AV-21: superseded by a newer tab load, or the window closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
+            // Toggle overlays
+            UserProfilePanel.IsVisible = !_viewModel.NoProfileVisible;
+            NoProfileOverlay.IsVisible = _viewModel.NoProfileVisible;
+
+            if (_viewModel.NoProfileVisible)
+            {
+                NoProfileMainMessage.Text = _viewModel.NoProfileMainMessage;
+                NoProfileSubMessage.Text = _viewModel.NoProfileSubMessage;
+                return;
+            }
+
+            // Update profile header
+            UserProfileUser.Text = _viewModel.ProfileUser;
+            UserProfileMotto.Text = _viewModel.ProfileMotto;
+            UserProfileRichPresence.Text = _viewModel.ProfileRichPresence;
+
+            // Update stats
+            PointsValue.Text = _viewModel.ProfilePoints;
+            TruePointsValue.Text = _viewModel.ProfileTruePoints;
+            RankValue.Text = _viewModel.ProfileRank;
+
+            // Update detailed info
+            UserProfileMemberSince.Text = _viewModel.ProfileMemberSince;
+            UserProfileId.Text = _viewModel.ProfileId;
+            UserProfileContributions.Text = _viewModel.ProfileContributions;
+            UserProfileSoftcorePoints.Text = _viewModel.ProfileSoftcorePoints;
+            UserProfilePermissions.Text = _viewModel.ProfilePermissions;
+            UserProfileStatus.Text = _viewModel.ProfileStatus;
+            UserProfileProfileId.Text = _viewModel.ProfileProfileId;
+            UserProfileWallActive.Text = _viewModel.ProfileWallActive;
+
+            // Update profile image
+            UserProfilePic.Url = _viewModel.ProfileImageUrl;
+
+            // Bind recently played games
+            UserProfileRecentlyPlayed.ItemsSource = _viewModel.RecentlyPlayedGames;
         }
-
-        // Update profile header
-        UserProfileUser.Text = _viewModel.ProfileUser;
-        UserProfileMotto.Text = _viewModel.ProfileMotto;
-        UserProfileRichPresence.Text = _viewModel.ProfileRichPresence;
-
-        // Update stats
-        PointsValue.Text = _viewModel.ProfilePoints;
-        TruePointsValue.Text = _viewModel.ProfileTruePoints;
-        RankValue.Text = _viewModel.ProfileRank;
-
-        // Update detailed info
-        UserProfileMemberSince.Text = _viewModel.ProfileMemberSince;
-        UserProfileId.Text = _viewModel.ProfileId;
-        UserProfileContributions.Text = _viewModel.ProfileContributions;
-        UserProfileSoftcorePoints.Text = _viewModel.ProfileSoftcorePoints;
-        UserProfilePermissions.Text = _viewModel.ProfilePermissions;
-        UserProfileStatus.Text = _viewModel.ProfileStatus;
-        UserProfileProfileId.Text = _viewModel.ProfileProfileId;
-        UserProfileWallActive.Text = _viewModel.ProfileWallActive;
-
-        // Update profile image
-        UserProfilePic.Url = _viewModel.ProfileImageUrl;
-
-        // Bind recently played games
-        UserProfileRecentlyPlayed.ItemsSource = _viewModel.RecentlyPlayedGames;
-
-        SetLoadingState(false);
+        finally
+        {
+            // Only the latest load may hide the shared overlay; an exception must never
+            // leave it stuck (it is closed here on every path).
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
+        }
     }
 
     private async Task LoadUnlocksByDateAsync()
@@ -177,29 +183,36 @@ public partial class RetroAchievementsWindow : Window
         _logger.Debug("Fetching earned achievements by date...");
         SetLoadingState(true);
 
-        // Sync DatePickers with ViewModel (Avalonia DatePicker uses DateTimeOffset)
-        FromDatePicker.SelectedDate = ToDateTimeOffset(_viewModel.FromDate);
-        ToDatePicker.SelectedDate = ToDateTimeOffset(_viewModel.ToDate);
+        try
+        {
+            // Sync DatePickers with ViewModel (Avalonia DatePicker uses DateTimeOffset)
+            FromDatePicker.SelectedDate = ToDateTimeOffset(_viewModel.FromDate);
+            ToDatePicker.SelectedDate = ToDateTimeOffset(_viewModel.ToDate);
 
-        await _viewModel.LoadUnlocksByDateAsync();
+            await _viewModel.LoadUnlocksByDateAsync();
 
-        // AV-21: superseded by a newer tab load, or the window closed mid-load.
-        if (!IsCurrentLoad(generation)) return;
+            // AV-21: superseded by a newer tab load, or the window closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
 
-        // Bind unlocks data
-        UnlocksDataGrid.ItemsSource = _viewModel.Unlocks;
+            // Bind unlocks data
+            UnlocksDataGrid.ItemsSource = _viewModel.Unlocks;
 
-        // Update totals
-        TotalUnlocksInRangeText.Text = _viewModel.TotalUnlocksInRange;
-        TotalPointsEarnedInRangeText.Text = _viewModel.TotalPointsEarnedInRange;
+            // Update totals
+            TotalUnlocksInRangeText.Text = _viewModel.TotalUnlocksInRange;
+            TotalPointsEarnedInRangeText.Text = _viewModel.TotalPointsEarnedInRange;
 
-        // Toggle overlay
-        NoUnlocksOverlay.IsVisible = _viewModel.NoUnlocksVisible;
-        if (_viewModel.NoUnlocksVisible) NoUnlocksMessage.Text = _viewModel.NoUnlocksMessage;
+            // Toggle overlay
+            NoUnlocksOverlay.IsVisible = _viewModel.NoUnlocksVisible;
+            if (_viewModel.NoUnlocksVisible) NoUnlocksMessage.Text = _viewModel.NoUnlocksMessage;
 
-        FetchUnlocksButton.IsEnabled = _viewModel.FetchUnlocksEnabled;
-
-        SetLoadingState(false);
+            FetchUnlocksButton.IsEnabled = _viewModel.FetchUnlocksEnabled;
+        }
+        finally
+        {
+            // Only the latest load may hide the shared overlay; an exception must never
+            // leave it stuck (it is closed here on every path).
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
+        }
     }
 
     private async void FetchUnlocksClickAsync(object? sender, RoutedEventArgs e)
@@ -260,23 +273,30 @@ public partial class RetroAchievementsWindow : Window
         _logger.Debug("Fetching user completion progress...");
         SetLoadingState(true);
 
-        await _viewModel.LoadUserProgressAsync();
-
-        // AV-21: superseded by a newer tab load, or the window closed mid-load.
-        if (!IsCurrentLoad(generation)) return;
-
-        // Bind user progress data
-        UserProgressDataGrid.ItemsSource = _viewModel.UserProgress;
-
-        // Toggle overlay
-        NoUserProgressOverlay.IsVisible = _viewModel.NoUserProgressVisible;
-        if (_viewModel.NoUserProgressVisible)
+        try
         {
-            NoUserProgressMainMessage.Text = _viewModel.NoUserProgressMainMessage;
-            NoUserProgressSubMessage.Text = _viewModel.NoUserProgressSubMessage;
-        }
+            await _viewModel.LoadUserProgressAsync();
 
-        SetLoadingState(false);
+            // AV-21: superseded by a newer tab load, or the window closed mid-load.
+            if (!IsCurrentLoad(generation)) return;
+
+            // Bind user progress data
+            UserProgressDataGrid.ItemsSource = _viewModel.UserProgress;
+
+            // Toggle overlay
+            NoUserProgressOverlay.IsVisible = _viewModel.NoUserProgressVisible;
+            if (_viewModel.NoUserProgressVisible)
+            {
+                NoUserProgressMainMessage.Text = _viewModel.NoUserProgressMainMessage;
+                NoUserProgressSubMessage.Text = _viewModel.NoUserProgressSubMessage;
+            }
+        }
+        finally
+        {
+            // Only the latest load may hide the shared overlay; an exception must never
+            // leave it stuck (it is closed here on every path).
+            if (IsCurrentLoad(generation)) SetLoadingState(false);
+        }
     }
 
     private async void OpenUrlInBrowserAsync(string url)

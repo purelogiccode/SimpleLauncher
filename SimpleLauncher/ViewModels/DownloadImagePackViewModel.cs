@@ -182,8 +182,6 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
 
             _manager = (await _easyModeManager.LoadAsync())!;
 
-            IsLoading = false;
-
             if (_manager is not { Systems.Count: > 0 })
             {
                 await _messageBox.ImagePackDownloaderUnavailableMessageBoxAsync();
@@ -195,10 +193,14 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            IsLoading = false;
             _logger.Error(ex, "Error initializing image pack downloader");
             await _messageBox.ImagePackDownloaderUnavailableMessageBoxAsync();
             IsSystemDropdownEnabled = false;
+        }
+        finally
+        {
+            // Closed on every path (including exceptions) so the overlay cannot stick.
+            IsLoading = false;
         }
     }
 
@@ -400,8 +402,16 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
                 IsLoading = true;
                 await Task.Yield();
 
-                success = await _downloadManager.ExtractFileAsync(downloadedFile, destinationPath);
-                IsLoading = false;
+                try
+                {
+                    success = await _downloadManager.ExtractFileAsync(downloadedFile, destinationPath);
+                }
+                finally
+                {
+                    // Closed on every path (including exceptions) so the overlay cannot stick.
+                    IsLoading = false;
+                }
+
                 await Task.Yield();
             }
 

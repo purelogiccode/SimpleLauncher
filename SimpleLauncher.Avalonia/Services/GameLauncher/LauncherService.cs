@@ -118,7 +118,6 @@ public class LauncherService : ILauncherService
         string? originalFilePathForDisplay = null)
     {
         LastPlayTime = TimeSpan.Zero;
-        loadingStateProvider?.SetLoadingState(true, _localization.GetString("Preparing", "Preparing..."));
 
         // Use the original file path for display when provided (e.g., mounted/extracted
         // files) so toasts show the original archive name (WPF LaunchRegularEmulatorAsync parity).
@@ -135,6 +134,11 @@ public class LauncherService : ILauncherService
         // emulator runs — mirroring the WPF strategies which dispose after launch).
         MountChdDrive? mountedChd = null;
         MountXisoDrive? mountedXiso = null;
+
+        // The overlay state is reference-counted: every SetLoadingState(true) below has a
+        // matching SetLoadingState(false) in a finally block, so no path (including
+        // exceptions and early returns) can leave the overlay stuck.
+        loadingStateProvider?.SetLoadingState(true, _localization.GetString("Preparing", "Preparing..."));
 
         try
         {
@@ -177,29 +181,35 @@ public class LauncherService : ILauncherService
                         loadingStateProvider?.SetLoadingState(true,
                             _localization.GetString("Mountingarchive", "Mounting archive..."));
 
-                        if (isRpcs3)
+                        try
                         {
-                            await _mountZipFiles.MountZipFileAndLoadEbootBinAsync(
-                                resolvedFilePath, selectedSystemManager.SystemName, emulatorName,
-                                selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters,
-                                windowContext, logPath, this, Log.Logger, _messageBox);
+                            if (isRpcs3)
+                            {
+                                await _mountZipFiles.MountZipFileAndLoadEbootBinAsync(
+                                    resolvedFilePath, selectedSystemManager.SystemName, emulatorName,
+                                    selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters,
+                                    windowContext, logPath, this, Log.Logger, _messageBox);
+                            }
+                            else if (isScummVm)
+                            {
+                                await _mountZipFiles.MountZipFileAndLoadWithScummVmAsync(
+                                    resolvedFilePath, selectedSystemManager.SystemName, emulatorName,
+                                    selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters,
+                                    logPath, Log.Logger, _messageBox);
+                            }
+                            else
+                            {
+                                await _mountZipFiles.MountZipFileAndSearchForFileToLoadAsync(
+                                    resolvedFilePath, selectedSystemManager.SystemName, emulatorName,
+                                    selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters,
+                                    windowContext, logPath, this, Log.Logger, _messageBox);
+                            }
                         }
-                        else if (isScummVm)
+                        finally
                         {
-                            await _mountZipFiles.MountZipFileAndLoadWithScummVmAsync(
-                                resolvedFilePath, selectedSystemManager.SystemName, emulatorName,
-                                selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters,
-                                logPath, Log.Logger, _messageBox);
-                        }
-                        else
-                        {
-                            await _mountZipFiles.MountZipFileAndSearchForFileToLoadAsync(
-                                resolvedFilePath, selectedSystemManager.SystemName, emulatorName,
-                                selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters,
-                                windowContext, logPath, this, Log.Logger, _messageBox);
+                            loadingStateProvider?.SetLoadingState(false);
                         }
 
-                        loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
 
@@ -219,23 +229,29 @@ public class LauncherService : ILauncherService
                     {
                         loadingStateProvider?.SetLoadingState(true,
                             _localization.GetString("ExtractingEllipsis", "Extracting..."));
-                        var (gameFilePath, tempDirectoryPath) =
-                            await _extractionService.ExtractToTempAndGetLaunchFileAsync(
-                                resolvedFilePath, selectedSystemManager.FileFormatsToLaunch);
-                        if (gameFilePath is not null)
+                        try
                         {
-                            actualFilePath = gameFilePath;
-                            cleanupPath = tempDirectoryPath;
+                            var (gameFilePath, tempDirectoryPath) =
+                                await _extractionService.ExtractToTempAndGetLaunchFileAsync(
+                                    resolvedFilePath, selectedSystemManager.FileFormatsToLaunch);
+                            if (gameFilePath is not null)
+                            {
+                                actualFilePath = gameFilePath;
+                                cleanupPath = tempDirectoryPath;
+                            }
+                            else
+                            {
+                                // No launchable file found inside the archive
+                                await _messageBox.CustomErrorMessageBoxAsync(
+                                    $"No launchable file was found inside the archive:\n{resolvedFilePath}\n\n" +
+                                    "Expected formats: " + string.Join(", ", selectedSystemManager.FileFormatsToLaunch),
+                                    "No Launchable File Found");
+                                return;
+                            }
                         }
-                        else
+                        finally
                         {
-                            // No launchable file found inside the archive
-                            await _messageBox.CustomErrorMessageBoxAsync(
-                                $"No launchable file was found inside the archive:\n{resolvedFilePath}\n\n" +
-                                "Expected formats: " + string.Join(", ", selectedSystemManager.FileFormatsToLaunch),
-                                "No Launchable File Found");
                             loadingStateProvider?.SetLoadingState(false);
-                            return;
                         }
                     }
                     // else: pass the archive path to the emulator (RetroArch can read archives directly)
@@ -252,16 +268,22 @@ public class LauncherService : ILauncherService
                     {
                         loadingStateProvider?.SetLoadingState(true,
                             _localization.GetString("MountingXISO", "Mounting XISO..."));
-                        mountedXiso = await _mountXisoFiles.MountAsync(
-                            resolvedFilePath, Log.Logger, _messageBox);
-                        if (mountedXiso.IsMounted)
+                        try
                         {
-                            actualFilePath = mountedXiso.MountedPath;
+                            mountedXiso = await _mountXisoFiles.MountAsync(
+                                resolvedFilePath, Log.Logger, _messageBox);
+                            if (mountedXiso.IsMounted)
+                            {
+                                actualFilePath = mountedXiso.MountedPath;
+                            }
+                            else
+                            {
+                                return;
+                            }
                         }
-                        else
+                        finally
                         {
                             loadingStateProvider?.SetLoadingState(false);
-                            return;
                         }
                     }
                     // else: pass the ISO/XISO path to the emulator (may handle it directly)
@@ -278,32 +300,37 @@ public class LauncherService : ILauncherService
                     {
                         loadingStateProvider?.SetLoadingState(true,
                             _localization.GetString("MountingCHD", "Mounting CHD..."));
-                        var consoleAlias = _mountChdFiles.GetConsoleAliasFromSystemName(
-                            selectedSystemManager.SystemName, emulatorName, emulatorLocation, Log.Logger);
-                        mountedChd = await _mountChdFiles.MountAsync(
-                            resolvedFilePath, consoleAlias, Log.Logger, _messageBox);
-
-                        if (!mountedChd.IsMounted)
+                        try
                         {
-                            // Error message already shown by MountChdFiles
-                            loadingStateProvider?.SetLoadingState(false);
-                            return;
-                        }
+                            var consoleAlias = _mountChdFiles.GetConsoleAliasFromSystemName(
+                                selectedSystemManager.SystemName, emulatorName, emulatorLocation, Log.Logger);
+                            mountedChd = await _mountChdFiles.MountAsync(
+                                resolvedFilePath, consoleAlias, Log.Logger, _messageBox);
 
-                        var gameFilePath = FindGameFileInMountedChd(mountedChd.MountedPath, chdKind);
-                        if (string.IsNullOrEmpty(gameFilePath))
+                            if (!mountedChd.IsMounted)
+                            {
+                                // Error message already shown by MountChdFiles
+                                return;
+                            }
+
+                            var gameFilePath = FindGameFileInMountedChd(mountedChd.MountedPath, chdKind);
+                            if (string.IsNullOrEmpty(gameFilePath))
+                            {
+                                // Expected condition (unsupported input; user already gets UI feedback):
+                                // not a bug, keep it out of the bug report service.
+                                Log.Information("No game file found in mounted CHD for emulator '{Emulator}'", emulatorName);
+                                await _messageBox.CustomErrorMessageBoxAsync(
+                                    "No suitable game file was found inside the mounted CHD image.",
+                                    "No Game File Found");
+                                return;
+                            }
+
+                            actualFilePath = gameFilePath;
+                        }
+                        finally
                         {
-                            // Expected condition (unsupported input; user already gets UI feedback):
-                            // not a bug, keep it out of the bug report service.
-                            Log.Information("No game file found in mounted CHD for emulator '{Emulator}'", emulatorName);
-                            await _messageBox.CustomErrorMessageBoxAsync(
-                                "No suitable game file was found inside the mounted CHD image.",
-                                "No Game File Found");
                             loadingStateProvider?.SetLoadingState(false);
-                            return;
                         }
-
-                        actualFilePath = gameFilePath;
                     }
                     // else: the emulator reads .chd natively — pass the path directly
 
@@ -323,7 +350,6 @@ public class LauncherService : ILauncherService
                     "Ootake does not support CHD/ISO/CUE-BIN image files. Launch blocked. File: {Path}",
                     actualFilePath);
                 await _messageBox.OotakeDoesNotSupportImageFilesMessageBoxAsync();
-                loadingStateProvider?.SetLoadingState(false);
                 return;
             }
 
@@ -336,7 +362,6 @@ public class LauncherService : ILauncherService
                     "The Geolith libretro core only supports NEO files. Launch blocked. File: {Path}",
                     actualFilePath);
                 await _messageBox.GeolithDoesNotSupportCompressedFilesMessageBoxAsync();
-                loadingStateProvider?.SetLoadingState(false);
                 return;
             }
 
@@ -357,7 +382,6 @@ public class LauncherService : ILauncherService
                     "RetroArch parameters must contain \"-L\" pointing to the desired core.\n\n" +
                     "Example: -L \"cores\\snes9x_libretro.dll\"",
                     "RetroArch Parameter Issue");
-                loadingStateProvider?.SetLoadingState(false);
                 return;
             }
 
@@ -368,12 +392,15 @@ public class LauncherService : ILauncherService
                     "Xemu parameters must contain \"-dvd_path\" pointing to the disc image.\n\n" +
                     "Example: -dvd_path \"%ROM%\"",
                     "Xemu Parameter Issue");
-                loadingStateProvider?.SetLoadingState(false);
                 return;
             }
 
             // ── Launch ──
-            loadingStateProvider?.SetLoadingState(true, _localization.GetString("Launching", "Launching..."));
+            // WPF parity: the reference-counted overlay shown at the start of this method stays
+            // active for the whole launch, so no second show is taken here. Only the status bar
+            // text is advanced (incrementing the counter again would leak an overlay).
+            if (loadingStateProvider is ILaunchFeedback launchStageFeedback)
+                launchStageFeedback.SetStatusText(_localization.GetString("Launching", "Launching..."));
 
             if (string.IsNullOrWhiteSpace(emulatorPath))
             {
@@ -561,7 +588,6 @@ public class LauncherService : ILauncherService
                         await _messageBox.ApplicationControlPolicyBlockedMessageBoxAsync();
                         // Expected user-environment condition (OS policy blocks the emulator): not a bug.
                         Log.Information(win32Ex, "Application control policy blocked launching emulator");
-                        loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
                     else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
@@ -569,14 +595,12 @@ public class LauncherService : ILauncherService
                         await _messageBox.ElevationRequiredMessageBoxAsync();
                         // Expected user-environment condition (the emulator requires admin rights): not a bug.
                         Log.Information(win32Ex, "Elevation required to launch emulator");
-                        loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
                     else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(win32Ex))
                     {
                         // User cancelled the operation (e.g., clicked Cancel on the UAC
                         // prompt) — do nothing and don't offer the AI fix.
-                        loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
                     else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
@@ -584,13 +608,11 @@ public class LauncherService : ILauncherService
                         // Expected user-error condition (the file is not a valid executable for
                         // this OS platform): not a bug, don't log as error or offer the AI fix.
                         await _messageBox.InvalidExecutableFileMessageBoxAsync();
-                        loadingStateProvider?.SetLoadingState(false);
                         return;
                     }
                 }
 
                 await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
-                loadingStateProvider?.SetLoadingState(false);
 
                 // Offer the AI parameter fix (ported from the original launcher)
                 await _askAiToFixParameters.ExecuteAsync(
@@ -621,11 +643,13 @@ public class LauncherService : ILauncherService
                     emulatorName, loadingStateProvider);
                 GamePlayed?.Invoke(this, new GamePlayedEventArgs(resolvedFilePath, selectedSystemManager.SystemName));
             }
-
-            loadingStateProvider?.SetLoadingState(false, _localization.GetString("Done", "Done"));
         }
         finally
         {
+            // Closes the single reference-counted show taken at the start of this method:
+            // every return/exception path above leaves the overlay hidden.
+            loadingStateProvider?.SetLoadingState(false);
+
             // Clean up temp extraction directory
             if (cleanupPath is not null)
             {
@@ -732,12 +756,18 @@ public class LauncherService : ILauncherService
             {
                 loadingStateProvider?.SetLoadingState(true,
                     _localization.GetString("Configuringemulator", "Configuring emulator..."));
-                if (!await configHandler.HandleConfigurationAsync(context))
+                try
                 {
-                    Log.Information("Emulator config handler {Handler} aborted launch for {Emulator}",
-                        configHandler.GetType().Name, context.EmulatorName);
+                    if (!await configHandler.HandleConfigurationAsync(context))
+                    {
+                        Log.Information("Emulator config handler {Handler} aborted launch for {Emulator}",
+                            configHandler.GetType().Name, context.EmulatorName);
+                        return;
+                    }
+                }
+                finally
+                {
                     loadingStateProvider?.SetLoadingState(false);
-                    return;
                 }
             }
 
@@ -746,17 +776,28 @@ public class LauncherService : ILauncherService
             // Default/ZIP/XISO/CHD-mount strategies, so only strategies that previously
             // had no Avalonia handling (PBP conversion, DOSBox, Commander Genius,
             // CHD-to-CUE) can match before the Default fallback runs.
-            var strategy = _launchStrategies.FirstOrDefault(s => s.IsMatch(context));
-            if (strategy == null)
+            // WPF parity: the overlay is owned here for the whole strategy execution so a
+            // strategy that shows nothing still gets a loading state; strategies that take
+            // their own show use a balanced nested pair.
+            loadingStateProvider?.SetLoadingState(true);
+            try
             {
-                Log.Warning(
-                    "No launch strategy found for the context: SystemName='{System}', EmulatorName='{Emulator}', FilePath='{Path}'",
-                    context.SystemName, context.EmulatorName, context.FilePath);
-                await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(LogFilePath());
-                return;
-            }
+                var strategy = _launchStrategies.FirstOrDefault(s => s.IsMatch(context));
+                if (strategy == null)
+                {
+                    Log.Warning(
+                        "No launch strategy found for the context: SystemName='{System}', EmulatorName='{Emulator}', FilePath='{Path}'",
+                        context.SystemName, context.EmulatorName, context.FilePath);
+                    await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(LogFilePath());
+                    return;
+                }
 
-            await strategy.ExecuteAsync(context, this);
+                await strategy.ExecuteAsync(context, this);
+            }
+            finally
+            {
+                loadingStateProvider?.SetLoadingState(false);
+            }
         }
         catch (Exception ex)
         {

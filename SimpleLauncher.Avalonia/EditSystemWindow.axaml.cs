@@ -115,23 +115,28 @@ public partial class EditSystemWindow : Window
     private async Task LoadSystemsAsync()
     {
         SetLoadingState(true, _localization.GetString("Loadingsystems", "Loading systems..."));
-        await Task.Yield();
-
-        _systems = _systemManager.LoadSystems();
-
-        if (_systems.Count == 0)
+        try
         {
-            await _messageBox.SystemXmlNotFoundMessageBoxAsync();
-            SetLoadingState(false);
-            Close();
-            return;
+            await Task.Yield();
+
+            _systems = _systemManager.LoadSystems();
+
+            if (_systems.Count == 0)
+            {
+                await _messageBox.SystemXmlNotFoundMessageBoxAsync();
+                Close();
+                return;
+            }
+
+            PopulateSystemNamesDropdown();
+
+            if (!string.IsNullOrEmpty(_preSelectedSystemName)) SystemNameDropdown.SelectedItem = _preSelectedSystemName;
         }
-
-        PopulateSystemNamesDropdown();
-
-        if (!string.IsNullOrEmpty(_preSelectedSystemName)) SystemNameDropdown.SelectedItem = _preSelectedSystemName;
-
-        SetLoadingState(false);
+        finally
+        {
+            // Closed on every path (including exceptions) so the overlay cannot stick.
+            SetLoadingState(false);
+        }
     }
 
     private void SetLoadingState(bool isLoading, string? message = null)
