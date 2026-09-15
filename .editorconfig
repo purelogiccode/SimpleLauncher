@@ -1,18 +1,12 @@
 [*.cs]
-dotnet_diagnostic.MA0140.severity = suggestion
-
 dotnet_diagnostic.MA0004.severity = none
-
-dotnet_diagnostic.MA0134.severity = none
 
 dotnet_diagnostic.MA0051.severity = none
 
-dotnet_diagnostic.MA0023.severity = none
-
 dotnet_diagnostic.MA0016.severity = none
 
-dotnet_diagnostic.MA0046.severity = none
-
-dotnet_diagnostic.RCS1075.severity = none
-
 dotnet_diagnostic.MA0048.severity = none
+
+dotnet_diagnostic.MA0134.severity = none
+
+dotnet_diagnostic.MA0046.severity = none

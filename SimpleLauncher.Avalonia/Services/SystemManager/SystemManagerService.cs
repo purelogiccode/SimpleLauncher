@@ -24,7 +24,7 @@ public class SystemManagerService
             TimeSpan.FromSeconds(1));
 
     private static readonly Regex SystemNameRegexInstance =
-        new(@"<SystemName>\s*(.*?)\s*</SystemName>", RegexOptions.Singleline | RegexOptions.IgnoreCase,
+        new(@"<SystemName>\s*(.*?)\s*</SystemName>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture,
             TimeSpan.FromSeconds(1));
 
     private readonly IConfiguration _configuration;

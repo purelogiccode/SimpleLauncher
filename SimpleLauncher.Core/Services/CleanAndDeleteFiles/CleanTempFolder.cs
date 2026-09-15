@@ -17,7 +17,9 @@ public static class CleanTempFolder
         {
             await Task.Run(() => Directory.Delete(directoryPath, true));
         }
+#pragma warning disable RCS1075
         catch (Exception)
+#pragma warning restore RCS1075
         {
             // Ignore - this is cleanup code
         }
@@ -52,7 +54,9 @@ public static class CleanTempFolder
             foreach (var subDir in Directory.GetDirectories(directoryPath))
                 await Task.Run(() => Directory.Delete(subDir, true));
         }
+#pragma warning disable RCS1075
         catch (Exception)
+#pragma warning restore RCS1075
         {
             // Ignore - this is cleanup code
         }

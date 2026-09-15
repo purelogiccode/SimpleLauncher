@@ -90,7 +90,9 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         {
             // Cancellation during shutdown is expected.
         }
+#pragma warning disable RCS1075
         catch (Exception)
+#pragma warning restore RCS1075
         {
             // Shutdown must never throw.
         }

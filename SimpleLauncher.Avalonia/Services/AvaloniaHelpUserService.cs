@@ -301,10 +301,10 @@ public class AvaloniaHelpUserService
         { "Zeebo", "Zeebo" }
     };
 
-    private static readonly Regex HeadingRegex = new(@"^##\s*(.*?)$", RegexOptions.Multiline | RegexOptions.Compiled,
+    private static readonly Regex HeadingRegex = new(@"^##\s*(.*?)$", RegexOptions.Multiline | RegexOptions.Compiled | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 
-    private static readonly Regex BoldRegex = new(@"\*\*(.*?)\*\*", RegexOptions.Compiled,
+    private static readonly Regex BoldRegex = new(@"\*\*(.*?)\*\*", RegexOptions.Compiled | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 
     private static readonly Regex MarkdownLinkRegex = new(@"\[(?<text>[^\]]+?)\]\((?<url>https?://\S+?)\)",

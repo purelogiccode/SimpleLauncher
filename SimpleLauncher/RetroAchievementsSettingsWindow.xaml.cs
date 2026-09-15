@@ -71,9 +71,9 @@ public partial class RetroAchievementsSettingsWindow
         {
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // ignored
+            Log.Logger.Warning(ex, "Error in method OpenControlPanel");
         }
     }
 }
