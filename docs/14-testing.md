@@ -8,7 +8,7 @@
 - `SimpleLauncher.Tests` — xUnit (`net10.0-windows`), references `SimpleLauncher` (and transitively `SimpleLauncher.Core`); `InternalsVisibleTo` gives access to internal members.
 - `SimpleLauncher.Avalonia.Tests` — xUnit (`net10.0`, runs on Windows **and** Linux/WSL2), references `SimpleLauncher.Avalonia`; uses `Avalonia.Headless 12.1.1` for window construction tests.
 - Frameworks: **xUnit 2.9.3**, **Moq 4.20.72**, **Avalonia.Headless 12.1.1**, Serilog `ILogger` mocks; Meziantou analyzer enabled.
-- **~152 WPF test files + 48 Avalonia test files (~200 total)** — **489 Avalonia tests** + ~160+ WPF tests. WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
+- **~152 WPF test files + 48 Avalonia test files (~200 total)** — **518 Avalonia tests** + **2058 WPF tests**. WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
 
 ## Test helpers
 
@@ -43,12 +43,8 @@
 ## Running the tests
 
 ```bash
-# WPF — all tests (expect slow network/integration skips on machines without G:\/X:\/J:\ drives)
+# WPF — all tests, unfiltered (includes live endpoints and real app launches; ~3 min)
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj
-
-# WPF — fast path (skip live mount + network tests)
-dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj \
-  --filter "FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~ApiConnectivity&FullyQualifiedName!~StatsApiConnection&FullyQualifiedName!~UpdateSimulation&FullyQualifiedName!~RetroAchievementsManager&FullyQualifiedName!~UrlValidation&FullyQualifiedName!~MountChd&FullyQualifiedName!~MountZip"
 
 # WPF — single class
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj \
@@ -65,7 +61,7 @@ dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj \
 dotnet test SimpleLauncher.sln -c Debug
 ```
 
-> ⚠ **Known slow tests (WPF):** `UrlValidationTests.ParametersMdAllUrlsAreReachable` pings every URL in `parameters.md` over the network **without a timeout** — it can take 15+ minutes or hang when a URL is unreachable. `MountZipFilesIntegrationTests` / `MountChdFilesIntegrationTests` require real files on `G:\`, `X:\`, `J:\` drives and emit `$XunitDynamicSkip$` when missing. Exclude them with the fast-path filter above for local runs.
+> ⚠ **Known slow/live tests (WPF):** `UrlValidationTests.ParametersMdAllUrlsAreReachable` pings every URL in `parameters.md` over the network **without a timeout** — it can take 15+ minutes or hang when a URL is unreachable. `MountZipFilesIntegrationTests` / `MountChdFilesIntegrationTests` require real files on `G:\`, `X:\`, `J:\` drives and fail when missing. All of them run unfiltered in every `dotnet test` (no quarantine — see `AGENTS.md`); a full local run on a machine without that media reports those failures and still exercises everything else.
 
 ## Writing new tests — conventions
 

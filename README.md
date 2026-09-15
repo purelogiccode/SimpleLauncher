@@ -28,7 +28,7 @@
 * **MessagePack Engine:** High-speed MessagePack serialization for near-instant settings loading
 * **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) alongside x64
 * **Asynchronous Architecture:** Multi-threaded game scanning and validation with fluid UI
-* **Single Instance Enforcement:** Prevents resource conflicts by ensuring only one instance runs
+* **Single Instance Enforcement:** Prevents resource conflicts by ensuring only one instance runs — the WPF and Avalonia apps share the guard, so only one of them runs at a time (launching the other brings the running one to the foreground)
 * **Elevation Detection:** Automatically detects games requiring Administrator privileges
 * **Startup Validation:** Detects if running from temporary folders and prompts for proper extraction
 * **Secure Connections:** All metadata and image downloads use TLS 1.2/1.3
@@ -165,9 +165,10 @@ The launcher supports an extensive range of gaming systems including:
 1. **Download:** Grab the latest release for your architecture (x64 or ARM64) from the [Releases Page](https://github.com/purelogiccode/SimpleLauncher/releases).
 2. **Extract:** Unzip the contents into a **writable folder** (e.g., `C:\Games\SimpleLauncher`).
    * *Note: Do not install in `C:\Program Files` to avoid permission issues.*
-3. **Prerequisites:**
+3. **Run:** The single zip contains both apps next to each other — `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia). Run whichever you prefer; they share the same content and settings files.
+4. **Prerequisites:**
    * Install **Dokan** from [GitHub](https://github.com/dokan-dev/dokany/releases) for on-the-fly file mounting.
-   * Ensure you have the [.NET 10 Runtime](https://dotnet.microsoft.com/download) installed.
+   * Ensure you have the [.NET 10 **Desktop** Runtime](https://dotnet.microsoft.com/download) installed (both apps are framework-dependent).
 
 ---
 
@@ -203,8 +204,9 @@ Simple Launcher is translated into **18 languages**:
 An **Avalonia-based cross-platform port** (`SimpleLauncher.Avalonia`) is being developed alongside the WPF app. It reuses all business logic, models, data access, and emulator config handling from `SimpleLauncher.Core`:
 
 - **Platforms:** Windows (x64/ARM64) and Linux (x64/ARM64) — dual-target `net10.0` (Linux) + `net10.0-windows` (Windows)
+- **Windows delivery:** ships in the same unified release zip as the WPF app (`SimpleLauncher.Avalonia.exe` next to `SimpleLauncher.exe`); both are framework-dependent and share the same content files and settings. A single `Updater.exe` updates either app.
 - **Port status:** menu bar with full options (language, button size, aspect ratio, view mode, filename preferences, RetroAchievements, inject emulator config for all 21 emulators, tools, donate, about), per-game context menus (launch, favorites, details, RetroAchievements, copy path/name, show in folder, edit system), 15 utility windows, Favorites / Play History / Global Search pages, RetroAchievements UI (profile / unlocks / progress + settings), tray icon with native menu, F8 global screenshot hotkey (Windows), single dark theme, fully localized UI via JSON resources (18 languages, 2661 keys each)
-- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **489 Avalonia tests** + **150+ WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, resource-coverage suite for localization)
+- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **518 Avalonia tests** + **2058 WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, resource-coverage suite for localization)
 - **Build & test (Windows):** `dotnet build SimpleLauncher.sln -c Debug` · `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (headless, no display required)
 - **Build & test (Linux / WSL2):** `dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (net10.0, runs on Ubuntu 24.04) · `dotnet publish -f net10.0 -r linux-x64` / `linux-arm64` for self-contained folders
 

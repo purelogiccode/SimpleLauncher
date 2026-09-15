@@ -17,12 +17,6 @@ internal partial class GitHubService
 
     private const int GitHubTimeoutSeconds = 5;
 
-    /// <summary>
-    ///     Distinguishes the Avalonia release assets from the WPF ones. Both apps are
-    ///     attached to the same GitHub release, so the package names must not collide.
-    /// </summary>
-    private const string AssetPrefix = "avalonia_";
-
     private static readonly string[] RepoOwners = ["purelogiccode"];
 
     private readonly HttpClient _httpClient;
@@ -150,7 +144,7 @@ internal partial class GitHubService
             }
 
             var normalizedVersion = NormalizeVersion(rawVersionString);
-            var expectedAssetName = $"release_{AssetPrefix}{rawVersionString}_{CurrentRuntimeIdentifier}.zip";
+            var expectedAssetName = $"release_{rawVersionString}_{CurrentRuntimeIdentifier}.zip";
 
             LogMessage?.Invoke(this, new EventArgs<string>($"Searching for asset: {expectedAssetName}"));
 
@@ -168,7 +162,7 @@ internal partial class GitHubService
                                 new EventArgs<string>($"Latest version found: {normalizedVersion}"));
                             LogMessage?.Invoke(this, new EventArgs<string>($"Release package URL: {assetUrl}"));
                             var fallbackAssetUrl = SecondaryServerBaseUrl +
-                                                   $"release_{AssetPrefix}{rawVersionString}_{CurrentRuntimeIdentifier}.zip";
+                                                   $"release_{rawVersionString}_{CurrentRuntimeIdentifier}.zip";
                             return (normalizedVersion, assetUrl, fallbackAssetUrl);
                         }
                     }
@@ -243,7 +237,7 @@ internal partial class GitHubService
             }
 
             var normalizedVersion = NormalizeVersion(rawVersionString);
-            var expectedAssetName = $"release_{AssetPrefix}{rawVersionString}_{CurrentRuntimeIdentifier}.zip";
+            var expectedAssetName = $"release_{rawVersionString}_{CurrentRuntimeIdentifier}.zip";
             var assetUrl = SecondaryServerBaseUrl + expectedAssetName;
 
             LogMessage?.Invoke(this, new EventArgs<string>($"Latest version found: {normalizedVersion}"));

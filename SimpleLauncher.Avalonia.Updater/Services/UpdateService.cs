@@ -83,10 +83,12 @@ internal class UpdateService
     ///     Executes the complete update process.
     /// </summary>
     /// <param name="processId">The process ID of the main application to wait for, or null.</param>
+    /// <param name="targetAppProcessName">The application process name to wait for and restart (WPF or Avalonia).</param>
     /// <param name="ignoredFiles">Files to exclude during extraction (typically updater files).</param>
     /// <param name="cancellationToken">Token to cancel the update operation.</param>
     /// <returns>The result of the update operation.</returns>
-    public async Task<UpdateResult> ExecuteUpdateAsync(int? processId, string[] ignoredFiles,
+    public async Task<UpdateResult> ExecuteUpdateAsync(int? processId, string targetAppProcessName,
+        string[] ignoredFiles,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(_appDirectory))
@@ -114,7 +116,7 @@ internal class UpdateService
             // Wait for the main application to exit
             try
             {
-                await _processService.WaitForProcessExitAsync(processId, cancellationToken);
+                await _processService.WaitForProcessExitAsync(processId, targetAppProcessName, cancellationToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -292,12 +294,13 @@ internal class UpdateService
     /// <summary>
     ///     Restarts the main application after a successful update.
     /// </summary>
+    /// <param name="targetAppProcessName">The application process name to restart (WPF or Avalonia).</param>
     /// <returns>True if the restart was successful, false otherwise.</returns>
-    public bool RestartMainApplication()
+    public bool RestartMainApplication(string targetAppProcessName)
     {
         // ProcessService appends the platform-appropriate extension: passing the ".exe"
         // suffix here produced "SimpleLauncher.Avalonia.exe.exe" on Windows.
-        return _processService.RestartApplication(_appDirectory, "SimpleLauncher.Avalonia", "-whatsnew");
+        return _processService.RestartApplication(_appDirectory, targetAppProcessName, "-whatsnew");
     }
 
     /// <summary>

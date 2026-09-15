@@ -8,7 +8,8 @@ using SimpleLauncher.Avalonia.Updater.Services;
 namespace SimpleLauncher.Avalonia.Updater;
 
 /// <summary>
-///     Main window for the Avalonia Updater that manages the update process for SimpleLauncher.Avalonia.
+///     Main window for the single updater that manages the update process for both the
+///     WPF and the Avalonia SimpleLauncher applications (shipped side by side in one bundle).
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -22,12 +23,12 @@ public partial class MainWindow : Window
     // Files to exclude during extraction to prevent self-destruction
     private static readonly string[] IgnoredFiles =
     [
-        "SimpleLauncher.Avalonia.Updater",
-        "SimpleLauncher.Avalonia.Updater.exe",
-        "SimpleLauncher.Avalonia.Updater.pdb",
-        "SimpleLauncher.Avalonia.Updater.dll",
-        "SimpleLauncher.Avalonia.Updater.deps.json",
-        "SimpleLauncher.Avalonia.Updater.runtimeconfig.json"
+        "Updater",
+        "Updater.exe",
+        "Updater.pdb",
+        "Updater.dll",
+        "Updater.deps.json",
+        "Updater.runtimeconfig.json"
     ];
 
     private readonly string[] _args;
@@ -45,7 +46,7 @@ public partial class MainWindow : Window
 
     static MainWindow()
     {
-        HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SimpleLauncher-Avalonia-Updater");
+        HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SimpleLauncher-Updater");
     }
 
     /// <summary>
@@ -180,19 +181,35 @@ public partial class MainWindow : Window
             // Parse process ID from command line arguments. UPD-08: the PID is validated
             // against the expected main-app process name — an unrelated/reused PID is
             // ignored (falling back to the by-name wait) instead of stalling the update.
-            int? processId = null;
+            int? parsedPid = null;
             if (_args.Length > 0 &&
                 int.TryParse(_args[0], CultureInfo.InvariantCulture, out var pid) && pid > 0)
             {
-                processId = ProcessService.ValidateProcessId(pid);
+                parsedPid = pid;
+            }
+
+            // New releases pass the target application as the second argument; older WPF
+            // releases passed only the PID, so the application is detected from the process
+            // name as a fallback (defaulting to the WPF app, the only legacy caller).
+            var targetAppProcessName =
+                ProcessService.TryResolveAppProcessName(_args.Length > 1 ? _args[1] : null, parsedPid)
+                ?? ProcessService.WpfAppProcessName;
+
+            int? processId = null;
+            if (parsedPid.HasValue)
+            {
+                processId = ProcessService.ValidateProcessId(parsedPid.Value, targetAppProcessName);
                 if (!processId.HasValue)
                     Log($"Ignoring invalid process ID argument: {_args[0]} — waiting by process name instead.");
             }
 
+            Log($"Target application: {targetAppProcessName}");
+
             CancelButton.IsEnabled = true;
 
             // Execute the update through the service
-            var result = await _updateService.ExecuteUpdateAsync(processId, IgnoredFiles, cancellationToken);
+            var result = await _updateService.ExecuteUpdateAsync(processId, targetAppProcessName, IgnoredFiles,
+                cancellationToken);
 
             if (result.Success)
             {
@@ -204,7 +221,7 @@ public partial class MainWindow : Window
 
                 // UPD-16: only close on a real restart — a null/failed start must
                 // tell the user to launch manually instead of vanishing.
-                if (!_updateService.RestartMainApplication())
+                if (!_updateService.RestartMainApplication(targetAppProcessName))
                 {
                     Log("Update installed, but the application could not be restarted automatically.");
                     await DialogHelper.ShowMessageAsync(this,

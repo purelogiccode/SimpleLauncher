@@ -3,11 +3,12 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
-        <!-- Must stay in sync with SimpleLauncher.Avalonia.csproj. The app copies the updater's
-             entire self-contained publish over its own output, so a different runtime patch here
-             would silently replace the app's pinned runtime binaries. -->
+        <!-- Must stay in sync with SimpleLauncher.Avalonia.csproj. The app publishes this updater
+             (framework-dependent) and copies it next to itself, so a different runtime pin here
+             could make the updater require a runtime the apps do not. -->
         <RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
-        <AssemblyName>SimpleLauncher.Avalonia.Updater</AssemblyName>
+        <!-- The single updater shared by the WPF and Avalonia apps ships as Updater.exe. -->
+        <AssemblyName>Updater</AssemblyName>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyVersion>5.7.0</AssemblyVersion>

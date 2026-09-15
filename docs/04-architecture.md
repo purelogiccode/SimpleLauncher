@@ -90,13 +90,19 @@ sequenceDiagram
     App->>App: Temp-folder check → abort if running from %TEMP%
     App->>SP: BuildServiceProvider
     App->>App: Fire-and-forget CleanupTrash + CleanupTempFiles
-    App->>App: Single-instance Mutex + EventWaitHandle (skipped with --restarting)
+    App->>App: Single-instance Mutex + EventWaitHandle shared with the Avalonia app (skipped with --restarting)
     App->>App: ApplyTheme + ApplyLanguage from settings
     App->>MW: new MainWindow() via DI → Show()
     App->>App: -debug → DebugWindow; -whatsnew → UpdateHistoryWindow
     App->>App: Fire-and-forget usage stats
     MW->>MW: OnLoadedAsync → StartupInitializationService.InitializeAsync + HandleLoadedAsync
 ```
+
+The shared single-instance guard lives in `SimpleLauncher.Core/SingleInstance.cs`: both apps use
+the same named mutex + event. Launching a second copy of **either** app signals the running
+instance (which restores and foregrounds its window) and then exits immediately — including a
+WPF copy launched while the Avalonia app is running, and vice versa. `--restarting` bypasses the
+guard so the update/reinstall restart cannot be mistaken for a second launch.
 
 `StartupInitializationService.InitializeAsync` (`Services\StartupInitialization\StartupInitializationService.cs:59-72`) order:
 1. Status-bar timer (`StatusBarTimeoutSeconds`, default 3 s) — `:74-88`

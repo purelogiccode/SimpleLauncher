@@ -83,9 +83,6 @@ namespace SimpleLauncher.Avalonia;
 /// </summary>
 public class App : Application, IDisposable
 {
-    private const string UniqueMutexIdentifier = "D7F1A8B2-C4E6-9D0F-7A3B-5C1E2F8A6D9B";
-    private const string MutexName = "SimpleLauncherNew_SingleInstanceMutex_" + UniqueMutexIdentifier;
-    private const string EventName = "SimpleLauncherNew_SingleInstanceEvent_" + UniqueMutexIdentifier;
     private EventWaitHandle? _instanceSignal;
     private bool _isFirstInstance;
 
@@ -190,51 +187,60 @@ public class App : Application, IDisposable
         var displayHistoryWindow =
             startupArgs.Any(static arg => arg.Equals("-whatsnew", StringComparison.OrdinalIgnoreCase));
 
-        // Single-instance enforcement
-        try
+        // Single-instance enforcement. The mutex name is shared with the WPF app, so only
+        // one SimpleLauncher (WPF or Avalonia) can run at a time; a second launch signals
+        // the running instance to come to the foreground and exits. --restarting skips the
+        // check (WPF parity) so the app can replace itself while the previous process is
+        // still shutting down.
+        var isRestarting =
+            startupArgs.Any(static arg => arg.Equals("--restarting", StringComparison.OrdinalIgnoreCase));
+        if (!isRestarting)
         {
-            _singleInstanceMutex = new Mutex(true, MutexName, out _isFirstInstance);
-        }
-        catch (AbandonedMutexException)
-        {
-            // The mutex was abandoned by a previous instance (e.g., due to a crash).
-            // This means we successfully acquired it, and we are now the first instance.
-            // The 'out _isFirstInstance' parameter would already be true in this case,
-            // but we explicitly set it for clarity and to ensure the flow continues as a first instance.
-            _isFirstInstance = true;
-            Log.Debug(
-                "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance");
-        }
-
-        // Named EventWaitHandle is Windows-only; on Linux the named Mutex still enforces
-        // single-instance, only the "bring first instance to foreground" signal is lost.
-        if (OperatingSystem.IsWindows())
-            _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, EventName);
-
-        if (!_isFirstInstance)
-        {
-            // Signal the first instance to come to foreground
             try
             {
-                _instanceSignal?.Set();
+                _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out _isFirstInstance);
             }
-            catch (Exception ex)
+            catch (AbandonedMutexException)
             {
-                Log.Debug(ex, "Failed to signal first instance");
+                // The mutex was abandoned by a previous instance (e.g., due to a crash).
+                // This means we successfully acquired it, and we are now the first instance.
+                // The 'out _isFirstInstance' parameter would already be true in this case,
+                // but we explicitly set it for clarity and to ensure the flow continues as a first instance.
+                _isFirstInstance = true;
+                Log.Debug(
+                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance");
             }
 
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime nonFirstInstanceLifetime)
-            {
-                // Do NOT call Shutdown() synchronously here: the dispatcher main loop has not
-                // started yet, and DoShutdown() -> Dispatcher.UIThread.InvokeShutdown() leaves
-                // the dispatcher permanently shut down, so StartCore() then throws
-                // "Cannot perform requested operation because the Dispatcher shut down" when it
-                // calls Dispatcher.UIThread.MainLoop(...). Post the shutdown instead so it runs
-                // once the main loop is pumping (same clean-exit path as closing the main window).
-                Dispatcher.UIThread.Post(() => nonFirstInstanceLifetime.Shutdown());
-            }
+            // Named EventWaitHandle is Windows-only; on Linux the named Mutex still enforces
+            // single-instance, only the "bring first instance to foreground" signal is lost.
+            if (OperatingSystem.IsWindows())
+                _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SingleInstance.EventName);
 
-            return;
+            if (!_isFirstInstance)
+            {
+                // Signal the first instance to come to foreground
+                try
+                {
+                    _instanceSignal?.Set();
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Failed to signal first instance");
+                }
+
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime nonFirstInstanceLifetime)
+                {
+                    // Do NOT call Shutdown() synchronously here: the dispatcher main loop has not
+                    // started yet, and DoShutdown() -> Dispatcher.UIThread.InvokeShutdown() leaves
+                    // the dispatcher permanently shut down, so StartCore() then throws
+                    // "Cannot perform requested operation because the Dispatcher shut down" when it
+                    // calls Dispatcher.UIThread.MainLoop(...). Post the shutdown instead so it runs
+                    // once the main loop is pumping (same clean-exit path as closing the main window).
+                    Dispatcher.UIThread.Post(() => nonFirstInstanceLifetime.Shutdown());
+                }
+
+                return;
+            }
         }
 
         // Configuration

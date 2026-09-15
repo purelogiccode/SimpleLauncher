@@ -20,10 +20,9 @@ namespace SimpleLauncher.Avalonia.Services;
 /// <summary>
 ///     Checks for new application releases on GitHub, falling back to the secondary
 ///     server when GitHub is unreachable. Avalonia port of the WPF CheckForUpdatesService.
-///     When the user accepts an update, the Avalonia updater
-///     (SimpleLauncher.Avalonia.Updater) is re-downloaded from the release assets
-///     (falling back to the local copy when offline) and launched; the application
-///     then shuts down.
+///     When the user accepts an update, the single updater shared with the WPF app
+///     (Updater.exe) is re-downloaded from the release assets (falling back to the local
+///     copy when offline) and launched; the application then shuts down.
 /// </summary>
 public partial class AvaloniaCheckForUpdatesService
 {
@@ -32,13 +31,7 @@ public partial class AvaloniaCheckForUpdatesService
     private const string SecondaryServerBaseUrl =
         "https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/";
 
-    private const string UpdaterFileName = "SimpleLauncher.Avalonia.Updater";
-
-    /// <summary>
-    ///     Distinguishes the Avalonia release assets from the WPF ones. Both apps are
-    ///     attached to the same GitHub release, so the package names must not collide.
-    /// </summary>
-    private const string AssetPrefix = "avalonia_";
+    private const string UpdaterFileName = "Updater";
 
     private static readonly string[] RepoOwners = ["purelogiccode"];
     private readonly IApplicationLifetime _applicationLifetime;
@@ -84,6 +77,14 @@ public partial class AvaloniaCheckForUpdatesService
         : UpdaterFileName;
 
     /// <summary>
+    ///     Name of this application's executable, passed to the updater so it waits for
+    ///     and restarts the correct app (the WPF and Avalonia apps share one updater).
+    /// </summary>
+    internal static string AppExecutableName => OperatingSystem.IsWindows()
+        ? "SimpleLauncher.Avalonia.exe"
+        : "SimpleLauncher.Avalonia";
+
+    /// <summary>
     ///     Gets the current runtime identifier used for release/updater asset names,
     ///     mirroring the updater's GitHubService (win-x64/win-arm64/linux-x64/linux-arm64).
     /// </summary>
@@ -99,21 +100,22 @@ public partial class AvaloniaCheckForUpdatesService
     }
 
     /// <summary>
-    ///     Name of the release package asset for a raw version and runtime identifier,
-    ///     e.g. release_avalonia_5.7.0_win-x64.zip.
+    ///     Name of the unified release package asset for a raw version and runtime identifier,
+    ///     e.g. release_5.7.0_win-x64.zip. The bundle contains both the WPF and the Avalonia
+    ///     app next to each other.
     /// </summary>
     internal static string ReleaseAssetName(string rawVersion, string rid)
     {
-        return $"release_{AssetPrefix}{rawVersion}_{rid}.zip";
+        return $"release_{rawVersion}_{rid}.zip";
     }
 
     /// <summary>
-    ///     Name of the updater package asset for a runtime identifier,
-    ///     e.g. updater_avalonia_win-x64.zip.
+    ///     Name of the single updater package asset for a runtime identifier,
+    ///     e.g. updater_win-x64.zip.
     /// </summary>
     internal static string UpdaterAssetName(string rid)
     {
-        return $"updater_{AssetPrefix}{rid}.zip";
+        return $"updater_{rid}.zip";
     }
 
     private string CurrentVersion
@@ -273,7 +275,8 @@ public partial class AvaloniaCheckForUpdatesService
             {
                 var startInfo = new ProcessStartInfo(updaterPath)
                 {
-                    Arguments = Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                    Arguments =
+                        $"{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)} {AppExecutableName}",
                     UseShellExecute = true,
                     WorkingDirectory = _updaterDirectory
                 };

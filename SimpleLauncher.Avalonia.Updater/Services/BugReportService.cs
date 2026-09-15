@@ -164,7 +164,7 @@ internal static class BugReportService
         try
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var assemblyName = assembly.GetName().Name ?? "SimpleLauncher.Avalonia.Updater";
+            var assemblyName = assembly.GetName().Name ?? "Updater";
             var version = assembly.GetName().Version?.ToString() ?? "Unknown";
 
             var environmentInfo = EnvironmentInfo.Collect();

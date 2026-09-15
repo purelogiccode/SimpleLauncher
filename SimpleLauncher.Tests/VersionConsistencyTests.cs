@@ -76,17 +76,6 @@ public class VersionConsistencyTests
             Path.Combine("SimpleLauncher.Avalonia.Updater", "SimpleLauncher.Avalonia.Updater.csproj"));
     }
 
-    /// <summary>
-    ///     Verifies that the WPF updater csproj version metadata matches the canonical version from
-    ///     SimpleLauncher.csproj, auto-correcting mismatches.
-    /// </summary>
-    [Fact]
-    public void WpfUpdaterProjectVersionMatchesProjectVersion()
-    {
-        AssertProjectVersionMatchesProjectVersion(
-            Path.Combine("SimpleLauncher.Updater", "SimpleLauncher.Updater.csproj"));
-    }
-
     private static void AssertProjectVersionMatchesProjectVersion(string relativePath)
     {
         var projectVersion = GetProjectVersion();
@@ -147,24 +136,30 @@ public class VersionConsistencyTests
     }
 
     /// <summary>
-    ///     Verifies that the SimpleLauncher.Updater/version.txt content matches the project version, auto-correcting
-    ///     mismatches.
+    ///     Verifies that both apps ship the exact same appsettings.json. The unified release
+    ///     bundle places both executables in one folder with a single shared appsettings.json,
+    ///     so the two source files must never drift apart.
     /// </summary>
     [Fact]
-    public void UpdaterVersionTxtMatchesProjectVersion()
+    public void AppSettingsFilesAreIdentical()
     {
-        var projectVersion = GetProjectVersion();
-        var expectedContent = $"release{projectVersion}";
+        var wpfPath = GetProjectFilePath(Path.Combine("SimpleLauncher", "appsettings.json"));
+        var avaloniaPath = GetProjectFilePath(Path.Combine("SimpleLauncher.Avalonia", "appsettings.json"));
 
-        var versionTxtPath = GetProjectFilePath(Path.Combine("SimpleLauncher.Updater", "version.txt"));
-        Assert.True(File.Exists(versionTxtPath), $"SimpleLauncher.Updater/version.txt not found at {versionTxtPath}");
+        Assert.True(File.Exists(wpfPath), $"appsettings.json not found at {wpfPath}");
+        Assert.True(File.Exists(avaloniaPath), $"appsettings.json not found at {avaloniaPath}");
 
-        var currentContent = File.ReadAllText(versionTxtPath).Trim();
-        if (string.Equals(currentContent, expectedContent, StringComparison.Ordinal)) return;
+        var wpf = Normalize(wpfPath);
+        var avalonia = Normalize(avaloniaPath);
 
-        File.WriteAllText(versionTxtPath, expectedContent + Environment.NewLine);
-        Assert.Fail(
-            $"SimpleLauncher.Updater/version.txt was automatically updated from '{currentContent}' to '{expectedContent}'. " +
-            "Please review the change and commit it.");
+        Assert.True(string.Equals(wpf, avalonia, StringComparison.OrdinalIgnoreCase),
+            "SimpleLauncher/appsettings.json and SimpleLauncher.Avalonia/appsettings.json differ. " +
+            "The unified release bundle ships a single shared appsettings.json, so both files must stay in sync.");
+        return;
+
+        static string Normalize(string path)
+        {
+            return File.ReadAllText(path).Replace("\r\n", "\n", StringComparison.Ordinal).TrimEnd();
+        }
     }
 }

@@ -11,15 +11,71 @@ internal class ProcessService
     private const int ProcessExitPollIntervalMs = 500; // Poll every 500ms to check if process exited
 
     /// <summary>
-    ///     Expected main-application process name (without extension) for PID validation
-    ///     and by-name lookup.
+    ///     Process names (without extension) of the applications the single updater serves.
+    ///     PIDs and application arguments are only trusted when they match one of these.
     /// </summary>
-    private const string ExpectedMainAppProcessName = "SimpleLauncher.Avalonia";
+    internal const string WpfAppProcessName = "SimpleLauncher";
+
+    internal const string AvaloniaAppProcessName = "SimpleLauncher.Avalonia";
 
     /// <summary>
     ///     Event raised when a log message needs to be displayed.
     /// </summary>
     public event EventHandler<EventArgs<string>>? LogMessage;
+
+    /// <summary>
+    ///     Returns whether the given process name belongs to one of the applications the
+    ///     updater serves.
+    /// </summary>
+    internal static bool IsKnownAppProcessName(string processName)
+    {
+        return string.Equals(processName, WpfAppProcessName, StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(processName, AvaloniaAppProcessName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Resolves which application the updater targets. New releases pass the application
+    ///     executable name as the second argument; older WPF releases passed only the PID, so
+    ///     the application is detected from the process name as a fallback.
+    /// </summary>
+    /// <param name="appArgument">The optional application argument (e.g. "SimpleLauncher.exe").</param>
+    /// <param name="processId">The optional candidate process ID.</param>
+    /// <returns>The known application process name, or null when it cannot be resolved.</returns>
+    internal static string? TryResolveAppProcessName(string? appArgument, int? processId)
+    {
+        if (!string.IsNullOrWhiteSpace(appArgument))
+        {
+            var candidate = Path.GetFileName(appArgument.Trim());
+            if (candidate.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                candidate = candidate[..^4];
+
+            if (IsKnownAppProcessName(candidate))
+                return candidate;
+
+            Log.Warning("Ignoring unknown application argument '{Argument}'", appArgument);
+        }
+
+        if (processId.HasValue)
+        {
+            try
+            {
+                using var process = Process.GetProcessById(processId.Value);
+                if (IsKnownAppProcessName(process.ProcessName))
+                    return process.ProcessName;
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            {
+                // The process already exited — the caller falls back to the default.
+            }
+            catch (Exception ex)
+            {
+                // E.g. access denied reading an elevated process — never trust it.
+                Log.Warning(ex, "Could not detect the application from process ID {Pid}", processId);
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>
     ///     Validates a candidate main-application PID taken from the command line (UPD-08).
@@ -30,8 +86,9 @@ internal class ProcessService
     ///     the caller falls back to the by-name wait.
     /// </summary>
     /// <param name="pid">The candidate process ID.</param>
+    /// <param name="expectedProcessName">The expected application process name.</param>
     /// <returns>The PID when valid; otherwise null.</returns>
-    internal static int? ValidateProcessId(int pid)
+    internal static int? ValidateProcessId(int pid, string expectedProcessName)
     {
         if (pid <= 0)
             return null;
@@ -42,12 +99,12 @@ internal class ProcessService
             if (process.HasExited)
                 return null;
 
-            if (!string.Equals(process.ProcessName, ExpectedMainAppProcessName,
+            if (!string.Equals(process.ProcessName, expectedProcessName,
                     StringComparison.OrdinalIgnoreCase))
             {
                 Log.Warning(
                     "Ignoring process ID argument {Pid}: process name is '{Actual}' (expected '{Expected}')",
-                    pid, process.ProcessName, ExpectedMainAppProcessName);
+                    pid, process.ProcessName, expectedProcessName);
                 return null;
             }
 
@@ -74,11 +131,13 @@ internal class ProcessService
     ///     the PID path — instead of logging "proceeding anyway" into live file locks.
     /// </summary>
     /// <param name="processId">The process ID of the main application, or null if not available.</param>
+    /// <param name="expectedProcessName">The expected application process name (used for PID validation and by-name lookup).</param>
     /// <param name="cancellationToken">Token to cancel the wait operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="TimeoutException">Thrown when the process does not exit within the timeout period.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled.</exception>
-    public async Task WaitForProcessExitAsync(int? processId, CancellationToken cancellationToken = default)
+    public async Task WaitForProcessExitAsync(int? processId, string expectedProcessName,
+        CancellationToken cancellationToken = default)
     {
         if (processId.HasValue)
         {
@@ -86,7 +145,7 @@ internal class ProcessService
             {
                 using var mainAppProcess = Process.GetProcessById(processId.Value);
                 LogMessage?.Invoke(this,
-                    new EventArgs<string>($"Waiting for Simple Launcher (PID: {processId}) to exit..."));
+                    new EventArgs<string>($"Waiting for {expectedProcessName} (PID: {processId}) to exit..."));
 
                 var stopwatch = Stopwatch.StartNew();
                 while (!mainAppProcess.HasExited && stopwatch.ElapsedMilliseconds < ProcessExitTimeoutMs)
@@ -100,38 +159,38 @@ internal class ProcessService
                 if (!mainAppProcess.HasExited)
                 {
                     throw new TimeoutException(
-                        $"Simple Launcher (PID: {processId}) did not exit within {ProcessExitTimeoutMs / 1000} seconds. " +
+                        $"{expectedProcessName} (PID: {processId}) did not exit within {ProcessExitTimeoutMs / 1000} seconds. " +
                         "The process may be unresponsive or still shutting down.");
                 }
 
                 // Add a small delay to ensure file handles are released
                 await Task.Delay(500, cancellationToken);
-                LogMessage?.Invoke(this, new EventArgs<string>("Simple Launcher has exited."));
+                LogMessage?.Invoke(this, new EventArgs<string>($"{expectedProcessName} has exited."));
             }
             catch (ArgumentException)
             {
-                // Expected condition: Simple Launcher already exited before the poll started —
+                // Expected condition: the application already exited before the poll started —
                 // log at Information level, not a bug report.
-                Log.Information("Simple Launcher process not found (PID: {ProcessId}). Assuming it has already exited",
-                    processId);
+                Log.Information("{ProcessName} process not found (PID: {ProcessId}). Assuming it has already exited",
+                    expectedProcessName, processId);
                 LogMessage?.Invoke(this,
-                    new EventArgs<string>("Simple Launcher process not found. Assuming it has already exited."));
+                    new EventArgs<string>($"{expectedProcessName} process not found. Assuming it has already exited."));
             }
         }
         else
         {
             LogMessage?.Invoke(this,
                 new EventArgs<string>(
-                    "No PID provided by Simple Launcher. Searching for SimpleLauncher.Avalonia process by name..."));
+                    $"No PID provided. Searching for {expectedProcessName} process by name..."));
 
-            var processes = Process.GetProcessesByName(ExpectedMainAppProcessName);
+            var processes = Process.GetProcessesByName(expectedProcessName);
             if (processes.Length > 0)
             {
                 try
                 {
                     LogMessage?.Invoke(this,
                         new EventArgs<string>(
-                            $"Found {processes.Length} SimpleLauncher.Avalonia process(es). Waiting for all to exit..."));
+                            $"Found {processes.Length} {expectedProcessName} process(es). Waiting for all to exit..."));
 
                     var stopwatch = Stopwatch.StartNew();
                     bool allExited;
@@ -157,20 +216,21 @@ internal class ProcessService
                     if (!allExited)
                     {
                         throw new TimeoutException(
-                            $"SimpleLauncher.Avalonia did not exit within {ProcessExitTimeoutMs / 1000} seconds. " +
+                            $"{expectedProcessName} did not exit within {ProcessExitTimeoutMs / 1000} seconds. " +
                             "The process may be unresponsive or still shutting down.");
                     }
 
-                    LogMessage?.Invoke(this, new EventArgs<string>("SimpleLauncher.Avalonia has exited."));
+                    LogMessage?.Invoke(this, new EventArgs<string>($"{expectedProcessName} has exited."));
                 }
                 catch (InvalidOperationException)
                 {
                     // Expected condition: process exited between GetProcessesByName and HasExited check
                     Log.Information(
-                        "SimpleLauncher.Avalonia process disappeared during wait. Assuming it has already exited");
+                        "{ProcessName} process disappeared during wait. Assuming it has already exited",
+                        expectedProcessName);
                     LogMessage?.Invoke(this,
                         new EventArgs<string>(
-                            "SimpleLauncher.Avalonia process disappeared. Assuming it has already exited."));
+                            $"{expectedProcessName} process disappeared. Assuming it has already exited."));
                 }
                 finally
                 {
@@ -180,7 +240,7 @@ internal class ProcessService
             else
             {
                 LogMessage?.Invoke(this,
-                    new EventArgs<string>("SimpleLauncher process not found. Proceeding immediately."));
+                    new EventArgs<string>($"{expectedProcessName} process not found. Proceeding immediately."));
             }
 
             // Small delay to ensure file handles are released

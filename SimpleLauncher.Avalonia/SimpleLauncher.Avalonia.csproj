@@ -542,13 +542,15 @@
         <Using Include="Serilog" />
     </ItemGroup>
 
-    <!-- ── Avalonia Updater (phase 1.1: ship the updater next to the app) ──
+    <!-- ── Single updater (Updater.exe, shared by the WPF and Avalonia apps) ──
          The updater is a standalone executable (no compile reference — ReferenceOutputAssembly=false),
-         but it must ship in the same folder as the app so updates can replace the app files while
-         the updater itself stays locked/running. -->
+         but it must ship in the same folder as both apps so updates can replace the app files while
+         the updater itself stays locked/running. It is published framework-dependent single-file so
+         the same Updater.exe works from either app's folder and in older WPF-only installs. -->
     <ItemGroup>
         <ProjectReference Include="..\SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj"
-                          ReferenceOutputAssembly="false" />
+                          ReferenceOutputAssembly="false"
+                          Private="false" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
       <PackageReference Include="System.Drawing.Common" Version="10.0.12" />
@@ -570,11 +572,15 @@
 
          Publishing:
          - PublishAvaloniaUpdater (BeforeTargets=CopyAvaloniaUpdaterToPublishDir) publishes the
-           updater for the same Configuration/TFM/RID into the staging folder. With
-           ReferenceOutputAssembly=false the SDK only contributes the updater's apphost/deps/
-           runtimeconfig to the app publish (no managed dll), so without this target a fresh
-           checkout would produce an updater that cannot run. RuntimeFrameworkVersion is passed
-           through so the updater's self-contained runtime pack always matches the app's pin.
+           updater for the same Configuration/TFM/RID into the staging folder as a
+           framework-dependent single file (Updater.exe). With ReferenceOutputAssembly=false the
+           SDK only contributes the updater's apphost/deps/runtimeconfig to the app publish (no
+           managed dll), so without this target a fresh checkout would produce an updater that
+           cannot run. RuntimeFrameworkVersion is passed through so the updater's own output
+           follows the apps' runtime pin. The Avalonia native libraries the updater needs to start
+           (libSkiaSharp, libHarfBuzzSharp, av_libglesv2) are bundled into the single file and
+           self-extracted at launch: updater_{rid}.zip ships Updater.exe alone, so it must run on
+           legacy WPF-only installs that have no Avalonia natives in the application folder.
          - CopyAvaloniaUpdaterToPublishDir (AfterTargets=Publish) copies the staging tree into the
            app publish folder; the Error guard makes a missing updater publish a build failure
            instead of a silently broken updater in the payload.
@@ -592,14 +598,20 @@
             BeforeTargets="CopyAvaloniaUpdaterToPublishDir"
             Condition="'$(TargetFramework)' != ''">
         <!-- PublishDir is set explicitly so the app's own output directory (-o) is not propagated
-             into the updater publish, which would leave the staging path empty. -->
+             into the updater publish, which would leave the staging path empty. The staging tree
+             is removed first: publish overwrites but never deletes, so files produced by earlier
+             publishes with different options (for example an Updater.runtimeconfig.json from a
+             non-single-file run) would otherwise stay and leak into the app payload. -->
+        <RemoveDir Directories="$(AvaloniaUpdaterPublishDir)"
+                   Condition="Exists('$(AvaloniaUpdaterPublishDir)')"
+                   ContinueOnError="true" />
         <MSBuild Projects="..\SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj"
                  Targets="Publish"
-                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=true;RuntimeFrameworkVersion=$(RuntimeFrameworkVersion);PublishDir=$(AvaloniaUpdaterPublishDir)"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=false;PublishSingleFile=true;IncludeNativeLibrariesForSelfExtract=true;RuntimeFrameworkVersion=$(RuntimeFrameworkVersion);PublishDir=$(AvaloniaUpdaterPublishDir)"
                  Condition="'$(RuntimeIdentifier)' != ''" />
         <MSBuild Projects="..\SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj"
                  Targets="Publish"
-                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);RuntimeFrameworkVersion=$(RuntimeFrameworkVersion);PublishDir=$(AvaloniaUpdaterPublishDir)"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);SelfContained=false;PublishSingleFile=true;IncludeNativeLibrariesForSelfExtract=true;RuntimeFrameworkVersion=$(RuntimeFrameworkVersion);PublishDir=$(AvaloniaUpdaterPublishDir)"
                  Condition="'$(RuntimeIdentifier)' == ''" />
     </Target>
     <Target Name="CopyAvaloniaUpdaterToPublishDir" AfterTargets="Publish" Condition="'$(PublishDir)' != ''">

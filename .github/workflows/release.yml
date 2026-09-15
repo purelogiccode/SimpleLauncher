@@ -1,11 +1,12 @@
-name: Publish Avalonia release
+name: Publish release
 
-# Manual release: packages the Avalonia app for win-x64 and win-arm64 via
-# scripts/package-release.ps1 -App Avalonia (-OutputDir/-WorkDir override the defaults)
-# and creates/updates the GitHub release the in-app updater reads.
-# The assets carry the "avalonia_" prefix (release_avalonia_{version}_{rid}.zip,
-# updater_avalonia_{rid}.zip) so they share the release tag with the WPF packages
-# produced by release-wpf.yml without overwriting them.
+# Manual release: packages the unified WPF + Avalonia bundle for win-x64 and win-arm64
+# via scripts/package-release.ps1, uploads the zips as workflow artifacts and
+# creates/updates the GitHub release the in-app updater reads.
+#
+# Assets produced per RID:
+#   release_{version}_{rid}.zip   SimpleLauncher.exe + SimpleLauncher.Avalonia.exe side by side
+#   updater_{rid}.zip             the single Updater.exe shared by both apps
 
 on:
   workflow_dispatch:
@@ -34,7 +35,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Package Avalonia (win-x64, win-arm64)
+    name: Package unified bundle (win-x64, win-arm64)
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -52,15 +53,14 @@ jobs:
         run: >
           ./scripts/package-release.ps1
           -Version $env:VERSION
-          -App Avalonia
-          -OutputDir '${{ github.workspace }}/artifacts/release-avalonia'
-          -WorkDir '${{ runner.temp }}/sl-publish-avalonia'
+          -OutputDir '${{ github.workspace }}/artifacts/release'
+          -WorkDir '${{ runner.temp }}/sl-publish'
 
       - name: Upload packages as workflow artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: simplelauncher-avalonia-${{ inputs.version }}
-          path: artifacts/release-avalonia/*.zip
+          name: simplelauncher-${{ inputs.version }}
+          path: artifacts/release/*.zip
           retention-days: 7
 
       - name: Create or update GitHub release
@@ -72,7 +72,7 @@ jobs:
           RELEASE_NOTES: ${{ inputs.release_notes }}
         run: |
           $tag = "release$env:VERSION"
-          $assets = Get-ChildItem -LiteralPath 'artifacts/release-avalonia' -Filter '*.zip' | ForEach-Object { $_.FullName }
+          $assets = Get-ChildItem -LiteralPath 'artifacts/release' -Filter '*.zip' | ForEach-Object { $_.FullName }
 
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {

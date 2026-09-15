@@ -15,7 +15,7 @@
 
 1. Download the latest release zip (`release_{version}_{rid}.zip`, rid = `win-x64` or `win-arm64`) from the [GitHub releases page](https://github.com/purelogiccode/SimpleLauncher/releases).
 2. Extract to a folder (e.g. `C:\SimpleLauncher`). Do **not** run from a temporary/Downloads extraction folder.
-3. Run `SimpleLauncher.exe`.
+3. Run either `SimpleLauncher.exe` (WPF) or `SimpleLauncher.Avalonia.exe` (Avalonia) — both ship in the same zip, next to each other, and share the same content and settings files. Pick whichever you prefer; there is no need to install both.
 
 On first launch the app:
 
@@ -27,7 +27,9 @@ On first launch the app:
 
 ```
 SimpleLauncher/
-├── SimpleLauncher.exe
+├── SimpleLauncher.exe         WPF app
+├── SimpleLauncher.Avalonia.exe  Avalonia app (same folder, shared files)
+├── Updater.exe                the single updater used by both apps
 ├── appsettings.json, mame.dat, parameters.md, WhatsNew.md
 ├── audio/                     UI sound effects (click, notification, shutter, trash)
 ├── emulators/                 recommended place for emulators

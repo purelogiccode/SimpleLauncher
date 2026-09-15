@@ -96,7 +96,8 @@ public class AvaloniaQuitSimpleLauncher
         {
             var startInfo = new ProcessStartInfo(updaterPath)
             {
-                Arguments = Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                Arguments =
+                    $"{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)} {AvaloniaCheckForUpdatesService.AppExecutableName}",
                 UseShellExecute = true,
                 WorkingDirectory = appDirectory
             };

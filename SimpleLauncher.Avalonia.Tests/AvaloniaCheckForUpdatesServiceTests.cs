@@ -49,19 +49,17 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies Avalonia packages use their own asset names so they can share a GitHub
-    ///     release with the WPF packages without overwriting them.
+    ///     Verifies the Avalonia app consumes the unified release bundle and the single
+    ///     Updater.exe asset shared with the WPF app.
     /// </summary>
     [Fact]
-    public void AssetNamesAreAvaloniaSpecific()
+    public void AssetNamesMatchUnifiedBundle()
     {
-        Assert.Equal($"release_avalonia_9.9.9_{Rid}.zip",
+        Assert.Equal($"release_9.9.9_{Rid}.zip",
             AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid));
-        Assert.Equal($"updater_avalonia_{Rid}.zip", AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid));
-        Assert.NotEqual($"release_9.9.9_{Rid}.zip",
-            AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid), StringComparer.Ordinal);
-        Assert.NotEqual($"updater_{Rid}.zip", AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid),
-            StringComparer.Ordinal);
+        Assert.Equal($"updater_{Rid}.zip", AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid));
+        Assert.Equal(OperatingSystem.IsWindows() ? "Updater.exe" : "Updater",
+            AvaloniaCheckForUpdatesService.UpdaterExecutableName);
     }
 
     private static string GitHubReleaseJson(string versionTag, params string[] assetNames)

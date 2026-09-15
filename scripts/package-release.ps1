@@ -1,60 +1,58 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-Packages the SimpleLauncher release artifacts (win-x64 / win-arm64).
+Packages the unified SimpleLauncher release artifacts (win-x64 / win-arm64).
 
 .DESCRIPTION
 For every runtime identifier this produces, in the output folder:
 
-  WPF (default):
-    release_{version}_{rid}.zip            the app payload (framework-dependent single-file)
-    updater_{rid}.zip                      the standalone Updater.exe
+  release_{version}_{rid}.zip   the unified payload: SimpleLauncher.exe (WPF) and
+                                SimpleLauncher.Avalonia.exe next to each other, sharing
+                                the content files (images, tools, samples, appsettings.json)
+  updater_{rid}.zip             the single standalone Updater.exe (framework-dependent,
+                                single-file) used by both apps
 
-  Avalonia (-App Avalonia):
-    release_avalonia_{version}_{rid}.zip   the app payload (self-contained)
-    updater_avalonia_{rid}.zip             the Avalonia updater (exe + dll + deps + runtimeconfig)
+Both apps are published framework-dependent (the .NET 10 Desktop Runtime is required on
+the target machine), so the payload does not carry a runtime. The updater is the same
+binary for both apps: it receives the target application in its command line (older WPF
+releases pass only the PID and the updater detects the app from the process name).
 
-The Avalonia assets carry the "avalonia_" prefix because both apps are attached to the
-same GitHub release; without it the WPF and Avalonia packages would overwrite each other
-and each app would download the other app's payload.
+The WPF and Avalonia payloads are merged into one folder. Files that exist in both
+payloads must be byte-identical (the two appsettings.json sources are kept in sync and
+guarded by a unit test); any other content conflict fails the build loudly.
 
-The other architecture's bundled tools are pruned from each payload:
+The other architecture's bundled tools are pruned from the payload:
   win-x64   : drops *_arm64 files and tools/FindRomCover/arm64
   win-arm64 : drops *_x64 files, tools/FindRomCover/x64, and the unsuffixed
               executables that have an _arm64 sibling (7z.dll is kept)
 Both RIDs drop the Linux-only extension-less RetroAchievementsSharp binaries.
 
-The version is validated against the canonical SimpleLauncher.csproj (plus the app's own
-csproj/manifest and SimpleLauncher.Core.csproj) before publishing.
+Debug symbol files (*.pdb) are pruned from the payload: they are never needed at runtime
+and the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
+
+The version is validated against the canonical SimpleLauncher.csproj (plus both app
+projects/manifests, SimpleLauncher.Core.csproj and the Avalonia updater project) before
+publishing.
 
 .PARAMETER Version
 The release version, e.g. 5.7.0. Must match the csproj/manifest values.
-
-.PARAMETER App
-Which application to package: Wpf (default) or Avalonia.
 
 .PARAMETER RuntimeIdentifiers
 RIDs to package. Defaults to win-x64 and win-arm64.
 
 .PARAMETER OutputDir
-Where the zips are written. Defaults to SimpleLauncher\bin\Release (WPF) or
-SimpleLauncher.Avalonia\bin\Release (Avalonia).
+Where the zips are written. Defaults to artifacts\release.
 
 .PARAMETER WorkDir
-Scratch folder for the publish outputs. Defaults to artifacts\publish (WPF) or
-artifacts\publish-avalonia (Avalonia).
+Scratch folder for the publish outputs. Defaults to artifacts\publish.
 
 .EXAMPLE
 pwsh scripts/package-release.ps1 -Version 5.7.0
-pwsh scripts/package-release.ps1 -Version 5.7.0 -App Avalonia
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Version,
-
-    [ValidateSet('Wpf', 'Avalonia')]
-    [string]$App = 'Wpf',
 
     [string[]]$RuntimeIdentifiers = @('win-x64', 'win-arm64'),
 
@@ -69,22 +67,15 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 $repoDir = Split-Path -Parent $PSScriptRoot
-$isAvalonia = $App -eq 'Avalonia'
-$assetPrefix = if ($isAvalonia) { 'avalonia_' } else { '' }
-$appProjectRelative = if ($isAvalonia) { 'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj' } else { 'SimpleLauncher\SimpleLauncher.csproj' }
-$appProject = Join-Path $repoDir $appProjectRelative
-$updaterProjectRelative = if ($isAvalonia) { 'SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj' } else { 'SimpleLauncher.Updater\SimpleLauncher.Updater.csproj' }
-$updaterProject = Join-Path $repoDir $updaterProjectRelative
-$updaterExeName = if ($isAvalonia) { 'SimpleLauncher.Avalonia.Updater.exe' } else { 'Updater.exe' }
-$targetFramework = if ($isAvalonia) { 'net10.0-windows' } else { $null }
-$selfContained = if ($isAvalonia) { 'true' } else { 'false' }
-$publishSingleFile = -not $isAvalonia
+$wpfProject = Join-Path $repoDir 'SimpleLauncher\SimpleLauncher.csproj'
+$avaloniaProject = Join-Path $repoDir 'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj'
+$updaterProject = Join-Path $repoDir 'SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj'
 
 if (-not $OutputDir) {
-    $OutputDir = Join-Path $repoDir $(if ($isAvalonia) { 'SimpleLauncher.Avalonia\bin\Release' } else { 'SimpleLauncher\bin\Release' })
+    $OutputDir = Join-Path $repoDir 'artifacts\release'
 }
 if (-not $WorkDir) {
-    $WorkDir = Join-Path $repoDir $(if ($isAvalonia) { 'artifacts\publish-avalonia' } else { 'artifacts\publish' })
+    $WorkDir = Join-Path $repoDir 'artifacts\publish'
 }
 $OutputDir = [System.IO.Path]::GetFullPath($OutputDir)
 $WorkDir = [System.IO.Path]::GetFullPath($WorkDir)
@@ -108,50 +99,42 @@ function Get-CsprojVersion {
     return $node.InnerText.Trim()
 }
 
+function Get-ManifestVersion {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $manifest = [xml](Get-Content -LiteralPath $Path -Raw)
+    return $manifest.assembly.assemblyIdentity.GetAttribute('version')
+}
+
 function Assert-Versions {
     param([Parameter(Mandatory = $true)][string]$Version)
 
-    $canonicalVersion = Get-CsprojVersion (Join-Path $repoDir 'SimpleLauncher\SimpleLauncher.csproj')
-    $coreVersion = Get-CsprojVersion (Join-Path $repoDir 'SimpleLauncher.Core\SimpleLauncher.Core.csproj')
-    $appVersion = Get-CsprojVersion $appProject
-
-    $manifestRelative = if ($isAvalonia) { 'SimpleLauncher.Avalonia\app.manifest' } else { 'SimpleLauncher\app.manifest' }
-    $manifestPath = Join-Path $repoDir $manifestRelative
-    $manifest = [xml](Get-Content -LiteralPath $manifestPath -Raw)
-    $manifestVersion = $manifest.assembly.assemblyIdentity.GetAttribute('version')
-
-    if ($canonicalVersion -ne $Version) {
-        throw "Version mismatch: requested $Version but SimpleLauncher.csproj says $canonicalVersion."
-    }
-    if ($appVersion -ne $Version) {
-        throw "Version mismatch: requested $Version but $appProjectRelative says $appVersion."
-    }
-    if ($coreVersion -ne $Version) {
-        throw "Version mismatch: requested $Version but SimpleLauncher.Core.csproj says $coreVersion."
-    }
-    if ($manifestVersion -ne "$Version.0") {
-        throw "Version mismatch: $manifestRelative says $manifestVersion, expected $Version.0."
+    $projectVersions = [ordered]@{
+        'SimpleLauncher\SimpleLauncher.csproj'                       = $wpfProject
+        'SimpleLauncher.Core\SimpleLauncher.Core.csproj'             = (Join-Path $repoDir 'SimpleLauncher.Core\SimpleLauncher.Core.csproj')
+        'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj'     = $avaloniaProject
+        'SimpleLauncher.Avalonia.Updater\...csproj'                  = $updaterProject
     }
 
-    if ($isAvalonia) {
-        $updaterVersion = Get-CsprojVersion $updaterProject
-        if ($updaterVersion -ne $Version) {
-            throw "Version mismatch: requested $Version but $updaterProjectRelative says $updaterVersion."
-        }
-    }
-    else {
-        $updaterProjectVersion = Get-CsprojVersion $updaterProject
-        if ($updaterProjectVersion -ne $Version) {
-            throw "Version mismatch: requested $Version but $updaterProjectRelative says $updaterProjectVersion."
-        }
-        $updaterVersionPath = Join-Path $repoDir 'SimpleLauncher.Updater\version.txt'
-        $updaterVersion = (Get-Content -LiteralPath $updaterVersionPath -Raw).Trim()
-        if ($updaterVersion -ne "release$Version") {
-            throw "Version mismatch: SimpleLauncher.Updater/version.txt says $updaterVersion, expected release$Version."
+    foreach ($entry in $projectVersions.GetEnumerator()) {
+        $projectVersion = Get-CsprojVersion $entry.Value
+        if ($projectVersion -ne $Version) {
+            throw "Version mismatch: requested $Version but $($entry.Key) says $projectVersion."
         }
     }
 
-    Write-Host "Version $Version is consistent across csproj, manifest and updater metadata."
+    $manifests = @(
+        'SimpleLauncher\app.manifest',
+        'SimpleLauncher.Avalonia\app.manifest'
+    )
+    foreach ($manifestRelative in $manifests) {
+        $manifestVersion = Get-ManifestVersion (Join-Path $repoDir $manifestRelative)
+        if ($manifestVersion -ne "$Version.0") {
+            throw "Version mismatch: $manifestRelative says $manifestVersion, expected $Version.0."
+        }
+    }
+
+    Write-Host "Version $Version is consistent across both app projects, the updater project and the manifests."
 }
 
 function Invoke-DotnetPublish {
@@ -162,6 +145,92 @@ function Invoke-DotnetPublish {
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed with exit code $LASTEXITCODE."
     }
+}
+
+# Merges the WPF and Avalonia publish outputs into one payload folder. Files present in
+# both outputs must have identical content — anything else indicates the two apps have
+# drifted apart (for example appsettings.json, which the unified bundle ships once).
+function Merge-Payload {
+    param(
+        [Parameter(Mandatory = $true)][string[]]$SourceDirs,
+        [Parameter(Mandatory = $true)][string]$DestinationDir
+    )
+
+    $null = New-Item -ItemType Directory -Path $DestinationDir -Force
+    $hashes = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $conflicts = [System.Collections.Generic.List[string]]::new()
+    $copied = 0
+
+    foreach ($sourceDir in $SourceDirs) {
+        $files = @(Get-ChildItem -LiteralPath $sourceDir -Recurse -File -Force)
+        foreach ($file in $files) {
+            $relative = [System.IO.Path]::GetRelativePath($sourceDir, $file.FullName)
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+
+            if ($hashes.ContainsKey($relative)) {
+                if ($hashes[$relative] -ne $hash) {
+                    [void]$conflicts.Add($relative)
+                }
+                continue
+            }
+
+            $hashes[$relative] = $hash
+            $destination = Join-Path $DestinationDir $relative
+            $destinationDirectory = Split-Path -Parent $destination
+            if (-not (Test-Path -LiteralPath $destinationDirectory)) {
+                $null = New-Item -ItemType Directory -Path $destinationDirectory -Force
+            }
+            Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
+            $copied++
+        }
+    }
+
+    if ($conflicts.Count -gt 0) {
+        throw ("The WPF and Avalonia payloads contain files with the same relative path but different content: " +
+            ($conflicts -join ', ') +
+            ". Keep the shared files in sync (see AppSettingsFilesAreIdentical in VersionConsistencyTests).")
+    }
+
+    Write-Host "Merged payload: $copied files copied from $($SourceDirs.Count) publish outputs."
+}
+
+# Safety net: the app project references the updater with ReferenceOutputAssembly=false and
+# Private=false, so the SDK must not contribute the updater's plain build outputs (dll / deps /
+# runtimeconfig) next to the single-file Updater.exe. Remove any that still show up so the
+# payload can never ship sidecars that a single-file app does not use.
+function Remove-UpdaterSidecars {
+    param([Parameter(Mandatory = $true)][string]$PayloadDir)
+
+    foreach ($name in @('Updater', 'Updater.dll', 'Updater.pdb', 'Updater.deps.json', 'Updater.runtimeconfig.json')) {
+        $path = Join-Path $PayloadDir $name
+        if (Test-Path -LiteralPath $path) {
+            Remove-Item -LiteralPath $path -Force
+            Write-Host "Removed updater sidecar '$name' from the payload."
+        }
+    }
+
+    if (-not (Test-Path -LiteralPath (Join-Path $PayloadDir 'Updater.exe'))) {
+        throw "Updater.exe was not produced in the merged payload. The Avalonia app's updater copy target did not run."
+    }
+}
+
+# Debug symbol files are never needed to run the apps (the bundled tool binaries do not
+# ship any today either); the native SkiaSharp/HarfBuzzSharp symbols are the bulk of it.
+function Remove-DebugSymbols {
+    param([Parameter(Mandatory = $true)][string]$PayloadDir)
+
+    $symbols = @(Get-ChildItem -LiteralPath $PayloadDir -Recurse -File -Force -Filter '*.pdb')
+    if ($symbols.Count -eq 0) {
+        return
+    }
+
+    $totalBytes = ($symbols | Measure-Object -Property Length -Sum).Sum
+    foreach ($symbol in $symbols) {
+        Remove-Item -LiteralPath $symbol.FullName -Force
+    }
+
+    Write-Host ("Removed {0} debug symbol file(s) ({1} MB) from the payload." -f
+        $symbols.Count, [math]::Round($totalBytes / 1MB, 1))
 }
 
 function Remove-OtherArchitectureFiles {
@@ -255,12 +324,6 @@ function New-FilesZipArchive {
     }
 }
 
-function Get-AvaloniaUpdaterPublishDir {
-    param([Parameter(Mandatory = $true)][string]$Rid)
-
-    return Join-Path $repoDir "SimpleLauncher.Avalonia.Updater\bin\Release\net10.0-windows\$Rid\publish"
-}
-
 Assert-Versions -Version $Version
 
 $null = New-Item -ItemType Directory -Path $OutputDir -Force
@@ -270,96 +333,49 @@ $null = New-Item -ItemType Directory -Path $WorkDir -Force
 $produced = [System.Collections.Generic.List[string]]::new()
 
 foreach ($rid in $RuntimeIdentifiers) {
-    $appPublishDir = Join-Path $WorkDir "$rid\app"
-    $updaterPublishDir = Join-Path $WorkDir "$rid\updater"
+    $wpfPublishDir = Join-Path $WorkDir "$rid\wpf"
+    $avaloniaPublishDir = Join-Path $WorkDir "$rid\avalonia"
+    $payloadDir = Join-Path $WorkDir "$rid\payload"
 
     Write-Host ""
-    Write-Host "=== SimpleLauncher $App $Version ($rid) ==="
+    Write-Host "=== SimpleLauncher (WPF + Avalonia) $Version ($rid) ==="
 
-    if ($isAvalonia) {
-        # The Avalonia app csproj copies the updater from its default publish folder into the
-        # app publish output, so the updater must be published first and to its default path.
-        $updaterPublishDir = Get-AvaloniaUpdaterPublishDir -Rid $rid
+    # WPF: framework-dependent single file (managed assemblies bundled into SimpleLauncher.exe).
+    Invoke-DotnetPublish @(
+        'publish',
+        $wpfProject,
+        '-c', 'Release',
+        '-r', $rid,
+        '--self-contained', 'false',
+        '-p:PublishSingleFile=true',
+        '--nologo',
+        '-o', $wpfPublishDir
+    )
 
-        Invoke-DotnetPublish @(
-            'publish',
-            $updaterProject,
-            '-c', 'Release',
-            '-f', $targetFramework,
-            '-r', $rid,
-            '--self-contained', $selfContained,
-            '--nologo'
-        )
+    # Avalonia: framework-dependent multi-file. The app project publishes the single
+    # updater (framework-dependent single file) and copies Updater.exe into this output.
+    Invoke-DotnetPublish @(
+        'publish',
+        $avaloniaProject,
+        '-c', 'Release',
+        '-f', 'net10.0-windows',
+        '-r', $rid,
+        '--self-contained', 'false',
+        '--nologo',
+        '-o', $avaloniaPublishDir
+    )
 
-        Invoke-DotnetPublish @(
-            'publish',
-            $appProject,
-            '-c', 'Release',
-            '-f', $targetFramework,
-            '-r', $rid,
-            '--self-contained', $selfContained,
-            '--nologo',
-            '-o', $appPublishDir
-        )
-    }
-    else {
-        $publishArguments = [System.Collections.Generic.List[string]]::new()
-        $publishArguments.AddRange([string[]]@('publish', $appProject, '-c', 'Release', '-r', $rid))
-        $publishArguments.Add('--self-contained')
-        $publishArguments.Add($selfContained)
-        if ($publishSingleFile) {
-            $publishArguments.Add('-p:PublishSingleFile=true')
-        }
-        $publishArguments.Add('--nologo')
-        $publishArguments.Add('-o')
-        $publishArguments.Add($appPublishDir)
+    Merge-Payload -SourceDirs @($wpfPublishDir, $avaloniaPublishDir) -DestinationDir $payloadDir
+    Remove-UpdaterSidecars -PayloadDir $payloadDir
+    Remove-DebugSymbols -PayloadDir $payloadDir
+    Remove-OtherArchitectureFiles -PublishDir $payloadDir -Rid $rid
 
-        Invoke-DotnetPublish -Arguments $publishArguments.ToArray()
-
-        Invoke-DotnetPublish @(
-            'publish',
-            $updaterProject,
-            '-c', 'Release',
-            '-r', $rid,
-            '--self-contained', $selfContained,
-            '-p:PublishSingleFile=true',
-            '--nologo',
-            '-o', $updaterPublishDir
-        )
-    }
-
-    Remove-OtherArchitectureFiles -PublishDir $appPublishDir -Rid $rid
-
-    $releaseZip = Join-Path $OutputDir "release_${assetPrefix}${Version}_${rid}.zip"
-    New-ZipArchive -SourceDir $appPublishDir -ZipPath $releaseZip
+    $releaseZip = Join-Path $OutputDir "release_${Version}_${rid}.zip"
+    New-ZipArchive -SourceDir $payloadDir -ZipPath $releaseZip
     [void]$produced.Add($releaseZip)
 
-    if ($isAvalonia) {
-        # Ship only the updater's own files: it runs with the self-contained runtime already
-        # present in the application directory (same release), keeping the asset small.
-        $updaterBaseName = 'SimpleLauncher.Avalonia.Updater'
-        $updaterFiles = @(
-            (Join-Path $updaterPublishDir "$updaterBaseName.exe"),
-            (Join-Path $updaterPublishDir "$updaterBaseName.dll"),
-            (Join-Path $updaterPublishDir "$updaterBaseName.deps.json"),
-            (Join-Path $updaterPublishDir "$updaterBaseName.runtimeconfig.json")
-        )
-        foreach ($updaterFile in $updaterFiles) {
-            if (-not (Test-Path -LiteralPath $updaterFile)) {
-                throw "Expected updater file was not produced: $updaterFile"
-            }
-        }
-    }
-    else {
-        $updaterExe = Join-Path $updaterPublishDir $updaterExeName
-        if (-not (Test-Path -LiteralPath $updaterExe)) {
-            throw "$updaterExeName was not produced at $updaterExe."
-        }
-        $updaterFiles = @($updaterExe)
-    }
-
-    $updaterZip = Join-Path $OutputDir "updater_${assetPrefix}${rid}.zip"
-    New-FilesZipArchive -FilePaths $updaterFiles -ZipPath $updaterZip
+    $updaterZip = Join-Path $OutputDir "updater_${rid}.zip"
+    New-FilesZipArchive -FilePaths @((Join-Path $payloadDir 'Updater.exe')) -ZipPath $updaterZip
     [void]$produced.Add($updaterZip)
 }
 

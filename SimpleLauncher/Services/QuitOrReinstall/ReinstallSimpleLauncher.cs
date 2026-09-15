@@ -46,7 +46,10 @@ public class ReinstallSimpleLauncher
                     {
                         var startInfo = new ProcessStartInfo(updaterPath)
                         {
-                            Arguments = Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                            // The second argument tells the single updater which app to wait
+                            // for and restart (shared by both apps in the unified bundle).
+                            Arguments =
+                                $"{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)} SimpleLauncher.exe",
                             UseShellExecute = true,
                             WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
                         };

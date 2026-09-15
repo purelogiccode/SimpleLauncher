@@ -107,7 +107,7 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
             var payload = new
             {
                 message = report,
-                applicationName = assembly.GetName().Name ?? "SimpleLauncher.Avalonia.Updater",
+                applicationName = assembly.GetName().Name ?? "Updater",
                 version = assembly.GetName().Version?.ToString() ?? "Unknown",
                 userInfo = GetUserInfo(),
                 environment = GetEnvironmentName(),
@@ -163,7 +163,7 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
         message.AppendLine("=== Environment Details ===");
         message.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.Now}");
         message.AppendLine(CultureInfo.InvariantCulture,
-            $"Application Name: {Assembly.GetExecutingAssembly().GetName().Name ?? "SimpleLauncher.Updater"}");
+            $"Application Name: {Assembly.GetExecutingAssembly().GetName().Name ?? "Updater"}");
         message.AppendLine(CultureInfo.InvariantCulture,
             $"Application Version: {Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown"}");
         message.AppendLine(CultureInfo.InvariantCulture, $"OS Version: {RuntimeInformation.OSDescription}");

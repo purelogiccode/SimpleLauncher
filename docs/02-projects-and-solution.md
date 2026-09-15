@@ -10,15 +10,15 @@
 | `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
 | `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
 | `SimpleLauncher.Tests` | xUnit test project | ~152 test files; references `SimpleLauncher` (and transitively Core) |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | ~48 test files (489 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
-| `SimpleLauncher.Updater` | Console app | Self-update helper (`Updater.exe`) — downloads release zip, swaps files, relaunches app |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | ~48 test files (518 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
+| `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
 | `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux); phases 1–11 of [`References/AvaloniaPlan.md`](../References/AvaloniaPlan.md) done |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in `resources\strings.*.xaml` (WPF) and `SimpleLauncher.Avalonia\Resources\strings.*.json` via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
 | `Tools\Mame.DatCreator` | WPF tool | Builds `mame.dat` (MessagePack) from MAME `-listxml` + software lists |
 | `Tools\RetroAchievements.DataFetcher` | CLI tool | Fetches the RA game database into `RetroAchievements.dat` |
 | `Tools\XmlToBinaryConverter` | WPF tool | Converts `history.xml` ↔ `history.dat` (MessagePack) |
 
-Dependency edges: `SimpleLauncher → SimpleLauncher.Core`; `SimpleLauncher.Tests → SimpleLauncher`; `SimpleLauncher.Avalonia.Tests → SimpleLauncher.Avalonia`; `SimpleLauncher.Updater` standalone; `SimpleLauncher.Avalonia` references Core (via `InternalsVisibleTo`). `SimpleLauncher.Avalonia.Tests` targets `net10.0` (not `-windows`) so it runs on Linux CI/WSL2 without the Windows desktop pack.
+Dependency edges: `SimpleLauncher → SimpleLauncher.Core`; `SimpleLauncher.Tests → SimpleLauncher`; `SimpleLauncher.Avalonia.Tests → SimpleLauncher.Avalonia`; `SimpleLauncher.Avalonia.Updater` standalone (no compile reference — the Avalonia app publishes it and copies `Updater.exe` next to itself); `SimpleLauncher.Avalonia` references Core (via `InternalsVisibleTo`). `SimpleLauncher.Avalonia.Tests` targets `net10.0` (not `-windows`) so it runs on Linux CI/WSL2 without the Windows desktop pack.
 
 ## `SimpleLauncher\SimpleLauncher.csproj` (the app)
 
@@ -33,13 +33,13 @@ Key properties:
 <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
 <ApplicationManifest>app.manifest</ApplicationManifest>
 <StartupObject>SimpleLauncher.App</StartupObject>
-<AssemblyVersion>/<FileVersion>/<Version>5.6.0</Version>
+<AssemblyVersion>/<FileVersion>/<Version>5.7.0</Version>
 <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 <RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
 <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 ```
 
-- **Versioning:** `5.6.0`; kept consistent with Core, tests, `app.manifest`, and `SimpleLauncher.Updater\version.txt` (`VersionConsistencyTests` enforces it).
+- **Versioning:** `5.7.0`; kept consistent with Core, tests and `app.manifest` (`VersionConsistencyTests` enforces it).
 - **`InternalsVisibleTo("SimpleLauncher.Tests")`** — tests reach internal members.
 - **Copy-to-output payloads** (`<None Update=... CopyToOutputDirectory>`):
   - `appsettings.json` (Always), `WhatsNew.md` (PreserveNewest), `mame.dat` (Always), system images `images\systems\*.png` (Always), `audio\*.mp3`.
@@ -70,7 +70,7 @@ Key properties:
 
 ## `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (the library)
 
-Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 14`, `DebugType=embedded`, version `5.6.0`.
+Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 14`, `DebugType=embedded`, version `5.7.0`.
 
 - **`InternalsVisibleTo`:** `SimpleLauncher.Tests`, `SimpleLauncher`, `SimpleLauncher.New`, `SimpleLauncher.Avalonia`, `SimpleLauncher.New.Tests`.
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog` — so every Core service takes a Serilog `ILogger` by convention.
@@ -78,7 +78,7 @@ Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangV
 
 ## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the cross-platform port)
 
-Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.1`, `UseWindowsForms=False`, version synced to the WPF app (5.6.1), `StartupObject = SimpleLauncher.Avalonia.Program`.
+Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.1`, `UseWindowsForms=False`, version synced to the WPF app (5.7.0), `StartupObject = SimpleLauncher.Avalonia.Program`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
 - **Windows-only services** (`#if WINDOWS`, `net10.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).

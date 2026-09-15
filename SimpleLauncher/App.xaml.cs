@@ -93,10 +93,6 @@ namespace SimpleLauncher;
 /// </summary>
 public partial class App : IDisposable
 {
-    private const string UniqueMutexIdentifier = "A8E2B9C1-F5D7-4E0A-8B3C-6D1E9F0A7B4C";
-    private const string MutexName = "SimpleLauncher_SingleInstanceMutex_" + UniqueMutexIdentifier;
-    private const string EventName = "SimpleLauncher_SingleInstanceEvent_" + UniqueMutexIdentifier;
-
     private const int SwRestore = 9;
     private EventWaitHandle _instanceSignal = null!;
     private bool _isFirstInstance;
@@ -550,6 +546,9 @@ public partial class App : IDisposable
             appDataLogFolder);
 
         // --- Single Instance Check ---
+        // The WPF and Avalonia apps share one named mutex (SingleInstance.MutexName), so
+        // only one of them can run at a time; a second launch signals the running instance
+        // to restore its window and exits.
         // Catch args
         var isRestarting = e.Args.Any(static arg => arg.Equals("--restarting", StringComparison.OrdinalIgnoreCase));
         var displayHistoryWindow =
@@ -586,7 +585,7 @@ public partial class App : IDisposable
                 // Try to create or open the mutex
                 // The 'out _isFirstInstance' parameter will be true if the mutex was created (first instance)
                 // and false if it already existed (another instance is running).
-                _singleInstanceMutex = new Mutex(true, MutexName, out _isFirstInstance);
+                _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out _isFirstInstance);
             }
             catch (AbandonedMutexException)
             {
@@ -622,7 +621,7 @@ public partial class App : IDisposable
                 // Another instance is running. Signal it to restore its window and exit.
                 try
                 {
-                    using var signal = EventWaitHandle.OpenExisting(EventName);
+                    using var signal = EventWaitHandle.OpenExisting(SingleInstance.EventName);
                     signal.Set();
                 }
                 catch (WaitHandleCannotBeOpenedException)
@@ -636,15 +635,18 @@ public partial class App : IDisposable
                 }
 
                 _singleInstanceMutex?.Dispose();
-                Shutdown();
 
-                return; // Stop further startup logic
+                // WPF's Application.Shutdown() is not enough here: when it is called before
+                // the dispatcher loop starts, RunDispatcher returns early and the process
+                // lingers with no window and no message pump. A second launch must die hard
+                // after signaling the running instance (WPF or Avalonia).
+                Environment.Exit(0);
             }
 
             // Create the named event so future instances can signal us to restore the window
             try
             {
-                _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, EventName);
+                _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SingleInstance.EventName);
                 _ = Task.Run(InstanceSignalListener);
             }
             catch (Exception ex)

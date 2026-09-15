@@ -122,7 +122,10 @@ public class QuitSimpleLauncher
         {
             var startInfo = new ProcessStartInfo(updaterPath)
             {
-                Arguments = Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                // The second argument tells the single updater which app to wait for and
+                // restart (it is shared by the WPF and Avalonia apps shipped side by side).
+                Arguments =
+                    $"{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)} SimpleLauncher.exe",
                 UseShellExecute = true,
                 WorkingDirectory = appDirectory
             };
