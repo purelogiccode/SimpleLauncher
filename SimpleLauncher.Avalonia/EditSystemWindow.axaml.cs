@@ -349,11 +349,12 @@ public partial class EditSystemWindow : Window
 
         // Defense in depth (AV-13): only ever auto-create folders inside the app
         // directory, even if a crafted system name slipped into the default pattern.
-        var appBase = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory);
-        var fullTarget = Path.GetFullPath(resolvedCurrentPath);
-        if (!fullTarget.StartsWith(appBase + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        // PathHelper normalizes the trailing separator that BaseDirectory carries on
+        // Windows (the previous inline check rejected even in-app paths because of it).
+        if (!PathHelper.IsPathContainedInBaseFolder(resolvedCurrentPath, AppDomain.CurrentDomain.BaseDirectory))
         {
-            _logger.Error("Refusing to auto-create folder outside the app directory: {Path}", resolvedCurrentPath);
+            _logger.Information(
+                "Not auto-creating a folder outside the app directory: {Path}", resolvedCurrentPath);
             return;
         }
 
@@ -363,7 +364,8 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Unable to create default folder: {Path}", resolvedCurrentPath);
+            // Environment issue (permissions, read-only install folder), not a code bug.
+            _logger.Information(ex, "Unable to create default folder: {Path}", resolvedCurrentPath);
         }
     }
 

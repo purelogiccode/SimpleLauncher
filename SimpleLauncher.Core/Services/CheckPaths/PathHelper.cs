@@ -32,12 +32,17 @@ public static partial class PathHelper
             string.Equals(text, flag, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static bool IsPathContainedInBaseFolder(string resolvedPath, string baseFolder)
+    /// <summary>
+    ///     Determines whether a resolved path is the base folder itself or lives inside it.
+    ///     Handles base folders that carry a trailing directory separator (e.g.
+    ///     <c>AppDomain.CurrentDomain.BaseDirectory</c> on Windows).
+    /// </summary>
+    internal static bool IsPathContainedInBaseFolder(string resolvedPath, string baseFolder)
     {
         if (string.IsNullOrEmpty(resolvedPath) || string.IsNullOrEmpty(baseFolder)) return false;
 
-        var normalizedResolved = Path.GetFullPath(resolvedPath);
-        var normalizedBase = Path.GetFullPath(baseFolder);
+        var normalizedResolved = Path.TrimEndingDirectorySeparator(Path.GetFullPath(resolvedPath));
+        var normalizedBase = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseFolder));
 
         if (normalizedResolved.Equals(normalizedBase, StringComparison.OrdinalIgnoreCase)) return true;
 

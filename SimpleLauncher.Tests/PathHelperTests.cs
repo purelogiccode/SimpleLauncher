@@ -38,6 +38,25 @@ public class PathHelperTests
     }
 
     /// <summary>
+    ///     Bug #67079/#67080: the Avalonia folder guard compared against
+    ///     <c>BaseDirectory + separator</c>, but <c>BaseDirectory</c> already ends with a
+    ///     separator, so even in-app folders were rejected. The helper must treat a
+    ///     trailing separator correctly.
+    /// </summary>
+    [Fact]
+    public void IsPathContainedInBaseFolderHandlesTrailingSeparator()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "SimpleLauncherApp");
+        var baseFolderWithSeparator = root + Path.DirectorySeparatorChar;
+        var inside = Path.Combine(root, "images", "Microsoft Xbox");
+        var outside = Path.Combine(Path.GetTempPath(), "SimpleLauncherApp2", "images");
+
+        Assert.True(PathHelper.IsPathContainedInBaseFolder(inside, baseFolderWithSeparator));
+        Assert.True(PathHelper.IsPathContainedInBaseFolder(root, baseFolderWithSeparator));
+        Assert.False(PathHelper.IsPathContainedInBaseFolder(outside, baseFolderWithSeparator));
+    }
+
+    /// <summary>
     ///     Verifies that GetFileNameWithoutExtension returns the file name without its extension.
     /// </summary>
     /// <param name="path">The path to extract the file name from.</param>
