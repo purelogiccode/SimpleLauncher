@@ -107,8 +107,7 @@ public static class JsonResourceAnalyzer
                     LanguageCode = langCode,
                     LanguageName = langName,
                     MissingKeys = missing,
-                    DuplicateKeysRemoved = duplicateKeys.Distinct(StringComparer.Ordinal).ToList(),
-                    Format = ResourceFormat.AvaloniaJson
+                    DuplicateKeysRemoved = duplicateKeys.Distinct(StringComparer.Ordinal).ToList()
                 });
             }
         }

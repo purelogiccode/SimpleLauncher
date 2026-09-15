@@ -29,9 +29,4 @@ public class MissingKeyBatch
     ///     Gets or sets the list of duplicate keys that were removed.
     /// </summary>
     public IList<string> DuplicateKeysRemoved { get; set; } = [];
-
-    /// <summary>
-    ///     Gets or sets the resource file format.
-    /// </summary>
-    public ResourceFormat Format { get; set; } = ResourceFormat.WpfXaml;
 }

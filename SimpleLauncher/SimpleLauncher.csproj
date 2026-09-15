@@ -748,39 +748,12 @@
         <Resource Include="images\delete.png" />
         <Resource Include="images\noimage.png" />
         <Resource Include="images\language.png" />
-        <Page Remove="resources\Strings.de.xaml" />
-        <Resource Include="resources\strings.bn.xaml" />
-        <Resource Include="resources\strings.de.xaml" />
-        <Page Remove="resources\Strings.en.xaml" />
-        <Resource Include="resources\strings.en.xaml" />
-        <Page Remove="resources\Strings.es.xaml" />
-        <Resource Include="resources\strings.es.xaml" />
-        <Page Remove="resources\Strings.fr.xaml" />
-        <Resource Include="resources\strings.fr.xaml" />
-        <Page Remove="resources\Strings.ja.xaml" />
-        <Resource Include="resources\strings.id.xaml" />
-        <Resource Include="resources\strings.ja.xaml" />
-        <Page Remove="resources\Strings.ko.xaml" />
-        <Resource Include="resources\strings.ko.xaml" />
-        <Page Remove="resources\Strings.pt-BR.xaml" />
-        <Resource Include="resources\strings.pt-br.xaml" />
-        <Page Remove="resources\Strings.ru.xaml" />
-        <Resource Include="resources\strings.ru.xaml" />
-        <Page Remove="resources\Strings.zh-Hans.xaml" />
-        <Resource Include="resources\strings.ur.xaml" />
-        <Resource Include="resources\strings.zh-hans.xaml" />
-        <Page Remove="resources\strings.ar.xaml" />
-        <Resource Include="resources\strings.ar.xaml" />
-        <Page Remove="resources\strings.hi.xaml" />
-        <Resource Include="resources\strings.hi.xaml" />
-        <Page Remove="resources\strings.it.xaml" />
-        <Resource Include="resources\strings.it.xaml" />
-        <Page Remove="resources\strings.nl.xaml" />
-        <Resource Include="resources\strings.nl.xaml" />
-        <Page Remove="resources\strings.tr.xaml" />
-        <Resource Include="resources\strings.tr.xaml" />
-        <Page Remove="resources\strings.vi.xaml" />
-        <Resource Include="resources\strings.vi.xaml" />
+        <!-- Localization packs are shared with the Avalonia app (SimpleLauncher.Core\Localization\strings.*.json,
+             linked into the Avalonia output as Resources\strings.*.json). The WPF app embeds them as pack
+             resources (SimpleLauncher.g.resources: resources/strings.{code}.json) so App.ApplyLanguage can
+             build the language ResourceDictionary without an extra payload folder. -->
+        <Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json"
+                  Link="resources\%(Filename)%(Extension)" />
         <Resource Include="resources2\Theme.Midnight.xaml" />
         <Resource Include="resources2\Theme.HighContrast.xaml" />
         <Resource Include="images\gamepad.png" />

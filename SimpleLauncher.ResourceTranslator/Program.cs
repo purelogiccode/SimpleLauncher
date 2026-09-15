@@ -94,36 +94,13 @@ public static class Program
             var totalTranslated = 0;
             var totalDuplicatesRemoved = 0;
 
-            // Process WPF project
-            var wpfResourcesPath = FindWpfResourcesPath();
-            if (wpfResourcesPath != null)
+            // Process the shared localization packs (used by both the WPF and Avalonia apps)
+            var localizationResourcesPath = FindLocalizationResourcesPath();
+            if (localizationResourcesPath != null)
             {
-                Log.Information("--- WPF Project (SimpleLauncher) ---");
+                Log.Information("--- Shared Localization Packs (SimpleLauncher.Core\\Localization) ---");
                 var (translated, duplicates) = await ProcessProject(
-                    wpfResourcesPath,
-                    "strings.en.xaml",
-                    ResourceAnalyzer.ReadEnglishKeys,
-                    ResourceAnalyzer.AnalyzeAllLanguages,
-                    XamlResourceWriter.UpdateResourceFile,
-                    translator);
-
-                totalTranslated += translated;
-                totalDuplicatesRemoved += duplicates;
-            }
-            else
-            {
-                Log.Warning("Could not locate SimpleLauncher/resources directory. Skipping WPF project");
-            }
-
-            Console.WriteLine();
-
-            // Process Avalonia project
-            var avaloniaResourcesPath = FindAvaloniaResourcesPath();
-            if (avaloniaResourcesPath != null)
-            {
-                Log.Information("--- Avalonia Project (SimpleLauncher.Avalonia) ---");
-                var (translated, duplicates) = await ProcessProject(
-                    avaloniaResourcesPath,
+                    localizationResourcesPath,
                     "strings.en.json",
                     JsonResourceAnalyzer.ReadEnglishKeys,
                     JsonResourceAnalyzer.AnalyzeAllLanguages,
@@ -135,7 +112,8 @@ public static class Program
             }
             else
             {
-                Log.Warning("Could not locate SimpleLauncher.Avalonia/Resources directory. Skipping Avalonia project");
+                Log.Warning(
+                    "Could not locate SimpleLauncher.Core/Localization directory. Nothing to translate");
             }
 
             overallStopwatch.Stop();
@@ -274,54 +252,11 @@ public static class Program
         MainAsync().GetAwaiter().GetResult();
     }
 
-    private static string? FindWpfResourcesPath()
+    private static string? FindLocalizationResourcesPath()
     {
         // If running from the project directory (development)
-        var devPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "SimpleLauncher", "resources");
-        if (Directory.Exists(devPath))
-        {
-            var fullPath = Path.GetFullPath(devPath);
-            if (File.Exists(Path.Combine(fullPath, "strings.en.xaml")))
-                return fullPath;
-        }
-
-        // If running from output near SimpleLauncher project
-        var nearProject = Path.Combine(AppContext.BaseDirectory, "..", "..", "SimpleLauncher", "resources");
-        if (Directory.Exists(nearProject))
-        {
-            var fullPath = Path.GetFullPath(nearProject);
-            if (File.Exists(Path.Combine(fullPath, "strings.en.xaml")))
-                return fullPath;
-        }
-
-        // If running from the same folder as SimpleLauncher
-        var siblingPath = Path.Combine(AppContext.BaseDirectory, "..", "SimpleLauncher", "resources");
-        if (Directory.Exists(siblingPath))
-        {
-            var fullPath = Path.GetFullPath(siblingPath);
-            if (File.Exists(Path.Combine(fullPath, "strings.en.xaml")))
-                return fullPath;
-        }
-
-        // Search upward for SimpleLauncher folder
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var candidate = Path.Combine(dir.FullName, "SimpleLauncher", "resources");
-            if (Directory.Exists(candidate) && File.Exists(Path.Combine(candidate, "strings.en.xaml")))
-                return candidate;
-
-            dir = dir.Parent;
-        }
-
-        return null;
-    }
-
-    private static string? FindAvaloniaResourcesPath()
-    {
-        // If running from the project directory (development)
-        var devPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "SimpleLauncher.Avalonia",
-            "Resources");
+        var devPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "SimpleLauncher.Core",
+            "Localization");
         if (Directory.Exists(devPath))
         {
             var fullPath = Path.GetFullPath(devPath);
@@ -329,8 +264,8 @@ public static class Program
                 return fullPath;
         }
 
-        // If running from output near SimpleLauncher.Avalonia project
-        var nearProject = Path.Combine(AppContext.BaseDirectory, "..", "..", "SimpleLauncher.Avalonia", "Resources");
+        // If running from output near the SimpleLauncher.Core project
+        var nearProject = Path.Combine(AppContext.BaseDirectory, "..", "..", "SimpleLauncher.Core", "Localization");
         if (Directory.Exists(nearProject))
         {
             var fullPath = Path.GetFullPath(nearProject);
@@ -338,20 +273,11 @@ public static class Program
                 return fullPath;
         }
 
-        // If running from the same folder as SimpleLauncher.Avalonia
-        var siblingPath = Path.Combine(AppContext.BaseDirectory, "..", "SimpleLauncher.Avalonia", "Resources");
-        if (Directory.Exists(siblingPath))
-        {
-            var fullPath = Path.GetFullPath(siblingPath);
-            if (File.Exists(Path.Combine(fullPath, "strings.en.json")))
-                return fullPath;
-        }
-
-        // Search upward for SimpleLauncher.Avalonia folder
+        // Search upward for the SimpleLauncher.Core folder
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null)
         {
-            var candidate = Path.Combine(dir.FullName, "SimpleLauncher.Avalonia", "Resources");
+            var candidate = Path.Combine(dir.FullName, "SimpleLauncher.Core", "Localization");
             if (Directory.Exists(candidate) && File.Exists(Path.Combine(candidate, "strings.en.json")))
                 return candidate;
 

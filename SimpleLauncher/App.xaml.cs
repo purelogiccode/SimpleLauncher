@@ -1,8 +1,12 @@
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net.Security;
+using System.Resources;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
+using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -995,6 +999,12 @@ public partial class App : IDisposable
         return configuredLanguage;
     }
 
+    /// <summary>
+    ///     The language dictionary currently merged into <see cref="Application.Resources" />.
+    ///     The JSON-built dictionary has no Source URI, so it is tracked here for replacement.
+    /// </summary>
+    private static ResourceDictionary? _currentLanguageDictionary;
+
     private static void ApplyLanguage(string languageCode)
     {
         try
@@ -1003,21 +1013,16 @@ public partial class App : IDisposable
             Thread.CurrentThread.CurrentCulture = culture;
             Thread.CurrentThread.CurrentUICulture = culture;
 
-            // Load and apply the resource dictionary for the selected language
-            var resourceDictionary = new ResourceDictionary();
-            var resourcePath = $"/SimpleLauncher;component/resources/strings.{languageCode}.xaml";
-            resourceDictionary.Source = new Uri(resourcePath, UriKind.Relative);
+            // Build the dictionary for the selected language from the shared JSON pack
+            // (SimpleLauncher.Core\Localization, embedded as the pack resource resources/strings.*.json).
+            var resourceDictionary = BuildLanguageDictionary(languageCode);
 
-            // Add the new dictionary to the application's resources
-            // Find and remove any existing language dictionaries first
-            var existingLanguageDictionaries = Current.Resources.MergedDictionaries
-                .Where(static d =>
-                    d.Source?.OriginalString.Contains("/resources/strings.", StringComparison.Ordinal) == true)
-                .ToList();
-
-            foreach (var dict in existingLanguageDictionaries) Current.Resources.MergedDictionaries.Remove(dict);
+            // Replace the previously applied language dictionary, if any.
+            if (_currentLanguageDictionary != null)
+                Current.Resources.MergedDictionaries.Remove(_currentLanguageDictionary);
 
             Current.Resources.MergedDictionaries.Add(resourceDictionary);
+            _currentLanguageDictionary = resourceDictionary;
         }
         catch (Exception ex)
         {
@@ -1029,11 +1034,13 @@ public partial class App : IDisposable
             {
                 try
                 {
-                    var fallbackDictionary = new ResourceDictionary
-                    {
-                        Source = new Uri("/SimpleLauncher;component/resources/strings.en.xaml", UriKind.Relative)
-                    };
+                    var fallbackDictionary = BuildLanguageDictionary("en");
+
+                    if (_currentLanguageDictionary != null)
+                        Current.Resources.MergedDictionaries.Remove(_currentLanguageDictionary);
+
                     Current.Resources.MergedDictionaries.Add(fallbackDictionary);
+                    _currentLanguageDictionary = fallbackDictionary;
                 }
                 catch (Exception fallbackEx)
                 {
@@ -1047,6 +1054,74 @@ public partial class App : IDisposable
                     .Warning("Fallback to English language resources due to initial culture error");
             }
         }
+    }
+
+    /// <summary>
+    ///     Builds a WPF <see cref="ResourceDictionary" /> from the shared JSON localization pack
+    ///     embedded as the pack resource <c>resources/strings.{language}.json</c>.
+    /// </summary>
+    private static ResourceDictionary BuildLanguageDictionary(string languageCode)
+    {
+        const string resourcePrefix = "resources/strings.";
+        var assembly = typeof(App).Assembly;
+
+        using var bundleStream = assembly.GetManifestResourceStream("SimpleLauncher.g.resources")
+            ?? throw new FileNotFoundException(
+                "SimpleLauncher.g.resources not found. Check SimpleLauncher.csproj: the shared localization " +
+                "packs need a <Resource Include=\"..\\SimpleLauncher.Core\\Localization\\strings.*.json\" /> entry.");
+
+        using var reader = new ResourceReader(bundleStream);
+
+        // Settings may store WPF-style codes ('pt-br', 'zh-hans') while the shared files use the
+        // canonical casing ('pt-BR', 'zh-Hans'). Resolve case-insensitively, like the Avalonia app.
+        var expectedFileName = $"{languageCode}.json";
+        object? resourceValue = null;
+        string? resourceName = null;
+        foreach (DictionaryEntry entry in reader)
+        {
+            if (entry.Key is not string name)
+                continue;
+
+            if (!name.StartsWith(resourcePrefix, StringComparison.OrdinalIgnoreCase)
+                || !name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(name[resourcePrefix.Length..], expectedFileName,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            resourceValue = entry.Value;
+            resourceName = name;
+            break;
+        }
+
+        if (resourceName == null)
+            throw new FileNotFoundException(
+                $"Embedded localization resource not found for language '{languageCode}' in SimpleLauncher.g.resources.");
+
+        var json = resourceValue switch
+        {
+            byte[] bytes => Encoding.UTF8.GetString(bytes),
+            Stream stream => ReadAllText(stream),
+            string text => text,
+            var other => throw new InvalidDataException(
+                $"Localization resource '{resourceName}' has unexpected type '{other?.GetType().Name}'.")
+        };
+
+        var strings = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+        if (strings == null)
+            throw new InvalidDataException($"Localization resource '{resourceName}' contains no JSON object.");
+
+        var dictionary = new ResourceDictionary();
+        foreach (var (key, value) in strings) dictionary[key] = value;
+
+        return dictionary;
+    }
+
+    private static string ReadAllText(Stream stream)
+    {
+        using var textReader = new StreamReader(stream, Encoding.UTF8);
+        return textReader.ReadToEnd();
     }
 
     private static void ApplyTheme(string baseTheme, string accentColor)

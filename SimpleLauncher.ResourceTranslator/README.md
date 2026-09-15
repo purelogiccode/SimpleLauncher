@@ -1,13 +1,13 @@
 # SimpleLauncher.ResourceTranslator
 
-Console application that uses the **OpenRouter API** to automatically translate missing English resource keys into all other language files for both UI projects of [SimpleLauncher](../README.md):
+Console application that uses the **OpenRouter API** to automatically translate missing English resource keys into all other language files of the shared localization packs used by both UI apps of [SimpleLauncher](../README.md):
 
-- **WPF app** (`SimpleLauncher`): `SimpleLauncher\resources\strings.*.xaml` — master file `strings.en.xaml`
-- **Avalonia app** (`SimpleLauncher.Avalonia`): `SimpleLauncher.Avalonia\Resources\strings.*.json` — master file `strings.en.json`
+- **Shared packs**: `SimpleLauncher.Core\Localization\strings.*.json` — master file `strings.en.json`
+- The WPF app (`SimpleLauncher`) embeds these packs at build time; the Avalonia app (`SimpleLauncher.Avalonia`) links/copies them to `Resources\strings.*.json`.
 
 ## What It Does
 
-1. Loads the English master file of each project as the canonical key list.
+1. Loads the English master file (`strings.en.json`) as the canonical key list.
 2. Compares every other language file against English.
 3. **Auto-removes duplicate keys** found in target language files.
 4. **Translates missing keys** in batches of 40 via the OpenRouter chat-completions API.
@@ -28,22 +28,23 @@ dotnet run --project SimpleLauncher.ResourceTranslator
 
 ### Workflow
 
-1. The app locates both resource folders automatically from the solution structure.
+1. The app locates the shared `SimpleLauncher.Core\Localization` folder automatically from the solution structure.
 2. Enter your OpenRouter API key when prompted.
 3. Select a model (or press Enter for the default `z-ai/glm-5.3-flash`).
-4. It prints an analysis summary per project: how many languages need updates, how many keys are missing, and how many duplicates will be removed.
+4. It prints an analysis summary: how many languages need updates, how many keys are missing, and how many duplicates will be removed.
 5. Press any key to proceed.
 6. Keys are translated in batches of 40 with a 500 ms delay between requests to avoid rate limits.
 7. Each language file is updated and saved automatically.
 
 ### When to run it
 
-The `SimpleLauncher.Avalonia.Tests` resource tests tell you:
+Both test suites have resource tests that keep the shared packs in sync:
 
-- `DetectMissingResourceStringsTests` scans the Avalonia source (`.cs` `GetString(...)` calls and `.axaml` `{ext:Translate Key}` usages) and **auto-adds any missing key to `strings.en.json`** with a sensible fallback value.
-- `LocalizationTests.EveryLanguageFileSharesTheEnglishKeySet` fails with a per-language list of missing keys and a pointer to this tool whenever a language file falls out of sync.
+- `DetectMissingResourceStringsTests` (Avalonia) scans the Avalonia source (`.cs` `GetString(...)` calls and `.axaml` `{ext:Translate Key}` usages) and **auto-adds any missing key to `strings.en.json`** with a sensible fallback value.
+- `DetectMissingResourceProviderKeysTests` / `DetectMissingResourceStringsTests` (WPF) do the same for `_resourceProvider.GetString(...)` and `TryFindResource(...)` usages in the WPF app.
+- `LocalizationTests.EveryLanguageFileSharesTheEnglishKeySet` (Avalonia) fails with a per-language list of missing keys and a pointer to this tool whenever a language file falls out of sync.
 
-If either test fails, run the translator to propagate the new keys to all languages, then re-run the tests.
+If a test fails after new English keys were auto-added, run the translator to propagate them to all languages, then re-run the tests.
 
 ## Models
 
@@ -67,15 +68,13 @@ Notes on model behavior:
 ```
 SimpleLauncher.ResourceTranslator/
 ├── SimpleLauncher.ResourceTranslator.csproj
-├── Program.cs                          # Entry point, user prompts, orchestration (WPF + Avalonia)
+├── Program.cs                          # Entry point, user prompts, orchestration
 ├── Models/
 │   ├── OpenRouterModelInfo.cs          # Model metadata (id, name, description)
 │   └── MissingKeyBatch.cs              # Holds missing keys & duplicates per language
 └── Services/
-    ├── ResourceAnalyzer.cs             # Reads English XAML keys and diffs other XAML languages
     ├── JsonResourceAnalyzer.cs         # Reads English JSON keys and diffs other JSON languages
     ├── OpenRouterTranslationService.cs # HTTP client for OpenRouter API batch translation
-    ├── XamlResourceWriter.cs           # Writes updated XAML, removes duplicates, sorts keys
     └── JsonResourceWriter.cs           # Writes updated JSON (UTF-8 without BOM, 2-space indent, readable)
 ```
 
@@ -98,4 +97,4 @@ The LLM receives each batch as a flat list of `Key|Value` lines and must answer 
 - If a translation batch fails (network error, rate limit, etc.), the app **skips that batch** and does not add empty strings to the resource file. Run the app again later to retry.
 - The app is safe to run multiple times; it only processes keys that are actually missing.
 - Empty English values are intentionally preserved as empty entries so translators can fill them in later.
-- JSON files are written as UTF-8 without a BOM, with 2-space indentation and `StringComparer.OrdinalIgnoreCase` key order — matching the committed Avalonia resource files.
+- JSON files are written as UTF-8 without a BOM, with 2-space indentation and `StringComparer.OrdinalIgnoreCase` key order — matching the committed shared resource files.

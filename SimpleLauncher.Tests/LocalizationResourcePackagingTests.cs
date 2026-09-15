@@ -5,13 +5,15 @@ using Xunit;
 namespace SimpleLauncher.Tests;
 
 /// <summary>
-///     Guards the localization PACKAGING step: every language the app can select must
-///     be embedded as a pack resource in the built assembly, otherwise
-///     App.ApplyLanguage throws IOException ("Failed to Apply Language") at runtime
-///     and falls back to English.
+///     Guards the localization PACKAGING step: every language the app can select must be
+///     embedded as a pack resource in SimpleLauncher.g.resources (the packs live in
+///     SimpleLauncher.Core\Localization and are shared with the Avalonia app), otherwise
+///     App.ApplyLanguage falls back to English at runtime.
 /// </summary>
 public class LocalizationResourcePackagingTests
 {
+    private const string ResourcePrefix = "resources/strings.";
+
     // Mirrors LanguageMenuService.NameToCode (the 18 selectable languages)
     private static readonly string[] SupportedLanguageCodes =
     [
@@ -22,29 +24,38 @@ public class LocalizationResourcePackagingTests
     [Fact]
     public void AllSupportedLanguages_AreEmbeddedAsPackResources()
     {
-        var assembly = typeof(App).Assembly;
-
-        using var stream = assembly.GetManifestResourceStream("SimpleLauncher.g.resources");
-        Assert.NotNull(stream);
-
-        using var reader = new ResourceReader(stream);
-        var embeddedNames = new HashSet<string>(
-            reader.Cast<DictionaryEntry>().Select(d => (string)d.Key),
-            StringComparer.OrdinalIgnoreCase);
+        var embeddedNames = ReadPackResourceNames();
 
         foreach (var code in SupportedLanguageCodes)
         {
-            var expectedResource = $"resources/strings.{code}.xaml";
+            var expectedResource = ResourcePrefix + code + ".json";
             Assert.True(
-                embeddedNames.Contains(expectedResource),
+                embeddedNames.Contains(expectedResource, StringComparer.OrdinalIgnoreCase),
                 $"'{expectedResource}' is NOT embedded in the assembly. " +
-                "Check SimpleLauncher.csproj: the language needs a <Resource Include=\"resources\\strings.<code>.xaml\" /> entry " +
-                "(a bare <Page Remove> excludes it from the build entirely).");
+                "Check SimpleLauncher.csproj: the shared pack needs to match the " +
+                "<Resource Include=\"..\\SimpleLauncher.Core\\Localization\\strings.*.json\" /> entry.");
         }
     }
 
     [Fact]
     public void EveryEmbeddedStringsResource_HasAMatchingSourceLanguage()
+    {
+        var embedded = ReadPackResourceNames()
+            .Where(static k => k.StartsWith(ResourcePrefix, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        Assert.NotEmpty(embedded);
+
+        foreach (var resource in embedded)
+        {
+            var code = resource[ResourcePrefix.Length..]
+                .Replace(".json", "", StringComparison.OrdinalIgnoreCase);
+            Assert.True(SupportedLanguageCodes.Contains(code, StringComparer.OrdinalIgnoreCase),
+                $"Embedded resource '{resource}' does not map to a known language.");
+        }
+    }
+
+    private static HashSet<string> ReadPackResourceNames()
     {
         var assembly = typeof(App).Assembly;
 
@@ -52,19 +63,10 @@ public class LocalizationResourcePackagingTests
         Assert.NotNull(stream);
 
         using var reader = new ResourceReader(stream);
-        var embedded = reader.Cast<DictionaryEntry>()
-            .Select(d => (string)d.Key)
-            .Where(k => k.StartsWith("resources/strings.", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        Assert.NotEmpty(embedded);
-
-        foreach (var resource in embedded)
-        {
-            var code = resource.Replace("resources/strings.", "", StringComparison.OrdinalIgnoreCase)
-                .Replace(".xaml", "", StringComparison.OrdinalIgnoreCase);
-            Assert.True(SupportedLanguageCodes.Contains(code, StringComparer.OrdinalIgnoreCase),
-                $"Embedded resource '{resource}' does not map to a known language.");
-        }
+        return reader.Cast<DictionaryEntry>()
+            .Select(static entry => entry.Key as string)
+            .Where(static key => key != null)
+            .Select(static key => key!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }

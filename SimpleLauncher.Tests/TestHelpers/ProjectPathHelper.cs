@@ -29,4 +29,20 @@ public static class ProjectPathHelper
         throw new DirectoryNotFoundException(
             "Could not locate the SimpleLauncher project directory from the test output folder.");
     }
+
+    /// <summary>
+    ///     Returns the path to the shared localization packs folder
+    ///     (SimpleLauncher.Core\Localization) used by both the WPF and Avalonia apps.
+    /// </summary>
+    /// <exception cref="DirectoryNotFoundException">Thrown when the folder cannot be located.</exception>
+    public static string GetLocalizationResourcesPath()
+    {
+        var repoRoot = Path.GetDirectoryName(GetSimpleLauncherPath());
+        var candidate = repoRoot == null ? null : Path.Combine(repoRoot, "SimpleLauncher.Core", "Localization");
+        if (candidate == null || !Directory.Exists(candidate))
+            throw new DirectoryNotFoundException(
+                $"Could not locate the shared localization folder from the test output folder: {candidate}");
+
+        return candidate;
+    }
 }

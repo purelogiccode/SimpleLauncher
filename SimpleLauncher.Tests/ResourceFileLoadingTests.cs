@@ -1,56 +1,83 @@
-using System.Windows;
-using System.Windows.Markup;
-using SimpleLauncher.Tests.TestHelpers;
+using System.Collections;
+using System.Resources;
+using System.Text;
+using System.Text.Json;
 using Xunit;
 
 namespace SimpleLauncher.Tests;
 
 /// <summary>
-///     Loads every localization resource dictionary (strings.*.xaml) at runtime
-///     using the WPF XAML parser.  The test fails if any file cannot be parsed,
-///     if the root element is not a ResourceDictionary, or if duplicate keys
-///     cause a runtime exception during load.
+///     Loads every localization pack embedded in the built assembly as a pack resource
+///     (SimpleLauncher.g.resources: resources/strings.*.json, sourced from
+///     SimpleLauncher.Core\Localization) and fails if any pack cannot be parsed,
+///     is not a JSON object, or is empty.
 /// </summary>
 public class ResourceFileLoadingTests
 {
+    private const string ResourcePrefix = "resources/strings.";
+
     /// <summary>
-    ///     Verifies that all localization resource XAML files can be loaded and parsed without errors.
+    ///     Verifies that all embedded localization packs can be parsed without errors.
     /// </summary>
     [Fact]
     public void AllResourceFilesShouldLoadWithoutErrors()
     {
-        var resourcesPath = Path.Combine(ProjectPathHelper.GetSimpleLauncherPath(), "resources");
-        var resourceFiles = Directory.EnumerateFiles(resourcesPath, "strings.*.xaml")
-            .OrderBy(static f => f, StringComparer.OrdinalIgnoreCase)
+        var assembly = typeof(App).Assembly;
+        using var bundleStream = assembly.GetManifestResourceStream("SimpleLauncher.g.resources");
+        Assert.NotNull(bundleStream);
+
+        using var reader = new ResourceReader(bundleStream);
+
+        var entries = reader.Cast<DictionaryEntry>()
+            .Where(static entry => entry.Key is string)
+            .ToDictionary(static entry => (string)entry.Key!, static entry => entry.Value,
+                StringComparer.OrdinalIgnoreCase);
+
+        var resourceNames = entries.Keys
+            .Where(static key => key.StartsWith(ResourcePrefix, StringComparison.OrdinalIgnoreCase)
+                                 && key.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(static key => key, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        if (resourceFiles.Count == 0)
-            Assert.Fail($"No resource files found in: {resourcesPath}");
+        if (resourceNames.Count == 0)
+            Assert.Fail($"No embedded localization resources found with prefix '{ResourcePrefix}'.");
 
         var failures = new List<(string FileName, string Error)>();
 
-        foreach (var file in resourceFiles)
+        foreach (var resourceName in resourceNames)
         {
             try
             {
-                using var stream = File.OpenRead(file);
-                var loadedObject = XamlReader.Load(stream);
-
-                if (loadedObject is not ResourceDictionary)
+                var json = entries[resourceName] switch
                 {
-                    failures.Add((
-                        Path.GetFileName(file),
-                        $"Root element is {loadedObject?.GetType().Name ?? "null"}, expected ResourceDictionary."
-                    ));
+                    byte[] bytes => Encoding.UTF8.GetString(bytes),
+                    Stream stream => ReadAllText(stream),
+                    string text => text,
+                    var other => throw new InvalidDataException(
+                        $"Unexpected resource type '{other?.GetType().Name}'.")
+                };
+
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    failures.Add((resourceName, $"Root element is {doc.RootElement.ValueKind}, expected Object."));
+                    continue;
                 }
+
+                if (doc.RootElement.EnumerateObject().Any())
+                {
+                    continue;
+                }
+
+                failures.Add((resourceName, "Resource pack contains no entries."));
             }
-            catch (XamlParseException ex)
+            catch (JsonException ex)
             {
-                failures.Add((Path.GetFileName(file), $"XAML parse error: {ex.Message}"));
+                failures.Add((resourceName, $"JSON parse error: {ex.Message}"));
             }
             catch (Exception ex)
             {
-                failures.Add((Path.GetFileName(file), $"{ex.GetType().Name}: {ex.Message}"));
+                failures.Add((resourceName, $"{ex.GetType().Name}: {ex.Message}"));
             }
         }
 
@@ -64,5 +91,11 @@ public class ResourceFileLoadingTests
                       );
 
         Assert.Fail(message);
+    }
+
+    private static string ReadAllText(Stream stream)
+    {
+        using var textReader = new StreamReader(stream, Encoding.UTF8);
+        return textReader.ReadToEnd();
     }
 }

@@ -110,12 +110,14 @@ packaging. Bump all of them together.
 
 ## Localization
 
-- 18 languages as WPF resource dictionaries: `SimpleLauncher\resources\strings.{code}.xaml` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-br, ru, tr, ur, vi, zh-hans).
-- 18 languages as Avalonia JSON resources: `SimpleLauncher.Avalonia\Resources\strings.{code}.json` — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical Avalonia key set (2669 keys).
-- `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) translates missing keys for both projects; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
-- Unit tests guard against common translation issues: missing keys in other languages, duplicate/mismatched resource keys, empty values, key-count mismatches (`DetectMissingResourceStringsTests` family — WPF XAML and Avalonia JSON/AXAML source scan).
-- `DetectMissingResourceStringsTests` scans the Avalonia source (`.cs` `GetString(...)` calls and `.axaml` `{ext:Translate Key}` usages) and auto-adds missing keys with fallback values to `strings.en.json`; `LocalizationTests.EveryLanguageFileSharesTheEnglishKeySet` fails with a per-language missing-key list when files are out of sync.
-- Add a new language: create `strings.{code}.xaml` (WPF) and `strings.{code}.json` (Avalonia, UTF-8 without BOM + sorted), register it in `App.ChangeLanguage`/`LanguageMenuService` (WPF) and `AvaloniaLanguageMenuService` (Avalonia), run the translator, and update the resource-key tests if needed.
+- **One shared pack set for both apps**: `SimpleLauncher.Core\Localization\strings.{code}.json` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-BR, ru, tr, ur, vi, zh-Hans) — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical key set (2669 keys, all files in full key parity).
+- The Avalonia app links/copies the packs to `Resources\strings.{code}.json` (`LocalizationService`); the WPF app embeds them as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, via `<Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json" />` in `SimpleLauncher.csproj`) and `App.ApplyLanguage` builds the WPF language `ResourceDictionary` from the JSON, resolving codes like `pt-br`/`zh-hans` case-insensitively.
+- `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) translates missing keys into the shared packs; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
+- Unit tests guard against common translation issues: keys used in source but missing from English (auto-added with fallbacks), duplicate keys, mismatched fallbacks, empty values, key parity and key counts.
+  - WPF: `DetectMissingResourceProviderKeysTests` and `DetectMissingResourceStringsTests` scan the WPF sources (`_resourceProvider.GetString(...)`, `TryFindResource(...)`) and auto-add missing keys to `strings.en.json`; `DetectDuplicateResourceKeysTests`, `DetectAlphabeticalOrderingTests`, `ResourceFileLoadingTests` and `LocalizationResourcePackagingTests` cover the packs and the embedded payload.
+  - Avalonia: `DetectMissingResourceStringsTests` scans the Avalonia source (`.cs` `GetString(...)` calls and `.axaml` `{ext:Translate Key}` usages) and auto-adds missing keys; `LocalizationTests.EveryLanguageFileSharesTheEnglishKeySet` fails with a per-language missing-key list when files are out of sync.
+  - The WPF and Avalonia auto-add tests mutate the same `strings.en.json`; they serialize writes with a cross-process named mutex, so the suites are safe to run in parallel.
+- Add a new language: create `strings.{code}.json` (UTF-8 without BOM + sorted), add the code to `LanguageMenuService` (WPF) and `LocalizationService.AvailableLanguages`/`AvaloniaLanguageMenuService` (Avalonia), run the translator, and update the resource-key tests if needed.
 
 ## Static analysis & code style
 

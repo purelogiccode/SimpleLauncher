@@ -33,10 +33,17 @@ public static class AvaloniaProjectPathHelper
     }
 
     /// <summary>
-    ///     Returns the path to the SimpleLauncher.Avalonia Resources directory (source files, not output copies).
+    ///     Returns the path to the shared localization packs folder
+    ///     (SimpleLauncher.Core\Localization) used by both the WPF and Avalonia apps.
     /// </summary>
-    public static string GetAvaloniaResourcesPath()
+    public static string GetLocalizationResourcesPath()
     {
-        return Path.Combine(GetAvaloniaProjectPath(), "Resources");
+        var repoRoot = Path.GetDirectoryName(GetAvaloniaProjectPath());
+        var candidate = repoRoot == null ? null : Path.Combine(repoRoot, "SimpleLauncher.Core", "Localization");
+        if (candidate == null || !Directory.Exists(candidate))
+            throw new DirectoryNotFoundException(
+                $"Could not locate the shared localization folder from the test output folder: {candidate}");
+
+        return candidate;
     }
 }

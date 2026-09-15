@@ -28,15 +28,15 @@ dotnet test SimpleLauncher.Tests --filter "FullyQualifiedName~EmulatorConfig"
 
 | Test | Purpose |
 |------|---------|
-| `DetectMissingResourceStringsTests` | Finds resource keys used in C#/XAML but missing from `strings.en.xaml`. **Auto-writes** missing keys to the English file and fails so the developer is notified. |
+| `DetectMissingResourceProviderKeysTests` | Finds keys used via `_resourceProvider.GetString(...)` that are missing from the shared `SimpleLauncher.Core\Localization\strings.en.json`. **Auto-writes** missing keys (with defaults) and fails so the developer is notified; also reports duplicate keys. |
+| `DetectMissingResourceStringsTests` | Finds keys used via `TryFindResource("Key")` that are missing from `strings.en.json`. **Auto-writes** missing keys (with fallbacks) and fails so the developer is notified. |
 | `DetectMismatchedResourceStringsTests` | Detects when the same `TryFindResource("Key")` is used with **different** fallback strings (`?? "Value"`) across the codebase. |
-| `DetectDuplicateResourceKeysTests` | Scans every `strings.*.xaml` for duplicate `x:Key` entries. **Fails** if duplicates are found so the admin can remove them. |
-| `DetectMissingKeysInOtherLanguagesTests` | Compares all non-English language files against `strings.en.xaml`. **Fails** if any file is missing keys or has extra keys. |
-| `DetectEmptyResourceValuesTests` | Scans every `strings.*.xaml` for entries with empty string values. **Fails** if any empty values are found. |
-| `DetectEmptyResourceValuesAndAutoRemoveTests` | Scans for empty resource values and **auto-removes** them, then fails to notify the developer. |
-| `DetectResourceKeyCountMismatchTests` | Compares the total key count between English and non-English resource files. **Fails** if counts differ. |
-| `DetectAlphabeticalOrderingTests` | Verifies that every `strings.*.xaml` has entries sorted alphabetically by `x:Key`. **Auto-re-sorts** unsorted files and fails to notify the developer. |
-| `ResourceFileLoadingTests` | Loads every `strings.*.xaml` via WPF `XamlReader` at runtime to verify they parse without errors. |
+| `DetectDuplicateResourceKeysTests` | Scans every `strings.*.json` for duplicate keys. **Fails** if duplicates with conflicting values are found. |
+| `DetectAlphabeticalOrderingTests` | Verifies that every `strings.*.json` has entries sorted alphabetically by key. **Auto-re-sorts** unsorted files and fails to notify the developer. |
+| `ResourceFileLoadingTests` | Loads every localization pack embedded in `SimpleLauncher.g.resources` (`resources/strings.*.json`) and verifies it parses to a non-empty JSON object. |
+| `LocalizationResourcePackagingTests` | Verifies every selectable language is embedded as a manifest resource and that no unknown pack is embedded. |
+
+Language key parity and empty-value checks for the shared packs live in the Avalonia suite (`LocalizationTests`).
 
 ### URL & API Validation Tests
 
@@ -198,9 +198,8 @@ dotnet test SimpleLauncher.Tests --filter "FullyQualifiedName~EmulatorConfig"
 
 Some tests are designed to **fail** to alert the admin of real data issues that must be fixed manually:
 
-- **Duplicate keys** in non-English `strings.*.xaml` files (`DetectDuplicateResourceKeysTests`)
-- **Missing translation keys** in non-English files (`DetectMissingKeysInOtherLanguagesTests`)
-- **Empty resource values** in localization files (`DetectEmptyResourceValuesTests`)
+- **Duplicate keys** in the shared `strings.*.json` packs (`DetectDuplicateResourceKeysTests`)
+- **Keys used in WPF source but missing from `strings.en.json`** (`DetectMissingResourceProviderKeysTests` / `DetectMissingResourceStringsTests`; auto-added when a fallback exists)
 - **Unsorted resource keys** in localization files (`DetectAlphabeticalOrderingTests`)
 - **Version mismatches** across project files (`VersionConsistencyTests`)
 - **Broken or unreachable URLs** in `parameters.md` or EasyMode XML (`UrlValidationTests`)
@@ -213,15 +212,13 @@ SimpleLauncher.Tests/
 ├── TestHelpers/                         # Shared test utilities
 │
 ├── # Resource Localization
+├── DetectMissingResourceProviderKeysTests.cs
 ├── DetectMissingResourceStringsTests.cs
 ├── DetectMismatchedResourceStringsTests.cs
 ├── DetectDuplicateResourceKeysTests.cs
-├── DetectMissingKeysInOtherLanguagesTests.cs
-├── DetectEmptyResourceValuesTests.cs
-├── DetectEmptyResourceValuesAndAutoRemoveTests.cs
-├── DetectResourceKeyCountMismatchTests.cs
 ├── DetectAlphabeticalOrderingTests.cs
 ├── ResourceFileLoadingTests.cs
+├── LocalizationResourcePackagingTests.cs
 │
 ├── # URL & API Validation
 ├── UrlValidationTests.cs

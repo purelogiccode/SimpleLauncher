@@ -120,7 +120,7 @@ All use **CommunityToolkit.Mvvm** (`ObservableObject` + `[RelayCommand]`). Group
 ## Themes & language
 
 - **Themes (5):** Light, Dark, **Adaptive** (syncs with Windows Light/Dark), **High Contrast**, **Midnight** — applied via MahApps `ThemeManager` (`App.xaml.cs:925-967`); High Contrast and Midnight are Dark + `resources2\Theme.HighContrast.xaml` / `Theme.Midnight.xaml` overrides (`:897-907`); 27 accent colors incl. custom Maroon/OliveDrab/Plum/SkyBlue (`:930-942`); `ApplyThemeToWindow` runs in every window ctor (`:1030-1071`); `ChangeTheme` persists + re-applies to all open windows (`:1099-1117`).
-- **Languages (18):** `ApplyLanguage(code)` sets `CurrentCulture`/`CurrentUICulture` and swaps `resources\strings.{code}.xaml` merged dictionaries, English fallback on error (`App.xaml.cs:831-883`). Files: `strings.{ar,bn,de,en,es,fr,hi,id,it,ja,ko,nl,pt-br,ru,tr,ur,vi,zh-hans}.xaml`. Language switch triggers an app restart.
+- **Languages (18):** `ApplyLanguage(code)` sets `CurrentCulture`/`CurrentUICulture` and builds the WPF resource dictionary from the shared JSON packs (embedded as pack resources `resources/strings.{code}.json` in `SimpleLauncher.g.resources`, sourced from `SimpleLauncher.Core\Localization`), English fallback on error. Codes like `pt-br`/`zh-hans` are resolved case-insensitively. Language switch triggers an app restart.
 
 ## Related docs
 

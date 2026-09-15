@@ -111,7 +111,11 @@
         <None Update="appsettings.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Resources\strings.*.json">
+        <!-- Localization packs are shared with the WPF app and live in SimpleLauncher.Core\Localization.
+             They are linked into the output as Resources\strings.*.json, which is where
+             LocalizationService loads them from. -->
+        <None Include="..\SimpleLauncher.Core\Localization\strings.*.json"
+              Link="Resources\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\Amiga.png">

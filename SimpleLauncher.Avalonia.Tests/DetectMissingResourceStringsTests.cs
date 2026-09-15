@@ -24,7 +24,7 @@ public partial class DetectMissingResourceStringsTests
     public void EnglishResourceFileShouldContainAllKeysReferencedInSourceCode()
     {
         var avaloniaPath = AvaloniaProjectPathHelper.GetAvaloniaProjectPath();
-        var stringsEnPath = Path.Combine(AvaloniaProjectPathHelper.GetAvaloniaResourcesPath(), "strings.en.json");
+        var stringsEnPath = Path.Combine(AvaloniaProjectPathHelper.GetLocalizationResourcesPath(), "strings.en.json");
 
         Assert.True(File.Exists(stringsEnPath), $"English resource file not found: {stringsEnPath}");
 
@@ -167,22 +167,35 @@ public partial class DetectMissingResourceStringsTests
     ///     case-insensitively by key, and rewrites the file.
     ///     Mirrors the output format of the SimpleLauncher.ResourceTranslator JSON writer
     ///     (2-space indented, UTF-8 without BOM, OrdinalIgnoreCase sort).
+    ///     The WPF test suite also auto-fixes this shared file, so the mutation is
+    ///     serialized with a cross-process mutex.
     /// </summary>
     private static void AppendMissingEntries(string filePath, Dictionary<string, string> missingEntries)
     {
-        var existingEntries = LoadKeys(filePath);
+        using var fileLock = new Mutex(false, "SimpleLauncher.Localization.EnglishPack");
+        if (!fileLock.WaitOne(TimeSpan.FromMinutes(3)))
+            throw new TimeoutException("Timed out waiting for the localization file lock.");
 
-        foreach (var kvp in missingEntries)
+        try
         {
-            if (!existingEntries.ContainsKey(kvp.Key))
-                existingEntries[kvp.Key] = kvp.Value;
+            var existingEntries = LoadKeys(filePath);
+
+            foreach (var kvp in missingEntries)
+            {
+                if (!existingEntries.ContainsKey(kvp.Key))
+                    existingEntries[kvp.Key] = kvp.Value;
+            }
+
+            var sorted = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in existingEntries) sorted[kvp.Key] = kvp.Value;
+
+            var json = JsonSerializer.Serialize(sorted, JsonOptions);
+            File.WriteAllText(filePath, json + Environment.NewLine, new UTF8Encoding(false));
         }
-
-        var sorted = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kvp in existingEntries) sorted[kvp.Key] = kvp.Value;
-
-        var json = JsonSerializer.Serialize(sorted, JsonOptions);
-        File.WriteAllText(filePath, json + Environment.NewLine, new UTF8Encoding(false));
+        finally
+        {
+            fileLock.ReleaseMutex();
+        }
     }
 
     private static Dictionary<string, string> LoadKeys(string filePath)
