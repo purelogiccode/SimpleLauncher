@@ -34,13 +34,13 @@
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
-    <!-- Linux target (net10.0): linux RIDs only. A Windows RID on this TFM builds
+    <!-- Cross-platform target (net10.0): Linux + macOS RIDs. A Windows RID on this TFM builds
          WITHOUT the WINDOWS symbol, so Core's PlaySoundEffects silently takes the
          libsndfile/SoundFileReader path and crashes on Windows with
          DllNotFoundException: libsndfile (no Windows native binary is shipped).
          Fail loudly instead of producing a broken publish. -->
     <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-        <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <Target Name="GuardWindowsRidOnLinuxTfm" BeforeTargets="Build;Publish">

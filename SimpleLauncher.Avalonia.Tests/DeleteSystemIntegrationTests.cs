@@ -11,7 +11,11 @@ namespace SimpleLauncher.Avalonia.Tests;
 ///     correct SystemConfig node and that the subsequent orchestrator reload reflects
 ///     the deletion (regression guard for the AreYouSure... stub that previously
 ///     returned Ok and prevented deletion).
+///     The database is redirected to an isolated temp file (exclusive collection);
+///     after every legacy XML write the test database is re-seeded from the XML so
+///     manager reads stay in sync without touching real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class DeleteSystemIntegrationTests : IDisposable
 {
     private readonly IConfiguration _config;
@@ -54,10 +58,14 @@ public class DeleteSystemIntegrationTests : IDisposable
         _config = TestEnvironment.ConfigurationFromJson(
             $$"""{"SystemXmlPath": "{{_systemXmlPath.Replace("\\", @"\\")}}"}""");
         _logger = TestDependencies.Logger();
+
+        UnifiedTestDatabase.RedirectToTempDb(_tempRoot);
+        UnifiedTestDatabase.SeedSystemsFromXml(new SystemManagerService(_config), _systemXmlPath);
     }
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, true);
@@ -104,6 +112,7 @@ public class DeleteSystemIntegrationTests : IDisposable
 
         await writer.DeleteSystemAsync("Atari 2600");
         manager.InvalidateCache();
+        UnifiedTestDatabase.SeedSystemsFromXml(manager, _systemXmlPath);
         var after = manager.LoadSystems();
         Assert.Equal(2, after.Count);
         Assert.DoesNotContain(after,
@@ -120,6 +129,7 @@ public class DeleteSystemIntegrationTests : IDisposable
         await writer.DeleteSystemAsync("NES");
         await writer.DeleteSystemAsync("SNES");
         manager.InvalidateCache();
+        UnifiedTestDatabase.SeedSystemsFromXml(manager, _systemXmlPath);
         var remaining = manager.LoadSystems();
         Assert.Single(remaining);
         Assert.Equal("Atari 2600", remaining[0].SystemName);

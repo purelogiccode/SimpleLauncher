@@ -14,6 +14,7 @@ using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SanitizeInputString;
 using SimpleLauncher.Core.Services.SettingsManager;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using CoreMessageBoxResult = SimpleLauncher.Core.Models.MessageBoxResult;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
@@ -105,7 +106,7 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error loading systems into Edit window.");
+            _logger.Error(ex, "Error loading systems into Edit window");
         }
     }
 
@@ -157,7 +158,7 @@ public partial class EditSystemWindow : Window
         _playSoundEffects.PlayNotificationSound();
         LoadingOverlay.IsVisible = false;
 
-        _logger.Debug("[Emergency] User forced overlay dismissal in EditSystemWindow.");
+        _logger.Debug("[Emergency] User forced overlay dismissal in EditSystemWindow");
     }
 
     private void PopulateSystemNamesDropdown()
@@ -296,7 +297,7 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method LoadSystemDetails.");
+            _logger.Error(ex, "Error in the method LoadSystemDetails");
         }
     }
 
@@ -415,7 +416,7 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method AddSystemButton_ClickAsync.");
+            _logger.Error(ex, "Error in the method AddSystemButton_ClickAsync");
         }
     }
 
@@ -470,15 +471,29 @@ public partial class EditSystemWindow : Window
         _settings.Emulator5Expanded = Emulator5Expander.IsExpanded;
         _ = _settings.SaveAsync();
 
-        // Create a backup of system.xml before closing
+        // Create a backup of the system configuration before closing:
+        // settings.dat in the database path, system.xml in the legacy path.
         try
         {
+            if (UnifiedSettingsDatabase.IsValidDatabase())
+            {
+                var dbPath = UnifiedSettingsDatabase.GetDatabasePath();
+                var dbFolder = Path.GetDirectoryName(dbPath);
+                if (dbFolder is not null && File.Exists(dbPath))
+                {
+                    var backupFileName = $"settings_backup{DateTime.Now:yyyyMMdd_HHmmss}.dat";
+                    File.Copy(dbPath, Path.Combine(dbFolder, backupFileName), true);
+                }
+
+                return;
+            }
+
             var appFolderPath = AppDomain.CurrentDomain.BaseDirectory;
             var sourceFilePath = Path.Combine(appFolderPath, "system.xml");
             if (!File.Exists(sourceFilePath)) return;
 
-            var backupFileName = $"system_backup{DateTime.Now:yyyyMMdd_HHmmss}.xml";
-            File.Copy(sourceFilePath, Path.Combine(appFolderPath, backupFileName), true);
+            var backupXmlFileName = $"system_backup{DateTime.Now:yyyyMMdd_HHmmss}.xml";
+            File.Copy(sourceFilePath, Path.Combine(appFolderPath, backupXmlFileName), true);
         }
         catch (Exception ex)
         {
@@ -775,7 +790,7 @@ public partial class EditSystemWindow : Window
                         // program, e.g. another running SimpleLauncher instance, an image viewer or
                         // the OS file manager preview): not a bug, keep it out of the bug report.
                         _logger.Information(ex,
-                            "Could not copy the system image to '{DestFilePath}': the file is in use by another program. Ask the user to close the other program and retry.",
+                            "Could not copy the system image to '{DestFilePath}': the file is in use by another program. Ask the user to close the other program and retry",
                             destFilePath);
                         await _messageBox.FailedToCopySystemImageMessageBoxAsync(ex.Message);
                         return;
@@ -786,13 +801,13 @@ public partial class EditSystemWindow : Window
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error copying system image.");
+                _logger.Error(ex, "Error copying system image");
                 await _messageBox.FailedToCopySystemImageMessageBoxAsync(ex.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error copying system image.");
+            _logger.Error(ex, "Error copying system image");
         }
     }
 
@@ -846,7 +861,7 @@ public partial class EditSystemWindow : Window
             // cross-platform launcher instead of assuming Windows shell-execute.
             if (!await ExternalLinkHelper.TryOpenUrlAsync(searchUrl, TopLevel.GetTopLevel(this)))
             {
-                _logger.Error("Unable to open help URL: invalid or unreachable URL.");
+                _logger.Error("Unable to open help URL: invalid or unreachable URL");
                 await _messageBox.ErrorOpeningUrlMessageBoxAsync();
             }
         }
@@ -1352,7 +1367,7 @@ public partial class EditSystemWindow : Window
                     await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);
                     await _playHistoryManager.RenameSystemAsync(oldSystemName, systemNameText);
                     _logger.Information(
-                        "System renamed from {OldSystemName} to {NewSystemName}. Favorites and play history migrated.",
+                        "System renamed from {OldSystemName} to {NewSystemName}. Favorites and play history migrated",
                         oldSystemName, systemNameText);
                 }
 
@@ -1375,7 +1390,7 @@ public partial class EditSystemWindow : Window
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Unexpected error during system save process.");
+                _logger.Error(ex, "Unexpected error during system save process");
                 await _messageBox.SaveSystemFailedMessageBoxAsync("An unexpected error occurred.");
             }
             finally
@@ -1385,7 +1400,7 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error saving system configuration.");
+            _logger.Error(ex, "Error saving system configuration");
         }
     }
 

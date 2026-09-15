@@ -11,7 +11,10 @@ namespace SimpleLauncher.Avalonia.Tests;
 ///     Tests for the Avalonia SystemSelectionOrchestratorService: verifies system.xml
 ///     loading into the combo box, system selection coordination, and the full
 ///     ReloadAfterConfigurationChangeAsync flow (WPF SystemSelectionOrchestratorService parity).
+///     The database is redirected to an isolated temp file (exclusive collection) and
+///     seeded from the fixture XML so results never depend on real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 {
     private readonly IConfiguration _config;
@@ -75,7 +78,7 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
                                                   <EmulatorParameters></EmulatorParameters>
                                                 </Emulator>
                                               </Emulators>
-                                            </SystemConfig>
+                                             </SystemConfig>
                                           </SystemConfigs>
                                           """);
 
@@ -92,10 +95,14 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
         _service = new AvaloniaSystemSelectionOrchestratorService(
             _systemManager, _loadingOrchestrator, _logger.Object);
         _service.Initialize(_host.Object);
+
+        UnifiedTestDatabase.RedirectToTempDb(_tempRoot);
+        UnifiedTestDatabase.SeedSystemsFromXml(_systemManager, _systemXmlPath);
     }
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             if (Directory.Exists(_tempRoot))
@@ -231,11 +238,11 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
                                               <FileFormatsToSearch><FormatToSearch>.gen</FormatToSearch></FileFormatsToSearch>
                                               <FileFormatsToLaunch><FormatToLaunch>.gen</FormatToLaunch></FileFormatsToLaunch>
                                               <Emulators><Emulator><EmulatorName>BlastEm</EmulatorName><EmulatorPath>blastem.exe</EmulatorPath><EmulatorParameters></EmulatorParameters></Emulator></Emulators>
-                                            </SystemConfig>
+                                             </SystemConfig>
                                           </SystemConfigs>
                                           """);
 
-        _systemManager.InvalidateCache();
+        UnifiedTestDatabase.SeedSystemsFromXml(_systemManager, _systemXmlPath);
         _service.LoadOrReloadSystemManager();
 
         _host.Verify(h => h.SetSystemComboBoxItems(

@@ -15,8 +15,11 @@ namespace SimpleLauncher.Avalonia.Tests;
 /// <summary>
 ///     Tests the launch-gating contract: a config handler returning false aborts the
 ///     launch and clears the loading state (WPF parity), while a returning-true handler
-///     lets the flow continue to the pre-flight checks.
+///     lets the flow continue to the pre-flight checks. The database is redirected to
+///     an isolated temp file (exclusive collection) so system lookups never depend
+///     on real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class MinimalLauncherServiceGatingTests : IDisposable
 {
     private readonly Mock<IEmulatorConfigHandler> _handler = new();
@@ -29,12 +32,14 @@ public class MinimalLauncherServiceGatingTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "SLTest_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
+        UnifiedTestDatabase.RedirectToTempDb(_tempDir);
         _isoPath = Path.Combine(_tempDir, "game.iso");
         File.WriteAllText(_isoPath, "fake iso");
     }
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             Directory.Delete(_tempDir, true);

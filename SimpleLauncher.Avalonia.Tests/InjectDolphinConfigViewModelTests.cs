@@ -11,8 +11,11 @@ namespace SimpleLauncher.Avalonia.Tests;
 /// <summary>
 ///     ViewModel tests for the emulator config-injection feature.
 ///     Uses a portable-mode temp emulator dir so Dolphin ini injection stays
-///     isolated from the real user AppData.
+///     isolated from the real user AppData. The database is redirected to an
+///     isolated temp file (exclusive collection) so system lookups never depend
+///     on real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class InjectDolphinConfigViewModelTests : IDisposable
 {
     private readonly string _fakeExe;
@@ -38,10 +41,13 @@ public class InjectDolphinConfigViewModelTests : IDisposable
             _logger.Object,
             new Mock<ICredentialProtector>().Object,
             _messageBox.Object);
+
+        UnifiedTestDatabase.RedirectToTempDb(_tempDir);
     }
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             Directory.Delete(_tempDir, true);

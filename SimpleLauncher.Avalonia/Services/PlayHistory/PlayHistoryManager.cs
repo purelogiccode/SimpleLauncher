@@ -4,13 +4,17 @@ using MessagePack;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using ILogger = Serilog.ILogger;
 
 namespace SimpleLauncher.Avalonia.Services.PlayHistory;
 
 /// <summary>
-///     Manages play history tracking, persistence, and date format migration using MessagePack serialization.
-///     Compatible with the existing playhistory.dat format from SimpleLauncher.
+///     Manages play history tracking and persistence.
+///     The Avalonia app persists history in the unified SQLite database
+///     (<c>settings.dat</c> in AppData); the legacy MessagePack <c>playhistory.dat</c>
+///     format is only read during the one-time migration (and as a fallback when no
+///     database exists yet).
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public class PlayHistoryManager
@@ -29,11 +33,84 @@ public class PlayHistoryManager
     private static string TempFilePath => FileLocation.TempFilePath;
     public static bool IsPortableMode => FileLocation.IsPortableMode;
 
+    /// <summary>Loads play history from the unified database (callers must have verified it is valid).</summary>
+    private static PlayHistoryManager LoadFromDatabase(ILogger? logErrors)
+    {
+        var manager = new PlayHistoryManager { _logger = logErrors };
+        foreach (var record in UnifiedSettingsDatabase.LoadPlayHistory())
+        {
+            if (string.IsNullOrWhiteSpace(record.FileName))
+                continue;
+            manager.PlayHistoryList.Add(new PlayHistoryItem
+            {
+                FileName = record.FileName,
+                SystemName = record.SystemName ?? "",
+                TimesPlayed = record.TimesPlayed,
+                TotalPlayTime = record.TotalPlayTime,
+                LastPlayDate = record.LastPlayDate ?? "",
+                LastPlayTime = record.LastPlayTime ?? ""
+            });
+        }
+
+        return manager;
+    }
+
+    /// <summary>Saves a snapshot of the list to the unified database.</summary>
+    private void SaveToDatabase()
+    {
+        List<PlayHistoryRecord> snapshot;
+        lock (_historyLock)
+        {
+            snapshot = PlayHistoryList
+                .Where(static item => !string.IsNullOrWhiteSpace(item.FileName))
+                .Select(static item => new PlayHistoryRecord(
+                    item.FileName,
+                    item.SystemName ?? "",
+                    item.TimesPlayed,
+                    item.TotalPlayTime,
+                    item.LastPlayDate ?? "",
+                    item.LastPlayTime ?? ""))
+                .ToList();
+        }
+
+        UnifiedSettingsDatabase.EnsureCreated();
+        UnifiedSettingsDatabase.SavePlayHistory(snapshot);
+    }
+
     /// <summary>
-    ///     Loads play history from the MessagePack file. Creates new if doesn't exist.
+    ///     Loads play history from the unified database when it exists, from the legacy
+    ///     MessagePack file when it does not (pre-migration), or creates a new database-backed instance.
     /// </summary>
     public static PlayHistoryManager LoadPlayHistory(ILogger? logErrors = null)
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                return LoadFromDatabase(logErrors);
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error loading play history from the unified database; trying the legacy file");
+            }
+        }
+        else if (!File.Exists(FilePath))
+        {
+            // Fresh start with neither a database nor a legacy file: create the
+            // database instead of a legacy playhistory.dat.
+            try
+            {
+                UnifiedSettingsDatabase.EnsureCreated();
+                var fresh = new PlayHistoryManager { _logger = logErrors };
+                fresh.SaveToDatabase();
+                return fresh;
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error creating play history in the unified database; using a legacy file");
+            }
+        }
+
         if (!File.Exists(FilePath))
         {
             var defaultManager = new PlayHistoryManager { _logger = logErrors };
@@ -62,12 +139,26 @@ public class PlayHistoryManager
     }
 
     /// <summary>
-    ///     Synchronous initial save (startup/recovery paths only). Mirrors
+    ///     Synchronous initial save (startup/recovery paths only). Writes to the unified
+    ///     database when it exists; otherwise mirrors
     ///     <see cref="SavePlayHistoryAsync" /> with retry logic and AppData fallback,
     ///     but never awaits — safe to call on the UI thread.
     /// </summary>
     private void SavePlayHistorySync()
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                SaveToDatabase();
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error(ex, "Error saving play history to the unified database; trying the legacy file");
+            }
+        }
+
         const int maxRetries = 3;
         var retryDelayMs = 100;
         var attempt = 0;
@@ -147,9 +238,23 @@ public class PlayHistoryManager
 
     /// <summary>
     ///     Saves play history atomically with retry logic and AppData fallback.
+    ///     Writes to the unified database when it exists; otherwise falls back to the legacy file.
     /// </summary>
     public async Task SavePlayHistoryAsync()
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                SaveToDatabase();
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error(ex, "Error saving play history to the unified database; trying the legacy file");
+            }
+        }
+
         const int maxRetries = 3;
         var retryDelayMs = 100;
         var attempt = 0;
@@ -311,7 +416,7 @@ public class PlayHistoryManager
             }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error building play history lookup; returning empty dictionary.");
+                _logger?.Error(ex, "Error building play history lookup; returning empty dictionary");
                 return new Dictionary<string, PlayHistoryItem>(StringComparer.OrdinalIgnoreCase);
             }
         }

@@ -8,8 +8,10 @@ namespace SimpleLauncher.Avalonia.Tests;
 
 /// <summary>
 ///     Tests for EmulatorPathResolver — config-driven via a temporary system.xml,
-///     so no real user configuration is touched.
+///     so no real user configuration is touched. The database is redirected to an
+///     isolated temp file (exclusive collection) so results never depend on real data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class EmulatorPathResolverTests : IDisposable
 {
     private readonly string _fakeExePath;
@@ -38,10 +40,13 @@ public class EmulatorPathResolverTests : IDisposable
 
         _systemManager = new SystemManagerService(config);
         _resolver = new EmulatorPathResolver(_systemManager);
+
+        UnifiedTestDatabase.RedirectToTempDb(_tempDir);
     }
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             Directory.Delete(_tempDir, true);
@@ -53,7 +58,8 @@ public class EmulatorPathResolverTests : IDisposable
     }
 
     /// <summary>
-    ///     Writes a system.xml with one system carrying the given emulators.
+    ///     Writes a system.xml with one system carrying the given emulators,
+    ///     then seeds the redirected test database from it.
     /// </summary>
     private void WriteSystemXml(params (string Name, string Path)[] emulators)
     {
@@ -70,6 +76,7 @@ public class EmulatorPathResolverTests : IDisposable
                                                </SystemConfig>
                                            </SystemConfigs>
                                            """);
+        UnifiedTestDatabase.SeedSystemsFromXml(_systemManager, _systemXmlPath);
     }
 
     [Theory]
@@ -175,12 +182,12 @@ public class EmulatorPathResolverTests : IDisposable
         File.WriteAllText(_systemXmlPath, $"""
                                            <?xml version="1.0" encoding="utf-8"?>
                                            <SystemConfigs>
-                                               <SystemConfig>
-                                                   <SystemName>Switch</SystemName>
-                                                   <Emulators>
-                                                       <Emulator><EmulatorName>Yuzu</EmulatorName><EmulatorPath>{_fakeExePath}</EmulatorPath></Emulator>
-                                                   </Emulators>
-                                               </SystemConfig>
+                                                <SystemConfig>
+                                                    <SystemName>Switch</SystemName>
+                                                    <Emulators>
+                                                        <Emulator><EmulatorName>Yuzu</EmulatorName><EmulatorPath>{_fakeExePath}</EmulatorPath></Emulator>
+                                                    </Emulators>
+                                                </SystemConfig>
                                                <SystemConfig>
                                                    <SystemName>GameCube</SystemName>
                                                    <Emulators>
@@ -189,6 +196,7 @@ public class EmulatorPathResolverTests : IDisposable
                                                </SystemConfig>
                                            </SystemConfigs>
                                            """);
+        UnifiedTestDatabase.SeedSystemsFromXml(_systemManager, _systemXmlPath);
 
         var result = _resolver.TryFindEmulatorPath("Dolphin", _logger.Object);
 

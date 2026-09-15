@@ -2,16 +2,19 @@ using System.Collections.ObjectModel;
 using MessagePack;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using ILogger = Serilog.ILogger;
 
 namespace SimpleLauncher.Avalonia.Services.Favorites;
 
 /// <summary>
-///     Manages the user's favorite games list with MessagePack serialization.
-///     Compatible with the existing favorites.dat format from SimpleLauncher.
-///     Mirrors the WPF FavoritesManager save/load logic: favorites are sorted by
-///     file name before writing, serialization uses a snapshot, and writes retry
-///     with exponential backoff on transient IO errors, falling back to the
+///     Manages the user's favorite games list.
+///     The Avalonia app persists favorites in the unified SQLite database
+///     (<c>settings.dat</c> in AppData); the legacy MessagePack <c>favorites.dat</c>
+///     format is only read during the one-time migration (and as a fallback when no
+///     database exists yet). Mirrors the WPF FavoritesManager save/load logic: favorites
+///     are sorted by file name before writing, serialization uses a snapshot, and writes
+///     retry with exponential backoff on transient IO errors, falling back to the
 ///     LocalAppData folder when a portable-mode write fails.
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
@@ -29,11 +32,75 @@ public class FavoritesManager
     private static string TempDatFilePath => FileLocation.TempFilePath;
     public static bool IsPortableMode => FileLocation.IsPortableMode;
 
+    /// <summary>Loads favorites from the unified database (callers must have verified it is valid).</summary>
+    private static FavoritesManager LoadFromDatabase(ILogger? logErrors)
+    {
+        var manager = new FavoritesManager { _logger = logErrors };
+        foreach (var record in UnifiedSettingsDatabase.LoadFavorites())
+        {
+            if (string.IsNullOrWhiteSpace(record.FileName))
+                continue;
+            manager.FavoriteList.Add(new Favorite
+            {
+                FileName = record.FileName,
+                SystemName = record.SystemName ?? ""
+            });
+        }
+
+        return manager;
+    }
+
+    /// <summary>Saves a sorted snapshot of the list to the unified database.</summary>
+    private void SaveToDatabase()
+    {
+        List<FavoriteRecord> snapshot;
+        lock (ListLock)
+        {
+            snapshot = FavoriteList
+                .Where(static fav => !string.IsNullOrWhiteSpace(fav.FileName))
+                .OrderBy(static fav => fav.FileName, StringComparer.OrdinalIgnoreCase)
+                .Select(static fav => new FavoriteRecord(fav.FileName, fav.SystemName ?? ""))
+                .ToList();
+        }
+
+        UnifiedSettingsDatabase.EnsureCreated();
+        UnifiedSettingsDatabase.SaveFavorites(snapshot);
+    }
+
     /// <summary>
-    ///     Loads favorites from the DAT file, or creates a new instance if none exists.
+    ///     Loads favorites from the unified database when it exists, from the legacy DAT
+    ///     file when it does not (pre-migration), or creates a new database-backed instance.
     /// </summary>
     public static FavoritesManager LoadFavorites(ILogger? logErrors = null)
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                return LoadFromDatabase(logErrors);
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error loading favorites from the unified database; trying the legacy file");
+            }
+        }
+        else if (!File.Exists(DatFilePath))
+        {
+            // Fresh start with neither a database nor a legacy file: create the
+            // database instead of a legacy favorites.dat.
+            try
+            {
+                UnifiedSettingsDatabase.EnsureCreated();
+                var fresh = new FavoritesManager { _logger = logErrors };
+                fresh.SaveToDatabase();
+                return fresh;
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error creating favorites in the unified database; using a legacy file");
+            }
+        }
+
         if (File.Exists(DatFilePath))
         {
             try
@@ -58,11 +125,25 @@ public class FavoritesManager
     }
 
     /// <summary>
-    ///     Synchronous initial save (startup path only). Mirrors <see cref="SaveFavoritesAsync" />
+    ///     Synchronous initial save (startup path only). Writes to the unified database
+    ///     when it exists; otherwise mirrors <see cref="SaveFavoritesAsync" />
     ///     with retry logic, but never awaits — safe to call on the UI thread.
     /// </summary>
     private void SaveFavoritesSync()
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                SaveToDatabase();
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error(ex, "Error saving favorites to the unified database; trying the legacy file");
+            }
+        }
+
         // Take a sorted snapshot for serialization without modifying the live collection.
         List<Favorite> sortedSnapshot;
         lock (ListLock)
@@ -157,10 +238,24 @@ public class FavoritesManager
     }
 
     /// <summary>
-    ///     Saves favorites atomically to the DAT file with retry logic.
+    ///     Saves favorites atomically with retry logic. Writes to the unified database
+    ///     when it exists; otherwise falls back to the legacy DAT file.
     /// </summary>
     public async Task SaveFavoritesAsync()
     {
+        if (UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                SaveToDatabase();
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error(ex, "Error saving favorites to the unified database; trying the legacy file");
+            }
+        }
+
         // Take a sorted snapshot for serialization without modifying the live collection.
         List<Favorite> sortedSnapshot;
         lock (ListLock)

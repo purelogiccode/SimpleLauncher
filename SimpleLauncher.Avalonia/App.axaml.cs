@@ -31,6 +31,7 @@ using SimpleLauncher.Avalonia.Services.PlayHistory;
 using SimpleLauncher.Avalonia.Services.QuitOrReinstall;
 using SimpleLauncher.Avalonia.Services.RetroAchievements;
 using SimpleLauncher.Avalonia.Services.SearchOrchestrator;
+using SimpleLauncher.Avalonia.Services.SettingsDatabase;
 using SimpleLauncher.Avalonia.Services.SystemImageResolver;
 using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Avalonia.Services.SystemSelectionOrchestrator;
@@ -113,7 +114,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Error disposing the tray icon manager.");
+            Log.Debug(ex, "Error disposing the tray icon manager");
         }
 
         // Cancel any running RetroAchievements hash scan and wait (bounded) so no
@@ -127,7 +128,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Error canceling the RetroAchievements hash scan on shutdown.");
+            Log.Debug(ex, "Error canceling the RetroAchievements hash scan on shutdown");
         }
 
         try
@@ -139,14 +140,14 @@ public class App : Application, IDisposable
                 // while an awaited StopAsync is still in flight (AV-11).
                 _ = gamePadController.StopAsync().ContinueWith(static t =>
                 {
-                    if (t.IsFaulted) Log.Debug(t.Exception, "Failed to stop the gamepad controller on shutdown.");
+                    if (t.IsFaulted) Log.Debug(t.Exception, "Failed to stop the gamepad controller on shutdown");
                 }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
                 gamePadController.Dispose();
             }
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Error disposing the gamepad controller.");
+            Log.Debug(ex, "Error disposing the gamepad controller");
         }
 
         try
@@ -155,7 +156,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Error disposing the game file watcher service.");
+            Log.Debug(ex, "Error disposing the game file watcher service");
         }
 
         _singleInstanceMutex?.Dispose();
@@ -202,7 +203,7 @@ public class App : Application, IDisposable
             // but we explicitly set it for clarity and to ensure the flow continues as a first instance.
             _isFirstInstance = true;
             Log.Debug(
-                "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance.");
+                "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance");
         }
 
         // Named EventWaitHandle is Windows-only; on Linux the named Mutex still enforces
@@ -274,6 +275,24 @@ public class App : Application, IDisposable
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
 
+        // One-time migration from the legacy files (favorites.dat, playhistory.dat,
+        // settings.xml, system.xml) into the unified SQLite database (settings.dat in
+        // AppData). Idempotent: does nothing when settings.dat is already valid. On
+        // success legacy files are shelved as .bak; on failure they are left untouched
+        // and the managers fall back to reading them.
+        try
+        {
+            AvaloniaLegacyMigrator.EnsureMigrated(
+                ServiceProvider.GetRequiredService<IConfiguration>(),
+                ServiceProvider.GetRequiredService<ILogger>(),
+                ServiceProvider.GetRequiredService<ICredentialProtector>(),
+                ServiceProvider.GetService<IMessageBoxLibraryService>());
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Legacy settings migration failed; continuing with legacy files");
+        }
+
         // Apply the saved language (from settings.xml) once at startup, BEFORE any UI is
         // constructed. Resolving SettingsManagerService here also forces the settings ->
         // message-box-library -> localization chain to build once, in a safe order.
@@ -308,13 +327,13 @@ public class App : Application, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Failed to cleanup trash in SimpleLauncher folder.");
+                    Log.Error(ex, "Failed to cleanup trash in SimpleLauncher folder");
                 }
             });
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to resolve the background folder cleanup service.");
+            Log.Error(ex, "Failed to resolve the background folder cleanup service");
         }
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
@@ -347,7 +366,7 @@ public class App : Application, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "Error in the F8 screenshot handler.");
+                        Log.Error(ex, "Error in the F8 screenshot handler");
                     }
                 };
                 hotkeyService.Initialize();
@@ -365,7 +384,7 @@ public class App : Application, IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error initializing the F8 global hotkey. The screenshot functionality is turned off.");
+                Log.Error(ex, "Error initializing the F8 global hotkey. The screenshot functionality is turned off");
             }
 #endif
 
@@ -377,7 +396,7 @@ public class App : Application, IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error initializing the tray icon. The application will continue without it.");
+                Log.Error(ex, "Error initializing the tray icon. The application will continue without it");
             }
 
             // Phase 3 lifecycle: status-bar timer, write-access + required-files checks,
@@ -400,7 +419,7 @@ public class App : Application, IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error initializing the application lifecycle service.");
+                Log.Error(ex, "Error initializing the application lifecycle service");
             }
 
             // WPF parity: the updater restarts the app with -whatsnew after a successful
@@ -420,7 +439,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to apply the saved theme at startup.");
+            Log.Error(ex, "Failed to apply the saved theme at startup");
         }
     }
 
@@ -535,9 +554,12 @@ public class App : Application, IDisposable
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetRequiredService<ILogger>(),
                 sp.GetRequiredService<ICredentialProtector>(),
-                sp.GetRequiredService<IMessageBoxLibraryService>());
-            // Load settings.xml once at startup — same as the WPF app. Without this the
-            // in-memory defaults would overwrite the shared settings.xml on the first save.
+                sp.GetRequiredService<IMessageBoxLibraryService>(),
+                // Avalonia persists settings in the unified SQLite database
+                // (settings.dat in AppData); the WPF app keeps settings.xml.
+                useUnifiedDatabase: true);
+            // Load settings once at startup — same as the WPF app. Without this the
+            // in-memory defaults would overwrite the persisted settings on the first save.
             sm.Load();
             return sm;
         });
@@ -566,7 +588,13 @@ public class App : Application, IDisposable
         services.AddSingleton<PlaySoundEffects>();
         services.AddSingleton<IPlaySoundEffects>(sp => sp.GetRequiredService<PlaySoundEffects>());
         services.AddSingleton<GamePadController>();
-        services.AddSingleton<SystemConfigurationWriterService>();
+        services.AddSingleton<SystemConfigurationWriterService>(sp =>
+            new SystemConfigurationWriterService(
+                sp.GetRequiredService<IConfiguration>(),
+                sp.GetRequiredService<ILogger>(),
+                // Avalonia persists systems in the unified SQLite database
+                // (settings.dat in AppData); the WPF app keeps system.xml.
+                useUnifiedDatabase: true));
         services.AddSingleton<ISystemConfigurationWriterService>(sp =>
             sp.GetRequiredService<SystemConfigurationWriterService>());
         services.AddSingleton<Stats>();
@@ -935,7 +963,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error showing UpdateHistoryWindow with -whatsnew argument.");
+            Log.Error(ex, "Error showing UpdateHistoryWindow with -whatsnew argument");
         }
     }
 
@@ -956,7 +984,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to migrate play history on startup.");
+            Log.Error(ex, "Failed to migrate play history on startup");
         }
 
         try
@@ -965,7 +993,7 @@ public class App : Application, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to run the startup initialization tasks.");
+            Log.Error(ex, "Failed to run the startup initialization tasks");
         }
 
         _ = Task.Run(async () =>
@@ -976,7 +1004,7 @@ public class App : Application, IDisposable
             }
             catch (Exception ex)
             {
-                Log.Debug(ex, "Usage stats reporting failed on startup.");
+                Log.Debug(ex, "Usage stats reporting failed on startup");
             }
         });
 
@@ -991,7 +1019,7 @@ public class App : Application, IDisposable
             }
             catch (Exception ex)
             {
-                Log.Debug(ex, "ApplicationStats API call failed on startup.");
+                Log.Debug(ex, "ApplicationStats API call failed on startup");
             }
         });
 
@@ -1003,7 +1031,7 @@ public class App : Application, IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Silent update check failed on startup.");
+                Log.Error(ex, "Silent update check failed on startup");
             }
         });
     }

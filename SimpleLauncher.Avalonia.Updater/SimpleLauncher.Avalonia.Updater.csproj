@@ -27,9 +27,11 @@
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
-    <!-- Linux target (net10.0): linux RIDs only -->
+    <!-- Cross-platform target (net10.0): Linux + macOS RIDs (must cover every RID
+         the app's net10.0 target can publish, since the app build forwards its own
+         RuntimeIdentifier to the updater publish). -->
     <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-        <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>

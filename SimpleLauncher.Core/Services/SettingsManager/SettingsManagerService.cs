@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.SettingsManager.EmulatorSettings;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 
 namespace SimpleLauncher.Core.Services.SettingsManager;
 
@@ -29,6 +30,13 @@ public class SettingsManagerService : IDisposable
     private readonly DataFileLocation _fileLocation;
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
+
+    /// <summary>
+    ///     Gets whether this instance persists to the unified SQLite database
+    ///     (<c>settings.dat</c> in AppData) instead of the legacy <c>settings.xml</c>.
+    ///     Opt-in per app: the Avalonia app passes <c>true</c>, the WPF app keeps the default <c>false</c>.
+    /// </summary>
+    public bool UseUnifiedDatabase { get; }
     private readonly ReaderWriterLockSlim _settingsLock = new(LockRecursionPolicy.SupportsRecursion);
 
     // AV-24: serializes concurrent SaveAsync calls. Every save snapshots under
@@ -66,13 +74,23 @@ public class SettingsManagerService : IDisposable
     /// <summary>
     ///     Initializes a new instance of the SettingsManagerService with the specified dependencies.
     /// </summary>
+    /// <param name="configuration">The application configuration.</param>
+    /// <param name="logErrors">The logger for error reporting.</param>
+    /// <param name="credentialProtector">The credential protector for sensitive values.</param>
+    /// <param name="messageBox">The message-box service (optional).</param>
+    /// <param name="useUnifiedDatabase">
+    ///     When true, settings persist to the unified SQLite database (<c>settings.dat</c> in AppData)
+    ///     instead of the legacy <c>settings.xml</c>. Only the Avalonia app opts in; the WPF app keeps XML.
+    /// </param>
     public SettingsManagerService(IConfiguration configuration, ILogger logErrors,
-        ICredentialProtector credentialProtector, IMessageBoxLibraryService? messageBox = null)
+        ICredentialProtector credentialProtector, IMessageBoxLibraryService? messageBox = null,
+        bool useUnifiedDatabase = false)
     {
         _configuration = configuration;
         _logger = logErrors;
         _credentialProtector = credentialProtector;
         _messageBox = messageBox!;
+        UseUnifiedDatabase = useUnifiedDatabase;
         _fileLocation = new DataFileLocation(DefaultSettingsFilePath);
 
         VideoUrl = configuration.GetValue<string>("Urls:YouTubeSearch") ??
@@ -280,6 +298,48 @@ public class SettingsManagerService : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    ///     Loads settings from an explicit legacy XML file path without side effects.
+    ///     Used by the one-time legacy migration (test seam: arbitrary folders).
+    ///     When the file is missing or corrupt the current values are kept and no
+    ///     file is created (unlike <see cref="Load" />).
+    /// </summary>
+    internal void LoadFromLegacyFile(string path)
+    {
+        XElement? settings = null;
+
+        if (File.Exists(path))
+        {
+            try
+            {
+                var readerSettings = new XmlReaderSettings
+                {
+                    DtdProcessing = DtdProcessing.Prohibit,
+                    XmlResolver = null
+                };
+                using var reader = XmlReader.Create(path, readerSettings);
+                settings = XElement.Load(reader);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error loading legacy settings file '{Path}'", path);
+            }
+        }
+
+        if (settings is null)
+            return;
+
+        _settingsLock.EnterWriteLock();
+        try
+        {
+            LoadFromXml(settings);
+        }
+        finally
+        {
+            _settingsLock.ExitWriteLock();
+        }
+    }
+
     private string EncryptString(string plainText)
     {
         if (string.IsNullOrEmpty(plainText)) return plainText;
@@ -322,10 +382,26 @@ public class SettingsManagerService : IDisposable
     }
 
     /// <summary>
-    ///     Loads settings from the XML configuration file, applying defaults if the file does not exist.
+    ///     Loads settings, applying defaults if no persisted state exists.
+    ///     In unified-database mode this reads <c>settings.dat</c> (falling back to the legacy
+    ///     <c>settings.xml</c> when the database does not exist yet so the migrator can import it);
+    ///     otherwise it reads the legacy <c>settings.xml</c> exactly as before.
     /// </summary>
     public void Load()
     {
+        if (UseUnifiedDatabase && UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                LoadFromDatabase();
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error loading settings from the unified database; falling back to legacy files");
+            }
+        }
+
         XElement? settings = null;
 
         // Read from disk without holding any lock — disk I/O is slow and
@@ -346,7 +422,7 @@ public class SettingsManagerService : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error loading settings.xml.");
+                _logger.Error(ex, "Error loading settings.xml");
             }
         }
 
@@ -443,6 +519,17 @@ public class SettingsManagerService : IDisposable
 
         // Application Settings Fallback Logic
         var app = settings.Element("Application");
+        LoadApplicationSection(app, settings);
+        LoadRemainingSections(settings);
+    }
+
+    /// <summary>
+    ///     Applies the Application section. Shared by the XML loader and the unified-database
+    ///     importer so both paths enforce identical validation. Missing keys keep their current
+    ///     values; invalid values fall back to safe defaults.
+    /// </summary>
+    private void LoadApplicationSection(XElement? app, XElement settings)
+    {
         ThumbnailSize =
             ValidateThumbnailSize(
                 app?.Element("ThumbnailSize")?.Value ?? settings.Element("ThumbnailSize")?.Value ?? "");
@@ -594,6 +681,12 @@ public class SettingsManagerService : IDisposable
         {
             Emulator5Expanded = e5E;
         }
+    }
+
+    /// <summary>Loads emulator sections and per-system play times (XML loader path).</summary>
+    private void LoadRemainingSections(XElement settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
 
         // Delegate emulator settings loading to each emulator's LoadFromXml
         Ares.LoadFromXml(settings);
@@ -659,7 +752,8 @@ public class SettingsManagerService : IDisposable
         _settingsLock.EnterReadLock();
         try
         {
-            snapshot = new SettingsManagerService(_configuration, _logger, _credentialProtector, _messageBox);
+            snapshot = new SettingsManagerService(_configuration, _logger, _credentialProtector, _messageBox,
+                UseUnifiedDatabase);
             snapshot.CopyFrom(this);
         }
         finally
@@ -698,6 +792,12 @@ public class SettingsManagerService : IDisposable
 
     private async Task WriteSnapshotAsync(SettingsManagerService snapshot)
     {
+        if (snapshot.UseUnifiedDatabase)
+        {
+            await Task.Run(() => snapshot.SaveToDatabase());
+            return;
+        }
+
             var tempPath = _fileLocation.TempFilePath;
             const int maxRetries = 3;
             var retryDelayMs = 500;
@@ -712,7 +812,7 @@ public class SettingsManagerService : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Error creating settings directory.");
+                    _logger.Error(ex, "Error creating settings directory");
                 }
             }
 
@@ -940,7 +1040,293 @@ public class SettingsManagerService : IDisposable
     /// </summary>
     public void ResetToDefaults()
     {
-        CopyFrom(new SettingsManagerService(_configuration, _logger, _credentialProtector, _messageBox));
+        _settingsLock.EnterWriteLock();
+        try
+        {
+            ResetToDefaultsLocked();
+        }
+        finally
+        {
+            _settingsLock.ExitWriteLock();
+        }
+    }
+
+    // ── Unified-database backend (Avalonia opts in via useUnifiedDatabase) ──
+
+    /// <summary>
+    ///     Exports the Application section as a key/value dictionary (values use invariant
+    ///     formatting; secrets stay encrypted exactly as they are written to XML).
+    /// </summary>
+    public Dictionary<string, string> ExportAppSettings()
+    {
+        _settingsLock.EnterReadLock();
+        try
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["ThumbnailSize"] = ThumbnailSize.ToString(CultureInfo.InvariantCulture),
+                ["ThumbnailSizeForSystem"] = ThumbnailSizeForSystem.ToString(CultureInfo.InvariantCulture),
+                ["GamesPerPage"] = GamesPerPage.ToString(CultureInfo.InvariantCulture),
+                ["ShowGames"] = ShowGames,
+                ["ViewMode"] = ViewMode,
+                ["EnableGamePadNavigation"] = EnableGamePadNavigation.ToString(CultureInfo.InvariantCulture),
+                ["VideoUrl"] = VideoUrl,
+                ["InfoUrl"] = InfoUrl,
+                ["BaseTheme"] = BaseTheme,
+                ["AccentColor"] = AccentColor,
+                ["StyleVariant"] = StyleVariant,
+                ["Language"] = Language,
+                ["DeadZoneX"] = DeadZoneX.ToString(CultureInfo.InvariantCulture),
+                ["DeadZoneY"] = DeadZoneY.ToString(CultureInfo.InvariantCulture),
+                ["ButtonAspectRatio"] = ButtonAspectRatio,
+                ["FilenameDisplayMode"] = FilenameDisplayMode,
+                ["DisplayMachineName"] = DisplayMachineName.ToString(CultureInfo.InvariantCulture),
+                ["FilenameFontSize"] = FilenameFontSize,
+                ["MachineNameFontSize"] = MachineNameFontSize,
+                ["EnableFuzzyMatching"] = EnableFuzzyMatching.ToString(CultureInfo.InvariantCulture),
+                ["FuzzyMatchingThreshold"] = FuzzyMatchingThreshold.ToString(CultureInfo.InvariantCulture),
+                ["EnableAnnotationStripping"] = EnableAnnotationStripping.ToString(CultureInfo.InvariantCulture),
+                ["EnableNotificationSound"] = EnableNotificationSound.ToString(CultureInfo.InvariantCulture),
+                ["CustomNotificationSoundFile"] = CustomNotificationSoundFile,
+                ["RaUsername"] = RaUsername,
+                ["RaApiKey"] = EncryptString(RaApiKey),
+                ["RaPassword"] = EncryptString(RaPassword),
+                ["RaToken"] = EncryptString(RaToken),
+                ["OverlayRetroAchievementButton"] =
+                    OverlayRetroAchievementButton.ToString(CultureInfo.InvariantCulture),
+                ["OverlayOpenVideoButton"] = OverlayOpenVideoButton.ToString(CultureInfo.InvariantCulture),
+                ["OverlayOpenInfoButton"] = OverlayOpenInfoButton.ToString(CultureInfo.InvariantCulture),
+                ["AdditionalSystemFoldersExpanded"] =
+                    AdditionalSystemFoldersExpanded.ToString(CultureInfo.InvariantCulture),
+                ["Emulator1Expanded"] = Emulator1Expanded.ToString(CultureInfo.InvariantCulture),
+                ["Emulator2Expanded"] = Emulator2Expanded.ToString(CultureInfo.InvariantCulture),
+                ["Emulator3Expanded"] = Emulator3Expanded.ToString(CultureInfo.InvariantCulture),
+                ["Emulator4Expanded"] = Emulator4Expanded.ToString(CultureInfo.InvariantCulture),
+                ["Emulator5Expanded"] = Emulator5Expanded.ToString(CultureInfo.InvariantCulture)
+            };
+        }
+        finally
+        {
+            _settingsLock.ExitReadLock();
+        }
+    }
+
+    /// <summary>
+    ///     Imports Application-section values (same validation as the XML loader).
+    ///     Missing keys keep their current values.
+    /// </summary>
+    public void ImportAppSettings(IReadOnlyDictionary<string, string> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        var app = new XElement("Application",
+            values.Select(static kvp => new XElement(kvp.Key, kvp.Value)));
+        var root = new XElement("Settings", app);
+
+        _settingsLock.EnterWriteLock();
+        try
+        {
+            LoadApplicationSection(app, root);
+        }
+        finally
+        {
+            _settingsLock.ExitWriteLock();
+        }
+    }
+
+    /// <summary>Exports every emulator settings object as a name → JSON dictionary.</summary>
+    public Dictionary<string, string> ExportEmulatorSettings()
+    {
+        _settingsLock.EnterReadLock();
+        try
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["Ares"] = EmulatorSettingsJson.Serialize(Ares),
+                ["Azahar"] = EmulatorSettingsJson.Serialize(Azahar),
+                ["Blastem"] = EmulatorSettingsJson.Serialize(Blastem),
+                ["Cemu"] = EmulatorSettingsJson.Serialize(Cemu),
+                ["Daphne"] = EmulatorSettingsJson.Serialize(Daphne),
+                ["Dolphin"] = EmulatorSettingsJson.Serialize(Dolphin),
+                ["DuckStation"] = EmulatorSettingsJson.Serialize(DuckStation),
+                ["Flycast"] = EmulatorSettingsJson.Serialize(Flycast),
+                ["Mame"] = EmulatorSettingsJson.Serialize(Mame),
+                ["Mednafen"] = EmulatorSettingsJson.Serialize(Mednafen),
+                ["Mesen"] = EmulatorSettingsJson.Serialize(Mesen),
+                ["Pcsx2"] = EmulatorSettingsJson.Serialize(Pcsx2),
+                ["Raine"] = EmulatorSettingsJson.Serialize(Raine),
+                ["Redream"] = EmulatorSettingsJson.Serialize(Redream),
+                ["RetroArch"] = EmulatorSettingsJson.Serialize(RetroArch),
+                ["Rpcs3"] = EmulatorSettingsJson.Serialize(Rpcs3),
+                ["SegaModel2"] = EmulatorSettingsJson.Serialize(SegaModel2),
+                ["Stella"] = EmulatorSettingsJson.Serialize(Stella),
+                ["Supermodel"] = EmulatorSettingsJson.Serialize(Supermodel),
+                ["Xenia"] = EmulatorSettingsJson.Serialize(Xenia),
+                ["Yumir"] = EmulatorSettingsJson.Serialize(Yumir)
+            };
+        }
+        finally
+        {
+            _settingsLock.ExitReadLock();
+        }
+    }
+
+    /// <summary>
+    ///     Imports emulator settings from a name → JSON dictionary.
+    ///     Corrupt or absent entries keep their current values.
+    /// </summary>
+    public void ImportEmulatorSettings(IReadOnlyDictionary<string, string> configs)
+    {
+        ArgumentNullException.ThrowIfNull(configs);
+
+        _settingsLock.EnterWriteLock();
+        try
+        {
+            if (configs.TryGetValue("Ares", out var ares) &&
+                EmulatorSettingsJson.Deserialize<AresSettings>(ares) is { } aresV) Ares.CopyFrom(aresV);
+            if (configs.TryGetValue("Azahar", out var azahar) &&
+                EmulatorSettingsJson.Deserialize<AzaharSettings>(azahar) is { } azaharV) Azahar.CopyFrom(azaharV);
+            if (configs.TryGetValue("Blastem", out var blastem) &&
+                EmulatorSettingsJson.Deserialize<BlastemSettings>(blastem) is { } blastemV) Blastem.CopyFrom(blastemV);
+            if (configs.TryGetValue("Cemu", out var cemu) &&
+                EmulatorSettingsJson.Deserialize<CemuSettings>(cemu) is { } cemuV) Cemu.CopyFrom(cemuV);
+            if (configs.TryGetValue("Daphne", out var daphne) &&
+                EmulatorSettingsJson.Deserialize<DaphneSettings>(daphne) is { } daphneV) Daphne.CopyFrom(daphneV);
+            if (configs.TryGetValue("Dolphin", out var dolphin) &&
+                EmulatorSettingsJson.Deserialize<DolphinSettings>(dolphin) is { } dolphinV) Dolphin.CopyFrom(dolphinV);
+            if (configs.TryGetValue("DuckStation", out var duckStation) &&
+                EmulatorSettingsJson.Deserialize<DuckStationSettings>(duckStation) is { } duckStationV)
+                DuckStation.CopyFrom(duckStationV);
+            if (configs.TryGetValue("Flycast", out var flycast) &&
+                EmulatorSettingsJson.Deserialize<FlycastSettings>(flycast) is { } flycastV) Flycast.CopyFrom(flycastV);
+            if (configs.TryGetValue("Mame", out var mame) &&
+                EmulatorSettingsJson.Deserialize<MameSettings>(mame) is { } mameV) Mame.CopyFrom(mameV);
+            if (configs.TryGetValue("Mednafen", out var mednafen) &&
+                EmulatorSettingsJson.Deserialize<MednafenSettings>(mednafen) is { } mednafenV) Mednafen.CopyFrom(mednafenV);
+            if (configs.TryGetValue("Mesen", out var mesen) &&
+                EmulatorSettingsJson.Deserialize<MesenSettings>(mesen) is { } mesenV) Mesen.CopyFrom(mesenV);
+            if (configs.TryGetValue("Pcsx2", out var pcsx2) &&
+                EmulatorSettingsJson.Deserialize<Pcsx2Settings>(pcsx2) is { } pcsx2V) Pcsx2.CopyFrom(pcsx2V);
+            if (configs.TryGetValue("Raine", out var raine) &&
+                EmulatorSettingsJson.Deserialize<RaineSettings>(raine) is { } raineV) Raine.CopyFrom(raineV);
+            if (configs.TryGetValue("Redream", out var redream) &&
+                EmulatorSettingsJson.Deserialize<RedreamSettings>(redream) is { } redreamV) Redream.CopyFrom(redreamV);
+            if (configs.TryGetValue("RetroArch", out var retroArch) &&
+                EmulatorSettingsJson.Deserialize<RetroArchSettings>(retroArch) is { } retroArchV)
+                RetroArch.CopyFrom(retroArchV);
+            if (configs.TryGetValue("Rpcs3", out var rpcs3) &&
+                EmulatorSettingsJson.Deserialize<Rpcs3Settings>(rpcs3) is { } rpcs3V) Rpcs3.CopyFrom(rpcs3V);
+            if (configs.TryGetValue("SegaModel2", out var segaModel2) &&
+                EmulatorSettingsJson.Deserialize<SegaModel2Settings>(segaModel2) is { } segaModel2V)
+                SegaModel2.CopyFrom(segaModel2V);
+            if (configs.TryGetValue("Stella", out var stella) &&
+                EmulatorSettingsJson.Deserialize<StellaSettings>(stella) is { } stellaV) Stella.CopyFrom(stellaV);
+            if (configs.TryGetValue("Supermodel", out var supermodel) &&
+                EmulatorSettingsJson.Deserialize<SupermodelSettings>(supermodel) is { } supermodelV)
+                Supermodel.CopyFrom(supermodelV);
+            if (configs.TryGetValue("Xenia", out var xenia) &&
+                EmulatorSettingsJson.Deserialize<XeniaSettings>(xenia) is { } xeniaV) Xenia.CopyFrom(xeniaV);
+            if (configs.TryGetValue("Yumir", out var yumir) &&
+                EmulatorSettingsJson.Deserialize<YumirSettings>(yumir) is { } yumirV) Yumir.CopyFrom(yumirV);
+        }
+        finally
+        {
+            _settingsLock.ExitWriteLock();
+        }
+    }
+
+    /// <summary>Exports per-system play times for the SystemPlayTimes table.</summary>
+    public List<SystemPlayTimeRecord> ExportSystemPlayTimes()
+    {
+        _settingsLock.EnterReadLock();
+        try
+        {
+            return SystemPlayTimes
+                .Select(static pt => new SystemPlayTimeRecord(pt.SystemName, pt.PlayTimeSeconds))
+                .ToList();
+        }
+        finally
+        {
+            _settingsLock.ExitReadLock();
+        }
+    }
+
+    /// <summary>Replaces per-system play times (e.g. after loading from the database).</summary>
+    public void ImportSystemPlayTimes(IReadOnlyList<SystemPlayTimeRecord> playTimes)
+    {
+        ArgumentNullException.ThrowIfNull(playTimes);
+
+        _settingsLock.EnterWriteLock();
+        try
+        {
+            SystemPlayTimes.Clear();
+            foreach (var pt in playTimes)
+            {
+                if (string.IsNullOrWhiteSpace(pt.SystemName))
+                    continue;
+                SystemPlayTimes.Add(new SystemPlayTime
+                {
+                    SystemName = pt.SystemName,
+                    PlayTimeSeconds = pt.PlayTimeSeconds
+                });
+            }
+        }
+        finally
+        {
+            _settingsLock.ExitWriteLock();
+        }
+    }
+
+    /// <summary>Loads all settings from the unified database (creates it when missing).</summary>
+    public void LoadFromDatabase(string? dbPath = null)
+    {
+        UnifiedSettingsDatabase.EnsureCreated(dbPath);
+        var app = UnifiedSettingsDatabase.LoadAppSettings(dbPath);
+        var emulators = UnifiedSettingsDatabase.LoadEmulatorConfigs(dbPath);
+        var playTimes = UnifiedSettingsDatabase.LoadSystemPlayTimes(dbPath);
+
+        if (app.Count == 0 && emulators.Count == 0 && playTimes.Count == 0)
+        {
+            // Fresh database with no migrated content — persist the defaults so the
+            // file is complete (mirrors SetDefaultsAndSave for the XML path).
+            _settingsLock.EnterWriteLock();
+            try
+            {
+                ResetToDefaultsLocked();
+            }
+            finally
+            {
+                _settingsLock.ExitWriteLock();
+            }
+
+            SaveToDatabase(dbPath);
+            return;
+        }
+
+        if (app.Count > 0)
+            ImportAppSettings(app);
+        if (emulators.Count > 0)
+            ImportEmulatorSettings(emulators);
+        ImportSystemPlayTimes(playTimes);
+    }
+
+    /// <summary>Saves all settings to the unified database.</summary>
+    public void SaveToDatabase(string? dbPath = null)
+    {
+        var app = ExportAppSettings();
+        var emulators = ExportEmulatorSettings();
+        var playTimes = ExportSystemPlayTimes();
+
+        UnifiedSettingsDatabase.EnsureCreated(dbPath);
+        UnifiedSettingsDatabase.SaveAppSettings(app, dbPath);
+        UnifiedSettingsDatabase.SaveAllEmulatorConfigs(emulators, dbPath);
+        UnifiedSettingsDatabase.SaveSystemPlayTimes(playTimes, dbPath);
+    }
+
+    /// <summary>Resets to defaults without taking the lock (callers must hold the write lock).</summary>
+    private void ResetToDefaultsLocked()
+    {
+        CopyFrom(new SettingsManagerService(_configuration, _logger, _credentialProtector, _messageBox,
+            UseUnifiedDatabase));
     }
 
     private void SetDefaultsAndSave()

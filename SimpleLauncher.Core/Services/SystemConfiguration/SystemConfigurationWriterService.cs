@@ -4,6 +4,8 @@ using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 
 namespace SimpleLauncher.Core.Services.SystemConfiguration;
 
@@ -20,20 +22,67 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
     private readonly ILogger _logger;
 
     /// <summary>
+    ///     Gets whether this instance persists to the unified SQLite database
+    ///     (<c>settings.dat</c> in AppData) instead of the legacy <c>system.xml</c>.
+    ///     Opt-in per app: the Avalonia app passes <c>true</c>, the WPF app keeps the default <c>false</c>.
+    /// </summary>
+    public bool UseUnifiedDatabase { get; }
+
+    /// <summary>
     ///     Initializes a new instance of the SystemConfigurationWriterService with the specified dependencies.
     /// </summary>
-    public SystemConfigurationWriterService(IConfiguration configuration, ILogger logErrors)
+    /// <param name="configuration">The application configuration.</param>
+    /// <param name="logErrors">The logger for error reporting.</param>
+    /// <param name="useUnifiedDatabase">
+    ///     When true, systems persist to the unified SQLite database instead of <c>system.xml</c>.
+    ///     Only the Avalonia app opts in; the WPF app keeps XML.
+    /// </param>
+    public SystemConfigurationWriterService(IConfiguration configuration, ILogger logErrors,
+        bool useUnifiedDatabase = false)
     {
         _configuration = configuration;
         _logger = logErrors;
+        UseUnifiedDatabase = useUnifiedDatabase;
         _fileLocation = new DataFileLocation(configuration, "SystemXmlPath", "system.xml");
     }
 
     /// <summary>
-    ///     Asynchronously saves a system configuration to the XML file, creating or updating the entry.
+    ///     Asynchronously saves a system configuration, creating or updating the entry.
+    ///     In unified-database mode the system is upserted into <c>settings.dat</c>;
+    ///     otherwise the legacy XML file path is used exactly as before.
     /// </summary>
     public async Task SaveSystemAsync(ISystemManager systemConfig, string? originalSystemName = null)
     {
+        if (UseUnifiedDatabase)
+        {
+            await Task.Run(() =>
+            {
+                lock (XmlLock)
+                {
+                    try
+                    {
+                        UnifiedSettingsDatabase.EnsureCreated();
+                        var config = ToSystemManagerConfig(systemConfig);
+
+                        // Handle renames: remove the old key when the name changed.
+                        if (!string.IsNullOrWhiteSpace(originalSystemName) &&
+                            !string.Equals(originalSystemName, config.SystemName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            UnifiedSettingsDatabase.DeleteSystem(originalSystemName);
+                        }
+
+                        UnifiedSettingsDatabase.SaveSystem(config.SystemName, SystemConfigStore.Serialize(config));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.Error(ex, "Error saving system configuration to the unified database");
+                        throw;
+                    }
+                }
+            });
+            return;
+        }
+
         try
         {
             await Task.Run(() =>
@@ -62,7 +111,7 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
                     }
                     catch (Exception ex)
                     {
-                        _logger?.Error(ex, "Error loading system.xml for saving.");
+                        _logger?.Error(ex, "Error loading system.xml for saving");
                         throw new InvalidOperationException("Failed to load system configuration for saving.", ex);
                     }
 
@@ -154,16 +203,38 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
         }
         catch (Exception ex)
         {
-            _logger?.Error(ex, "Error saving system configuration.");
+            _logger?.Error(ex, "Error saving system configuration");
             throw;
         }
     }
 
     /// <summary>
-    ///     Asynchronously deletes a system configuration entry by name from the XML file.
+    ///     Asynchronously deletes a system configuration entry by name.
+    ///     In unified-database mode the row is deleted from <c>settings.dat</c>;
+    ///     otherwise the legacy XML file path is used exactly as before.
     /// </summary>
     public async Task DeleteSystemAsync(string systemName)
     {
+        if (UseUnifiedDatabase)
+        {
+            await Task.Run(() =>
+            {
+                lock (XmlLock)
+                {
+                    try
+                    {
+                        UnifiedSettingsDatabase.EnsureCreated();
+                        UnifiedSettingsDatabase.DeleteSystem(systemName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.Error(ex, $"Error deleting system '{systemName}' from the unified database.");
+                    }
+                }
+            });
+            return;
+        }
+
         try
         {
             await Task.Run(() =>
@@ -238,10 +309,29 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
     }
 
     /// <summary>
-    ///     Checks whether a system configuration with the specified name exists in the XML file.
+    ///     Checks whether a system configuration with the specified name exists.
+    ///     In unified-database mode the check runs against <c>settings.dat</c>;
+    ///     otherwise the legacy XML file path is used exactly as before.
     /// </summary>
     public bool SystemExists(string systemName)
     {
+        if (UseUnifiedDatabase)
+        {
+            lock (XmlLock)
+            {
+                try
+                {
+                    if (!UnifiedSettingsDatabase.IsValidDatabase())
+                        return false;
+                    return UnifiedSettingsDatabase.SystemExists(systemName);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
         lock (XmlLock)
         {
             var systemXmlPath = _fileLocation.FilePath;
@@ -334,5 +424,35 @@ public class SystemConfigurationWriterService : ISystemConfigurationWriterServic
             element.Add(new XElement("ImagePackDownloadExtractPath", emulator.ImagePackDownloadExtractPath));
 
         return element;
+    }
+
+    /// <summary>Converts an <see cref="ISystemManager" /> to a concrete config for database serialization.</summary>
+    private static SystemManagerConfig ToSystemManagerConfig(ISystemManager config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return new SystemManagerConfig
+        {
+            SystemName = config.SystemName,
+            SystemFolders = config.SystemFolders?.ToList() ?? [],
+            SystemImageFolder = config.SystemImageFolder ?? "",
+            FileFormatsToSearch = config.FileFormatsToSearch?.ToList() ?? [],
+            FileFormatsToLaunch = config.FileFormatsToLaunch?.ToList() ?? [],
+            ExtractFileBeforeLaunch = config.ExtractFileBeforeLaunch,
+            GroupByFolder = config.GroupByFolder,
+            DisableRecursiveSearch = config.DisableRecursiveSearch,
+            Emulators = config.Emulators?.Select(static e => new Emulator
+            {
+                EmulatorName = e.EmulatorName ?? "",
+                EmulatorLocation = e.EmulatorLocation ?? "",
+                EmulatorParameters = e.EmulatorParameters ?? "",
+                ReceiveANotificationOnEmulatorError = e.ReceiveANotificationOnEmulatorError,
+                ImagePackDownloadLink = e.ImagePackDownloadLink ?? "",
+                ImagePackDownloadLink2 = e.ImagePackDownloadLink2 ?? "",
+                ImagePackDownloadLink3 = e.ImagePackDownloadLink3 ?? "",
+                ImagePackDownloadLink4 = e.ImagePackDownloadLink4 ?? "",
+                ImagePackDownloadLink5 = e.ImagePackDownloadLink5 ?? "",
+                ImagePackDownloadExtractPath = e.ImagePackDownloadExtractPath ?? ""
+            }).ToList() ?? []
+        };
     }
 }

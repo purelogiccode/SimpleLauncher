@@ -22,7 +22,10 @@ namespace SimpleLauncher.Avalonia.Tests;
 /// <summary>
 ///     Verifies the Favorites section ViewModel loads stored favorites into rows
 ///     (the file names resolve against the system folders, matching the WPF flow).
+///     The database is redirected to an isolated temp file (exclusive collection) and
+///     seeded from the fixture XML so results never depend on real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class FavoritesSectionViewModelTests : IDisposable
 {
     private readonly IConfiguration _config;
@@ -73,6 +76,8 @@ public class FavoritesSectionViewModelTests : IDisposable
         _config = TestEnvironment.ConfigurationFromJson(
             $$"""{"SystemXmlPath": "{{_systemXmlPath.Replace("\\", @"\\")}}"}""");
 
+        UnifiedTestDatabase.RedirectToTempDb(_tempRoot);
+
         _mameData.Setup(m => m.Lookup).Returns(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "abyss", "Abyss" }
@@ -80,6 +85,7 @@ public class FavoritesSectionViewModelTests : IDisposable
 
         var settings = TestDependencies.Settings(_config, _messageBox);
         var systemManager = new SystemManagerService(_config);
+        UnifiedTestDatabase.SeedSystemsFromXml(systemManager, _systemXmlPath);
         _mainViewModel = new MainViewModel(
             new FavoritesManager(),
             new PlayHistoryManager(),
@@ -103,6 +109,7 @@ public class FavoritesSectionViewModelTests : IDisposable
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, true);

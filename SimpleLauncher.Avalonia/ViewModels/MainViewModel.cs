@@ -259,12 +259,41 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     /// <summary>
-    ///     Reloads the current game list, reapplying the Show Games filter, filename
+    ///     Reloads the game library and reapplies the Show Games filter, filename
     ///     display mode, and card sizing (called after menu-driven setting changes).
     /// </summary>
     public void ReloadGames()
     {
         LoadAllGames();
+    }
+
+    /// <summary>
+    ///     Reloads the system snapshot and game counts after the system configuration
+    ///     changes (system added/edited/deleted in Easy Mode or Edit System).
+    ///     Without this, navigation keeps filtering the stale snapshot: a newly added
+    ///     system shows 0 games, an edited system scans the old folders, and a
+    ///     deleted system keeps showing its games until restart.
+    ///     Disk enumeration runs on the thread pool (startup InitializeAsync parity);
+    ///     state is applied back on the UI context.
+    /// </summary>
+    public async Task ReloadSystemsAfterConfigurationChangeAsync()
+    {
+        try
+        {
+            var (systems, counts) = await Task.Run(() =>
+            {
+                var loadedSystems = _systemManager.LoadSystems();
+                var loadedCounts = ComputeSystemCounts(loadedSystems);
+                return (loadedSystems, loadedCounts);
+            });
+
+            _allSystems = systems;
+            SystemGameCounts = counts;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to reload systems after configuration change");
+        }
     }
 
     /// <summary>
@@ -946,6 +975,15 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 ? _allSystems
                 : _allSystems.Where(s => string.Equals(s.SystemName, systemName, StringComparison.OrdinalIgnoreCase))
                     .ToList();
+
+            // Snapshot safety net: if the snapshot predates a configuration change,
+            // fall back to a direct lookup so a configured system never shows 0 games.
+            if (!string.IsNullOrEmpty(systemName) && systems.Count == 0)
+            {
+                var direct = _systemManager.GetSystem(systemName);
+                if (direct is not null)
+                    systems = [direct];
+            }
 
             var games = ScanGames(systems);
             ApplyFavoritesAndHistory(games);

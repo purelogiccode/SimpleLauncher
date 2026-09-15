@@ -7,9 +7,9 @@
 
 | Format | Files | Written/read by |
 |---|---|---|
-| **XML (LINQ-to-XML)** | `settings.xml`, `system.xml`, emulator `*.ini`-adjacent XML (Ares `settings.bml`, Cemu `settings.xml`) | `SettingsManagerService`, `SystemConfigurationWriterService`, `EmulatorXmlHelpers`, inject services |
-| **MessagePack** | `favorites.dat`, `playhistory.dat`, `history.dat`, `mame.dat`, `RetroAchievements.dat`, `all_ra_games.dat` | `FavoritesManager`, `PlayHistoryManager`, `RomHistoryLoader`, `MameManagerService`, `RetroAchievementsManager` |
-| **SQLite** | Amazon Games DB (read-only), Stella `stella.sqlite3` (settings upserts) | `ScanAmazonGames` (Microsoft.Data.Sqlite), `StellaConfigurationService` (SourceGear.sqlite3) |
+| **XML (LINQ-to-XML)** | `settings.xml`, `system.xml` (WPF; legacy in Avalonia), emulator `*.ini`-adjacent XML (Ares `settings.bml`, Cemu `settings.xml`) | `SettingsManagerService`, `SystemConfigurationWriterService`, `EmulatorXmlHelpers`, inject services |
+| **MessagePack** | `favorites.dat`, `playhistory.dat` (WPF; legacy in Avalonia), `history.dat`, `mame.dat`, `RetroAchievements.dat`, `all_ra_games.dat` | `FavoritesManager`, `PlayHistoryManager`, `RomHistoryLoader`, `MameManagerService`, `RetroAchievementsManager` |
+| **SQLite** | Avalonia `settings.dat` (unified store), Amazon Games DB (read-only), Stella `stella.sqlite3` (settings upserts) | `UnifiedSettingsDatabase` + `AvaloniaLegacyMigrator` (Microsoft.Data.Sqlite), `ScanAmazonGames`, `StellaConfigurationService` |
 | **JSON** | `appsettings.json` (config), `LauncherInstalled.dat`/manifests (Epic), GOG `.info`, Humble `config.json`, itch `.itch.toml`-adjacent, Mesen `settings.json`, BizHawk `config.ini` (JSON), API payloads | app config, scanners, `MesenConfigurationService`, `RetroAchievementsEmulatorConfiguratorService`, `JsonSerializer` |
 | **YAML** | RPCS3 `config.yml` | `RPCS3ConfigurationService` (YamlDotNet round-trip) |
 | **TOML** | Xenia `xenia[-canary].config.toml`, Yumir `Ymir.toml` | `XeniaConfigurationService`, `YumirConfigurationService` (Tomlyn) |
@@ -39,6 +39,23 @@
 ## system.xml details
 
 - `SystemConfigs` root; entries alphabetically sorted (ordinal-ignore-case); UTF-8, 2-space indent; `XDeclaration` ensured; retry ×3 with 500 ms backoff; temp file + `File.Move`; empty or corrupt root replaced with a fresh `<SystemConfigs/>`. See [05 — Configuration](05-configuration.md#systemxml).
+
+## Avalonia unified database (`settings.dat`)
+
+- The Avalonia app stores **all** user data — favorites, play history, application +
+  emulator settings, per-system play times, and system configurations — in a single
+  SQLite database named `settings.dat` (SQLite content, legacy extension) inside the
+  AppData folder (`%LocalAppData%\SimpleLauncher` on Windows, `~/.local/share/SimpleLauncher`
+  on Linux/macOS). Same file works on Windows, Linux and macOS (Microsoft.Data.Sqlite).
+- Schema (versioned via a `Meta` table): `AppSettings` (key/value),
+  `EmulatorSettings` (one JSON blob per emulator), `Favorites`, `PlayHistory`,
+  `Systems` (one JSON blob per system), `SystemPlayTimes`. Name/file keys are
+  `COLLATE NOCASE`, matching the legacy OrdinalIgnoreCase semantics.
+- First launch migrates `favorites.dat`, `playhistory.dat`, `settings.xml` and
+  `system.xml` (portable location or AppData, newest wins) into the database, verifies
+  row counts, then shelves each legacy file as `<name>.bak`. The migration is idempotent;
+  if it fails, legacy files are left untouched and the next launch retries.
+  See `UnifiedSettingsDatabase` (Core) and `AvaloniaLegacyMigrator` (Avalonia).
 
 ## Emulator config files (injected)
 

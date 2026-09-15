@@ -23,7 +23,10 @@ namespace SimpleLauncher.Avalonia.Tests;
 ///     the letter filter bar, Feeling Lucky (random game), the MAME sort-order toggle,
 ///     and Ctrl+wheel card-size zoom. All I/O is isolated to temp ROM folders and a
 ///     temp system.xml (the same pattern as GameScannerServiceTests).
+///     The database is redirected to an isolated temp file (exclusive collection) and
+///     seeded from the fixture XML so results never depend on real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class MainViewModelQuickActionsTests : IDisposable
 {
     private readonly IConfiguration _config;
@@ -68,8 +71,11 @@ public class MainViewModelQuickActionsTests : IDisposable
         _config = TestEnvironment.ConfigurationFromJson(
             $$"""{"SystemXmlPath": "{{_systemXmlPath.Replace("\\", @"\\")}}"}""");
 
+        UnifiedTestDatabase.RedirectToTempDb(_tempRoot);
+
         var settings = TestDependencies.Settings(_config, _messageBox);
         var systemManager = new SystemManagerService(_config);
+        UnifiedTestDatabase.SeedSystemsFromXml(systemManager, _systemXmlPath);
         var loadingOrchestrator = new AvaloniaGameFileLoadingOrchestrator(
             new AvaloniaGameCacheService(), _logger.Object);
         var pagination = new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object);
@@ -105,6 +111,7 @@ public class MainViewModelQuickActionsTests : IDisposable
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, true);

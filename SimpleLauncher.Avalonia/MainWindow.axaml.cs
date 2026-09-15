@@ -161,7 +161,7 @@ public partial class MainWindow : Window, IPaginationHost
             if (_wasControllerRunningBeforeDeactivation)
             {
                 _ = _gamePadController.StartAsync();
-                Log.Debug("Gamepad controller restarted on window activation.");
+                Log.Debug("Gamepad controller restarted on window activation");
             }
 
             _wasControllerRunningBeforeDeactivation = false;
@@ -172,7 +172,7 @@ public partial class MainWindow : Window, IPaginationHost
             {
                 _wasControllerRunningBeforeDeactivation = true;
                 _ = _gamePadController.StopAsync();
-                Log.Debug("Gamepad controller temporarily stopped on window deactivation.");
+                Log.Debug("Gamepad controller temporarily stopped on window deactivation");
             }
             else
             {
@@ -393,7 +393,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error during initial Windows games scan.");
+            Log.Error(ex, "Error during initial Windows games scan");
         }
         finally
         {
@@ -1497,7 +1497,7 @@ public partial class MainWindow : Window, IPaginationHost
         var window = new GameDetailWindow(game, _viewModel);
         window.ShowDialog(this).ContinueWith(t =>
         {
-            if (t.IsFaulted) Log.Error(t.Exception, "Error in GameDetail dialog.");
+            if (t.IsFaulted) Log.Error(t.Exception, "Error in GameDetail dialog");
         }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
     }
 
@@ -2394,6 +2394,9 @@ public partial class MainWindow : Window, IPaginationHost
     private async Task RefreshAfterSystemConfigurationChangeAsync()
     {
         await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+        // Refresh the view-model's system snapshot + counts: without this, opening a
+        // newly added system filters the stale snapshot and shows 0 games.
+        await _viewModel.ReloadSystemsAfterConfigurationChangeAsync();
         RefreshSidebarCounts();
         await ShowSystemSelectionScreenAsync();
     }
@@ -2848,11 +2851,11 @@ public partial class MainWindow : Window, IPaginationHost
             // AV-15: config-controlled URL — validate the scheme and open via the
             // cross-platform launcher instead of assuming Windows shell-execute.
             if (!await ExternalLinkHelper.TryOpenUrlAsync(url, GetTopLevel(this)))
-                Log.Error("Unable to open the donation link from the menu: invalid or unreachable URL.");
+                Log.Error("Unable to open the donation link from the menu: invalid or unreachable URL");
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Unable to open the donation link from the menu.");
+            Log.Error(ex, "Unable to open the donation link from the menu");
         }
     }
 
@@ -2968,7 +2971,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Toast auto-dismissal skipped.");
+            Log.Debug(ex, "Toast auto-dismissal skipped");
         }
     }
 

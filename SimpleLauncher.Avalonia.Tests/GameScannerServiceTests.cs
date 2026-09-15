@@ -1,11 +1,11 @@
 using System.Reflection;
-using System.Xml.Linq;
 using Moq;
 using SimpleLauncher.Avalonia.Interfaces;
 using SimpleLauncher.Avalonia.Services.GameScan;
 using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.SanitizeInputString;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Avalonia.Tests;
@@ -14,8 +14,10 @@ namespace SimpleLauncher.Avalonia.Tests;
 ///     Tests for <see cref="GameScannerService" /> — "Microsoft Windows" system creation, shortcut
 ///     materialization through the registered scanners, idempotence, ignored-name filtering, and the
 ///     FindMainExecutable/TryGetExeFiles heuristics. All I/O is isolated to a temp system.xml and the
-///     test output directory.
+///     test output directory. The database is redirected to an isolated temp file (exclusive
+///     collection) so scans never read or write real user data.
 /// </summary>
+[Collection(nameof(UsesDatabasePathOverride))]
 public class GameScannerServiceTests : IDisposable
 {
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"SL_GameScanTest_{Guid.NewGuid():N}");
@@ -24,6 +26,7 @@ public class GameScannerServiceTests : IDisposable
     {
         CleanDefaultFolders();
         Directory.CreateDirectory(_tempRoot);
+        UnifiedTestDatabase.RedirectToTempDb(_tempRoot);
     }
 
     private static string DefaultRomsPath =>
@@ -34,6 +37,7 @@ public class GameScannerServiceTests : IDisposable
 
     public void Dispose()
     {
+        UnifiedTestDatabase.ClearRedirect();
         try
         {
             if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, true);
@@ -106,18 +110,15 @@ public class GameScannerServiceTests : IDisposable
         Assert.StartsWith("[InternetShortcut]", content, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(@"URL=file:///C:\Games\HollowKnight\hollow.exe", content, StringComparison.OrdinalIgnoreCase);
 
-        var doc = XDocument.Load(systemXml);
-        var config = Assert.Single(doc.Root!.Elements("SystemConfig"),
-            static e => string.Equals(e.Element("SystemName")?.Value, GameScannerService.WindowsSystemName,
-                StringComparison.OrdinalIgnoreCase));
-        Assert.Equal(GameScannerService.WindowsSystemName, config.Element("SystemName")?.Value);
-        Assert.Equal(
-            ["url", "lnk", "bat"],
-            config.Element("FileFormatsToSearch")?.Elements("FormatToSearch").Select(static e => e.Value).ToList());
-        Assert.Equal("Direct Launch", config.Element("Emulators")?.Element("Emulator")?.Element("EmulatorName")?.Value);
-        Assert.Equal(
-            $@"%BASEFOLDER%\roms\{GameScannerService.WindowsSystemName}",
-            config.Element("SystemFolders")?.Element("SystemFolder")?.Value);
+        var stored = UnifiedSettingsDatabase.LoadSystems();
+        var entry = Assert.Single(stored);
+        var parsed = SystemConfigStore.Deserialize(entry.Key, entry.Value);
+        Assert.NotNull(parsed);
+        Assert.Equal(GameScannerService.WindowsSystemName, parsed.SystemName);
+        Assert.Equal(["url", "lnk", "bat"], parsed.FileFormatsToSearch, StringComparer.Ordinal);
+        Assert.Equal("Direct Launch", Assert.Single(parsed.Emulators).EmulatorName);
+        Assert.Equal($@"%BASEFOLDER%\roms\{GameScannerService.WindowsSystemName}",
+            Assert.Single(parsed.SystemFolders));
     }
 
     [Fact]
@@ -140,10 +141,9 @@ public class GameScannerServiceTests : IDisposable
         Assert.False(second.SystemWasCreated);
         Assert.False(scanner.WasNewSystemCreated);
 
-        var doc = XDocument.Load(systemXml);
-        _ = Assert.Single(doc.Root!.Elements("SystemConfig"),
-            static e => string.Equals(e.Element("SystemName")?.Value, GameScannerService.WindowsSystemName,
-                StringComparison.OrdinalIgnoreCase));
+        var stored = UnifiedSettingsDatabase.LoadSystems();
+        var entry = Assert.Single(stored);
+        Assert.Equal(GameScannerService.WindowsSystemName, entry.Key, StringComparer.OrdinalIgnoreCase);
 
         // Existing shortcut content is never overwritten
         var doomShortcut = Path.Combine(DefaultRomsPath, "Doom.url");
@@ -215,6 +215,7 @@ public class GameScannerServiceTests : IDisposable
                                       """);
         var json = $$"""{"SystemXmlPath": "{{systemXml.Replace("\\", @"\\")}}"}""";
         var config = TestEnvironment.ConfigurationFromJson(json);
+        UnifiedTestDatabase.SeedSystemsFromXml(config, systemXml);
         var scanner = new GameScannerService(
             TestDependencies.MessageBox().Object,
             config,
@@ -259,6 +260,7 @@ public class GameScannerServiceTests : IDisposable
                                       """);
         var json = $$"""{"SystemXmlPath": "{{systemXml.Replace("\\", @"\\")}}"}""";
         var config = TestEnvironment.ConfigurationFromJson(json);
+        UnifiedTestDatabase.SeedSystemsFromXml(config, systemXml);
         var messageBox = TestDependencies.MessageBox();
         var scanner = new GameScannerService(
             messageBox.Object,

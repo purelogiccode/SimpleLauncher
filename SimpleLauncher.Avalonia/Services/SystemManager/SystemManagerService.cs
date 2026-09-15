@@ -7,13 +7,18 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
+using SimpleLauncher.Core.Services.UnifiedSettings;
 
 namespace SimpleLauncher.Avalonia.Services.SystemManager;
 
 /// <summary>
-///     Reads and writes system.xml, exposing system configurations.
-///     Supports both legacy (nested child-element) and simplified (semicolon/comma-delimited) formats for reading.
-///     Writes in the legacy format for compatibility with the original SimpleLauncher.
+///     Reads and writes system configurations.
+///     The Avalonia app persists systems in the unified SQLite database
+///     (<c>settings.dat</c> in AppData) when it exists; the legacy <c>system.xml</c>
+///     format is only read during the one-time migration (and as a fallback when no
+///     database exists yet). XML read/write supports both legacy (nested child-element)
+///     and simplified (semicolon/comma-delimited) formats for reading, and writes in the
+///     legacy format for compatibility with the original SimpleLauncher.
 /// </summary>
 public class SystemManagerService
 {
@@ -50,10 +55,56 @@ public class SystemManagerService
     {
         if (_cachedSystems is not null) return _cachedSystems;
 
-        _cachedSystems = [];
+        _cachedSystems = LoadSystemsFromPath(null);
+        return _cachedSystems;
+    }
 
-        var path = GetSystemXmlPath();
-        if (!File.Exists(path)) return _cachedSystems;
+    /// <summary>
+    ///     Loads systems from the unified database without touching the cache.
+    ///     Test seam: accepts an explicit database path so tests never touch real user data.
+    /// </summary>
+    internal List<SystemManagerConfig> LoadSystemsFromDatabase(string? dbPathOverride)
+    {
+        var result = new List<SystemManagerConfig>();
+
+        foreach (var kvp in UnifiedSettingsDatabase.LoadSystems(dbPathOverride))
+        {
+            var dbConfig = SystemConfigStore.Deserialize(kvp.Key, kvp.Value);
+            if (dbConfig is not null)
+                result.Add(dbConfig);
+        }
+
+        result.Sort(static (a, b) =>
+            string.Compare(a.SystemName, b.SystemName, StringComparison.OrdinalIgnoreCase));
+        return result;
+    }
+
+    /// <summary>
+    ///     Loads systems from an explicit file path without touching the cache.
+    ///     Used by the one-time legacy migration (test seam: arbitrary folders).
+    ///     Unlike <see cref="LoadSystems" />, this never reads the database and never
+    ///     rewrites the file or offers backup restores.
+    /// </summary>
+    internal List<SystemManagerConfig> LoadSystemsFromPath(string? explicitPath)
+    {
+        var result = new List<SystemManagerConfig>();
+
+        // Unified-database path: single source of truth once migrated.
+        // Skipped for explicit paths (the migrator reads the legacy file itself).
+        if (explicitPath is null && UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                return LoadSystemsFromDatabase(null);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error loading systems from the unified database; trying the legacy file");
+            }
+        }
+
+        var path = explicitPath ?? GetSystemXmlPath();
+        if (!File.Exists(path)) return result;
 
         var invalidErrors = new List<string>();
         var dirty = false;
@@ -76,7 +127,7 @@ public class SystemManagerService
                     try
                     {
                         var config = ParseSystemElement(element);
-                        _cachedSystems.Add(config);
+                        result.Add(config);
                     }
                     catch (Exception ex)
                     {
@@ -90,7 +141,7 @@ public class SystemManagerService
         }
         catch (XmlException ex)
         {
-            Log.Error(ex, "Structural corruption in 'system.xml'. Attempting partial recovery.");
+            Log.Error(ex, "Structural corruption in 'system.xml'. Attempting partial recovery");
             dirty = true;
 
             try
@@ -102,7 +153,7 @@ public class SystemManagerService
                     {
                         var sysConfigElement = XElement.Parse(match.Value);
                         var config = ParseSystemElement(sysConfigElement);
-                        _cachedSystems.Add(config);
+                        result.Add(config);
                     }
                     catch (Exception innerEx)
                     {
@@ -117,39 +168,42 @@ public class SystemManagerService
             }
             catch (Exception recoveryEx)
             {
-                Log.Error(recoveryEx, "Failed to perform regex recovery on system.xml.");
+                Log.Error(recoveryEx, "Failed to perform regex recovery on system.xml");
             }
 
-            if (_cachedSystems.Count == 0 && invalidErrors.Count == 0) NotifyCorruptedAndMaybeRestore(path);
+            if (result.Count == 0 && invalidErrors.Count == 0 && explicitPath is null)
+                NotifyCorruptedAndMaybeRestore(path);
         }
         catch (IOException ex)
         {
-            Log.Error(ex, "The file 'system.xml' is locked.");
+            Log.Error(ex, "The file 'system.xml' is locked");
             _ = _messageBox?.FileSystemXmlIsLockedMessageBoxAsync();
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Failed to parse system.xml at {Path}", path);
-            NotifyCorruptedAndMaybeRestore(path);
+            if (explicitPath is null)
+                NotifyCorruptedAndMaybeRestore(path);
         }
 
         // Notify the user about each invalid system that was removed.
         foreach (var error in invalidErrors) _ = _messageBox?.InvalidSystemConfigurationMessageBoxAsync(error);
 
         // Rewrite a cleaned, sorted copy so future loads don't re-corrupt.
-        if (dirty && _cachedSystems.Count > 0)
+        // Skipped for explicit paths (migration must not modify the source file).
+        if (explicitPath is null && dirty && result.Count > 0)
         {
             try
             {
-                SaveCleanedSystems(_cachedSystems, path);
+                SaveCleanedSystems(result, path);
             }
             catch (Exception saveEx)
             {
-                Log.Error(saveEx, "Error saving cleaned 'system.xml' after loading.");
+                Log.Error(saveEx, "Error saving cleaned 'system.xml' after loading");
             }
         }
 
-        return _cachedSystems;
+        return result;
     }
 
     /// <summary>Informs the user the file is corrupted and offers to restore the last backup.</summary>
@@ -193,7 +247,7 @@ public class SystemManagerService
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error searching for system.xml backups.");
+            Log.Error(ex, "Error searching for system.xml backups");
             return null;
         }
     }
@@ -283,7 +337,7 @@ public class SystemManagerService
                 }
                 else
                 {
-                    Log.Error(ex, "Error saving cleaned 'system.xml'.");
+                    Log.Error(ex, "Error saving cleaned 'system.xml'");
                 }
             }
         }
@@ -317,7 +371,8 @@ public class SystemManagerService
         string systemFolder,
         IConfiguration configuration,
         ILogger? logErrors = null,
-        SystemManagerService? cacheOwner = null)
+        SystemManagerService? cacheOwner = null,
+        string? dbPathOverride = null)
     {
         return SaveSystemConfigurationAsync(
             selectedSystem.SystemName,
@@ -330,7 +385,8 @@ public class SystemManagerService
             selectedSystem.SystemName,
             configuration,
             logErrors,
-            cacheOwner);
+            cacheOwner,
+            dbPathOverride: dbPathOverride);
     }
 
     /// <summary>
@@ -350,8 +406,62 @@ public class SystemManagerService
         ILogger? logErrors = null,
         SystemManagerService? cacheOwner = null,
         bool groupByFolder = false,
-        bool disableRecursiveSearch = false)
+        bool disableRecursiveSearch = false,
+        string? dbPathOverride = null)
     {
+        // Unified-database path: upsert the system into settings.dat.
+        // A test override forces the database branch against an isolated file.
+        if (dbPathOverride is not null || UnifiedSettingsDatabase.IsValidDatabase())
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    lock (XmlLock)
+                    {
+                        UnifiedSettingsDatabase.EnsureCreated(dbPathOverride);
+                        var identifier = originalSystemName ?? systemName;
+
+                        // Legacy parity: when updating an existing system through this path,
+                        // preserve its GroupByFolder/DisableRecursiveSearch flags (the XML merge
+                        // only sets them when absent).
+                        var stored = UnifiedSettingsDatabase.LoadSystems(dbPathOverride);
+                        if (stored.TryGetValue(identifier, out var existingJson) &&
+                            SystemConfigStore.Deserialize(identifier, existingJson) is { } existing)
+                        {
+                            groupByFolder = existing.GroupByFolder;
+                            disableRecursiveSearch = existing.DisableRecursiveSearch;
+                        }
+
+                        if (!string.Equals(identifier, systemName, StringComparison.OrdinalIgnoreCase))
+                            UnifiedSettingsDatabase.DeleteSystem(identifier, dbPathOverride);
+
+                        var config = new SystemManagerConfig
+                        {
+                            SystemName = systemName,
+                            SystemFolders = systemFolders.ToList(),
+                            SystemImageFolder = systemImageFolder,
+                            FileFormatsToSearch = fileFormatsToSearch.ToList(),
+                            FileFormatsToLaunch = fileFormatsToLaunch.ToList(),
+                            ExtractFileBeforeLaunch = extractFileBeforeLaunch,
+                            GroupByFolder = groupByFolder,
+                            DisableRecursiveSearch = disableRecursiveSearch,
+                            Emulators = emulator is not null ? [emulator] : []
+                        };
+                        UnifiedSettingsDatabase.SaveSystem(systemName, SystemConfigStore.Serialize(config),
+                            dbPathOverride);
+                    }
+                });
+                cacheOwner?.InvalidateCache();
+            }
+            catch (Exception ex)
+            {
+                logErrors?.Error(ex, "Error saving system configuration to the unified database");
+            }
+
+            return;
+        }
+
         try
         {
             await Task.Run(() =>
@@ -408,7 +518,7 @@ public class SystemManagerService
                     }
                     catch (Exception ex)
                     {
-                        logErrors?.Error(ex, "Error loading/parsing system.xml for saving.");
+                        logErrors?.Error(ex, "Error loading/parsing system.xml for saving");
                         throw new InvalidOperationException("Failed to load system configuration for saving.", ex);
                     }
 
@@ -504,7 +614,7 @@ public class SystemManagerService
                                 }
                                 catch (Exception fallbackEx)
                                 {
-                                    Log.Debug(fallbackEx, "Fallback to LocalAppData failed while saving system.xml.");
+                                    Log.Debug(fallbackEx, "Fallback to LocalAppData failed while saving system.xml");
                                 }
                             }
 
@@ -531,7 +641,7 @@ public class SystemManagerService
                         }
                     }
 
-                    logErrors?.Error(lastException, "Error saving system.xml.");
+                    logErrors?.Error(lastException, "Error saving system.xml");
                     throw new InvalidOperationException("Failed to save system configuration.", lastException);
                 }
             });
@@ -539,7 +649,7 @@ public class SystemManagerService
         }
         catch (Exception ex)
         {
-            logErrors?.Error(ex, "Error saving system configuration.");
+            logErrors?.Error(ex, "Error saving system configuration");
         }
     }
 
