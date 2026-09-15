@@ -171,7 +171,7 @@ public class AvaloniaHelpUserServiceTests
                 .SelectMany(bold => bold.Inlines.OfType<Run>())
                 .Select(run => run.Text)
                 .ToList();
-            Assert.Contains("%BASEFOLDER%", boldTexts);
+            Assert.Contains("%BASEFOLDER%", boldTexts, StringComparer.Ordinal);
         });
     }
 
