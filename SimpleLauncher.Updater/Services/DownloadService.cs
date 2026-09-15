@@ -11,6 +11,13 @@ internal class DownloadService
 {
     private const int FileBufferSize = 81920; // 80KB buffer for efficient file I/O
 
+    /// <summary>
+    ///     UPD-06: hard cap on in-memory downloads (1 GiB). Release zips and the Dokan MSI
+    ///     are two orders of magnitude smaller — anything larger is a hostile/compromised
+    ///     payload, and buffering it unbounded would exhaust RAM (OOM / zip-bomb).
+    /// </summary>
+    internal const long MaxDownloadBytes = 1L << 30;
+
     private readonly HttpClient _httpClient;
 
     /// <summary>
@@ -34,11 +41,15 @@ internal class DownloadService
 
     /// <summary>
     ///     Downloads a file to a memory stream with progress reporting.
+    ///     UPD-06: the download is bounded by <see cref="MaxDownloadBytes" /> — an oversize
+    ///     Content-Length is rejected before reading, and the running total is enforced
+    ///     while streaming, so a lying/missing Content-Length cannot exhaust memory.
     /// </summary>
     /// <param name="url">The URL to download from.</param>
     /// <param name="cancellationToken">Token to cancel the download operation.</param>
     /// <returns>A MemoryStream containing the downloaded file.</returns>
     /// <exception cref="HttpRequestException">Thrown when the download fails.</exception>
+    /// <exception cref="IOException">Thrown when the payload exceeds <see cref="MaxDownloadBytes" />.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled.</exception>
     public async Task<MemoryStream> DownloadToMemoryAsync(string url, CancellationToken cancellationToken = default)
     {
@@ -67,6 +78,14 @@ internal class DownloadService
         using (response)
         {
             var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+
+            // UPD-06: reject an oversize payload before buffering a single byte.
+            // Thrown as IOException so callers treat it as an expected download failure
+            // (fallback source / manual update) rather than a bug report.
+            if (totalBytes > MaxDownloadBytes)
+                throw new IOException(
+                    $"Update file too large: {FormatBytes(totalBytes)} exceeds the {FormatBytes(MaxDownloadBytes)} limit.");
+
             var memoryStream = new MemoryStream();
             var buffer = new byte[FileBufferSize];
             var totalBytesRead = 0L;
@@ -85,6 +104,12 @@ internal class DownloadService
 
                         await memoryStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
                         totalBytesRead += bytesRead;
+
+                        // UPD-06: enforce the cap while streaming — a missing or lying
+                        // Content-Length must not allow unbounded memory growth.
+                        if (totalBytesRead > MaxDownloadBytes)
+                            throw new IOException(
+                                $"Download exceeded the {FormatBytes(MaxDownloadBytes)} limit — aborting.");
 
                         // Calculate and report progress
                         if (totalBytes > 0)
@@ -132,8 +157,10 @@ internal class DownloadService
                 await memoryStream.DisposeAsync();
                 // HTTP failures, transport aborts and timeouts (including user cancellation)
                 // are expected network conditions — they are retried from the fallback source
-                // and must not be reported as bugs. Only unexpected exceptions are reported.
-                if (ex is HttpRequestException or IOException or OperationCanceledException)
+                // and must not be reported as bugs. Oversize-payload rejections (IOException)
+                // and allocation failures (OutOfMemoryException, UPD-06) are likewise
+                // environmental, not bugs. Only unexpected exceptions are reported.
+                if (ex is HttpRequestException or IOException or OperationCanceledException or OutOfMemoryException)
                 {
                     Log.Information(ex, "Error downloading update file");
                 }

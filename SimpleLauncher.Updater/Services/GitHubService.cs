@@ -104,7 +104,8 @@ internal partial class GitHubService
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
 
             var apiUrl = $"https://api.github.com/repos/{repoOwner}/{RepoName}/releases/latest";
-            var response = await _httpClient.GetAsync(apiUrl, linkedCts.Token);
+            // UPD-11: dispose the response (socket/stream leak otherwise).
+            using var response = await _httpClient.GetAsync(apiUrl, linkedCts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -210,7 +211,8 @@ internal partial class GitHubService
             // The secondary server has a version.txt file with the current version
             const string versionUrl = SecondaryServerBaseUrl + "version.txt";
 
-            var versionResponse = await _httpClient.GetAsync(versionUrl, cancellationToken);
+            // UPD-11: dispose the response (socket/stream leak otherwise).
+            using var versionResponse = await _httpClient.GetAsync(versionUrl, cancellationToken);
             if (!versionResponse.IsSuccessStatusCode)
             {
                 throw new HttpRequestException(

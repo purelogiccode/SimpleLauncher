@@ -72,6 +72,22 @@ public partial class MainWindow : Window
         // Start update process async when window is loaded
         _cts = new CancellationTokenSource();
         Opened += async (_, _) => await ExecuteUpdateAsync(_cts.Token);
+
+        // UPD-13: release the update cancellation source with the window.
+        Closed += (_, _) =>
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+        };
+    }
+
+    /// <summary>
+    ///     Disposes the HttpClient instance. Should be called when the application is shutting down.
+    ///     UPD-13: WPF parity — the Avalonia updater previously never disposed it.
+    /// </summary>
+    public static void DisposeHttpClient()
+    {
+        HttpClient.Dispose();
     }
 
     /// <summary>
@@ -146,12 +162,16 @@ public partial class MainWindow : Window
     {
         try
         {
-            // Parse process ID from command line arguments
+            // Parse process ID from command line arguments. UPD-08: the PID is validated
+            // against the expected main-app process name — an unrelated/reused PID is
+            // ignored (falling back to the by-name wait) instead of stalling the update.
             int? processId = null;
             if (_args.Length > 0 &&
                 int.TryParse(_args[0], CultureInfo.InvariantCulture, out var pid) && pid > 0)
             {
-                processId = pid;
+                processId = ProcessService.ValidateProcessId(pid);
+                if (!processId.HasValue)
+                    Log($"Ignoring invalid process ID argument: {_args[0]} — waiting by process name instead.");
             }
 
             CancelButton.IsEnabled = true;

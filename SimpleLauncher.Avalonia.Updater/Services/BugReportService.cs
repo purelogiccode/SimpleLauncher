@@ -59,7 +59,8 @@ internal static class BugReportService
             request.Content = content;
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var response = await MainWindow.HttpClient.SendAsync(request, cts.Token);
+            // UPD-12: dispose the response — every bug report leaked a response + stream.
+            using var response = await MainWindow.HttpClient.SendAsync(request, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {

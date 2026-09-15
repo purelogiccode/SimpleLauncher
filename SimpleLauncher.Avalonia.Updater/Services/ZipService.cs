@@ -43,11 +43,17 @@ internal class ZipService
     /// <summary>
     ///     Extracts a ZIP archive from a memory stream to the application directory.
     ///     Uses streaming extraction without upfront indexing for faster start.
+    ///     UPD-05: extraction is staged, never in-place. Every entry is validated and
+    ///     written to a sibling staging directory first; only after the whole archive
+    ///     is staged is each file swapped onto the live install with a <c>.updbak</c>
+    ///     backup and rollback on failure — a mid-update failure (cancel, disk-full,
+    ///     lock, power loss) can no longer leave half-old/half-new binaries behind.
     /// </summary>
     /// <param name="zipStream">The memory stream containing the ZIP archive.</param>
     /// <param name="cancellationToken">Token to cancel the extraction operation.</param>
     /// <returns>The number of files extracted.</returns>
     /// <exception cref="SecurityException">Thrown when a ZIP entry attempts to escape the target directory.</exception>
+    /// <exception cref="IOException">Thrown when staging/swap fails (including insufficient disk space).</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled.</exception>
     public async Task<int> ExtractFromStreamAsync(MemoryStream zipStream, CancellationToken cancellationToken = default)
     {
@@ -56,91 +62,121 @@ internal class ZipService
         zipStream.Position = 0;
         var extractedCount = 0;
 
-        // Use ZipReader for streaming extraction - no upfront indexing needed
-        using var reader = ZipReader.OpenReader(zipStream, new ReaderOptions { LeaveStreamOpen = true });
+        var appDirectoryFullPath = EnsureTrailingSeparator(Path.GetFullPath(_appDirectory));
 
-        while (reader.MoveToNextEntry())
+        // UPD-05: sibling staging directory — same volume as the install, so the later
+        // per-file swaps are atomic moves. Leftovers from a crashed run are removed first.
+        var stagingRoot = _appDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                          ".update-staging";
+        var stagingRootFullPath = EnsureTrailingSeparator(Path.GetFullPath(stagingRoot));
+        CleanupDirectoryQuietly(stagingRoot);
+        CleanupStaleBackups(appDirectoryFullPath);
+        Directory.CreateDirectory(stagingRoot);
+
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var entryKey = reader.Entry.Key;
+            // Phase 1: validate every entry and extract into staging (live install untouched).
+            var stagedFiles = new List<(string RelativePath, string StagedPath)>();
 
-            try
+            // Use ZipReader for streaming extraction - no upfront indexing needed
+            using (var reader = ZipReader.OpenReader(zipStream, new ReaderOptions { LeaveStreamOpen = true }))
             {
-                // Skip entries without keys
-                if (string.IsNullOrEmpty(entryKey))
-                    continue;
-
-                // UPD-04: reject symbolic-link entries at the archive level. SharpCompress
-                // surfaces the link target; materializing links would let a later entry
-                // (or a FileMode.Create write) escape AppDirectory through the link.
-                if (!string.IsNullOrEmpty(reader.Entry.LinkTarget))
-                    throw new SecurityException($"Zip entry is a symbolic link, refusing to extract: {entryKey}");
-
-                // UPD-04: reject Windows alternate data streams. Entry keys are relative,
-                // so any ':' can only be an ADS (e.g. "file.exe:hidden").
-                if (entryKey.Contains(':'))
-                    throw new SecurityException(
-                        $"Zip entry contains an alternate data stream, refusing to extract: {entryKey}");
-
-                // Skip directory entries
-                if (reader.Entry.IsDirectory)
-                    continue;
-
-                var fileName = Path.GetFileName(entryKey);
-                if (!string.IsNullOrEmpty(fileName) &&
-                    IgnoredFiles.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                while (reader.MoveToNextEntry())
                 {
-                    LogMessage?.Invoke(this, new EventArgs<string>($"Skipping self-update file: {entryKey}"));
-                    continue;
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var entryKey = reader.Entry.Key;
+
+                    try
+                    {
+                        // Skip entries without keys
+                        if (string.IsNullOrEmpty(entryKey))
+                            continue;
+
+                        // UPD-04: reject symbolic-link entries at the archive level. SharpCompress
+                        // surfaces the link target; materializing links would let a later entry
+                        // (or a FileMode.Create write) escape AppDirectory through the link.
+                        if (!string.IsNullOrEmpty(reader.Entry.LinkTarget))
+                            throw new SecurityException(
+                                $"Zip entry is a symbolic link, refusing to extract: {entryKey}");
+
+                        // UPD-04: reject Windows alternate data streams. Entry keys are relative,
+                        // so any ':' can only be an ADS (e.g. "file.exe:hidden").
+                        if (entryKey.Contains(':'))
+                            throw new SecurityException(
+                                $"Zip entry contains an alternate data stream, refusing to extract: {entryKey}");
+
+                        // Skip directory entries
+                        if (reader.Entry.IsDirectory)
+                            continue;
+
+                        var fileName = Path.GetFileName(entryKey);
+                        if (!string.IsNullOrEmpty(fileName) &&
+                            IgnoredFiles.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                        {
+                            LogMessage?.Invoke(this,
+                                new EventArgs<string>($"Skipping self-update file: {entryKey}"));
+                            continue;
+                        }
+
+                        // Validate and sanitize entry path to prevent path traversal attacks.
+                        // The same relative path is resolved under BOTH roots — a ".." that
+                        // escapes the install dir would escape staging too, so both are checked.
+                        // Normalize: remove leading slashes, then combine and resolve
+                        var trimmedEntry = entryKey.TrimStart('/', '\\');
+                        var stagedPath = Path.GetFullPath(Path.Combine(stagingRoot, trimmedEntry));
+                        var destinationPath = Path.GetFullPath(Path.Combine(_appDirectory, trimmedEntry));
+
+                        // Security check: ensure the resolved destination path is within AppDirectory
+                        // This is the actual guard — it catches all traversal attempts including encoded or multi-level ".."
+                        if (!stagedPath.StartsWith(stagingRootFullPath, StringComparison.OrdinalIgnoreCase) ||
+                            !destinationPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                            throw new SecurityException(
+                                $"Zip entry attempts to escape target directory: {entryKey}");
+
+                        // UPD-04: refuse to write through (or overwrite) a reparse point / symlink
+                        // planted by an earlier entry of this same archive or a previous run —
+                        // FileMode.Create would otherwise follow it outside AppDirectory even
+                        // though this entry's own path passed the containment check above.
+                        ThrowIfPathContainsLink(stagedPath, entryKey);
+                        ThrowIfPathContainsLink(destinationPath, entryKey);
+
+                        var stagingDirectory = Path.GetDirectoryName(stagedPath);
+
+                        if (!string.IsNullOrEmpty(stagingDirectory) && !Directory.Exists(stagingDirectory))
+                            Directory.CreateDirectory(stagingDirectory);
+
+                        extractedCount++;
+
+                        // Report extraction progress (current file only, no percentage)
+                        ProgressChanged?.Invoke(this, new EventArgs<ExtractionProgressInfo>(new ExtractionProgressInfo
+                        {
+                            CurrentFile = entryKey,
+                            ExtractedCount = extractedCount
+                        }));
+
+                        // Extract with retry logic for locked files
+                        await ExtractFileWithRetryAsync(reader, stagedPath, entryKey, cancellationToken);
+                        stagedFiles.Add((trimmedEntry, stagedPath));
+
+                        LogMessage?.Invoke(this, new EventArgs<string>($"Extracted: {entryKey}"));
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Error extracting file: {EntryKey}", entryKey);
+                        await BugReportService.ReportBugAsync(ex, $"Error extracting file: {entryKey}");
+                        throw;
+                    }
                 }
-
-                // Validate and sanitize entry path to prevent path traversal attacks
-                // Normalize: remove leading slashes, then combine and resolve
-                var trimmedEntry = entryKey.TrimStart('/', '\\');
-                var destinationPath = Path.GetFullPath(Path.Combine(_appDirectory, trimmedEntry));
-                var appDirectoryFullPath = Path.GetFullPath(_appDirectory);
-
-                // UPD-03: the containment prefix must end in a separator — without it,
-                // e.g. "C:\AppEvil\pwn.exe" passes StartsWith("C:\App") and escapes.
-                if (!appDirectoryFullPath.EndsWith(Path.DirectorySeparatorChar))
-                    appDirectoryFullPath += Path.DirectorySeparatorChar;
-
-                // Security check: ensure the resolved destination path is within AppDirectory
-                // This is the actual guard — it catches all traversal attempts including encoded or multi-level ".."
-                if (!destinationPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
-                    throw new SecurityException($"Zip entry attempts to escape target directory: {entryKey}");
-
-                // UPD-04: refuse to write through (or overwrite) a reparse point / symlink
-                // planted by an earlier entry of this same archive or a previous run —
-                // FileMode.Create would otherwise follow it outside AppDirectory even
-                // though this entry's own path passed the containment check above.
-                ThrowIfPathContainsLink(destinationPath, entryKey);
-
-                var destinationDirectory = Path.GetDirectoryName(destinationPath);
-
-                if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
-                    Directory.CreateDirectory(destinationDirectory);
-
-                extractedCount++;
-
-                // Report extraction progress (current file only, no percentage)
-                ProgressChanged?.Invoke(this, new EventArgs<ExtractionProgressInfo>(new ExtractionProgressInfo
-                {
-                    CurrentFile = entryKey,
-                    ExtractedCount = extractedCount
-                }));
-
-                // Extract with retry logic for locked files
-                await ExtractFileWithRetryAsync(reader, destinationPath, entryKey, cancellationToken);
-
-                LogMessage?.Invoke(this, new EventArgs<string>($"Extracted: {entryKey}"));
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error extracting file: {EntryKey}", entryKey);
-                await BugReportService.ReportBugAsync(ex, $"Error extracting file: {entryKey}");
-                throw;
-            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Phase 2: swap the fully-staged tree onto the live install (UPD-05).
+            await SwapStagedFilesAsync(stagedFiles, appDirectoryFullPath, cancellationToken);
+        }
+        finally
+        {
+            CleanupDirectoryQuietly(stagingRoot);
         }
 
         // Report completion
@@ -152,6 +188,215 @@ internal class ZipService
 
         LogMessage?.Invoke(this, new EventArgs<string>($"Extraction complete ({extractedCount} files extracted)"));
         return extractedCount;
+    }
+
+    /// <summary>
+    ///     Swaps fully-staged files onto the live install (UPD-05). Each existing file is
+    ///     moved to a <c>.updbak</c> backup first, then the staged file is moved into place
+    ///     (same-volume move = atomic). If any swap fails, already-swapped files are rolled
+    ///     back from their backups; on success the backups are deleted.
+    /// </summary>
+    private async Task SwapStagedFilesAsync(List<(string RelativePath, string StagedPath)> stagedFiles,
+        string appDirectoryFullPath, CancellationToken cancellationToken)
+    {
+        // UPD-06 (disk-full): verify the staged payload plus a safety reserve fits on the
+        // install drive before touching a single live file.
+        long stagedBytes = 0;
+        foreach (var (_, stagedPath) in stagedFiles) stagedBytes += new FileInfo(stagedPath).Length;
+
+        var drive = new DriveInfo(Path.GetPathRoot(appDirectoryFullPath)!);
+        const long ReserveBytes = 64L * 1024 * 1024;
+        if (drive.AvailableFreeSpace < stagedBytes + ReserveBytes)
+            throw new IOException(
+                $"Insufficient disk space for update: need {DownloadService.FormatBytes(stagedBytes + ReserveBytes)}, " +
+                $"only {DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
+
+        LogMessage?.Invoke(this,
+            new EventArgs<string>($"Staged {stagedFiles.Count} files — installing onto live application..."));
+
+        var swapped = new List<(string FinalPath, string BackupPath)>();
+        try
+        {
+            foreach (var (relativePath, stagedPath) in stagedFiles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
+                if (!finalPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                    throw new SecurityException(
+                        $"Zip entry attempts to escape target directory: {relativePath}");
+
+                ThrowIfPathContainsLink(finalPath, relativePath);
+
+                var finalDirectory = Path.GetDirectoryName(finalPath);
+                if (!string.IsNullOrEmpty(finalDirectory) && !Directory.Exists(finalDirectory))
+                    Directory.CreateDirectory(finalDirectory);
+
+                string? backupPath = null;
+                if (File.Exists(finalPath))
+                {
+                    ClearReadOnlyAttribute(finalPath);
+                    backupPath = finalPath + ".updbak";
+                    if (File.Exists(backupPath))
+                        File.Delete(backupPath);
+                    await MoveFileWithRetryAsync(finalPath, backupPath, relativePath, cancellationToken);
+                }
+
+                await MoveFileWithRetryAsync(stagedPath, finalPath, relativePath, cancellationToken);
+                if (backupPath != null)
+                    swapped.Add((finalPath, backupPath));
+
+                ProgressChanged?.Invoke(this, new EventArgs<ExtractionProgressInfo>(new ExtractionProgressInfo
+                {
+                    CurrentFile = relativePath,
+                    ExtractedCount = swapped.Count
+                }));
+            }
+        }
+        catch
+        {
+            // Best-effort rollback: restore every already-swapped file from its backup.
+            foreach (var (finalPath, backupPath) in swapped)
+            {
+                try
+                {
+                    if (File.Exists(finalPath))
+                        File.Delete(finalPath);
+                    if (File.Exists(backupPath))
+                        File.Move(backupPath, finalPath);
+                }
+                catch (Exception rollbackEx)
+                {
+                    Log.Warning(rollbackEx, "Failed to roll back file after failed update: {FinalPath}", finalPath);
+                }
+            }
+
+            throw;
+        }
+
+        // Success — backups are no longer needed.
+        foreach (var (_, backupPath) in swapped)
+        {
+            try
+            {
+                if (File.Exists(backupPath))
+                    File.Delete(backupPath);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to delete update backup file: {BackupPath}", backupPath);
+            }
+        }
+
+        LogMessage?.Invoke(this, new EventArgs<string>($"Installed {swapped.Count} files onto live application."));
+    }
+
+    /// <summary>
+    ///     Moves a file with retry logic for locked files (same-volume moves are atomic).
+    /// </summary>
+    private async Task MoveFileWithRetryAsync(string sourcePath, string destinationPath, string entryKey,
+        CancellationToken cancellationToken)
+    {
+        Exception? lastException = null;
+
+        for (var attempt = 1; attempt <= FileWriteRetryAttempts; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                File.Move(sourcePath, destinationPath);
+                return; // Success, exit the method
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException &&
+                                       attempt < FileWriteRetryAttempts)
+            {
+                // File is likely locked by another process, retry after delay
+                lastException = ex;
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>(
+                        $"File locked or access denied ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs}ms..."));
+                await Task.Delay(FileWriteRetryDelayMs * attempt, cancellationToken);
+            }
+        }
+
+        if (lastException != null)
+            throw new IOException(
+                $"Failed to move file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
+                "The file may be locked by another process.", lastException);
+    }
+
+    /// <summary>
+    ///     Clears the read-only attribute on an existing file (best effort).
+    /// </summary>
+    private static void ClearReadOnlyAttribute(string path)
+    {
+        try
+        {
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
+        catch
+        {
+            // Best effort — the move will report the error if this fails
+        }
+    }
+
+    private static string EnsureTrailingSeparator(string fullPath)
+    {
+        // UPD-03: the containment prefix must end in a separator — without it,
+        // e.g. "C:\AppEvil\pwn.exe" passes StartsWith("C:\App") and escapes.
+        return fullPath.EndsWith(Path.DirectorySeparatorChar) ? fullPath : fullPath + Path.DirectorySeparatorChar;
+    }
+
+    /// <summary>
+    ///     Deletes a staging directory quietly (leftovers from a crashed run).
+    /// </summary>
+    private void CleanupDirectoryQuietly(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, true);
+                LogMessage?.Invoke(this, new EventArgs<string>($"Removed stale update staging directory."));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to clean staging directory: {Directory}", directory);
+        }
+    }
+
+    /// <summary>
+    ///     Deletes stale <c>.updbak</c> files left by a previously interrupted swap.
+    ///     The live files are already in place, so orphaned backups are safe to remove.
+    /// </summary>
+    private void CleanupStaleBackups(string appDirectoryFullPath)
+    {
+        try
+        {
+            var root = appDirectoryFullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (!Directory.Exists(root))
+                return;
+
+            foreach (var backup in Directory.EnumerateFiles(root, "*.updbak", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    File.Delete(backup);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to delete stale update backup: {Backup}", backup);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to enumerate stale update backups.");
+        }
     }
 
     /// <summary>
@@ -203,6 +448,8 @@ internal class ZipService
     ///     Extracts a file from the ZIP reader with retry logic for locked files.
     ///     Files are created with default ACLs/mode — archive permission bits
     ///     (including Unix setuid/setgid) are never applied (UPD-04).
+    ///     UPD-05: the destination is inside the staging directory; the live
+    ///     install is only touched later by <see cref="SwapStagedFilesAsync" />.
     /// </summary>
     /// <param name="reader">The ZIP reader positioned at the entry to extract.</param>
     /// <param name="destinationPath">The destination file path.</param>
@@ -222,18 +469,7 @@ internal class ZipService
 
             // Clear read-only attribute if the file already exists (e.g., from a previous installation)
             if (File.Exists(destinationPath))
-            {
-                try
-                {
-                    var attributes = File.GetAttributes(destinationPath);
-                    if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                        File.SetAttributes(destinationPath, attributes & ~FileAttributes.ReadOnly);
-                }
-                catch
-                {
-                    // Best effort — extraction will report the error if this fails
-                }
-            }
+                ClearReadOnlyAttribute(destinationPath);
 
             try
             {

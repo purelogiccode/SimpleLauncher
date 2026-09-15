@@ -313,7 +313,7 @@ internal class UpdateService
 
             // User chose to install Dokan
             LogMessage?.Invoke(this, new EventArgs<string>("Starting Dokan download and installation..."));
-            await _dokanService.DownloadAndInstallDokanAsync(_appDirectory);
+            await _dokanService.DownloadAndInstallDokanAsync();
             LogMessage?.Invoke(this, new EventArgs<string>("Dokan installer has been launched."));
         }
         catch (Exception ex)

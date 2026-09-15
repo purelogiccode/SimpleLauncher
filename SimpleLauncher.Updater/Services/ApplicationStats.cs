@@ -50,14 +50,21 @@ internal static class ApplicationStats
             var version = assembly.GetName().Version?.ToString() ?? "0.0.0";
 
             var httpClient = MainWindow.HttpClient;
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
 
             var payload = new { applicationId = "simplelauncher-updater", version };
             var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            using var response = await httpClient.PostAsync(StatsApiUrl, content, cts.Token);
+
+            // UPD-10: send the bearer key on this request only. Mutating the shared
+            // client's DefaultRequestHeaders races with in-flight DownloadService /
+            // GitHubService / BugReportService calls and would leave the secret attached
+            // to every subsequent request (including api.github.com).
+            using var request = new HttpRequestMessage(HttpMethod.Post, StatsApiUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await httpClient.SendAsync(request, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {

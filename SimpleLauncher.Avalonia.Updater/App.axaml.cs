@@ -48,6 +48,16 @@ public class App : Application
             var args = Environment.GetCommandLineArgs().Skip(1).ToArray();
             var mainWindow = new MainWindow(args);
             desktop.MainWindow = mainWindow;
+
+            // UPD-13: WPF parity — dispose the shared HttpClient, the bug-report sink
+            // resources and flush Serilog on exit (previously leaked every run).
+            desktop.Exit += (_, _) =>
+            {
+                MainWindow.DisposeHttpClient();
+                BugReportService.Dispose();
+                Log.CloseAndFlush();
+            };
+
             mainWindow.Show();
         }
 

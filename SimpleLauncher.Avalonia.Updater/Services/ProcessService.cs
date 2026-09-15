@@ -11,12 +11,67 @@ internal class ProcessService
     private const int ProcessExitPollIntervalMs = 500; // Poll every 500ms to check if process exited
 
     /// <summary>
+    ///     Expected main-application process name (without extension) for PID validation
+    ///     and by-name lookup.
+    /// </summary>
+    private const string ExpectedMainAppProcessName = "SimpleLauncher.Avalonia";
+
+    /// <summary>
     ///     Event raised when a log message needs to be displayed.
     /// </summary>
     public event EventHandler<EventArgs<string>>? LogMessage;
 
     /// <summary>
+    ///     Validates a candidate main-application PID taken from the command line (UPD-08).
+    ///     The process must exist, be alive, and carry the expected main-app process name —
+    ///     PID reuse or a malicious argument must never steer the exit-wait onto an
+    ///     unrelated process (30s stall then abort, or proceeding while the real app
+    ///     still holds file locks). Returns null when the PID is unusable, in which case
+    ///     the caller falls back to the by-name wait.
+    /// </summary>
+    /// <param name="pid">The candidate process ID.</param>
+    /// <returns>The PID when valid; otherwise null.</returns>
+    internal static int? ValidateProcessId(int pid)
+    {
+        if (pid <= 0)
+            return null;
+
+        try
+        {
+            using var process = Process.GetProcessById(pid);
+            if (process.HasExited)
+                return null;
+
+            if (!string.Equals(process.ProcessName, ExpectedMainAppProcessName,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Warning(
+                    "Ignoring process ID argument {Pid}: process name is '{Actual}' (expected '{Expected}').",
+                    pid, process.ProcessName, ExpectedMainAppProcessName);
+                return null;
+            }
+
+            return pid;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            // No such process, or it exited mid-check — fall back to the by-name wait.
+            Log.Information("Ignoring process ID argument {Pid}: process not running.", pid);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // E.g. access denied reading an elevated process — never trust it.
+            Log.Warning(ex, "Ignoring process ID argument {Pid}: could not verify the process.", pid);
+            return null;
+        }
+    }
+
+    /// <summary>
     ///     Waits for the main application process to exit.
+    ///     UPD-09: the null-PID path waits for ALL matching instances (not just the first)
+    ///     and throws <see cref="TimeoutException" /> on timeout — identical semantics to
+    ///     the PID path — instead of logging "proceeding anyway" into live file locks.
     /// </summary>
     /// <param name="processId">The process ID of the main application, or null if not available.</param>
     /// <param name="cancellationToken">Token to cancel the wait operation.</param>
@@ -69,37 +124,44 @@ internal class ProcessService
                 new EventArgs<string>(
                     "No PID provided by Simple Launcher. Searching for SimpleLauncher.Avalonia process by name..."));
 
-            var processes = Process.GetProcessesByName("SimpleLauncher.Avalonia");
+            var processes = Process.GetProcessesByName(ExpectedMainAppProcessName);
             if (processes.Length > 0)
             {
                 try
                 {
-                    var process = processes[0];
                     LogMessage?.Invoke(this,
                         new EventArgs<string>(
-                            $"Found SimpleLauncher.Avalonia process (PID: {process.Id}). Waiting for it to exit..."));
+                            $"Found {processes.Length} SimpleLauncher.Avalonia process(es). Waiting for all to exit..."));
 
                     var stopwatch = Stopwatch.StartNew();
-                    while (!process.HasExited && stopwatch.ElapsedMilliseconds < ProcessExitTimeoutMs)
+                    bool allExited;
+                    do
                     {
-                        await Task.Delay(ProcessExitPollIntervalMs, cancellationToken);
-                        process.Refresh();
-                    }
+                        allExited = true;
+                        foreach (var process in processes)
+                        {
+                            process.Refresh();
+                            if (!process.HasExited)
+                            {
+                                allExited = false;
+                                break;
+                            }
+                        }
 
-                    // Capture the exit state before disposing — accessing a disposed Process throws
-                    var hasExited = process.HasExited;
+                        if (!allExited)
+                            await Task.Delay(ProcessExitPollIntervalMs, cancellationToken);
+                    } while (!allExited && stopwatch.ElapsedMilliseconds < ProcessExitTimeoutMs);
+
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    if (!hasExited)
+                    if (!allExited)
                     {
-                        LogMessage?.Invoke(this,
-                            new EventArgs<string>(
-                                $"SimpleLauncher process did not exit within {ProcessExitTimeoutMs / 1000} seconds. Proceeding anyway."));
+                        throw new TimeoutException(
+                            $"SimpleLauncher.Avalonia did not exit within {ProcessExitTimeoutMs / 1000} seconds. " +
+                            "The process may be unresponsive or still shutting down.");
                     }
-                    else
-                    {
-                        LogMessage?.Invoke(this, new EventArgs<string>("SimpleLauncher has exited."));
-                    }
+
+                    LogMessage?.Invoke(this, new EventArgs<string>("SimpleLauncher.Avalonia has exited."));
                 }
                 catch (InvalidOperationException)
                 {

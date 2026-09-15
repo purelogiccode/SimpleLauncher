@@ -80,14 +80,18 @@ internal class DokanService
     }
 
     /// <summary>
-    ///     Downloads the Dokan MSI installer to the application directory and launches it.
+    ///     Downloads the Dokan MSI installer and launches it.
+    ///     UPD-14: the MSI is staged in the system temp folder, never in AppDirectory
+    ///     (often ACL-protected, and the old 10-minute deferred cleanup died with the
+    ///     updater so MSIs littered the install dir forever). After the installer exits,
+    ///     the MSI is deleted with a short lock-retry; anything left behind sits in temp
+    ///     where OS cleanup handles it.
     /// </summary>
-    /// <param name="appDirectory">The directory to save the MSI file to.</param>
-    public async Task DownloadAndInstallDokanAsync(string appDirectory)
+    public async Task DownloadAndInstallDokanAsync()
     {
         var downloadUrl = GetDokanDownloadUrl();
         var fileName = Path.GetFileName(new Uri(downloadUrl).LocalPath);
-        var msiPath = Path.Combine(appDirectory, fileName);
+        var msiPath = Path.Combine(Path.GetTempPath(), fileName);
 
         LogMessage?.Invoke(this, new EventArgs<string>($"Downloading Dokan installer from: {downloadUrl}"));
 
@@ -99,51 +103,76 @@ internal class DokanService
 
             await using var memoryStream = await _downloadService.DownloadToMemoryAsync(downloadUrl);
 
+            // Temp-drive free-space guard (UPD-06): the MSI must fit where we stage it.
+            var tempDrive = new DriveInfo(Path.GetPathRoot(Path.GetTempPath())!);
+            if (tempDrive.AvailableFreeSpace < memoryStream.Length + (64L * 1024 * 1024))
+                throw new IOException(
+                    $"Insufficient disk space to stage the Dokan installer on {tempDrive.Name}.");
+
             // Save to disk
             LogMessage?.Invoke(this, new EventArgs<string>($"Saving installer to: {msiPath}"));
-            await using var fileStream = File.Create(msiPath);
-            memoryStream.Position = 0;
-            await memoryStream.CopyToAsync(fileStream);
-            await fileStream.FlushAsync();
+            await using (var fileStream = File.Create(msiPath))
+            {
+                memoryStream.Position = 0;
+                await memoryStream.CopyToAsync(fileStream);
+                await fileStream.FlushAsync();
+            }
 
             LogMessage?.Invoke(this, new EventArgs<string>("Download complete. Launching Dokan installer..."));
 
             // Launch the MSI installer (shows UI, handles its own elevation if needed)
-            var process = Process.Start(new ProcessStartInfo
+            using var process = Process.Start(new ProcessStartInfo
             {
                 FileName = msiPath,
                 UseShellExecute = true
             });
 
-            if (process != null)
-            {
-                process.Dispose();
-                LogMessage?.Invoke(this,
-                    new EventArgs<string>("Dokan installer launched. Please follow the installation wizard."));
-
-                // Schedule cleanup of the MSI file after a delay (installer may lock it)
-                _ = Task.Run(async () =>
-                {
-                    await Task.Delay(TimeSpan.FromMinutes(10));
-                    try
-                    {
-                        if (File.Exists(msiPath))
-                        {
-                            File.Delete(msiPath);
-                            LogMessage?.Invoke(this, new EventArgs<string>($"Cleaned up Dokan installer: {msiPath}"));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning(ex, "Failed to clean up Dokan installer: {MsiPath}", msiPath);
-                        // Best-effort cleanup; file may still be in use
-                    }
-                });
-            }
-            else
+            if (process == null)
             {
                 LogMessage?.Invoke(this, new EventArgs<string>("Failed to launch the Dokan installer."));
+                DeleteInstallerQuietly(msiPath);
+                return;
             }
+
+            LogMessage?.Invoke(this,
+                new EventArgs<string>("Dokan installer launched. Please follow the installation wizard."));
+
+            // Wait for the installer to finish (bounded — a forgotten wizard must not hang
+            // the updater forever), then remove the staged MSI promptly.
+            using var waitCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            try
+            {
+                await process.WaitForExitAsync(waitCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>(
+                        "Dokan installer is still running — leaving the staged installer in the temp folder."));
+                return;
+            }
+
+            // The installer may hold a lock briefly after exit — short retry, then give up
+            // (temp-folder leftovers are reclaimed by OS disk cleanup).
+            for (var attempt = 0; attempt < 5; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(msiPath))
+                        File.Delete(msiPath);
+                    LogMessage?.Invoke(this, new EventArgs<string>($"Cleaned up Dokan installer: {msiPath}"));
+                    return;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                }
+            }
+
+            Log.Warning("Failed to clean up Dokan installer promptly: {MsiPath}", msiPath);
+            LogMessage?.Invoke(this,
+                new EventArgs<string>(
+                    $"Could not remove the staged installer ({msiPath}) — it is in the temp folder and safe to delete."));
         }
         catch (Exception ex)
         {
@@ -151,6 +180,22 @@ internal class DokanService
             await BugReportService.ReportBugAsync(ex, "Error downloading or installing Dokan");
             LogMessage?.Invoke(this, new EventArgs<string>($"Error during Dokan installation: {ex.Message}"));
             throw;
+        }
+    }
+
+    /// <summary>
+    ///     Best-effort deletion of the staged installer (never throws).
+    /// </summary>
+    private static void DeleteInstallerQuietly(string msiPath)
+    {
+        try
+        {
+            if (File.Exists(msiPath))
+                File.Delete(msiPath);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to clean up Dokan installer: {MsiPath}", msiPath);
         }
     }
 
