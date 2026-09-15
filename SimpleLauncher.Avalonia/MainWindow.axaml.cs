@@ -2490,6 +2490,14 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     private async Task ShowSystemSelectionScreenAsync()
     {
+        // WPF parity: the system selection screen implies no active system. WPF's
+        // UiResetService clears the System ComboBox before displaying this screen
+        // (SetSystemComboBoxSelectedItem(null)). Keeping the previous selection here
+        // made a system card click a no-op after closing Edit System: setting the
+        // ComboBox to the identical item raises no SelectionChanged, so the games
+        // were never loaded. A restart worked because UiResetService clears it.
+        SystemComboBox.SelectedItem = null;
+
         // WPF parity: both the top system-selection bar and the status bar are hidden
         // while the full-screen system selection grid is shown
         // (SystemSelectionOrchestratorService lines 115-116).
