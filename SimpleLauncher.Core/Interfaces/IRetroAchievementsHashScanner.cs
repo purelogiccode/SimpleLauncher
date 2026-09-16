@@ -16,9 +16,11 @@ public interface IRetroAchievementsHashScanner
 
     /// <summary>
     ///     Determines whether the given system can be hashed for RetroAchievements.
+    ///     Delegates to the system matcher so the background scan and the hasher tool UI
+    ///     always agree on which systems are supported.
     /// </summary>
     /// <param name="systemName">The name of the system.</param>
-    /// <returns>True if the system has a valid RetroAchievements console ID; otherwise, false.</returns>
+    /// <returns>True if the system is supported for RetroAchievements hashing; otherwise, false.</returns>
     bool IsSystemScannable(string systemName);
 
     /// <summary>
@@ -40,6 +42,10 @@ public interface IRetroAchievementsHashScanner
     /// <param name="groupByFolder">True if the system groups game entries by folder.</param>
     /// <param name="onCompleted">Optional callback invoked (on a background thread) when the scan completes.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <param name="force">
+    ///     True to re-hash every file even when the game count and hash logic are unchanged
+    ///     (used by the explicit "Rescan RetroAchievements" command).
+    /// </param>
     /// <returns>True if the scan started; false if a scan is already running or the system is not scannable.</returns>
     Task<bool> ScanSystemAsync(
         string systemName,
@@ -49,7 +55,8 @@ public interface IRetroAchievementsHashScanner
         bool disableRecursiveSearch,
         bool groupByFolder,
         Action<string>? onCompleted = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool force = false);
 
     /// <summary>
     ///     Scans the game folders of multiple systems sequentially and persists the calculated hashes.
@@ -57,11 +64,13 @@ public interface IRetroAchievementsHashScanner
     /// <param name="targets">The systems to scan, in order.</param>
     /// <param name="onCompleted">Optional callback invoked (on a background thread) after each system completes.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <param name="force">True to re-hash every file even when nothing changed.</param>
     /// <returns>True if the scan started; false if a scan is already running.</returns>
     Task<bool> ScanAllSystemsAsync(
         IEnumerable<RaHashScanTarget> targets,
         Action<string>? onCompleted = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool force = false);
 
     /// <summary>
     ///     Cancels the running hash scan (if any) and waits up to <paramref name="timeout" />

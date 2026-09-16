@@ -107,6 +107,41 @@ public class RetroAchievementsHasherToolTests : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that a .7z archive for an arcade-based system (Naomi, console id 27) is
+    ///     hashed by file name without extraction, exactly like Arcade itself.
+    /// </summary>
+    [Fact]
+    public async Task GetGameHash_ForNaomiArchive_HashesByFileNameWithoutExtraction()
+    {
+        var archivePath = Path.Combine(_tempFolder, "Game.7z");
+        File.WriteAllText(archivePath, "archive");
+
+        var result = await _tool.GetGameHashForRetroAchievementsAsync(
+            archivePath, "Sega Naomi", [".a26"], new NoOpLoadingState(), new NoOpLogger());
+
+        Assert.Equal("hash-Game", result.Hash);
+        Assert.Empty(_extractionService.ExtractedArchives);
+        Assert.Equal(archivePath, _fileHasher.HashedPaths[0]);
+    }
+
+    /// <summary>
+    ///     Verifies the hasher tool delegates hash-support decisions to the system matcher:
+    ///     Arcade is supported (even though "SEGA_arcade" is not) and Mega Duck is supported.
+    /// </summary>
+    /// <param name="systemName">The system name to check.</param>
+    /// <param name="expected">Whether the system is expected to be supported.</param>
+    [Theory]
+    [InlineData("Arcade", true)]
+    [InlineData("Mega Duck", true)]
+    [InlineData("Sega Naomi", true)]
+    [InlineData("Commodore 64", false)]
+    [InlineData("PlayStation 3", false)]
+    public void IsSystemSupportedForHashingDelegatesToMatcher(string systemName, bool expected)
+    {
+        Assert.Equal(expected, _tool.IsSystemSupportedForHashing(systemName));
+    }
+
+    /// <summary>
     ///     Creates a zip archive on disk containing a single entry.
     /// </summary>
     private static void CreateZip(string zipPath, string entryName, string content)

@@ -70,7 +70,12 @@ systems without a usable console ID (e.g. the `unsupported` pseudo-system, ID > 
 up front; **`.zip` archives are passed to the CLI directly** (it pre-loads the first entry —
 single entry from memory, multi-entry hashes the whole archive, oversized entries fall back to
 a temp file) — no extraction unless really needed; only `.7z/.rar` archives are extracted to
-temp (except arcade); single hash call; temp cleaned.
+temp (except arcade-based systems — console 27, including Naomi — which hash the file name);
+single hash call; temp cleaned.
+
+Hash support is decided in one place: `RetroAchievementsSystemMatcher.IsSystemSupportedForHashing`
+(valid console id and known hash logic) is the **single source of truth** shared by the hasher
+tool (RA icon) and the background hash scanner (`IsSystemScannable`).
 
 ## Hash-based game filter (`RetroAchievementsHashScanner` + `RetroAchievementsHashStore`, Core)
 
@@ -98,7 +103,9 @@ a second scan.
 Before hashing a system, the scanner enumerates the ROM path and compares the **number of game
 files** against the `FileCount` stored in the system's JSON file. If the count is unchanged, the
 scan is skipped entirely — hashes are only recalculated when a game was added to or removed from
-the path, since there is no need to hash again when nothing changed.
+the path, since there is no need to hash again when nothing changed. The explicit **Rescan
+RetroAchievements** command passes `force: true` and always re-hashes, so replacing a ROM with a
+different revision (same count and name) can be refreshed.
 
 ### Persistence
 
@@ -129,8 +136,9 @@ unchanged.
 ### Menu command
 
 **Options → RetroAchievements → Calculate hash for all Game Paths** runs the same background
-scan for every configured system (systems without a usable RA console ID are skipped), with a
-completion toast per system and a single in-progress toast on repeat clicks.
+scan for every configured system (systems not supported for hashing — no usable console ID or
+unknown hash logic — are skipped), with a completion toast per system and a single in-progress
+toast on repeat clicks.
 
 ## Credential injection (`RetroAchievementsEmulatorConfiguratorService`, Core)
 

@@ -23,7 +23,14 @@ public static class DuckStationConfigurationService
         if (string.IsNullOrEmpty(emuDir))
             throw new InvalidOperationException("Emulator directory not found.");
 
-        var configPath = Path.Combine(emuDir, "settings.ini");
+        // DuckStation reads '<exeDir>\settings.ini' only in portable mode (portable.txt);
+        // installed copies read 'Documents\DuckStation\settings.ini'.
+        var isPortable = File.Exists(Path.Combine(emuDir, "portable.txt"));
+        var configDir = isPortable
+            ? emuDir
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "DuckStation");
+
+        var configPath = Path.Combine(configDir, "settings.ini");
 
         if (!File.Exists(configPath))
         {
@@ -33,6 +40,8 @@ public static class DuckStationConfigurationService
             {
                 try
                 {
+                    // The installed-mode directory may not exist yet.
+                    Directory.CreateDirectory(configDir);
                     File.Copy(samplePath, configPath);
                     logger.Debug($"[DuckStationConfig] Created new settings.ini from sample: {configPath}");
                 }

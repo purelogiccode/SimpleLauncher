@@ -90,6 +90,7 @@ public class EmulatorConfigInjectionExtendedTests : IDisposable
     {
         var emuDir = Path.Combine(_testDirectory, "DuckStation");
         Directory.CreateDirectory(emuDir);
+        File.WriteAllText(Path.Combine(emuDir, "portable.txt"), string.Empty);
         var samplePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples", "DuckStation", "settings.ini");
         File.Copy(samplePath, Path.Combine(emuDir, "settings.ini"));
 

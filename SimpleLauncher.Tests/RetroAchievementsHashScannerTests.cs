@@ -358,15 +358,86 @@ public class RetroAchievementsHashScannerTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies that systems without a usable RetroAchievements console ID are reported as not scannable.
+    ///     Verifies that systems without usable hashing support are reported as not scannable,
+    ///     using the same single source of truth as the hasher tool (Arcade is supported even
+    ///     though "SEGA_arcade" is not, and Mega Duck/Naomi are supported arcade/console ids).
     /// </summary>
     [Fact]
     public void IsSystemScannable_SupportsOnlyKnownSystems()
     {
         Assert.True(_scanner.IsSystemScannable("Nintendo 64"));
         Assert.True(_scanner.IsSystemScannable("NES"));
+        Assert.True(_scanner.IsSystemScannable("Arcade"));
+        Assert.True(_scanner.IsSystemScannable("Mega Duck"));
+        Assert.True(_scanner.IsSystemScannable("Sega Naomi"));
+        Assert.False(_scanner.IsSystemScannable("Commodore 64"));
         Assert.False(_scanner.IsSystemScannable("Microsoft Windows"));
         Assert.False(_scanner.IsSystemScannable(""));
+    }
+
+    /// <summary>
+    ///     Verifies that the explicit rescan command forces a re-hash even when the game
+    ///     count and hash version are unchanged (e.g. a ROM was replaced with another revision).
+    /// </summary>
+    [Fact]
+    public async Task ScanSystemAsync_WithForce_ReHashesWhenCountUnchanged()
+    {
+        File.WriteAllText(Path.Combine(_romsFolder, "Game 1.7z"), "rom1");
+
+        await _scanner.ScanSystemAsync(
+            "Nintendo 64",
+            [_romsFolder],
+            [".7z"],
+            [".a26"],
+            true,
+            false);
+
+        Assert.Equal(1, _fileHasher.HashCallCount);
+
+        var completedSystems = new List<string>();
+        await _scanner.ScanSystemAsync(
+            "Nintendo 64",
+            [_romsFolder],
+            [".7z"],
+            [".a26"],
+            true,
+            false,
+            completedSystems.Add,
+            force: true);
+
+        Assert.Equal(2, _fileHasher.HashCallCount);
+        Assert.Contains("Nintendo 64", completedSystems, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Verifies that same-named games in different folders are all hashed: the scan
+    ///     de-duplicates by full path, not by file name.
+    /// </summary>
+    [Fact]
+    public async Task ScanSystemAsync_SameNamedFilesInDifferentFolders_AreAllHashed()
+    {
+        var folderA = Path.Combine(_romsFolder, "FolderA");
+        var folderB = Path.Combine(_romsFolder, "FolderB");
+        Directory.CreateDirectory(folderA);
+        Directory.CreateDirectory(folderB);
+        File.WriteAllText(Path.Combine(folderA, "Game.7z"), "rom-a");
+        File.WriteAllText(Path.Combine(folderB, "Game.7z"), "rom-b");
+
+        var started = await _scanner.ScanSystemAsync(
+            "Nintendo 64",
+            [folderA, folderB],
+            [".7z"],
+            [".a26"],
+            true,
+            false);
+
+        Assert.True(started);
+        Assert.Equal(2, _fileHasher.HashCallCount);
+
+        var loaded = _store.LoadSystemHashes("Nintendo 64");
+        Assert.NotNull(loaded);
+        Assert.Equal(2, loaded.FileCount);
+        Assert.Equal(2, loaded.Hashes.Count);
     }
 
     /// <summary>

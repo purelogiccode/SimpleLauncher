@@ -1191,7 +1191,8 @@ public class MenuActionHandlerService
                 selectedManager.FileFormatsToLaunch,
                 selectedManager.DisableRecursiveSearch,
                 selectedManager.GroupByFolder,
-                ShowHashScanCompletedToast);
+                ShowHashScanCompletedToast,
+                force: true);
 
             // Non-blocking notification: the app stays fully responsive while
             // the hash calculation runs in the background

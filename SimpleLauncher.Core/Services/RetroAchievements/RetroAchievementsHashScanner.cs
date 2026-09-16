@@ -73,14 +73,12 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
 
     /// <summary>
     ///     Determines whether the given system can be hashed for RetroAchievements.
-    ///     Systems without a usable console ID (including the "unsupported" pseudo-system, ID 102)
-    ///     are not scannable.
+    ///     Delegates to the system matcher so the background scan and the hasher tool UI
+    ///     always agree on which systems are supported.
     /// </summary>
     public bool IsSystemScannable(string systemName)
     {
-        var matchedName = ResolveSystemName(systemName);
-        var systemId = _systemMatcher.GetSystemId(matchedName);
-        return systemId is > 0 and <= RetroAchievementsConstants.MaxConsoleId;
+        return _systemMatcher.IsSystemSupportedForHashing(systemName);
     }
 
     /// <summary>
@@ -104,7 +102,8 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
         bool disableRecursiveSearch,
         bool groupByFolder,
         Action<string>? onCompleted = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool force = false)
     {
         var target = new RaHashScanTarget
         {
@@ -116,7 +115,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
             GroupByFolder = groupByFolder
         };
 
-        return ScanAllSystemsAsync([target], onCompleted, cancellationToken);
+        return ScanAllSystemsAsync([target], onCompleted, cancellationToken, force);
     }
 
     /// <summary>
@@ -126,7 +125,8 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
     public Task<bool> ScanAllSystemsAsync(
         IEnumerable<RaHashScanTarget> targets,
         Action<string>? onCompleted = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool force = false)
     {
         // Prevent parallel hash scans (they would spawn many CLI processes at once).
         // The flag is set synchronously so a concurrent request is rejected immediately.
@@ -136,7 +136,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
             return Task.FromResult(false);
         }
 
-        var runTask = RunScanAsync(targets, onCompleted, cancellationToken);
+        var runTask = RunScanAsync(targets, onCompleted, cancellationToken, force);
         Volatile.Write(ref _runningScanTask, runTask);
         return runTask;
     }
@@ -149,7 +149,8 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
     private async Task<bool> RunScanAsync(
         IEnumerable<RaHashScanTarget> targets,
         Action<string>? onCompleted,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool force)
     {
         try
         {
@@ -164,7 +165,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
             // the scan delegate never references a disposable owned by this scope.
             var linkedToken = linkedCts.Token;
             var scanTask = Task.Run(
-                () => ScanCoreAsync(targets.ToList(), onCompleted, linkedToken), linkedToken);
+                () => ScanCoreAsync(targets.ToList(), onCompleted, force, linkedToken), linkedToken);
 
             try
             {
@@ -228,6 +229,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
     private async Task ScanCoreAsync(
         IList<RaHashScanTarget> targets,
         Action<string>? onCompleted,
+        bool force,
         CancellationToken cancellationToken)
     {
         foreach (var target in targets)
@@ -236,7 +238,7 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
 
             try
             {
-                var result = await ScanSystemCoreAsync(target, cancellationToken);
+                var result = await ScanSystemCoreAsync(target, force, cancellationToken);
                 if (result == HashScanResult.Completed) onCompleted?.Invoke(target.SystemName);
             }
             catch (OperationCanceledException)
@@ -251,16 +253,18 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
         }
     }
 
-    private async Task<HashScanResult> ScanSystemCoreAsync(RaHashScanTarget target, CancellationToken cancellationToken)
+    private async Task<HashScanResult> ScanSystemCoreAsync(RaHashScanTarget target, bool force,
+        CancellationToken cancellationToken)
     {
         var matchedSystemName = ResolveSystemName(target.SystemName);
-        var systemId = _systemMatcher.GetSystemId(matchedSystemName);
-        if (systemId is <= 0 or > RetroAchievementsConstants.MaxConsoleId)
+        if (!_systemMatcher.IsSystemSupportedForHashing(target.SystemName))
         {
             _logger.Information(
                 $"[RA Hash Scanner] System '{target.SystemName}' is not supported for RetroAchievements hashing. Skipping.");
             return HashScanResult.NotScannable;
         }
+
+        var systemId = _systemMatcher.GetSystemId(matchedSystemName);
 
         // Enumerate all game files across the configured folders (same logic as the game list cache)
         var uniqueFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -280,14 +284,17 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
                 resolvedPath, target.FileFormatsToSearch, target.DisableRecursiveSearch, target.GroupByFolder,
                 cancellationToken);
 
-            foreach (var file in filesInFolder) uniqueFiles.TryAdd(Path.GetFileName(file), file);
+            // Key by full path: same-named games in different folders are distinct
+            // entries (the game list cache uses full paths too).
+            foreach (var file in filesInFolder) uniqueFiles.TryAdd(file, file);
         }
 
         // Only recalculate hashes when the number of games in the ROM path has changed
         // or the stored scan was produced by older hash logic; there is no need to
-        // hash again if nothing changed.
+        // hash again if nothing changed. The explicit rescan command forces the re-hash.
         var existing = _hashStore.LoadSystemHashes(target.SystemName);
-        if (existing != null && existing.FileCount == uniqueFiles.Count && existing.HashVersion == CurrentHashVersion)
+        if (!force && existing != null && existing.FileCount == uniqueFiles.Count &&
+            existing.HashVersion == CurrentHashVersion)
         {
             _logger.Information(
                 $"[RA Hash Scanner] Hash scan is up to date for '{target.SystemName}' ({uniqueFiles.Count} files). Skipping re-hashing.");
@@ -295,10 +302,11 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
         }
 
         _logger.Debug(
-            $"[RA Hash Scanner] Calculating hashes for '{target.SystemName}' ({uniqueFiles.Count} files, system id {systemId}).");
+            $"[RA Hash Scanner] Calculating hashes for '{target.SystemName}' ({uniqueFiles.Count} files, system id {systemId}{(force ? ", forced" : "")}).");
 
-        // Arcade games are hashed by file name; every other system hashes file content.
-        var isFileNameHashSystem = matchedSystemName.Equals("arcade", StringComparison.OrdinalIgnoreCase);
+        // Arcade-based systems (MAME, CPS, Neo Geo, Naomi) are hashed by file name;
+        // every other system hashes file content.
+        var isFileNameHashSystem = systemId == RetroAchievementsConstants.ArcadeConsoleId;
 
         // Files the CLI tool can hash directly (including .zip — the tool pre-loads
         // the first entry itself); .7z/.rar archives must be extracted first.

@@ -177,9 +177,14 @@ public class ExtractionService : IExtractionService
 
                 var estimatedSize = (long)(entries.Where(static e => !e.IsDirectory).Sum(static e => e.Size) * 1.2);
 
-                // Check disk space using the resolved destination folder
+                // Check disk space using the resolved destination folder. UNC roots
+                // (\\server\share) cannot be represented by DriveInfo — the constructor
+                // throws and would abort a valid extraction — so the advisory pre-check
+                // is skipped for network destinations.
                 var rootPath = Path.GetPathRoot(resolvedDestinationFolder);
-                if (!string.IsNullOrEmpty(rootPath))
+                var isUncDestination = !string.IsNullOrEmpty(rootPath) &&
+                                       rootPath.StartsWith(@"\\", StringComparison.Ordinal);
+                if (!string.IsNullOrEmpty(rootPath) && !isUncDestination)
                 {
                     try
                     {

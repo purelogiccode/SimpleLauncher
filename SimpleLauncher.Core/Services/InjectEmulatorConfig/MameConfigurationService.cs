@@ -132,12 +132,14 @@ public static partial class MameConfigurationService
                 var uniqueFullPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var finalPathList = new List<string>();
 
-                // 1. Process existing paths from the INI file, ensuring they exist, are unique and unquoted
+                // 1. Process existing paths from the INI file. Existence is used only for
+                // de-duplication: a temporarily unavailable path (disconnected network share,
+                // unplugged drive, offline cloud folder) must never be dropped from mame.ini.
                 var existingPathsRaw = SplitRomPath(existingValue);
                 foreach (var path in existingPathsRaw)
                 {
                     var fullPath = NormalizePath(GetFullPathSafe(path, emuDir)!);
-                    if (!string.IsNullOrEmpty(fullPath) && Directory.Exists(fullPath) && uniqueFullPaths.Add(fullPath))
+                    if (!string.IsNullOrEmpty(fullPath) && uniqueFullPaths.Add(fullPath))
                         finalPathList.Add(path); // Add the original (but unquoted) path
                 }
 
@@ -145,7 +147,7 @@ public static partial class MameConfigurationService
                 if (!string.IsNullOrEmpty(systemRomPath))
                 {
                     var fullPath = NormalizePath(GetFullPathSafe(systemRomPath, emuDir)!);
-                    if (!string.IsNullOrEmpty(fullPath) && Directory.Exists(fullPath) && uniqueFullPaths.Add(fullPath))
+                    if (!string.IsNullOrEmpty(fullPath) && uniqueFullPaths.Add(fullPath))
                         finalPathList.Add(RemoveQuotes(systemRomPath));
                 }
 
@@ -157,16 +159,13 @@ public static partial class MameConfigurationService
                         if (string.IsNullOrWhiteSpace(secondaryPath))
                             continue;
 
-                        var resolvedSecondaryPath = CheckPath.IsValidPath(secondaryPath)
-                            ? PathHelper.ResolveRelativeToAppDirectory(secondaryPath)
-                            : null;
+                        var resolvedSecondaryPath = PathHelper.ResolveRelativeToAppDirectory(secondaryPath);
 
                         if (string.IsNullOrEmpty(resolvedSecondaryPath))
                             continue;
 
                         var fullPath = NormalizePath(GetFullPathSafe(resolvedSecondaryPath, emuDir)!);
-                        if (!string.IsNullOrEmpty(fullPath) && Directory.Exists(fullPath) &&
-                            uniqueFullPaths.Add(fullPath))
+                        if (!string.IsNullOrEmpty(fullPath) && uniqueFullPaths.Add(fullPath))
                         {
                             finalPathList.Add(RemoveQuotes(resolvedSecondaryPath));
                         }
@@ -203,7 +202,7 @@ public static partial class MameConfigurationService
             if (!string.IsNullOrEmpty(systemRomPath))
             {
                 var fullPath = NormalizePath(GetFullPathSafe(systemRomPath, emuDir)!);
-                if (!string.IsNullOrEmpty(fullPath) && Directory.Exists(fullPath) && uniqueFullPaths.Add(fullPath))
+                if (!string.IsNullOrEmpty(fullPath) && uniqueFullPaths.Add(fullPath))
                     finalPathList.Add(RemoveQuotes(systemRomPath));
             }
 
@@ -215,15 +214,13 @@ public static partial class MameConfigurationService
                     if (string.IsNullOrWhiteSpace(secondaryPath))
                         continue;
 
-                    var resolvedSecondaryPath = CheckPath.IsValidPath(secondaryPath)
-                        ? PathHelper.ResolveRelativeToAppDirectory(secondaryPath)
-                        : null;
+                    var resolvedSecondaryPath = PathHelper.ResolveRelativeToAppDirectory(secondaryPath);
 
                     if (string.IsNullOrEmpty(resolvedSecondaryPath))
                         continue;
 
                     var fullPath = NormalizePath(GetFullPathSafe(resolvedSecondaryPath, emuDir)!);
-                    if (!string.IsNullOrEmpty(fullPath) && Directory.Exists(fullPath) && uniqueFullPaths.Add(fullPath))
+                    if (!string.IsNullOrEmpty(fullPath) && uniqueFullPaths.Add(fullPath))
                         finalPathList.Add(RemoveQuotes(resolvedSecondaryPath));
                 }
             }

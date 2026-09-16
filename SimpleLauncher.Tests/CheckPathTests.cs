@@ -177,6 +177,26 @@ public class CheckPathTests
     }
 
     /// <summary>
+    ///     Verifies that an extensionless file is accepted only on non-Windows platforms,
+    ///     where native emulator binaries (e.g. /usr/bin/retroarch) have no extension.
+    /// </summary>
+    [Fact]
+    public void IsValidEmulatorExecutablePathExtensionlessFileMatchesPlatform()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        File.WriteAllText(tempFile, "fake binary");
+        try
+        {
+            var result = CheckPath.IsValidEmulatorExecutablePath(tempFile);
+            Assert.Equal(!OperatingSystem.IsWindows(), result);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// <summary>
     ///     Verifies that %BASEFOLDER% resolves to the app directory and the sub-path is checked correctly.
     /// </summary>
     [Fact]

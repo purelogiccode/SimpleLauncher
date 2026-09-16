@@ -801,7 +801,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                     system.FileFormatsToLaunch,
                     system.DisableRecursiveSearch,
                     system.GroupByFolder,
-                    OnHashScanCompleted);
+                    OnHashScanCompleted,
+                    force: true);
 
                 // Non-blocking notification: the app stays fully responsive while
                 // the hash calculation runs in the background

@@ -357,6 +357,34 @@ public class EmulatorConfigInjectionTests2 : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that mame.ini keeps existing rompath entries whose directories are
+    ///     temporarily unavailable (offline network share, unplugged drive) instead of
+    ///     dropping them on the next settings injection.
+    /// </summary>
+    [Fact]
+    public void MameKeepsUnavailableRomPaths()
+    {
+        CopySampleToEmuDir("Mame", "MAME", "mame.ini");
+
+        var emuDir = Path.Combine(_testDirectory, "Mame");
+        var configPath = Path.Combine(emuDir, "mame.ini");
+
+        var lines = File.ReadAllLines(configPath).ToList();
+        var romPathIndex = lines.FindIndex(static l =>
+            l.TrimStart().StartsWith("rompath", StringComparison.OrdinalIgnoreCase));
+        Assert.True(romPathIndex >= 0, "The MAME sample must contain a rompath line.");
+        lines[romPathIndex] = @"rompath \\offline-server\roms;Z:\missing-roms";
+        File.WriteAllLines(configPath, lines);
+
+        var settings = CreateSettingsManager();
+        MameConfigurationService.InjectSettings(FakeEmulatorExePath(emuDir), settings, Log.Logger);
+
+        var content = File.ReadAllText(configPath);
+        Assert.Contains(@"\\offline-server\roms", content, StringComparison.Ordinal);
+        Assert.Contains(@"Z:\missing-roms", content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     ///     Verifies that Supermodel emulator settings are correctly injected into the Supermodel.ini configuration file.
     /// </summary>
     [Fact]

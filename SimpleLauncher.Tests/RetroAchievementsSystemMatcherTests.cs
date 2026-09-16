@@ -229,4 +229,31 @@ public class RetroAchievementsSystemMatcherTests
         var result = _matcher.GetSystemId(input);
         Assert.Equal(expected, result);
     }
+
+    /// <summary>
+    ///     Verifies the single source of truth for hash support: systems with a usable console id
+    ///     and known hash logic are supported, while unknown-hash-logic and pseudo systems are not.
+    ///     "Arcade" must not be rejected because "SEGA_arcade" is unsupported, and Mega Duck /
+    ///     Naomi (console ids 69/27) are hashable by the bundled CLI.
+    /// </summary>
+    /// <param name="input">The system name to check.</param>
+    /// <param name="expected">Whether the system is expected to be supported.</param>
+    [Theory]
+    [InlineData("Arcade", true)]
+    [InlineData("MAME", true)]
+    [InlineData("Mega Duck", true)]
+    [InlineData("Sega Naomi", true)]
+    [InlineData("Naomi", true)]
+    [InlineData("NES", true)]
+    [InlineData("SEGA_arcade", false)]
+    [InlineData("Commodore 64", false)]
+    [InlineData("PlayStation 3", false)]
+    [InlineData("Microsoft Windows", false)]
+    [InlineData("UnknownSystem12345", false)]
+    [InlineData("", false)]
+    public void IsSystemSupportedForHashingReturnsExpected(string input, bool expected)
+    {
+        var result = _matcher.IsSystemSupportedForHashing(input);
+        Assert.Equal(expected, result);
+    }
 }

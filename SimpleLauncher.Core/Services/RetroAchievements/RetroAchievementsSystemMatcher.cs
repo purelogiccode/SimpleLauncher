@@ -221,6 +221,20 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["Zeebo"] = new RaSystemInfo(70, ["Zeebo"])
     };
 
+    // Systems whose hashing logic is not implemented by the bundled RetroAchievementsSharp
+    // CLI (a 1:1 rcheevos port). Matching is exact and separator-insensitive: substring
+    // matching would wrongly reject supported systems (e.g. "Arcade" vs "SEGA_arcade").
+    private static readonly string[] UnsupportedHashLogicSystems =
+    [
+        "sega pico", "xbox", "xbox360",
+        "atari st", "commodore 64", "amiga", "zx spectrum",
+        "philips cd-i", "sharp x68000", "sharp x1", "oric", "thomson to8", "cassette vision",
+        "super cassette vision", "uzebox", "tic-80", "ti-83", "nokia n-gage", "vic-20", "zx81",
+        "pc-6000", "game & watch", "elektor tv games computer", "interton vc 4000",
+        "arcadia 2001", "fm towns", "hubs", "events", "standalone", "atari 800", "microsoft windows",
+        "atari 5200", "atari 8-bit"
+    ];
+
     private readonly HashSet<string> _loggedUnmatchedSystems = new(StringComparer.OrdinalIgnoreCase);
     private readonly ILogger _logger;
 
@@ -349,6 +363,57 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         // Try fuzzy matching as a last resort
         var bestMatch = GetBestMatchSystemName(systemName);
         return SystemMappings.ContainsKey(bestMatch);
+    }
+
+    /// <summary>
+    ///     Determines whether the system can be hashed for RetroAchievements by the bundled
+    ///     CLI tool: its resolved console has a usable id and its hash logic is known.
+    ///     This is the single source of truth for both the hasher tool UI and the
+    ///     background hash scanner.
+    /// </summary>
+    /// <param name="systemName">The system name to check.</param>
+    /// <returns>True if the system is supported for RetroAchievements hashing; otherwise, false.</returns>
+    public bool IsSystemSupportedForHashing(string systemName)
+    {
+        if (string.IsNullOrWhiteSpace(systemName))
+            return false;
+
+        var matchedName = GetExactAliasMatch(systemName) ?? GetBestMatchSystemName(systemName);
+
+        if (IsUnsupportedHashLogicSystem(matchedName)) return false;
+
+        return GetSystemId(matchedName) is > 0 and <= RetroAchievementsConstants.MaxConsoleId;
+    }
+
+    /// <summary>
+    ///     Checks the unsupported list with an exact, separator-insensitive match.
+    ///     Substring matching must not be used here: "Arcade" is supported while
+    ///     "SEGA_arcade" is not.
+    /// </summary>
+    private static bool IsUnsupportedHashLogicSystem(string systemName)
+    {
+        var normalized = NormalizeForHashLogicMatch(systemName);
+
+        foreach (var unsupported in UnsupportedHashLogicSystems)
+        {
+            if (normalized.Equals(NormalizeForHashLogicMatch(unsupported), StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string NormalizeForHashLogicMatch(string systemName)
+    {
+        return systemName.Trim().ToLowerInvariant()
+            .Replace("-", string.Empty)
+            .Replace("/", string.Empty)
+            .Replace("&", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace(".", string.Empty)
+            .Replace("'", string.Empty)
+            .Replace("™", string.Empty)
+            .Replace("®", string.Empty);
     }
 
     /// <summary>

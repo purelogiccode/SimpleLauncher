@@ -47,4 +47,14 @@ public interface IRetroAchievementsSystemMatcher
     /// <param name="systemName">The system name to check.</param>
     /// <returns>True if the system exists in SystemMappings; otherwise, false.</returns>
     bool IsSystemInMappings(string systemName);
+
+    /// <summary>
+    ///     Determines whether the system can be hashed for RetroAchievements by the bundled
+    ///     CLI tool: its resolved console has a usable id and its hash logic is known.
+    ///     This is the single source of truth for both the hasher tool UI and the
+    ///     background hash scanner.
+    /// </summary>
+    /// <param name="systemName">The system name to check.</param>
+    /// <returns>True if the system is supported for RetroAchievements hashing; otherwise, false.</returns>
+    bool IsSystemSupportedForHashing(string systemName);
 }

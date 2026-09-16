@@ -54,6 +54,13 @@ public static class CheckPath
                 return false;
 
             var extension = Path.GetExtension(pathForCheck);
+            if (string.IsNullOrEmpty(extension))
+            {
+                // Native emulator binaries are extensionless outside Windows
+                // (e.g. /usr/bin/retroarch), where the Avalonia app runs.
+                return !OperatingSystem.IsWindows();
+            }
+
             return extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
                    extension.Equals(".bat", StringComparison.OrdinalIgnoreCase) ||
                    extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase);

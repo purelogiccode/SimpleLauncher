@@ -58,9 +58,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
     public bool ConfigurePcsx2(string exePath, string username, string token)
     {
         var exeDir = Path.GetDirectoryName(exePath);
-        var configDir = exeDir != null && Directory.Exists(Path.Combine(exeDir, "inis"))
-            ? Path.Combine(exeDir, "inis")
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PCSX2", "inis");
+        var configDir = ResolvePcsx2ConfigDirectory(exeDir);
 
         var configPath = Path.Combine(configDir, "PCSX2.ini");
 
@@ -331,6 +329,23 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
     }
 
     /// <summary>
+    ///     Resolves PCSX2's config directory: portable mode is marked by <c>portable.ini</c>
+    ///     next to the executable (config in <c>inis\</c>), otherwise the installed copy reads
+    ///     <c>Documents\PCSX2\inis</c>. Mirrors the generic PCSX2 injector.
+    /// </summary>
+    private static string ResolvePcsx2ConfigDirectory(string? exeDir)
+    {
+        if (exeDir != null)
+        {
+            var localInis = Path.Combine(exeDir, "inis");
+            if (File.Exists(Path.Combine(exeDir, "portable.ini")) || Directory.Exists(localInis))
+                return localInis;
+        }
+
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PCSX2", "inis");
+    }
+
+    /// <summary>
     ///     Restores a sample configuration file from the samples folder if the target config is missing.
     /// </summary>
     private bool RestoreConfigFromSample(string emulatorFolderName, string targetConfigPath)
@@ -338,10 +353,9 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
         // Treat missing or 0-byte files as candidates for restoration
         if (File.Exists(targetConfigPath) && new FileInfo(targetConfigPath).Length > 0) return true;
 
-        var samplePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples",
-            emulatorFolderName.ToLowerInvariant(), Path.GetFileName(targetConfigPath));
+        var samplePath = ResolveSamplePath(emulatorFolderName, Path.GetFileName(targetConfigPath));
 
-        if (!File.Exists(samplePath)) return false;
+        if (samplePath == null) return false;
 
         try
         {
@@ -358,6 +372,28 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
                 $"Failed to restore {emulatorFolderName} config from sample: {samplePath} -> {targetConfigPath}");
             return false;
         }
+    }
+
+    /// <summary>
+    ///     Resolves a bundled sample file under <c>samples\</c>. The folder name is matched
+    ///     case-insensitively because the bundled folders use exact casing
+    ///     (<c>samples\DuckStation</c>) and Linux/macOS file systems are case-sensitive.
+    /// </summary>
+    private static string? ResolveSamplePath(string emulatorFolderName, string fileName)
+    {
+        var samplesRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples");
+
+        var exactPath = Path.Combine(samplesRoot, emulatorFolderName, fileName);
+        if (File.Exists(exactPath)) return exactPath;
+
+        if (!Directory.Exists(samplesRoot)) return null;
+
+        var folder = Directory.EnumerateDirectories(samplesRoot)
+            .FirstOrDefault(d => Path.GetFileName(d).Equals(emulatorFolderName, StringComparison.OrdinalIgnoreCase));
+        if (folder == null) return null;
+
+        var path = Path.Combine(folder, fileName);
+        return File.Exists(path) ? path : null;
     }
 
     // Helper for simple INI files
