@@ -228,8 +228,11 @@ internal class ZipService
 
         LogMessage?.Invoke(this,
             new EventArgs<string>($"Staged {stagedFiles.Count} files — installing onto live application..."));
-
-        var swapped = new List<(string FinalPath, string BackupPath)>();
+        // Track every file this swap touches so a failed install can be undone completely:
+        // pre-existing files record their .updbak as soon as it is created (a failure of
+        // the staged move itself must not orphan the original), and brand-new files are
+        // recorded so rollback removes them again.
+        var installed = new List<(string FinalPath, string? BackupPath)>();
         try
         {
             foreach (var (relativePath, stagedPath) in stagedFiles)
@@ -237,6 +240,7 @@ internal class ZipService
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
+
                 if (!finalPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
                     throw new SecurityException(
                         $"Zip entry attempts to escape target directory: {relativePath}");
@@ -255,29 +259,35 @@ internal class ZipService
                     if (File.Exists(backupPath))
                         File.Delete(backupPath);
                     await MoveFileWithRetryAsync(finalPath, backupPath, relativePath, cancellationToken);
+
+                    // Record the backup before moving the staged file into place: if that
+                    // move fails, the rollback below must still restore the original.
+                    installed.Add((finalPath, backupPath));
                 }
 
                 await MoveFileWithRetryAsync(stagedPath, finalPath, relativePath, cancellationToken);
-                if (backupPath != null)
-                    swapped.Add((finalPath, backupPath));
+                if (backupPath == null)
+                    installed.Add((finalPath, null));
 
                 ProgressChanged?.Invoke(this, new EventArgs<ExtractionProgressInfo>(new ExtractionProgressInfo
                 {
                     CurrentFile = relativePath,
-                    ExtractedCount = swapped.Count
+                    ExtractedCount = installed.Count
                 }));
             }
         }
         catch
         {
-            // Best-effort rollback: restore every already-swapped file from its backup.
-            foreach (var (finalPath, backupPath) in swapped)
+            // Best-effort rollback: delete files that did not exist before the update and
+            // restore every original from its backup (including backups whose staged move
+            // never completed).
+            foreach (var (finalPath, backupPath) in installed)
             {
                 try
                 {
                     if (File.Exists(finalPath))
                         File.Delete(finalPath);
-                    if (File.Exists(backupPath))
+                    if (backupPath != null && File.Exists(backupPath))
                         File.Move(backupPath, finalPath);
                 }
                 catch (Exception rollbackEx)
@@ -290,8 +300,9 @@ internal class ZipService
         }
 
         // Success — backups are no longer needed.
-        foreach (var (_, backupPath) in swapped)
+        foreach (var (_, backupPath) in installed)
         {
+            if (backupPath == null) continue;
             try
             {
                 if (File.Exists(backupPath))
@@ -303,7 +314,7 @@ internal class ZipService
             }
         }
 
-        LogMessage?.Invoke(this, new EventArgs<string>($"Installed {swapped.Count} files onto live application."));
+        LogMessage?.Invoke(this, new EventArgs<string>($"Installed {installed.Count} files onto live application."));
     }
 
     /// <summary>
@@ -395,8 +406,10 @@ internal class ZipService
     }
 
     /// <summary>
-    ///     Deletes stale <c>.updbak</c> files left by a previously interrupted swap.
-    ///     The live files are already in place, so orphaned backups are safe to remove.
+    ///     Recovers <c>.updbak</c> files left by a previously interrupted swap.
+    ///     When the live file exists the backup is orphaned (the swap completed) and is
+    ///     deleted; when the live file is missing the backup is the only remaining copy
+    ///     of the original and is restored instead of being destroyed.
     /// </summary>
     private static void CleanupStaleBackups(string appDirectoryFullPath)
     {
@@ -410,6 +423,14 @@ internal class ZipService
             {
                 try
                 {
+                    var livePath = backup[..^".updbak".Length];
+                    if (!File.Exists(livePath))
+                    {
+                        File.Move(backup, livePath);
+                        Log.Information("Restored a file left by an interrupted update: {LivePath}", livePath);
+                        continue;
+                    }
+
                     File.Delete(backup);
                 }
                 catch (Exception ex)

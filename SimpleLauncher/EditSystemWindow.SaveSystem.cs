@@ -317,9 +317,12 @@ internal partial class EditSystemWindow
                 // Keep favorites and play history in sync when the system was renamed:
                 // both store the system name as a plain string, so without this migration
                 // favorites would fail to launch with a missing system manager.
-                if (isUpdate && !string.Equals(_originalSystemName, systemNameText, StringComparison.OrdinalIgnoreCase))
+                // Use the name captured before the UI refresh: LoadSystemsAsync plus the
+                // subsequent SelectedItem assignment overwrite _originalSystemName with the
+                // new name, so it can no longer identify the old one here.
+                if (isUpdate && !string.Equals(originalSystemNameToUse, systemNameText, StringComparison.OrdinalIgnoreCase))
                 {
-                    var oldSystemName = _originalSystemName!;
+                    var oldSystemName = originalSystemNameToUse!;
                     await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);
                     await _playHistoryManager.RenameSystemAsync(oldSystemName, systemNameText);
                     _logger.Information(

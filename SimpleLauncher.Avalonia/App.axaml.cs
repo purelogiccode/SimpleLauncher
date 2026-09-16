@@ -1028,17 +1028,20 @@ public class App : Application, IDisposable
             }
         });
 
-        _ = Task.Run(async () =>
+        // Await on the UI thread (WPF parity): the check's continuations must stay on the
+        // dispatcher, because when an update exists the service shows the confirmation
+        // dialog, the update log window, and finally shuts the application down. Running
+        // this inside Task.Run created those windows on a pool thread, and Avalonia
+        // silently failed. The network calls are fully asynchronous, so this does not
+        // block startup.
+        try
         {
-            try
-            {
-                await lifecycle.SilentCheckForUpdatesAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Silent update check failed on startup");
-            }
-        });
+            await lifecycle.SilentCheckForUpdatesAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Silent update check failed on startup");
+        }
     }
 
     #region Global Exception Handlers

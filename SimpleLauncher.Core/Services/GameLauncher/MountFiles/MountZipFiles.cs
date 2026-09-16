@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using SharpCompress.Archives;
 using SimpleLauncher.Core.Interfaces;
@@ -898,9 +899,30 @@ public class MountZipFiles : IMountZipFiles
             using (var emulatorProcess = new Process())
             {
                 emulatorProcess.StartInfo = psiEmulator;
+
+                // Both pipes are redirected, so they must be drained: a full pipe would
+                // block the child and WaitForExitAsync would never complete.
+                var outputBuilder = new StringBuilder();
+                var errorBuilder = new StringBuilder();
+                emulatorProcess.OutputDataReceived += (_, args) =>
+                {
+                    if (!string.IsNullOrEmpty(args.Data)) outputBuilder.AppendLine(args.Data);
+                };
+                emulatorProcess.ErrorDataReceived += (_, args) =>
+                {
+                    if (!string.IsNullOrEmpty(args.Data)) errorBuilder.AppendLine(args.Data);
+                };
+
                 emulatorProcess.Start();
+                emulatorProcess.BeginOutputReadLine();
+                emulatorProcess.BeginErrorReadLine();
                 await emulatorProcess.WaitForExitAsync();
                 _logger.Debug($"[MountZipFiles] ScummVM process has exited with code: {emulatorProcess.ExitCode}.");
+                if (outputBuilder.Length > 0 || errorBuilder.Length > 0)
+                {
+                    _logger.Debug(
+                        $"[MountZipFiles] ScummVM output: {outputBuilder} {errorBuilder}");
+                }
             }
 
             _logger.Debug($"[MountZipFiles] Emulator for {mountDriveRootForChecks} has exited.");

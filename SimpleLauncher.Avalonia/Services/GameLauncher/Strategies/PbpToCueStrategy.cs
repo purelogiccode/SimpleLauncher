@@ -58,50 +58,48 @@ public class PbpToCueStrategy : ILaunchStrategy
     public async Task ExecuteAsync(LaunchContext context, ILauncherService launcher)
     {
         const string convertingMsg = "Converting PBP to CUE/BIN...";
-        if (context.LoadingState != null)
+
+        context.LoadingState?.SetLoadingState(true, convertingMsg);
+
+        string? cuePath;
+        try
         {
-            context.LoadingState.SetLoadingState(true, convertingMsg);
+            cuePath = await _discConverter.ConvertPbpToCueBinAsync(context.ResolvedFilePath);
+        }
+        finally
+        {
+            // Always end conversion loading state before launching
+            context.LoadingState?.SetLoadingState(false);
+        }
 
-            string? cuePath;
+        if (cuePath == null)
+        {
+            await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+            return;
+        }
+
+        try
+        {
+            await launcher.LaunchRegularEmulatorAsync(cuePath, context.EmulatorName, context.SystemManagerService!,
+                context.EmulatorManager!, context.Parameters, context.WindowContext!, context.LoadingState);
+        }
+        finally
+        {
+            // CLEANUP: Delete the temporary .cue and .bin files
             try
             {
-                cuePath = await _discConverter.ConvertPbpToCueBinAsync(context.ResolvedFilePath);
-            }
-            finally
-            {
-                // Always end conversion loading state before launching
-                context.LoadingState.SetLoadingState(false);
-            }
+                // Delete the main .cue and .bin files
+                if (File.Exists(cuePath)) File.Delete(cuePath);
+                var binPath = Path.ChangeExtension(cuePath, ".bin");
+                if (File.Exists(binPath)) File.Delete(binPath);
 
-            if (cuePath == null)
-            {
-                await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(
-                    PathHelper.ResolveLogFilePath(_configuration));
-                return;
+                _logger.Debug(
+                    $"Cleaned up temporary PBP conversion files: {Path.GetFileNameWithoutExtension(cuePath)}");
             }
-
-            try
+            catch (Exception ex)
             {
-                await launcher.LaunchRegularEmulatorAsync(cuePath, context.EmulatorName, context.SystemManagerService!,
-                    context.EmulatorManager!, context.Parameters, context.WindowContext!, context.LoadingState);
-            }
-            finally
-            {
-                // CLEANUP: Delete the temporary .cue and .bin files
-                try
-                {
-                    // Delete the main .cue and .bin files
-                    if (File.Exists(cuePath)) File.Delete(cuePath);
-                    var binPath = Path.ChangeExtension(cuePath, ".bin");
-                    if (File.Exists(binPath)) File.Delete(binPath);
-
-                    _logger.Debug(
-                        $"Cleaned up temporary PBP conversion files: {Path.GetFileNameWithoutExtension(cuePath)}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.Debug($"Failed to cleanup PBP temp files: {ex.Message}");
-                }
+                _logger.Debug($"Failed to cleanup PBP temp files: {ex.Message}");
             }
         }
     }

@@ -1596,7 +1596,7 @@ public partial class MainWindow : Window, IPaginationHost
             var filePath = FavoritesSection.ResolveFavoritePath(favorite) ?? favorite.FilePath;
             var context = BuildRightClickContext(
                 filePath, favorite.SystemName,
-                fileNameWithExtensionOverride: favorite.FilePath,
+                fileNameWithExtensionOverride: favorite.StoredFileName,
                 onFavoriteRemoved: () => _ = FavoritesSection.LoadFavoritesAsync());
 
             _contextMenuService.ShowContextMenu(context, FavoritesDataGrid);

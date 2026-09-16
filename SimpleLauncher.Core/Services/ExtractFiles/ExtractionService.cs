@@ -141,6 +141,11 @@ public class ExtractionService : IExtractionService
         // never deletes pre-existing user files (CORE-01).
         var extractedFiles = new List<string>();
 
+        // Set when one of this method's own guards (disk space / disk-space check)
+        // aborts the run: the 7za fallback performs no such check, so it must not
+        // run after a guard failure and bypass the guard (CORE-13).
+        var guardFailure = false;
+
         try
         {
             try
@@ -189,6 +194,7 @@ public class ExtractionService : IExtractionService
                             // Notify user
                             await _messageBoxLibrary.DiskSpaceErrorMessageBoxAsync();
 
+                            guardFailure = true;
                             throw new IOException("Insufficient disk space.");
                         }
                     }
@@ -201,6 +207,7 @@ public class ExtractionService : IExtractionService
                         // Notify user
                         await _messageBoxLibrary.CouldNotCheckForDiskSpaceMessageBoxAsync();
 
+                        guardFailure = true;
                         throw new IOException($"Unable to check disk space for path {resolvedDestinationFolder}", ex);
                     }
                 }
@@ -268,9 +275,13 @@ public class ExtractionService : IExtractionService
         }
         catch (Exception ex)
         {
-            // For .7z files, try fallback extraction with 7za executable
+            // For .7z files, try fallback extraction with 7za executable.
+            // Never fall back after one of our own guards fired: 7za performs neither the
+            // path traversal check nor the disk space check, so it would bypass them (CORE-13).
             if (string.Equals(extension, ".7z", StringComparison.Ordinal) &&
-                !string.IsNullOrEmpty(resolvedDestinationFolder))
+                !string.IsNullOrEmpty(resolvedDestinationFolder) &&
+                ex is not SecurityException &&
+                !guardFailure)
             {
                 _logger.Debug(
                     $"[ExtractionService] SharpCompress failed for .7z file, trying 7za fallback: {archivePath}");
@@ -435,8 +446,12 @@ public class ExtractionService : IExtractionService
         }
         catch (Exception ex)
         {
-            // For .7z files, try fallback extraction with 7za executable
-            if (string.Equals(extension, ".7z", StringComparison.Ordinal) && !string.IsNullOrEmpty(tempDirectory))
+            // For .7z files, try fallback extraction with 7za executable.
+            // A path traversal rejection must not fall through to 7za: it performs no
+            // such check, so the archive would be extracted anyway (CORE-13).
+            if (string.Equals(extension, ".7z", StringComparison.Ordinal) &&
+                !string.IsNullOrEmpty(tempDirectory) &&
+                ex is not SecurityException)
             {
                 _logger.Debug(
                     $"[ExtractionService] SharpCompress failed for .7z file, trying 7za fallback: {archivePath}");
@@ -494,7 +509,13 @@ public class ExtractionService : IExtractionService
             using var process = new Process();
             process.StartInfo = processStartInfo;
 
+            var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
+            process.OutputDataReceived += (_, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    outputBuilder.AppendLine(e.Data);
+            };
             process.ErrorDataReceived += (_, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
@@ -503,6 +524,7 @@ public class ExtractionService : IExtractionService
 
             _logger.Debug($"[ExtractionService] Running 7za fallback for: {archivePath}");
             process.Start();
+            process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
@@ -532,7 +554,7 @@ public class ExtractionService : IExtractionService
             }
 
             _logger.Debug(
-                $"[ExtractionService] 7za extraction failed. ExitCode: {process.ExitCode}. Error: {errorBuilder}");
+                $"[ExtractionService] 7za extraction failed. ExitCode: {process.ExitCode}. Error: {errorBuilder} Output: {outputBuilder}");
             return false;
         }
         catch (Exception ex)

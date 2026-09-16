@@ -246,7 +246,7 @@ public partial class AvaloniaCheckForUpdatesService
         await LaunchUpdaterAndShutdownAsync(updaterZipAssetUrl);
     }
 
-    private async Task LaunchUpdaterAndShutdownAsync(string? updaterZipAssetUrl)
+    private async Task LaunchUpdaterAndShutdownAsync(string? updaterZipAssetUrl, Window? ownerToHide = null)
     {
         var updaterPath = Path.Combine(_updaterDirectory, UpdaterExecutableName);
 
@@ -282,6 +282,12 @@ public partial class AvaloniaCheckForUpdatesService
                 };
                 Process.Start(startInfo);
 
+                // Hide the owner only now that the updater really started: hiding it
+                // earlier left the failure dialogs below without a visible owner, and
+                // Avalonia refuses to show a window owned by a hidden one (AV-26).
+                if (ownerToHide is not null)
+                    await RunOnUiThreadAsync(ownerToHide.Hide);
+
                 _logger.Information("Updater launched (PID {ProcessId}); shutting down for the update",
                     Environment.ProcessId);
                 _applicationLifetime.Shutdown();
@@ -303,9 +309,9 @@ public partial class AvaloniaCheckForUpdatesService
 
     /// <summary>
     ///     WPF parity (<c>CheckForUpdatesService.ShowUpdateWindowAsync</c>): shows the
-    ///     update log window, hides the owner window while the updater runs, and logs
-    ///     manual-download guidance when the updater fails to launch. On success the
-    ///     process exits, so the finally block only runs on failure paths.
+    ///     update log window, hides the owner window once the updater has actually been
+    ///     launched, and logs manual-download guidance when the updater fails to launch.
+    ///     On success the process exits, so the finally block only runs on failure paths.
     /// </summary>
     private async Task ShowUpdateWindowAsync(string? releasePackageUrl, string? updaterZipAssetUrl, Window? owner)
     {
@@ -321,9 +327,6 @@ public partial class AvaloniaCheckForUpdatesService
                 await logWindow.LogAsync("Starting update process...");
             }
 
-            if (owner is not null)
-                await RunOnUiThreadAsync(owner.Hide);
-
             if (logWindow is not null)
                 await logWindow.LogAsync(
                     $"Launching {UpdaterExecutableName} (auto-downloads from the release assets if needed)...");
@@ -331,7 +334,9 @@ public partial class AvaloniaCheckForUpdatesService
             // Give the log window a moment to paint before the process exits (WPF parity).
             if (logWindow is not null) await Task.Delay(500);
 
-            await LaunchUpdaterAndShutdownAsync(updaterZipAssetUrl);
+            // The owner is hidden inside LaunchUpdaterAndShutdownAsync, only after the
+            // updater process has started — failure dialogs need a visible owner (AV-26).
+            await LaunchUpdaterAndShutdownAsync(updaterZipAssetUrl, owner);
 
             // If we reach here, LaunchUpdaterAndShutdownAsync returned without shutting the
             // application down (the update failed — an error was already shown to the user).
