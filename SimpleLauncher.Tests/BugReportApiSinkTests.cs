@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -59,10 +60,63 @@ public class BugReportApiSinkTests
         }
     }
 
+    /// <summary>
+    ///     Verifies that disposing the sink does not block when the sink was initialized on a
+    ///     thread whose synchronization context never pumps (the WPF/Avalonia UI thread during
+    ///     shutdown). The consumer must run on the thread pool; otherwise Dispose waits for a
+    ///     continuation that can only run on the blocked UI thread and stalls shutdown for 35 s.
+    /// </summary>
+    [Fact]
+    public void DisposeDoesNotBlockWhenInitializedOnANonPumpingSynchronizationContext()
+    {
+        var previousContext = SynchronizationContext.Current;
+        var watch = Stopwatch.StartNew();
+
+        var logFolder = Path.Combine(Path.GetTempPath(), $"sl-bugreport-sink-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(logFolder);
+        try
+        {
+            SynchronizationContext.SetSynchronizationContext(new NonPumpingSynchronizationContext());
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["LogPath"] = "error_user.log",
+                    ["LogPathForAdmin"] = "error.log",
+                    ["LogPathCritical"] = "critical_error.log"
+                })
+                .Build();
+
+            var sink = new BugReportApiSink();
+            sink.Initialize(Mock.Of<IHttpClientFactory>(), configuration, Mock.Of<IDeleteFilesService>(),
+                logFolder);
+
+            sink.Dispose();
+            watch.Stop();
+
+            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5),
+                $"Dispose blocked for {watch.Elapsed}; the consumer must not continue on the captured synchronization context.");
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(previousContext);
+            Directory.Delete(logFolder, true);
+        }
+    }
+
     private static string EncodeApiKey(string apiKey)
     {
         var encodedOnce = Convert.ToBase64String(Encoding.UTF8.GetBytes(apiKey));
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(encodedOnce));
+    }
+
+    private sealed class NonPumpingSynchronizationContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            // Deliberately never invokes the callback: models a UI thread that is blocked
+            // in Dispose and cannot process queued continuations.
+        }
     }
 
     private sealed class CountingHandler : HttpMessageHandler

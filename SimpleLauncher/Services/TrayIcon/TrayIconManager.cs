@@ -24,6 +24,7 @@ public class TrayIconManager : IDisposable
     private readonly IToastNotificationService _toastNotificationService;
     private readonly System.Windows.Controls.ContextMenu _trayMenu;
     private readonly RoutedEventHandler _trayMouseDoubleClickHandler;
+    private bool _isDisposed;
 
     /// <summary>Initializes a new instance of the <see cref="TrayIconManager" />.</summary>
     /// <param name="mainWindow">The main application window.</param>
@@ -53,6 +54,10 @@ public class TrayIconManager : IDisposable
     /// <summary>Releases resources used by the tray icon manager.</summary>
     public void Dispose()
     {
+        if (_isDisposed) return;
+
+        _isDisposed = true;
+
         if (_taskbarIcon != null)
         {
             _taskbarIcon.TrayMouseDoubleClick -= _trayMouseDoubleClickHandler;
@@ -153,14 +158,35 @@ public class TrayIconManager : IDisposable
 
     private void OnOpen(object sender, RoutedEventArgs e)
     {
-        _mainWindow.ShowInTaskbar = true;
-        _mainWindow.Show();
-        _mainWindow.WindowState = WindowState.Normal;
-        _mainWindow.Activate();
+        if (!_mainWindow.IsLoaded)
+        {
+            _logger.Debug("Tray icon Open ignored: the main window has been closed");
+            return;
+        }
+
+        try
+        {
+            _mainWindow.ShowInTaskbar = true;
+            _mainWindow.Show();
+            _mainWindow.WindowState = WindowState.Normal;
+            _mainWindow.Activate();
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Expected: the window closed between the IsLoaded check and Show(), e.g.
+            // while the application is shutting down. Not a bug.
+            _logger.Information(ex, "Tray icon Open ignored: the main window is closing or closed");
+        }
     }
 
     private void OnMinimizeToTray(object sender, RoutedEventArgs e)
     {
+        if (!_mainWindow.IsLoaded)
+        {
+            _logger.Debug("Tray icon MinimizeToTray ignored: the main window has been closed");
+            return;
+        }
+
         _mainWindow.Hide();
         _mainWindow.ShowInTaskbar = false;
     }

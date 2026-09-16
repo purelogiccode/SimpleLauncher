@@ -128,7 +128,23 @@ public partial class MainWindow
 
                 try
                 {
+                    // When the application is shutting down, WPF ignores the cancel above
+                    // and has already closed this window while the save was awaited.
+                    // Close() would throw on the closed window, so run the teardown here
+                    // to still release the tray icon and other resources (WPF-01).
+                    if (!IsLoaded)
+                    {
+                        UnsubscribeEventHandlers();
+                        Dispose();
+                        return;
+                    }
+
                     Close();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Expected when the window was already closing/closed (app shutdown).
+                    Log.Information($"Window already closed after deferred save: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -147,6 +163,15 @@ public partial class MainWindow
         {
             Log.Error($"Error in Main Window_Closing. Error: {ex.Message}");
         }
+    }
+
+    private void MainWindow_Closed(object? sender, EventArgs e)
+    {
+        // Runs even when Application.Shutdown closes the window itself (where the
+        // deferred Closing path may never complete): release the tray icon here so
+        // it cannot remain clickable while the process winds down and crash on the
+        // closed window (WPF-01). Dispose is idempotent.
+        TrayIconManager?.Dispose();
     }
 
     private void MainWindow_StateChanged(object? sender, EventArgs e)

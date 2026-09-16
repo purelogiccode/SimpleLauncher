@@ -138,7 +138,12 @@ public class BugReportApiSink : ILogEventSink, IDisposable
             _deleteFilesService = deleteFilesService;
             _logFolder = logFolder;
 
-            _processTask = ProcessQueueAsync(_cts.Token);
+            // Run the consumer on the thread pool. Initialize is called from the UI thread
+            // (App.OnStartup), and awaiting the channel there captures the UI synchronization
+            // context: Dispose — which blocks that same UI thread while waiting for the
+            // consumer — would then deadlock until the 35 s wait times out, keeping the
+            // process alive with a closed main window and a clickable tray icon.
+            _processTask = Task.Run(() => ProcessQueueAsync(_cts.Token));
         }
     }
 
