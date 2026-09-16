@@ -174,6 +174,11 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
                     if (!processStarted)
                         throw new InvalidOperationException("Failed to start Commander Genius process.");
 
+                    // Commander Genius starts its own process (not through ILauncherService),
+                    // so report the launch explicitly; without this the pipeline would never
+                    // record play history for CG games.
+                    launcher.ReportGameLaunchStarted();
+
                     if (!process.HasExited)
                     {
                         process.BeginOutputReadLine();

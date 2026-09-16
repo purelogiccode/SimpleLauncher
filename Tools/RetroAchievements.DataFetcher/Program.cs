@@ -11,10 +11,13 @@ namespace RetroAchievements.DataFetcher;
 
 file static class Program
 {
-    private const string SettingsFilePath = "settings.xml";
-    private const string ConsoleListFilePath = "consoles.txt";
-    private const string OutputFileNameJson = "RetroAchievements.json";
-    private const string OutputFileNameMsgPack = "RetroAchievements.dat";
+    // Paths are anchored to the executable folder: relative paths used to resolve against the
+    // process CWD, so shortcuts with a different "Start in", dotnet run or scheduled tasks
+    // read/wrote the wrong files.
+    private static readonly string SettingsFilePath = Path.Combine(AppContext.BaseDirectory, "settings.xml");
+    private static readonly string ConsoleListFilePath = Path.Combine(AppContext.BaseDirectory, "consoles.txt");
+    private static readonly string OutputFileNameJson = Path.Combine(AppContext.BaseDirectory, "RetroAchievements.json");
+    private static readonly string OutputFileNameMsgPack = Path.Combine(AppContext.BaseDirectory, "RetroAchievements.dat");
     private const string BaseApiUrl = "https://retroachievements.org/API";
 
     private static async Task Main(string[] args)
@@ -108,6 +111,9 @@ file static class Program
             if (consoles.Count == 0)
             {
                 Log.Error("No consoles found. Aborting");
+                // Flush before the process exits: Environment.Exit bypasses Main's finally,
+                // which is exactly when the buffered logs are needed most.
+                Log.CloseAndFlush();
                 Environment.Exit(1);
             }
 
@@ -135,6 +141,7 @@ file static class Program
         {
             Log.Error(ex, "Critical error during fetch");
             Log.Error("Process incomplete");
+            Log.CloseAndFlush();
             Environment.Exit(1);
         }
 
@@ -292,6 +299,7 @@ file static class Program
         if (string.IsNullOrWhiteSpace(settings.Username) || string.IsNullOrWhiteSpace(settings.WebApiKey))
         {
             Log.Error("Username and Web API Key cannot be empty");
+            Log.CloseAndFlush();
             Environment.Exit(1);
         }
 

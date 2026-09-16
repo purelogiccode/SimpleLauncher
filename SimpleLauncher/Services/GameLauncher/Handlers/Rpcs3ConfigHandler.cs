@@ -46,8 +46,8 @@ public class Rpcs3ConfigHandler : IEmulatorConfigHandler
                 {
                     await context.WindowContext.Dispatcher.InvokeAsync(() =>
                     {
-                        var win = _scopeFactory.CreateScope().ServiceProvider
-                            .GetRequiredService<InjectRpcs3ConfigWindow>();
+                        using var scope = _scopeFactory.CreateScope();
+                        var win = scope.ServiceProvider.GetRequiredService<InjectRpcs3ConfigWindow>();
                         win.Owner = (Window)context.WindowContext.PlatformWindow;
                         win.Initialize(resolvedExe);
                         win.ShowDialog();

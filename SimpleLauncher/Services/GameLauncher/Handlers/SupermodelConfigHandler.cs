@@ -46,8 +46,8 @@ public class SupermodelConfigHandler : IEmulatorConfigHandler
                 {
                     await context.WindowContext.Dispatcher.InvokeAsync(() =>
                     {
-                        var win = _scopeFactory.CreateScope().ServiceProvider
-                            .GetRequiredService<InjectSupermodelConfigWindow>();
+                        using var scope = _scopeFactory.CreateScope();
+                        var win = scope.ServiceProvider.GetRequiredService<InjectSupermodelConfigWindow>();
                         win.Owner = (Window)context.WindowContext.PlatformWindow;
                         win.Initialize(resolvedExe);
                         win.ShowDialog();

@@ -46,8 +46,8 @@ public class CemuConfigHandler : IEmulatorConfigHandler
                 {
                     await context.WindowContext.Dispatcher.InvokeAsync(() =>
                     {
-                        var win = _scopeFactory.CreateScope().ServiceProvider
-                            .GetRequiredService<InjectCemuConfigWindow>();
+                        using var scope = _scopeFactory.CreateScope();
+                        var win = scope.ServiceProvider.GetRequiredService<InjectCemuConfigWindow>();
                         win.Owner = (Window)context.WindowContext.PlatformWindow;
                         win.Initialize(resolvedExe);
                         win.ShowDialog();

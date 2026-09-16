@@ -169,7 +169,10 @@ internal partial class EditSystemWindow
 
         // When extractFileBeforeLaunch is true, ALL formats must be zip, rar, or 7z
         // ReSharper disable once InvertIf
-        if (extractFileBeforeLaunch && !formatsToSearch.All(static f => f is "zip" or "7z" or "rar"))
+        if (extractFileBeforeLaunch && !formatsToSearch.All(static f =>
+                f.Equals("zip", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("7z", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("rar", StringComparison.OrdinalIgnoreCase)))
         {
             // Notify user
             await _messageBox.FileMustBeCompressedMessageBoxAsync();

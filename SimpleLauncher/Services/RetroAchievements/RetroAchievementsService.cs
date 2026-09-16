@@ -137,7 +137,7 @@ public class RetroAchievementsService
             var progress = new RaUserGameProgress
             {
                 GameTitle = apiResponse.Title,
-                GameIconUrl = $"{_siteBaseUrl}{apiResponse.ImageIcon}",
+                GameIconUrl = $"{_siteBaseUrl.TrimEnd('/')}{apiResponse.ImageIcon}",
                 ConsoleName = apiResponse.ConsoleName,
                 AchievementsEarned = apiResponse.NumAwardedToUser,
                 TotalAchievements = apiResponse.NumAchievements,
@@ -158,7 +158,7 @@ public class RetroAchievementsService
                     Title = a.Title,
                     Description = a.Description,
                     Points = a.Points,
-                    BadgeUri = $"{_siteBaseUrl}/Badge/{a.BadgeName}.png",
+                    BadgeUri = $"{_siteBaseUrl.TrimEnd('/')}/Badge/{a.BadgeName}.png",
                     IsUnlocked = a.DateEarned != null || a.DateEarnedHardcore != null,
                     DateUnlocked = a.DateEarnedHardcore ?? a.DateEarned,
                     UnlockedInHardcore = a.DateEarnedHardcore != null,

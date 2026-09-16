@@ -679,8 +679,10 @@ public class ContextMenuFunctions : IContextMenuFunctions
         }
         finally
         {
-            // Ensure loading indicator is hidden
-            (loadingStateProvider as Window)?.Dispatcher.Invoke(() => loadingStateProvider.SetLoadingState(false));
+            // Ensure loading indicator is hidden. Use the app dispatcher: the provider can be
+            // a Window but also a Page (Favorites/GlobalSearch/PlayHistory), so casting to
+            // Window skipped every Page host and left the overlay blocking the page.
+            Application.Current.Dispatcher.Invoke(() => loadingStateProvider.SetLoadingState(false));
 
             // --- Remove temporary extraction folder ---
             if (!string.IsNullOrEmpty(tempExtractionPath))

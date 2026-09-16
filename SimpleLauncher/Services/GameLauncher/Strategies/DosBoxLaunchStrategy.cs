@@ -327,15 +327,24 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
         var confPath = GenerateIsoConf(mountPath, selectedFile, context.ResolvedFilePath);
         var launchParameters = BuildLaunchParameters(context.Parameters);
 
-        await launcher.LaunchRegularEmulatorAsync(
-            confPath,
-            context.EmulatorName,
-            context.SystemManagerService!,
-            context.EmulatorManager!,
-            launchParameters,
-            context.WindowContext!,
-            context.LoadingState,
-            context.ResolvedFilePath);
+        try
+        {
+            await launcher.LaunchRegularEmulatorAsync(
+                confPath,
+                context.EmulatorName,
+                context.SystemManagerService!,
+                context.EmulatorManager!,
+                launchParameters,
+                context.WindowContext!,
+                context.LoadingState,
+                context.ResolvedFilePath);
+        }
+        finally
+        {
+            // The conf references the user's ROM paths and is single-use: delete it once
+            // DOSBox has exited (or the launch failed) instead of leaking it in %TEMP%.
+            TryDeleteConfFile(confPath);
+        }
     }
 
     private static string GenerateIsoConf(string mountPath, string executablePath, string isoFilePath)
@@ -450,15 +459,24 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
             var confPath = GenerateChdConf(mountPath, selectedFile);
             var launchParameters = BuildLaunchParameters(context.Parameters);
 
-            await launcher.LaunchRegularEmulatorAsync(
-                confPath,
-                context.EmulatorName,
-                context.SystemManagerService!,
-                context.EmulatorManager!,
-                launchParameters,
-                context.WindowContext!,
-                context.LoadingState,
-                context.ResolvedFilePath);
+            try
+            {
+                await launcher.LaunchRegularEmulatorAsync(
+                    confPath,
+                    context.EmulatorName,
+                    context.SystemManagerService!,
+                    context.EmulatorManager!,
+                    launchParameters,
+                    context.WindowContext!,
+                    context.LoadingState,
+                    context.ResolvedFilePath);
+            }
+            finally
+            {
+                // The conf references the user's ROM paths and is single-use: delete it once
+                // DOSBox has exited (or the launch failed) instead of leaking it in %TEMP%.
+                TryDeleteConfFile(confPath);
+            }
         }
         catch (Exception ex)
         {
@@ -512,5 +530,22 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
         _logger.Debug($"[DosBoxLaunchStrategy] Generated CHD conf file: {confPath}");
 
         return confPath;
+    }
+
+    /// <summary>
+    ///     Deletes a generated DOSBox conf file after use. Cleanup failures are logged at Debug:
+    ///     the next startup cleanup of %TEMP%\SimpleLauncher removes any file left behind.
+    /// </summary>
+    private void TryDeleteConfFile(string confPath)
+    {
+        try
+        {
+            if (File.Exists(confPath)) File.Delete(confPath);
+            _logger.Debug($"[DosBoxLaunchStrategy] Deleted temporary conf file: {confPath}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[DosBoxLaunchStrategy] Failed to delete temporary conf file {confPath}: {ex.Message}");
+        }
     }
 }

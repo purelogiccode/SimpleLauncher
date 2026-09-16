@@ -45,14 +45,20 @@ public static class CleanTempFolder
             var trackingFile = Path.Combine(directoryPath, ".extraction_in_progress");
             if (!File.Exists(trackingFile)) return;
 
-            await DeleteFiles.TryDeleteFileAsync(trackingFile);
-
-            // Delete all files in the directory
-            foreach (var file in Directory.GetFiles(directoryPath)) await DeleteFiles.TryDeleteFileAsync(file);
+            // Delete all files in the directory, keeping the marker until the end.
+            foreach (var file in Directory.GetFiles(directoryPath))
+            {
+                if (string.Equals(file, trackingFile, StringComparison.OrdinalIgnoreCase)) continue;
+                await DeleteFiles.TryDeleteFileAsync(file);
+            }
 
             // Recursively delete subdirectories
             foreach (var subDir in Directory.GetDirectories(directoryPath))
                 await Task.Run(() => Directory.Delete(subDir, true));
+
+            // The marker is deleted last: if any deletion above fails, the marker remains and
+            // the directory is still recognizable as a partial extraction on the next attempt.
+            await DeleteFiles.TryDeleteFileAsync(trackingFile);
         }
 #pragma warning disable RCS1075
         catch (Exception)

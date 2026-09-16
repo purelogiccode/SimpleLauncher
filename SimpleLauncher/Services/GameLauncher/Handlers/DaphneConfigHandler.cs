@@ -37,7 +37,8 @@ public class DaphneConfigHandler : IEmulatorConfigHandler
         {
             await context.WindowContext.Dispatcher.InvokeAsync(() =>
             {
-                var win = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<InjectDaphneConfigWindow>();
+                using var scope = _scopeFactory.CreateScope();
+                var win = scope.ServiceProvider.GetRequiredService<InjectDaphneConfigWindow>();
                 win.Owner = (Window)context.WindowContext.PlatformWindow;
                 win.Initialize();
                 win.ShowDialog();

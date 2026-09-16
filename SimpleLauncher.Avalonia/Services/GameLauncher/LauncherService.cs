@@ -1045,7 +1045,7 @@ public class LauncherService : ILauncherService
         {
             try
             {
-                var process = new Process
+                using var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -1064,7 +1064,9 @@ public class LauncherService : ILauncherService
                     {
                         // Expected user condition (a hung or long-running batch file) —
                         // Information level so it is never reported as a bug (WPF parity).
-                        process.Kill();
+                        // Kill the whole tree (WPF parity): children would otherwise keep
+                        // running and lock the files the batch file started.
+                        process.Kill(true);
                         Log.Information("Batch file timed out after 5 minutes and was killed: {Path}", resolvedFilePath);
                     }
                     catch (Exception killEx)
@@ -1195,7 +1197,7 @@ public class LauncherService : ILauncherService
         {
             try
             {
-                var process = new Process
+                using var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -1239,7 +1241,7 @@ public class LauncherService : ILauncherService
         {
             try
             {
-                var process = new Process
+                using var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -1325,9 +1327,15 @@ public class LauncherService : ILauncherService
         _ = _stats.CallApiAsync(emulatorName);
     }
 
+    /// <inheritdoc />
+    public void ReportGameLaunchStarted()
+    {
+        // No-op in Avalonia: play history is recorded inside LaunchRegularEmulatorAsync,
+        // which only runs on paths where a launch actually starts.
+    }
+
     // ── Post-exit error analysis constants ──
-    private const int MemoryAccessViolation = -1073741819;
-    private const int DepViolation = -1073740791;
+    private const int MemoryAccessViolation = -1073741819;    private const int DepViolation = -1073740791;
 
     /// <summary>
     ///     Post-exit error analysis — port of the WPF GameLauncherService's

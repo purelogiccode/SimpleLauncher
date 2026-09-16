@@ -61,17 +61,20 @@ public class SystemImageResolverService : ISystemImageResolverService
                 }
 
                 // Try stripping annotations from image filenames too
-                foreach (var fileInFolder in Directory.GetFiles(systemImageFolder)
-                             .Where(f => imageExtensions.Any(ext =>
-                                 f.EndsWith(ext, StringComparison.OrdinalIgnoreCase))))
+                if (Directory.Exists(systemImageFolder))
                 {
-                    var fileWithoutExt = Path.GetFileNameWithoutExtension(fileInFolder);
-                    if (string.IsNullOrEmpty(fileWithoutExt)) continue;
-
-                    if (string.Equals(strippedSystemName, FindCoverImageService.StripAnnotations(fileWithoutExt),
-                            StringComparison.OrdinalIgnoreCase))
+                    foreach (var fileInFolder in Directory.GetFiles(systemImageFolder)
+                                 .Where(f => imageExtensions.Any(ext =>
+                                     f.EndsWith(ext, StringComparison.OrdinalIgnoreCase))))
                     {
-                        return Task.FromResult(fileInFolder);
+                        var fileWithoutExt = Path.GetFileNameWithoutExtension(fileInFolder);
+                        if (string.IsNullOrEmpty(fileWithoutExt)) continue;
+
+                        if (string.Equals(strippedSystemName, FindCoverImageService.StripAnnotations(fileWithoutExt),
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            return Task.FromResult(fileInFolder);
+                        }
                     }
                 }
             }

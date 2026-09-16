@@ -385,6 +385,60 @@ public class EmulatorConfigInjectionTests2 : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that an inline '#' comment is preserved with its separating whitespace when a
+    ///     key is updated. The old regex swallowed the whitespace before '#' as part of the value,
+    ///     so the rebuilt line glued the new value to the comment ("video d3d# comment").
+    /// </summary>
+    [Fact]
+    public void MamePreservesSpacedTrailingCommentWhenUpdatingKey()
+    {
+        CopySampleToEmuDir("Mame", "MAME", "mame.ini");
+
+        var emuDir = Path.Combine(_testDirectory, "Mame");
+        var configPath = Path.Combine(emuDir, "mame.ini");
+
+        var lines = File.ReadAllLines(configPath).ToList();
+        var videoIndex = lines.FindIndex(static l =>
+            l.TrimStart().StartsWith("video", StringComparison.OrdinalIgnoreCase));
+        Assert.True(videoIndex >= 0, "The MAME sample must contain a video line.");
+        lines[videoIndex] = "video auto # video driver # preserved";
+        File.WriteAllLines(configPath, lines);
+
+        var settings = CreateSettingsManager();
+        settings.Mame.Video = "d3d";
+        MameConfigurationService.InjectSettings(FakeEmulatorExePath(emuDir), settings, Log.Logger);
+
+        var content = File.ReadAllText(configPath);
+        Assert.Contains("video d3d # video driver # preserved", content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Verifies that a '#' inside a rompath value is kept as part of the path instead of
+    ///     being truncated at the '#' by the INI line regex.
+    /// </summary>
+    [Fact]
+    public void MameKeepsHashInsideRomPathValue()
+    {
+        CopySampleToEmuDir("Mame", "MAME", "mame.ini");
+
+        var emuDir = Path.Combine(_testDirectory, "Mame");
+        var configPath = Path.Combine(emuDir, "mame.ini");
+
+        var lines = File.ReadAllLines(configPath).ToList();
+        var romPathIndex = lines.FindIndex(static l =>
+            l.TrimStart().StartsWith("rompath", StringComparison.OrdinalIgnoreCase));
+        Assert.True(romPathIndex >= 0, "The MAME sample must contain a rompath line.");
+        lines[romPathIndex] = @"rompath C:\roms\#1;Z:\missing-roms";
+        File.WriteAllLines(configPath, lines);
+
+        var settings = CreateSettingsManager();
+        MameConfigurationService.InjectSettings(FakeEmulatorExePath(emuDir), settings, Log.Logger);
+
+        var content = File.ReadAllText(configPath);
+        Assert.Contains(@"C:\roms\#1", content, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     ///     Verifies that Supermodel emulator settings are correctly injected into the Supermodel.ini configuration file.
     /// </summary>
     [Fact]

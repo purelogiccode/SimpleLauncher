@@ -30,10 +30,17 @@ public sealed class DataFileLocation
     /// <param name="defaultFileName">The default file name used when no path is configured.</param>
     public DataFileLocation(IConfiguration configuration, string configKey, string defaultFileName)
     {
-        _fileName = defaultFileName;
         var configuredPath = configuration.GetValue<string>(configKey) ?? defaultFileName;
+
+        // The configured value can contain a folder (e.g. %BASEFOLDER%\system.xml) and callers
+        // may pass it as the default name. The LocalAppData fallback must use a bare file name,
+        // otherwise Path.Combine creates a literal '%BASEFOLDER%' folder under LocalAppData.
+        var sanitizedFileName = Path.GetFileName(configuredPath);
+        if (string.IsNullOrEmpty(sanitizedFileName)) sanitizedFileName = Path.GetFileName(defaultFileName);
+        _fileName = string.IsNullOrEmpty(sanitizedFileName) ? defaultFileName : sanitizedFileName;
+
         var portablePath = PathHelper.ResolveRelativeToAppDirectory(configuredPath) ??
-                           Path.Combine(AppDomain.CurrentDomain.BaseDirectory, defaultFileName);
+                           Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _fileName);
         Initialize(portablePath);
     }
 

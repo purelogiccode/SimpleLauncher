@@ -47,8 +47,8 @@ public class AresConfigHandler : IEmulatorConfigHandler
                 {
                     await context.WindowContext.Dispatcher.InvokeAsync(() =>
                     {
-                        var aresWindow = _scopeFactory.CreateScope().ServiceProvider
-                            .GetRequiredService<InjectAresConfigWindow>();
+                        using var scope = _scopeFactory.CreateScope();
+                        var aresWindow = scope.ServiceProvider.GetRequiredService<InjectAresConfigWindow>();
                         aresWindow.Owner = (Window)context.WindowContext.PlatformWindow;
                         aresWindow.Initialize(resolvedEmulatorExePath);
                         aresWindow.ShowDialog();

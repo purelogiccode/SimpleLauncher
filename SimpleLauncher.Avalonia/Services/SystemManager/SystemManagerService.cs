@@ -667,8 +667,7 @@ public class SystemManagerService
 
     private static string GetSystemXmlPathStatic(IConfiguration configuration)
     {
-        var fileName = configuration.GetValue<string>("SystemXmlPath") ?? "system.xml";
-        var fileLocation = new DataFileLocation(configuration, "SystemXmlPath", fileName);
+        var fileLocation = new DataFileLocation(configuration, "SystemXmlPath", "system.xml");
         return fileLocation.FilePath;
     }
 

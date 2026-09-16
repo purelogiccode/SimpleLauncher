@@ -46,8 +46,8 @@ public class MesenConfigHandler : IEmulatorConfigHandler
                 {
                     await context.WindowContext.Dispatcher.InvokeAsync(() =>
                     {
-                        var win = _scopeFactory.CreateScope().ServiceProvider
-                            .GetRequiredService<InjectMesenConfigWindow>();
+                        using var scope = _scopeFactory.CreateScope();
+                        var win = scope.ServiceProvider.GetRequiredService<InjectMesenConfigWindow>();
                         win.Owner = (Window)context.WindowContext.PlatformWindow;
                         win.Initialize(resolvedExe);
                         win.ShowDialog();

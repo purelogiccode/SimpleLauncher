@@ -46,8 +46,8 @@ public class DolphinConfigHandler : IEmulatorConfigHandler
                 {
                     await context.WindowContext.Dispatcher.InvokeAsync(() =>
                     {
-                        var win = _scopeFactory.CreateScope().ServiceProvider
-                            .GetRequiredService<InjectDolphinConfigWindow>();
+                        using var scope = _scopeFactory.CreateScope();
+                        var win = scope.ServiceProvider.GetRequiredService<InjectDolphinConfigWindow>();
                         win.Owner = (Window)context.WindowContext.PlatformWindow;
                         win.Initialize(resolvedExe);
                         win.ShowDialog();

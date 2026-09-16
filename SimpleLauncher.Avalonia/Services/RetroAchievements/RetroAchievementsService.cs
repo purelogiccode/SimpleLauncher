@@ -135,7 +135,7 @@ public class RetroAchievementsService
             var progress = new RaUserGameProgress
             {
                 GameTitle = apiResponse.Title,
-                GameIconUrl = $"{_siteBaseUrl}{apiResponse.ImageIcon}",
+                GameIconUrl = $"{_siteBaseUrl.TrimEnd('/')}{apiResponse.ImageIcon}",
                 ConsoleName = apiResponse.ConsoleName,
                 AchievementsEarned = apiResponse.NumAwardedToUser,
                 TotalAchievements = apiResponse.NumAchievements,

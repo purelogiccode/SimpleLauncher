@@ -879,6 +879,11 @@ public partial class HelpUserService : IHelpUserService
 
         foreach (var (match, type) in matches)
         {
+            // Skip matches that overlap an already-emitted region: a markdown link nested in a
+            // bold segment (e.g. **[click](url)**) starts before the bold match ends and used
+            // to be emitted a second time, duplicating text and leaving stray ** markers.
+            if (match.Index < lastIndex) continue;
+
             // Add plain text (and any raw URLs within it) before the current match
             if (match.Index > lastIndex)
             {

@@ -99,6 +99,10 @@ def rewrite_wiki_links(text: str, page_names: set[str]) -> str:
         if target.startswith(("http://", "https://", "#", "mailto:")):
             return match.group(0)
         page = target.split("#")[0].removesuffix(".md")
+        if page == "README":
+            # docs/README.md is published as the wiki Home page, so links to it must
+            # resolve to Home instead of degrading to plain text.
+            page = "Home"
         anchor = target.split("#", 1)[1] if "#" in target else ""
         if page in page_names:
             return f"[{label}]({page}{('#' + anchor) if anchor else ''})"

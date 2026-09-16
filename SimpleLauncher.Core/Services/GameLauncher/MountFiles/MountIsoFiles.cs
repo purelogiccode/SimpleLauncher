@@ -337,7 +337,8 @@ public class MountIsoFiles : IMountIsoFiles
         {
             FileName = "powershell.exe",
             Arguments = $"-NoProfile -Command \"& {{ {command} }}\"",
-            RedirectStandardOutput = true,
+            // No stdout redirect: it was never drained (Dismount-DiskImage with
+            // -ErrorAction SilentlyContinue is silent), a latent pipe-deadlock pattern.
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true

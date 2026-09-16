@@ -210,13 +210,17 @@ public class DiscConverter : IDiscConverter
     /// <returns>The path of the converted CUE file, or null if the conversion failed.</returns>
     public async Task<string?> ConvertPbpToCueBinAsync(string pbpPath)
     {
+        // Declared outside the try so the catch can clean up partial files left by exceptions.
+        string? tempCuePath = null;
+        string? tempBinPath = null;
+
         try
         {
             Directory.CreateDirectory(TempFolder);
 
             var tempFileName = Guid.NewGuid().ToString();
-            var tempCuePath = Path.Combine(TempFolder, $"{tempFileName}.cue");
-            var tempBinPath = Path.Combine(TempFolder, $"{tempFileName}.bin");
+            tempCuePath = Path.Combine(TempFolder, $"{tempFileName}.cue");
+            tempBinPath = Path.Combine(TempFolder, $"{tempFileName}.bin");
 
             _logger.Debug("[ConvertPbpToCueBin] Converting from PBP to CUE/BIN using PBPSharp");
 
@@ -261,7 +265,10 @@ public class DiscConverter : IDiscConverter
         }
         catch (Exception ex)
         {
-            _logger.Debug($"[ConvertPbpToCueBin] Exception during conversion: {ex.Message}");
+            _logger.Error(ex, "[ConvertPbpToCueBin] Error converting PBP to CUE/BIN");
+            // An exception can leave partial .bin/.cue files behind; delete them here because
+            // the non-throwing failure paths are already handled inside the conversion lambda.
+            TryDeleteTempFiles(tempCuePath!, tempBinPath!);
             return null;
         }
     }

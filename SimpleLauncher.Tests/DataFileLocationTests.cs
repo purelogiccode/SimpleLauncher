@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Services;
 using Xunit;
 
@@ -132,5 +133,29 @@ public class DataFileLocationTests
         var location2 = new DataFileLocation(uniqueName);
 
         Assert.Equal(location1.GetLocalAppDataPath(), location2.GetLocalAppDataPath());
+    }
+
+    /// <summary>
+    ///     Verifies that a configured path containing a folder (%BASEFOLDER%\system.xml) yields a
+    ///     bare file name for the LocalAppData fallback instead of creating a literal
+    ///     '%BASEFOLDER%' folder there. The Avalonia SystemManagerService used to pass the
+    ///     configured path as the default file name.
+    /// </summary>
+    [Fact]
+    public void ConfiguredFolderPathUsesBareFileNameForLocalAppDataPath()
+    {
+        var uniqueName = $"sl_fileloc_{Guid.NewGuid():N}.xml";
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["SystemXmlPath"] = $"%BASEFOLDER%\\{uniqueName}"
+            })
+            .Build();
+
+        var location = new DataFileLocation(configuration, "SystemXmlPath", $"%BASEFOLDER%\\{uniqueName}");
+        var localPath = location.GetLocalAppDataPath();
+
+        Assert.Equal(uniqueName, Path.GetFileName(localPath));
+        Assert.DoesNotContain("%BASEFOLDER%", localPath, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -140,7 +140,6 @@ public static class AvaloniaThemeService
         Application.Current.Resources["AccentPressedColor"] = Darken(accent, 0.15);
         Application.Current.Resources["AccentDisabledColor"] = WithAlpha(accent, 0x66);
         Application.Current.Resources["SelectionRingColor"] = accent;
-        Application.Current.Resources["FavoriteHeartColor"] = accent;
 
         Application.Current.RequestedThemeVariant = effectiveBase switch
         {

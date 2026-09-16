@@ -65,4 +65,11 @@ public interface ILauncherService
         string resolvedFilePath,
         Emulator selectedEmulatorManager,
         IWindowContext windowContext);
+
+    /// <summary>
+    ///     Notifies the launcher that a launch strategy started the game process itself (instead of
+    ///     delegating to one of the launch methods above), so play history and statistics are only
+    ///     recorded for sessions where the game actually launched.
+    /// </summary>
+    void ReportGameLaunchStarted();
 }

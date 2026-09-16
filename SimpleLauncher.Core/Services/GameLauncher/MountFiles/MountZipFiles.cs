@@ -872,7 +872,8 @@ public class MountZipFiles : IMountZipFiles
                 selectedSystemManager?.SystemFolders,
                 resolvedEmulatorFolderPath,
                 resolvedZipFilePath,
-                romSystemFolder
+                romSystemFolder,
+                Path.GetFileNameWithoutExtension(resolvedZipFilePath)
             );
 
             // Navigate into nested single-folder directories to find the actual game files location

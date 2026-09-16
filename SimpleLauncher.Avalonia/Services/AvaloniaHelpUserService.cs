@@ -419,8 +419,13 @@ public class AvaloniaHelpUserService
 
         foreach (var (match, type) in matches)
         {
+            // Skip matches that overlap an already-emitted region: a markdown link nested in a
+            // bold segment (e.g. **[click](url)**) starts before the bold match ends and used
+            // to be emitted a second time, duplicating text and leaving stray ** markers.
+            if (match.Index < sourceIndex) continue;
+
             if (match.Index > sourceIndex)
-                emittedLength += AddPlainText(inlines, text[sourceIndex..match.Index], state);
+                emittedLength += AddPlainText(inlines, text[sourceIndex..match.Index], state, emittedLength);
 
             if (string.Equals(type, "bold", StringComparison.OrdinalIgnoreCase))
             {
@@ -443,10 +448,10 @@ public class AvaloniaHelpUserService
         }
 
         if (sourceIndex < text.Length)
-            AddPlainText(inlines, text[sourceIndex..], state);
+            AddPlainText(inlines, text[sourceIndex..], state, emittedLength);
     }
 
-    private static int AddPlainText(InlineCollection inlines, string text, LinkState state)
+    private static int AddPlainText(InlineCollection inlines, string text, LinkState state, int startOffset)
     {
         if (string.IsNullOrEmpty(text)) return 0;
 
@@ -483,7 +488,9 @@ public class AvaloniaHelpUserService
                     var navigateUrl = rawUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                         ? rawUrl
                         : "http://" + rawUrl;
-                    state.Links.Add(new LinkRange(emitted, rawUrl.Length, navigateUrl));
+                    // Use the global offset: a segment-local offset made links after bold/link
+                    // segments clickable at the wrong place in the flattened text.
+                    state.Links.Add(new LinkRange(startOffset + emitted, rawUrl.Length, navigateUrl));
                     inlines.Add(CreateLinkInline(rawUrl));
                     emitted += rawUrl.Length;
                     matchIndex++;

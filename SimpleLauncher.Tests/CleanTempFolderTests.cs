@@ -172,4 +172,31 @@ public class CleanTempFolderTests
         Assert.True(File.Exists(file1));
         Assert.True(Directory.Exists(tempDir));
     }
+
+    /// <summary>
+    ///     Verifies that the tracking marker is deleted LAST: when a subdirectory cannot be deleted
+    ///     (a file inside it is locked), the marker must survive so the directory is still
+    ///     recognizable as a partial extraction on the next cleanup attempt. Windows-only:
+    ///     FileShare.None locks are enforced only there.
+    /// </summary>
+    [Fact]
+    public async Task CleanupPartialExtractionAsyncKeepsTrackingFileWhenCleanupFails()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var subDir = Path.Combine(tempDir, "locked");
+        Directory.CreateDirectory(subDir);
+        var trackingFile = Path.Combine(tempDir, ".extraction_in_progress");
+        await File.WriteAllTextAsync(trackingFile, "in progress");
+
+        var lockedFile = Path.Combine(subDir, "locked.bin");
+        await File.WriteAllTextAsync(lockedFile, "content");
+
+        using (new FileStream(lockedFile, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            await CleanTempFolder.CleanupPartialExtractionAsync(tempDir);
+        }
+
+        Assert.True(File.Exists(trackingFile),
+            "The safeguard marker must be deleted last so a failed cleanup stays recognizable.");
+    }
 }

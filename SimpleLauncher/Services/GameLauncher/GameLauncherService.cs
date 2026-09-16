@@ -30,6 +30,14 @@ public partial class GameLauncherService : ILauncherService
 {
     private const int MemoryAccessViolation = -1073741819;
     private const int DepViolation = -1073740791;
+
+    /// <summary>
+    ///     Set when the game/emulator process for the current launch pipeline was actually started.
+    ///     Strategies that return early (cancelled file selection, failed mount, unsupported image)
+    ///     leave it false so no play history is recorded for the dialog time.
+    /// </summary>
+    private bool _gameLaunchStarted;
+
     private readonly IEnumerable<IEmulatorConfigHandler> _configHandlers;
     private readonly IConfiguration _configuration;
     private readonly IExtractionService _extractionService;
@@ -134,6 +142,7 @@ public partial class GameLauncherService : ILauncherService
         {
             using var process = Process.Start(psi);
             if (process == null) throw new InvalidOperationException("Failed to start the batch file process.");
+            _gameLaunchStarted = true;
 
             // 5-minute timeout to prevent hung batch files from blocking indefinitely
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
@@ -323,6 +332,7 @@ public partial class GameLauncherService : ILauncherService
                 // For shell execution, Start() might return false if a process was reused.
                 // Win32Exception will be thrown if it actually fails.
                 process.Start();
+                _gameLaunchStarted = true;
             }
             else // .LNK files
             {
@@ -341,6 +351,7 @@ public partial class GameLauncherService : ILauncherService
 
                 // For shell execution, Start() might return false if a process was reused.
                 process.Start();
+                _gameLaunchStarted = true;
             }
         }
         catch (Win32Exception ex) // Catch Win32Exception specifically
@@ -464,6 +475,7 @@ public partial class GameLauncherService : ILauncherService
         {
             var processStarted = process.Start();
             if (!processStarted) throw new InvalidOperationException("Failed to start the executable process.");
+            _gameLaunchStarted = true;
 
             await process.WaitForExitAsync();
 
@@ -591,6 +603,12 @@ public partial class GameLauncherService : ILauncherService
                     PathHelper.ResolveLogFilePath(_configuration));
             }
         }
+    }
+
+    /// <inheritdoc />
+    public void ReportGameLaunchStarted()
+    {
+        _gameLaunchStarted = true;
     }
 
     /// <summary>
@@ -1030,6 +1048,7 @@ public partial class GameLauncherService : ILauncherService
                 {
                     var processStarted = process.Start();
                     if (!processStarted) throw new InvalidOperationException("Failed to start the process.");
+                    _gameLaunchStarted = true;
 
                     if (!process.HasExited)
                     {
@@ -1236,6 +1255,10 @@ public partial class GameLauncherService : ILauncherService
             LoadingState = loadingStateProvider
         };
 
+        // Reset the launch marker for this pipeline run: only a strategy/launcher that really
+        // starts the game process may set it (see ReportGameLaunchStarted).
+        _gameLaunchStarted = false;
+
         try
         {
             // 2. Validate SystemManagerService and Emulators before resolving
@@ -1320,7 +1343,7 @@ public partial class GameLauncherService : ILauncherService
                 if (wasGamePadRunning) await gamePadController.StartAsync();
 
                 var playTime = DateTime.Now - startTime;
-                if (playTime.TotalSeconds > 5)
+                if (_gameLaunchStarted && playTime.TotalSeconds > 5)
                 {
                     UpdateStatsAndPlayCountAsync(playTime, context);
                     GamePlayed?.Invoke(this, new GamePlayedEventArgs(context.FilePath, context.SystemName));

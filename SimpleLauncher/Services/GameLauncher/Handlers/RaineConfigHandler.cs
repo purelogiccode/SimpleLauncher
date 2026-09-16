@@ -54,8 +54,8 @@ public class RaineConfigHandler : IEmulatorConfigHandler
                         {
                             await context.WindowContext.Dispatcher.InvokeAsync(() =>
                             {
-                                var win = _scopeFactory.CreateScope().ServiceProvider
-                                    .GetRequiredService<InjectRaineConfigWindow>();
+                                using var scope = _scopeFactory.CreateScope();
+                                var win = scope.ServiceProvider.GetRequiredService<InjectRaineConfigWindow>();
                                 win.Owner = (Window)context.WindowContext.PlatformWindow;
                                 win.Initialize(resolvedExe, true, context.ResolvedFilePath, resolvedSystemFolder);
                                 win.ShowDialog();

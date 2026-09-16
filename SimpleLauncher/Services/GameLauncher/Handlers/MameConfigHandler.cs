@@ -55,8 +55,8 @@ public class MameConfigHandler : IEmulatorConfigHandler
                     {
                         await context.WindowContext.Dispatcher.InvokeAsync(() =>
                         {
-                            var win = _scopeFactory.CreateScope().ServiceProvider
-                                .GetRequiredService<InjectMameConfigWindow>();
+                            using var scope = _scopeFactory.CreateScope();
+                            var win = scope.ServiceProvider.GetRequiredService<InjectMameConfigWindow>();
                             win.Owner = (Window)context.WindowContext.PlatformWindow;
                             win.Initialize(resolvedExe, true, resolvedSystemFolder, listOfSecondarySystemFolders);
                             win.ShowDialog();

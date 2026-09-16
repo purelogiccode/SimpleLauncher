@@ -349,9 +349,14 @@ public class SettingsManagerService : IDisposable
         {
             return _credentialProtector.Protect(plainText);
         }
-        catch
+        catch (Exception ex)
         {
-            return plainText;
+            // Security-relevant: the credential would previously be persisted in plain text
+            // without any indication. Log at Warning (a genuine DPAPI/environment failure, not
+            // an expected user condition) and refuse to persist it unencrypted.
+            _logger.Warning(ex,
+                "Credential protection failed; the credential will not be persisted in plain text");
+            return string.Empty;
         }
     }
 

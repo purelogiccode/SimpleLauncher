@@ -111,7 +111,7 @@ public static partial class MameConfigurationService
 
             var key = match.Groups[1].Value;
             var whitespaceBetween = match.Groups[2].Value;
-            var commentPart = match.Groups[4].Value; // Captures only the #comment
+            var commentPart = match.Groups[4].Value; // Captures the ' #comment' suffix (with its leading whitespace)
 
             // Handle standard settings
             if (updates.TryGetValue(key, out var newValue))
@@ -371,6 +371,6 @@ public static partial class MameConfigurationService
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",
         Justification = "Capturing groups are needed to extract key, whitespace, value and comment")]
-    [GeneratedRegex(@"^(\S+)(\s+)([^#\r\n]*)(#.*)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(\S+)(\s+)(.*?)(\s+#.*)?$", RegexOptions.None, 1000)]
     private static partial Regex IniLineRegex();
 }

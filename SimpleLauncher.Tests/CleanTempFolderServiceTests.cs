@@ -89,12 +89,21 @@ public class CleanTempFolderServiceTests : IDisposable
         var subDir = Path.Combine(_tempDir, "sub");
         Directory.CreateDirectory(subDir);
 
+        var deletedPaths = new List<string>();
+        _deleteFilesMock
+            .Setup(x => x.TryDeleteFileAsync(It.IsAny<string>()))
+            .Callback<string>(deletedPaths.Add)
+            .Returns(Task.CompletedTask);
+
         await _service.CleanupPartialExtractionAsync(_tempDir);
 
-        _deleteFilesMock.Verify(x => x.TryDeleteFileAsync(trackingFile),
-            Times.Exactly(2)); // explicit call + the file loop
+        _deleteFilesMock.Verify(x => x.TryDeleteFileAsync(trackingFile), Times.Once);
         _deleteFilesMock.Verify(x => x.TryDeleteFileAsync(file1), Times.Once);
         _deleteFilesMock.Verify(x => x.TryDeleteFileAsync(file2), Times.Once);
+
+        // The marker is deleted last: if any file/subdirectory deletion fails, the directory
+        // must remain recognizable as a partial extraction for the next cleanup attempt.
+        Assert.Equal(trackingFile, deletedPaths[^1]);
         Assert.False(Directory.Exists(subDir));
     }
 
