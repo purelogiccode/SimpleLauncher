@@ -185,19 +185,17 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         var userLogPath = Path.Combine(_logFolder,
             GetSafeLogFileName(_configuration.GetValue<string>("LogPath"), "error_user.log"));
 
-        if (errorLogPath != null)
-        {
-            await File.AppendAllTextAsync(errorLogPath, report);
-            if (userLogPath != null)
-            {
-                await File.AppendAllTextAsync(userLogPath,
-                    report +
-                    "--------------------------------------------------------------------------------------------------------------\n\n\n");
-            }
-        }
-
         try
         {
+            // Persist the report first. The appends stay inside this try: if the log
+            // folder is missing/read-only, the failure is handled by the catch below
+            // (WriteCriticalError never throws) instead of escaping SendReportAsync and
+            // silently killing the processing loop.
+            await File.AppendAllTextAsync(errorLogPath, report);
+            await File.AppendAllTextAsync(userLogPath,
+                report +
+                "--------------------------------------------------------------------------------------------------------------\n\n\n");
+
             var httpClient = _httpClientFactory.CreateClient("LogErrorsClient");
             httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
 

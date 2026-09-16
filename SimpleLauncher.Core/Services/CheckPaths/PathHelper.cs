@@ -199,8 +199,11 @@ public static partial class PathHelper
     {
         if (string.IsNullOrWhiteSpace(path) || path.Length > MaxPathLength) return null;
 
-        if ((path.StartsWith('"') && path.EndsWith('"')) ||
-            (path.StartsWith('\'') && path.EndsWith('\'')))
+        // Length check: a single quote satisfies both StartsWith and EndsWith, and
+        // path[1..^1] on a length-1 string throws ArgumentOutOfRangeException.
+        if (path.Length >= 2 &&
+            ((path.StartsWith('"') && path.EndsWith('"')) ||
+             (path.StartsWith('\'') && path.EndsWith('\''))))
         {
             path = path[1..^1];
         }

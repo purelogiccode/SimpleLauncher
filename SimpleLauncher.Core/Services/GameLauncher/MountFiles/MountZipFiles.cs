@@ -298,8 +298,12 @@ public class MountZipFiles : IMountZipFiles
         {
             // Notify developer
             _logger.Debug($"[MountZipFiles] Exception during ZIP mounting or launching: {ex}");
-            var exitCodeInfoInCatch = mountProcess is { HasExited: true }
-                ? $"Exit Code: {mountProcess.ExitCode}"
+            // HasExited throws InvalidOperationException when Start() itself failed (no
+            // process associated); treating "never started" as unknown keeps the original
+            // error visible and the user-facing dialog reachable.
+            var mountExitCode = GetMountProcessExitCodeOrNull(mountProcess);
+            var exitCodeInfoInCatch = mountExitCode.HasValue
+                ? $"Exit Code: {mountExitCode.Value}"
                 : "Process was still running or state unknown.";
             var contextMessage = $"Error during ZIP mount/launch process for {resolvedZipFilePath}.\n" +
                                  $"Exception: {ex.Message}\n" +
@@ -307,9 +311,8 @@ public class MountZipFiles : IMountZipFiles
             logErrors.Error(ex, contextMessage);
 
             // Notify user
-            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(mountProcess is { HasExited: true }
-                ? mountProcess.ExitCode
-                : null);
+            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(
+                GetMountProcessExitCodeOrNull(mountProcess));
         }
         finally
         {
@@ -376,9 +379,8 @@ public class MountZipFiles : IMountZipFiles
             }
             else if (mountProcessId != -1)
             {
-                var exitCodeStr = mountProcess is { HasExited: true }
-                    ? mountProcess.ExitCode.ToString(CultureInfo.InvariantCulture)
-                    : "N/A";
+                var exitCodeStr =
+                    GetMountProcessExitCodeOrNull(mountProcess)?.ToString(CultureInfo.InvariantCulture) ?? "N/A";
                 _logger.Debug(
                     $"[MountZipFiles] {_zipMountExecutableName} (ID: {mountProcessId}) had already exited or was not running when finally cleanup was attempted. Exit code likely {exitCodeStr}.");
             }
@@ -589,8 +591,12 @@ public class MountZipFiles : IMountZipFiles
             _logger.Debug($"[MountZipFiles] Exception during ZIP mounting or launching: {ex}");
 
             // Notify developer
-            var exitCodeInfoInCatch = mountProcess is { HasExited: true }
-                ? $"Exit Code: {mountProcess.ExitCode}"
+            // HasExited throws InvalidOperationException when Start() itself failed (no
+            // process associated); treating "never started" as unknown keeps the original
+            // error visible and the user-facing dialog reachable.
+            var mountExitCode = GetMountProcessExitCodeOrNull(mountProcess);
+            var exitCodeInfoInCatch = mountExitCode.HasValue
+                ? $"Exit Code: {mountExitCode.Value}"
                 : "Process was still running or state unknown.";
             var contextMessage = $"Error during ZIP mount/launch process for {resolvedZipFilePath}.\n" +
                                  $"Exception: {ex.Message}\n" +
@@ -598,9 +604,8 @@ public class MountZipFiles : IMountZipFiles
             logErrors.Error(ex, contextMessage);
 
             // Notify user
-            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(mountProcess is { HasExited: true }
-                ? mountProcess.ExitCode
-                : null);
+            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(
+                GetMountProcessExitCodeOrNull(mountProcess));
         }
         finally
         {
@@ -649,9 +654,8 @@ public class MountZipFiles : IMountZipFiles
             }
             else if (mountProcessId != -1)
             {
-                var exitCodeStr = mountProcess is { HasExited: true }
-                    ? mountProcess.ExitCode.ToString(CultureInfo.InvariantCulture)
-                    : "N/A";
+                var exitCodeStr =
+                    GetMountProcessExitCodeOrNull(mountProcess)?.ToString(CultureInfo.InvariantCulture) ?? "N/A";
                 _logger.Debug(
                     $"[MountZipFiles] {_zipMountExecutableName} (ID: {mountProcessId}) had already exited or was not running when finally cleanup was attempted. Exit code likely {exitCodeStr}.");
             }
@@ -932,8 +936,12 @@ public class MountZipFiles : IMountZipFiles
             _logger.Debug($"[MountZipFiles] Exception during ScummVM ZIP mounting or launching: {ex}");
 
             // Notify developer
-            var exitCodeInfoInCatch = mountProcess is { HasExited: true }
-                ? $"Exit Code: {mountProcess.ExitCode}"
+            // HasExited throws InvalidOperationException when Start() itself failed (no
+            // process associated); treating "never started" as unknown keeps the original
+            // error visible and the user-facing dialog reachable.
+            var mountExitCode = GetMountProcessExitCodeOrNull(mountProcess);
+            var exitCodeInfoInCatch = mountExitCode.HasValue
+                ? $"Exit Code: {mountExitCode.Value}"
                 : "Process was still running or state unknown.";
             var contextMessage = $"Error during ScummVM ZIP mount/launch process for {resolvedZipFilePath}.\n" +
                                  $"Exception: {ex.Message}\n" +
@@ -941,9 +949,8 @@ public class MountZipFiles : IMountZipFiles
             logErrors.Error(ex, contextMessage);
 
             // Notify user
-            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(mountProcess is { HasExited: true }
-                ? mountProcess.ExitCode
-                : null);
+            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(
+                GetMountProcessExitCodeOrNull(mountProcess));
         }
         finally
         {
@@ -992,9 +999,8 @@ public class MountZipFiles : IMountZipFiles
             }
             else if (mountProcessId != -1)
             {
-                var exitCodeStr = mountProcess is { HasExited: true }
-                    ? mountProcess.ExitCode.ToString(CultureInfo.InvariantCulture)
-                    : "N/A";
+                var exitCodeStr =
+                    GetMountProcessExitCodeOrNull(mountProcess)?.ToString(CultureInfo.InvariantCulture) ?? "N/A";
                 _logger.Debug(
                     $"[MountZipFiles] {_zipMountExecutableName} (ID: {mountProcessId}) had already exited or was not running when finally cleanup was attempted. Exit code likely {exitCodeStr}.");
             }
@@ -1246,6 +1252,26 @@ public class MountZipFiles : IMountZipFiles
             logErrors.Error(ex, "Error in FindScummVmGamePath");
 
             return mountDriveRootForChecks;
+        }
+    }
+
+    /// <summary>
+    ///     Returns the mount process exit code when the process actually started and has
+    ///     exited; otherwise null. <see cref="Process.HasExited" /> throws
+    ///     InvalidOperationException when Start() itself failed (no process associated),
+    ///     which used to replace the original error and skip the user-facing dialog.
+    /// </summary>
+    private static int? GetMountProcessExitCodeOrNull(Process? mountProcess)
+    {
+        if (mountProcess is null) return null;
+
+        try
+        {
+            return mountProcess.HasExited ? mountProcess.ExitCode : null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
         }
     }
 }

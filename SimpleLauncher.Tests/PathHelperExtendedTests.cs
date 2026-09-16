@@ -42,6 +42,20 @@ public class PathHelperExtendedTests
     }
 
     /// <summary>
+    ///     Verifies that a path consisting of a single quote does not throw: both characters
+    ///     satisfy StartsWith and EndsWith, and path[1..^1] used to throw
+    ///     ArgumentOutOfRangeException.
+    /// </summary>
+    [Theory]
+    [InlineData("\"")]
+    [InlineData("'")]
+    public void ResolveRelativeToAppDirectorySingleQuoteDoesNotThrow(string path)
+    {
+        var exception = Record.Exception(() => PathHelper.ResolveRelativeToAppDirectory(path));
+        Assert.Null(exception);
+    }
+
+    /// <summary>
     ///     Verifies that ResolveRelativeToAppDirectory returns null for an extremely long path.
     /// </summary>
     [Fact]

@@ -67,6 +67,13 @@ public partial class ValidateBatchFile
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
+                // Skip comments exactly like ValidateBatchFileContents: a commented-out
+                // path (rem "D:\old\game.exe") must not trigger the missing-paths prompt.
+                var trimmed = line.TrimStart();
+                if (trimmed.StartsWith("rem", StringComparison.OrdinalIgnoreCase)) continue;
+                if (trimmed.StartsWith("::", StringComparison.Ordinal)) continue;
+                if (trimmed.StartsWith('#')) continue;
+
                 var currentIndex = 0;
                 while (currentIndex < line.Length)
                 {

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -78,7 +79,7 @@ public class MountChdFiles : IMountChdFiles
         _logger.Debug($"[MountChdFiles.MountAsync] Arguments: {psiMount.Arguments}");
 
         var mountProcess = new Process { StartInfo = psiMount, EnableRaisingEvents = true };
-        var errorOutput = new List<string>();
+        var errorOutput = new ConcurrentQueue<string>();
 
         try
         {
@@ -87,7 +88,7 @@ public class MountChdFiles : IMountChdFiles
             mountProcess.ErrorDataReceived += (_, e) =>
             {
                 if (e.Data != null)
-                    errorOutput.Add(e.Data);
+                    errorOutput.Enqueue(e.Data);
             };
             mountProcess.BeginErrorReadLine();
 
@@ -209,7 +210,7 @@ public class MountChdFiles : IMountChdFiles
         Process? mountProcess = null;
         var mountProcessId = -1;
         string? driveRoot = null;
-        var errorOutput = new List<string>();
+        var errorOutput = new ConcurrentQueue<string>();
 
         try
         {
@@ -221,7 +222,7 @@ public class MountChdFiles : IMountChdFiles
             mountProcess.ErrorDataReceived += (_, e) =>
             {
                 if (e.Data != null)
-                    errorOutput.Add(e.Data);
+                    errorOutput.Enqueue(e.Data);
             };
             mountProcess.BeginErrorReadLine();
 
@@ -423,7 +424,7 @@ public class MountChdFiles : IMountChdFiles
         Process? mountProcess = null;
         var mountProcessId = -1;
         string? driveRoot = null;
-        var errorOutput = new List<string>();
+        var errorOutput = new ConcurrentQueue<string>();
 
         try
         {
@@ -435,7 +436,7 @@ public class MountChdFiles : IMountChdFiles
             mountProcess.ErrorDataReceived += (_, e) =>
             {
                 if (e.Data != null)
-                    errorOutput.Add(e.Data);
+                    errorOutput.Enqueue(e.Data);
             };
             mountProcess.BeginErrorReadLine();
 
@@ -837,7 +838,7 @@ public class MountChdFiles : IMountChdFiles
 
     private async Task<(bool Success, char? DriveLetter, int? ExitCode)> WaitForDriveMountAndDetectAsync(
         HashSet<char> existingDrives, Process mountProcess, int processId, ILogger logErrors,
-        List<string> errorOutput, string chdFileName)
+        ConcurrentQueue<string> errorOutput, string chdFileName)
     {
         const int maxRetries = 240;
         const int pollIntervalMs = 500;

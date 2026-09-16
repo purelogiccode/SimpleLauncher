@@ -124,6 +124,21 @@ public class ValidateBatchFileTests : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that FindInvalidQuotedPathsSimple skips rem/:: comments like
+    ///     ValidateBatchFileContents does: a commented-out path must not trigger the
+    ///     false "some paths are missing, continue?" prompt at launch.
+    /// </summary>
+    [Fact]
+    public void FindInvalidQuotedPathsSimpleCommentLinesAreSkipped()
+    {
+        var batchFile = Path.Combine(_testDirectory, "comments.bat");
+        File.WriteAllText(batchFile, "rem \"C:\\nonexistent\\old.exe\"\n:: \"C:\\nonexistent\\also_old.exe\"\n");
+
+        var result = ValidateBatchFile.FindInvalidQuotedPathsSimple(batchFile);
+        Assert.Empty(result);
+    }
+
+    /// <summary>
     ///     Verifies that <see cref="ValidateBatchFile.FindInvalidQuotedPathsSimple" /> returns empty for an empty file.
     /// </summary>
     [Fact]

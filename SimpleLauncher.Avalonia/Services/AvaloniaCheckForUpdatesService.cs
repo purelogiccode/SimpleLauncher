@@ -415,7 +415,7 @@ public partial class AvaloniaCheckForUpdatesService
     {
         try
         {
-            var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             await using var stream = await response.Content.ReadAsStreamAsync();
@@ -470,7 +470,7 @@ public partial class AvaloniaCheckForUpdatesService
         {
             try
             {
-                var response =
+                using var response =
                     await _httpClient.GetAsync($"https://api.github.com/repos/{repoOwner}/{RepoName}/releases/latest");
                 if (!response.IsSuccessStatusCode)
                 {
@@ -503,7 +503,7 @@ public partial class AvaloniaCheckForUpdatesService
         // Fallback: the secondary server hosts a version.txt file and the release packages.
         try
         {
-            var versionResponse = await _httpClient.GetAsync(SecondaryServerBaseUrl + "version.txt");
+            using var versionResponse = await _httpClient.GetAsync(SecondaryServerBaseUrl + "version.txt");
             if (!versionResponse.IsSuccessStatusCode)
             {
                 _logger.Debug(

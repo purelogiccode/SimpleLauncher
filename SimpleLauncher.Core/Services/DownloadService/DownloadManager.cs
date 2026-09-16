@@ -38,6 +38,11 @@ public class DownloadManager : IDisposable
     private volatile bool _isFileLockedDuringDownload;
     private volatile bool _isUserCancellation;
 
+    // Incremented by CancelDownload. A download snapshots it when the call starts: if the
+    // value changed before the download's state reset, the stop request belongs to this
+    // download and must not be discarded. Guarded by _lock.
+    private long _cancelEpoch;
+
     /// <summary>
     ///     Initializes a new instance of the DownloadManager.
     /// </summary>
@@ -168,6 +173,7 @@ public class DownloadManager : IDisposable
                 return;
 
             IsUserCancellation = true;
+            _cancelEpoch++;
             cts = _cancellationTokenSource;
         }
 
@@ -213,6 +219,18 @@ public class DownloadManager : IDisposable
     /// <returns>The path to the downloaded file, or null if the download failed.</returns>
     internal async Task<string?> DownloadFileAsync(string downloadUrl, string? fileName = null)
     {
+        // Snapshot the cancel epoch at invocation: a stop request that arrives after this
+        // point (while the download is queued on the gate or mid-reset) must cancel this
+        // download. A stop request from an earlier session does not change this value.
+        long cancelEpochAtStart;
+        lock (_lock)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(DownloadManager));
+
+            cancelEpochAtStart = _cancelEpoch;
+        }
+
         // Serialize downloads so a second call can never Reset/dispose the shared
         // CancellationTokenSource while a first download still owns its token (CORE-08).
         try
@@ -226,13 +244,38 @@ public class DownloadManager : IDisposable
 
         try
         {
+            bool canceledWhileQueued;
+            lock (_lock)
+            {
+                ObjectDisposedException.ThrowIf(_disposed || _cancellationTokenSource == null,
+                    nameof(DownloadManager));
+
+                // Ordered against CancelDownload: either the stop request is seen here
+                // (and honored) or CancelDownload runs after the reset and cancels the new
+                // CTS — the flag clearing below can never swallow a pending stop request.
+                canceledWhileQueued = _cancelEpoch != cancelEpochAtStart;
+                if (canceledWhileQueued)
+                {
+                    IsUserCancellation = true;
+                }
+                else
+                {
+                    IsDownloadCompleted = false;
+                    IsUserCancellation = false;
+                    IsFileLockedDuringDownload = false;
+                }
+            }
+
+            if (canceledWhileQueued)
+            {
+                _logger.Debug(
+                    $"Download start skipped because a stop request arrived while it was queued: {downloadUrl}");
+                return null;
+            }
+
             // Reset the cancellation token source at the beginning of every download attempt.
             // Safe here: the gate guarantees no other download is using the old CTS.
             ResetCancellationToken();
-
-            IsDownloadCompleted = false;
-            IsUserCancellation = false;
-            IsFileLockedDuringDownload = false;
 
         // Determine a safe file name confined to TempFolder (CORE-05).
         // Both the caller-supplied fileName and the URL-derived name are untrusted:
@@ -299,7 +342,7 @@ public class DownloadManager : IDisposable
 
                 currentRetry++;
             }
-            catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException
+            catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException
                                            or Polly.Timeout.TimeoutRejectedException)
             {
                 if (IsUserCancellation) return null;
@@ -464,7 +507,8 @@ public class DownloadManager : IDisposable
             // Throttle UI updates to 10fps
             if ((DateTime.Now - lastProgressUpdate).TotalMilliseconds >= 100)
             {
-                var progressPercentage = totalBytes.HasValue ? (double)totalBytesRead / totalBytes.Value * 100 : 0;
+                // Content-Length 0 (or missing) must not produce NaN/Infinity percentages.
+                var progressPercentage = totalBytes is > 0 ? (double)totalBytesRead / totalBytes.Value * 100 : 0;
                 var sizeStatus = totalBytes.HasValue
                     ? $"{FormatFileSize.FormatToHumanReadable(totalBytesRead)} of {FormatFileSize.FormatToHumanReadable(totalBytes.Value)}"
                     : $"{FormatFileSize.FormatToHumanReadable(totalBytesRead)}";

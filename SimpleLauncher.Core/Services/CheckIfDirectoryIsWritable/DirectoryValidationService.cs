@@ -44,7 +44,10 @@ public class DirectoryValidationService : IDirectoryValidationService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to check if directory is writable");
+            // Expected condition: directory is not writable (e.g. Program Files).
+            // Log at Information level so the bug report API does not pick it up.
+            _logger.Information(ex, "Directory is not writable: {Path}", path);
+
             return false;
         }
     }

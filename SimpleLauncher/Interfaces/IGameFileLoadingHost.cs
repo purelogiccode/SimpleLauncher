@@ -102,4 +102,11 @@ public interface IGameFileLoadingHost
     /// </summary>
     /// <returns>The sort order string.</returns>
     string GetMameSortOrder();
+
+    /// <summary>
+    ///     Gets the active letter filter and search query so a reload re-applies the same
+    ///     view instead of silently replacing it with the unfiltered list.
+    /// </summary>
+    /// <returns>The current start letter (or null) and search query (or null).</returns>
+    (string? startLetter, string? searchQuery) GetLoadGameFilesParams();
 }

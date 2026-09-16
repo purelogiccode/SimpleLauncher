@@ -251,7 +251,12 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
                     $"[OnGameFilesChangedAsync] File change detected for system '{systemName}'. Reloading game list.");
 
                 await InvalidateGameFileCachesAsync(token);
-                await LoadGameFilesAsync(cancellationToken: token);
+
+                // Re-apply the active letter/search filter: passing no params here would
+                // silently replace the filtered list with the unfiltered one while the
+                // highlighted letter and CurrentFilter/ActiveSearchQueryOrMode stayed set.
+                var (startLetter, searchQuery) = _host.GetLoadGameFilesParams();
+                await LoadGameFilesAsync(startLetter, searchQuery, token);
             });
             await inner;
         }

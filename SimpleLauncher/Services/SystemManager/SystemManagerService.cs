@@ -1147,6 +1147,7 @@ public partial class SystemManagerService : ISystemManager
             new XElement("FileFormatsToSearch",
                 config.FileFormatsToSearch.Select(static format => new XElement("FormatToSearch", format))),
             new XElement("GroupByFolder", config.GroupByFolder),
+            new XElement("DisableRecursiveSearch", config.DisableRecursiveSearch),
             config.ExtractFileBeforeLaunch ? new XElement("ExtractFileBeforeLaunch", true) : null,
             new XElement("FileFormatsToLaunch",
                 config.FileFormatsToLaunch.Select(static format => new XElement("FormatToLaunch", format))),

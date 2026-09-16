@@ -108,8 +108,9 @@ internal class ZipService
                         // Validate and sanitize entry path to prevent path traversal attacks.
                         // The same relative path is resolved under BOTH roots — a ".." that
                         // escapes the install dir would escape staging too, so both are checked.
-                        // Normalize: remove leading slashes, then combine and resolve
-                        var trimmedEntry = entryKey.TrimStart('/', '\\');
+                        // Normalize: remove leading slashes, collapse "."/".." segments so a
+                        // non-canonical entry cannot masquerade as a non-root path below.
+                        var trimmedEntry = NormalizeEntryPath(entryKey.TrimStart('/', '\\'));
 
                         // Skip directory entries (created implicitly with their files)
                         if (reader.Entry.IsDirectory)
@@ -384,6 +385,37 @@ internal class ZipService
         // UPD-03: the containment prefix must end in a separator — without it,
         // e.g. "C:\AppEvil\pwn.exe" passes StartsWith("C:\App") and escapes.
         return fullPath.EndsWith(Path.DirectorySeparatorChar) ? fullPath : fullPath + Path.DirectorySeparatorChar;
+    }
+
+    /// <summary>
+    ///     Normalizes a ZIP entry path before the security checks: collapses "." and ".."
+    ///     segments so entries like "./Updater.exe" or "sub/../Updater.exe" (which resolve
+    ///     to the archive root) cannot bypass the updater self-protection check (UPD-23).
+    ///     A leading ".." is kept so the containment check below still rejects it.
+    /// </summary>
+    private static string NormalizeEntryPath(string entry)
+    {
+        var segments = entry.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries);
+        var normalized = new List<string>(segments.Length);
+        foreach (var segment in segments)
+        {
+            switch (segment)
+            {
+                case ".":
+                    continue;
+                case "..":
+                    if (normalized.Count > 0)
+                        normalized.RemoveAt(normalized.Count - 1);
+                    else
+                        normalized.Add(segment);
+                    continue;
+                default:
+                    normalized.Add(segment);
+                    break;
+            }
+        }
+
+        return string.Join(Path.DirectorySeparatorChar, normalized);
     }
 
     /// <summary>

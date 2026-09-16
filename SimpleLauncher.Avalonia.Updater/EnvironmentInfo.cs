@@ -140,35 +140,35 @@ internal class EnvironmentInfo
         {
             if (OperatingSystem.IsWindows())
             {
-                // Try to get accurate Windows version from registry first
+                // Windows 11 (client) still reports ProductName = "Windows 10 ..." in the
+                // registry, so the build number is checked FIRST: build >= 22000 means
+                // Windows 11 (or a Server 2022+ product). Checking the product name first
+                // mislabeled Windows 11 bug reports as Windows 10.
                 var productName = GetRegistryProductName();
+                var build = Environment.OSVersion.Version.Build;
+                if (build >= 22000)
+                {
+                    // Server product names are accurate in the registry (Server 2022/2025).
+                    return !string.IsNullOrEmpty(productName) &&
+                           productName.Contains("Server", StringComparison.OrdinalIgnoreCase)
+                        ? $"{productName} (Build {build})"
+                        : $"Windows 11 (Build {build})";
+                }
+
                 if (!string.IsNullOrEmpty(productName))
                 {
-                    // Windows 11 check: ProductName contains "Windows 11"
-                    if (productName.Contains("Windows 11", StringComparison.OrdinalIgnoreCase))
-                        return $"{productName} (Build {Environment.OSVersion.Version.Build})";
-
                     // Windows Server 2022 check: ProductName contains "Server 2022"
                     if (productName.Contains("Server 2022", StringComparison.OrdinalIgnoreCase))
-                        return $"{productName} (Build {Environment.OSVersion.Version.Build})";
+                        return $"{productName} (Build {build})";
 
-                    // Windows 10 check
+                    // Windows 10 (build < 22000 by the check above)
                     if (productName.Contains("Windows 10", StringComparison.OrdinalIgnoreCase))
-                        return $"{productName} (Build {Environment.OSVersion.Version.Build})";
+                        return $"{productName} (Build {build})";
                 }
 
                 // Fallback to Environment.OSVersion with improved logic
                 var osVersion = Environment.OSVersion;
                 var version = osVersion.Version;
-
-                // Windows 11 and Server 2022 both have build >= 22000
-                // Use registry to differentiate, or fall back to Major.Minor check
-                if (version is { Build: >= 22000, Major: 10 })
-                {
-                    // Without registry, we can't be 100% sure, but we'll assume Windows 11 for client OS
-                    // and note the uncertainty
-                    return $"Windows 11 or Server 2022 (Build {version.Build})";
-                }
 
                 return version.Major switch
                 {

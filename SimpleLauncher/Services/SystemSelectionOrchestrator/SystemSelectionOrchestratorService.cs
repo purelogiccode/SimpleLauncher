@@ -537,7 +537,9 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
             var filesInFolder = await _getListOfFiles.GetFilesAsync(resolvedSystemFolderPath,
                 selectedManager.FileFormatsToSearch, selectedManager.DisableRecursiveSearch,
                 selectedManager.GroupByFolder, cancellationToken);
-            foreach (var file in filesInFolder) uniqueFilesForSystem.TryAdd(Path.GetFileName(file), file);
+            // Key by full path: systems whose subfolders contain same-named ROMs must not
+            // hide all but one entry in the cache (WPF-07 follow-up).
+            foreach (var file in filesInFolder) uniqueFilesForSystem.TryAdd(Path.GetFullPath(file), file);
         }
 
         await _gameCacheService.SetAllGamesAsync(uniqueFilesForSystem.Values.ToList(), currentSelectedSystem,

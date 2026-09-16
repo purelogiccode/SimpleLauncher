@@ -334,6 +334,43 @@ public class SystemManagerXmlPersistenceTests : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that DisableRecursiveSearch survives the FIRST save of a new system.
+    ///     CreateSystemXElement used to omit the element, so the flag was lost until a
+    ///     second save rewrote the node.
+    /// </summary>
+    [Fact]
+    public async Task SaveSystemConfigurationAsyncPersistsDisableRecursiveSearchForNewSystem()
+    {
+        var system = new SystemManagerService
+        {
+            SystemName = "Genesis",
+            SystemFolders = [@"C:\roms\Genesis"],
+            SystemImageFolder = @"C:\images\Genesis",
+            FileFormatsToSearch = [".md"],
+            FileFormatsToLaunch = [".md"],
+            DisableRecursiveSearch = true,
+            Emulators =
+            [
+                new Emulator
+                {
+                    EmulatorName = "Blastem",
+                    EmulatorLocation = @"C:\emu\blastem.exe",
+                    EmulatorParameters = "%ROM%",
+                    ReceiveANotificationOnEmulatorError = true
+                }
+            ]
+        };
+
+        await SystemManagerService.SaveSystemConfigurationAsync(system);
+
+        ResetSystemXmlStaticState();
+        var loaded = SystemManagerService.LoadSystemManagers(_configuration);
+
+        Assert.Single(loaded);
+        Assert.True(loaded[0].DisableRecursiveSearch);
+    }
+
+    /// <summary>
     ///     Verifies that a new system is added alongside existing systems in the XML.
     /// </summary>
     [Fact]

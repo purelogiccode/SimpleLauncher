@@ -64,4 +64,9 @@ public partial class MainWindow : IGameFileLoadingHost
     {
         return ((IUiResetHost)this).MameSortOrder;
     }
+
+    (string? startLetter, string? searchQuery) IGameFileLoadingHost.GetLoadGameFilesParams()
+    {
+        return GetLoadGameFilesParams();
+    }
 }
