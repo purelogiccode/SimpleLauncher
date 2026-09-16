@@ -172,7 +172,7 @@ public class SystemManagerService
             }
 
             if (result.Count == 0 && invalidErrors.Count == 0 && explicitPath is null)
-                NotifyCorruptedAndMaybeRestore(path);
+                _ = NotifyCorruptedAndMaybeRestoreAsync(path);
         }
         catch (IOException ex)
         {
@@ -183,7 +183,7 @@ public class SystemManagerService
         {
             Log.Error(ex, "Failed to parse system.xml at {Path}", path);
             if (explicitPath is null)
-                NotifyCorruptedAndMaybeRestore(path);
+                _ = NotifyCorruptedAndMaybeRestoreAsync(path);
         }
 
         // Notify the user about each invalid system that was removed.
@@ -207,30 +207,36 @@ public class SystemManagerService
     }
 
     /// <summary>Informs the user the file is corrupted and offers to restore the last backup.</summary>
-    private void NotifyCorruptedAndMaybeRestore(string path)
+    private async Task NotifyCorruptedAndMaybeRestoreAsync(string path)
     {
-        _ = _messageBox?.SystemXmlIsCorruptedMessageBoxAsync(
-            PathHelper.ResolveLogFilePath(_configuration));
-
-        var backup = FindLatestBackup(path);
-        if (backup is null) return;
-
-        var restoreTask = _messageBox?.WouldYouLikeToRestoreTheLastBackupMessageBoxAsync();
-        if (restoreTask is null) return;
-        var result = restoreTask.GetAwaiter().GetResult();
-        if (result != MessageBoxResult.Yes) return;
-
         try
         {
-            File.Copy(backup, path, true);
-            _cachedSystems = null;
-            InvalidateCache();
-            _cachedSystems = LoadSystems();
+            _ = _messageBox?.SystemXmlIsCorruptedMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+
+            var backup = FindLatestBackup(path);
+            if (backup is null) return;
+
+            if (_messageBox is null) return;
+            var result = await _messageBox.WouldYouLikeToRestoreTheLastBackupMessageBoxAsync();
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                File.Copy(backup, path, true);
+                _cachedSystems = null;
+                InvalidateCache();
+                _cachedSystems = LoadSystems();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to restore 'system.xml' from backup '{Backup}'", backup);
+                _ = _messageBox.SimpleLauncherWasUnableToRestoreBackupMessageBoxAsync();
+            }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to restore 'system.xml' from backup '{Backup}'", backup);
-            _ = _messageBox?.SimpleLauncherWasUnableToRestoreBackupMessageBoxAsync();
+            Log.Error(ex, "Error while handling a corrupted 'system.xml'");
         }
     }
 
@@ -279,7 +285,6 @@ public class SystemManagerService
         var root = new XElement("SystemConfigs");
         foreach (var config in systems.OrderBy(static c => c.SystemName, StringComparer.OrdinalIgnoreCase))
         {
-            var emulator = config.Emulators?.FirstOrDefault();
             root.Add(BuildSystemConfigElement(
                 config.SystemName,
                 config.SystemFolders,
@@ -287,7 +292,7 @@ public class SystemManagerService
                 config.FileFormatsToSearch,
                 config.FileFormatsToLaunch,
                 config.ExtractFileBeforeLaunch,
-                emulator,
+                config.Emulators,
                 config.GroupByFolder,
                 config.DisableRecursiveSearch));
         }
@@ -542,7 +547,7 @@ public class SystemManagerService
                         var newElement = BuildSystemConfigElement(
                             systemName, systemFolders, systemImageFolder,
                             fileFormatsToSearch, fileFormatsToLaunch,
-                            extractFileBeforeLaunch, emulator,
+                            extractFileBeforeLaunch, emulator is null ? null : [emulator],
                             groupByFolder, disableRecursiveSearch);
                         root.Add(newElement);
                     }
@@ -782,7 +787,7 @@ public class SystemManagerService
         IEnumerable<string> fileFormatsToSearch,
         IEnumerable<string> fileFormatsToLaunch,
         bool extractFileBeforeLaunch,
-        Emulator? emulator,
+        IEnumerable<Emulator>? emulators,
         bool groupByFolder = false,
         bool disableRecursiveSearch = false)
     {
@@ -799,12 +804,28 @@ public class SystemManagerService
             new XElement("FileFormatsToLaunch",
                 fileFormatsToLaunch.Select(f => new XElement("FormatToLaunch", f))));
 
-        if (emulator != null) element.Add(BuildEmulatorsElement(emulator));
+        if (emulators != null)
+        {
+            var emulatorList = emulators.ToList();
+            if (emulatorList.Count > 0) element.Add(BuildEmulatorsElement(emulatorList));
+        }
 
         return element;
     }
 
     private static XElement BuildEmulatorsElement(Emulator emu)
+    {
+        return BuildEmulatorsElement([emu]);
+    }
+
+    private static XElement BuildEmulatorsElement(IEnumerable<Emulator> emulators)
+    {
+        var emulatorsElement = new XElement("Emulators");
+        foreach (var emu in emulators) emulatorsElement.Add(BuildEmulatorElement(emu));
+        return emulatorsElement;
+    }
+
+    private static XElement BuildEmulatorElement(Emulator emu)
     {
         var emuEl = new XElement("Emulator",
             new XElement("EmulatorName", emu.EmulatorName),
@@ -821,7 +842,7 @@ public class SystemManagerService
         AppendIfNotEmpty(emuEl, "ImagePackDownloadLink5", emu.ImagePackDownloadLink5);
         AppendIfNotEmpty(emuEl, "ImagePackDownloadExtractPath", emu.ImagePackDownloadExtractPath);
 
-        return new XElement("Emulators", emuEl);
+        return emuEl;
     }
 
     private static void AppendIfNotEmpty(XElement parent, string name, string? value)

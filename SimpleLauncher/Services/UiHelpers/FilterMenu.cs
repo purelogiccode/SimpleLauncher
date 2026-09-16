@@ -176,8 +176,12 @@ public class FilterMenu
         if (_selectedButton != null && _selectedButton != button)
             _selectedButton.ClearValue(Control.BackgroundProperty);
 
-        // ReSharper disable once AssignNullToNotNullAttribute
-        button.Background = (Brush)Application.Current.Resources["AccentColorBrush"];
+        var accentBrush = Application.Current?.Resources.Contains("MahApps.Brushes.Accent") == true
+            ? Application.Current.Resources["MahApps.Brushes.Accent"] as Brush
+            : null;
+        if (accentBrush != null)
+            button.Background = accentBrush;
+
         _playSoundEffects.PlayNotificationSound();
         _selectedButton = button;
     }

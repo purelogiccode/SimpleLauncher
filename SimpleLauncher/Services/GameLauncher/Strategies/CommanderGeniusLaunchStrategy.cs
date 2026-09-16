@@ -84,6 +84,15 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             }
 
             var zipName = Path.GetFileNameWithoutExtension(context.ResolvedFilePath);
+            if (string.IsNullOrEmpty(zipName) || zipName is "." or ".." ||
+                zipName.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) >= 0)
+            {
+                _logger.Debug(
+                    "[CommanderGeniusLaunchStrategy] Refusing to use an invalid archive name as the extraction folder");
+                LogErrorAsync($"Invalid archive name: {Path.GetFileName(context.ResolvedFilePath)}");
+                return;
+            }
+
             var gamesDir = Path.Combine(cgDataPath, "games");
             extractionDir = Path.Combine(gamesDir, zipName);
 
