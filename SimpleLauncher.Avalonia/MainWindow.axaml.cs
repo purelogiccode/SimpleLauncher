@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
@@ -64,6 +63,7 @@ public partial class MainWindow : Window, IPaginationHost
     private readonly EventHandler<PointerWheelEventArgs> _pointerWheelChangedHandler;
     private readonly AvaloniaQuitSimpleLauncher _quitSimpleLauncher;
     private readonly SettingsManagerService _settings;
+    private readonly AvaloniaStartupInitializationService _startupInitializationService;
     private readonly SystemManagerService _systemManagerService;
     private readonly AvaloniaSystemSelectionOrchestratorService _systemSelectionOrchestrator;
 
@@ -94,7 +94,8 @@ public partial class MainWindow : Window, IPaginationHost
         AvaloniaSystemSelectionOrchestratorService systemSelectionOrchestrator,
         AvaloniaContextMenuService contextMenuService,
         AvaloniaLoadingOverlayService loadingOverlay,
-        AvaloniaQuitSimpleLauncher quitSimpleLauncher)
+        AvaloniaQuitSimpleLauncher quitSimpleLauncher,
+        AvaloniaStartupInitializationService startupInitializationService)
     {
         _viewModel = viewModel;
         _systemManagerService = systemManagerService;
@@ -113,6 +114,7 @@ public partial class MainWindow : Window, IPaginationHost
         _contextMenuService = contextMenuService;
         _loadingOverlay = loadingOverlay;
         _quitSimpleLauncher = quitSimpleLauncher;
+        _startupInitializationService = startupInitializationService;
         FavoritesSection = favoritesSection;
         PlayHistorySection = playHistorySection;
         GlobalSearchSection = globalSearchSection;
@@ -652,6 +654,10 @@ public partial class MainWindow : Window, IPaginationHost
     {
         PaginationLabel.Text = "";
         StatusRight.Text = _localization.GetString("Empty.Title", "No Games Found");
+
+        // The timer is one-shot: restart it so this message auto-clears after the
+        // configured timeout instead of staying on screen until the next one.
+        _startupInitializationService.RestartStatusBarTimer();
     }
 
     /// <summary>
@@ -725,7 +731,11 @@ public partial class MainWindow : Window, IPaginationHost
 
             var data = new WindowBoundsData
             {
-                State = WindowState.ToString()
+                // Only Normal/Maximized are persisted: exiting via minimize-to-tray would
+                // otherwise save "Minimized" and the next launch could start hidden.
+                State = WindowState == WindowState.Maximized
+                    ? nameof(WindowState.Maximized)
+                    : nameof(WindowState.Normal)
             };
 
             if (WindowState == WindowState.Normal)
@@ -774,7 +784,13 @@ public partial class MainWindow : Window, IPaginationHost
                 }
             }
 
-            if (data.State is not null && Enum.TryParse<WindowState>(data.State, out var state)) WindowState = state;
+            // Never restore Minimized: the window would be hidden before the
+            // hide-on-minimize handler is wired, leaving a tray-only session.
+            if (data.State is not null && Enum.TryParse<WindowState>(data.State, out var state) &&
+                state is WindowState.Normal or WindowState.Maximized)
+            {
+                WindowState = state;
+            }
         }
         catch (Exception ex)
         {
@@ -831,7 +847,9 @@ public partial class MainWindow : Window, IPaginationHost
 
     private void SortGamesByColumn(string columnName)
     {
-        var collection = _viewModel.Games;
+        // Sort the backing (full) list, never the paginated Games slice: sorting the
+        // slice only reordered the current page and was reverted by paging/filters.
+        var collection = _viewModel.CurrentBaseGames;
         if (string.Equals(_lastSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
         {
             _sortAscending = !_sortAscending;
@@ -881,7 +899,7 @@ public partial class MainWindow : Window, IPaginationHost
             _ => collection.OrderBy(g => g.FileName, StringComparer.OrdinalIgnoreCase)
         };
 
-        _viewModel.Games = new ObservableCollection<GameCardViewModel>(sorted);
+        _viewModel.ApplySortedCurrentView(sorted.ToList());
     }
 
     private void GameDataGrid_DoubleTapped(object? sender, TappedEventArgs e)
@@ -1184,6 +1202,11 @@ public partial class MainWindow : Window, IPaginationHost
                 break;
             case MainSection.PlayHistory:
                 await PlayHistorySection.LoadHistoryAsync();
+                break;
+            case MainSection.GlobalSearch:
+                // The section ViewModel is a singleton: refresh the system dropdown so
+                // systems added/renamed/deleted since the last visit are reflected.
+                GlobalSearchSection.RefreshSystemNames();
                 break;
         }
     }
@@ -2479,6 +2502,7 @@ public partial class MainWindow : Window, IPaginationHost
         // Refresh the view-model's system snapshot + counts: without this, opening a
         // newly added system filters the stale snapshot and shows 0 games.
         await _viewModel.ReloadSystemsAfterConfigurationChangeAsync();
+        GlobalSearchSection.RefreshSystemNames();
         RefreshSidebarCounts();
         await ShowSystemSelectionScreenAsync();
     }

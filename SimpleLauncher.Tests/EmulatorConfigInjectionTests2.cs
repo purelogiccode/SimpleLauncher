@@ -433,6 +433,41 @@ public class EmulatorConfigInjectionTests2 : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that the spaced <c>[ Global ]</c> header used by the bundled sample is
+    ///     recognized: existing keys are updated in place and no duplicate Global section is
+    ///     appended (regression: the sample gained one extra block per injection).
+    /// </summary>
+    [Fact]
+    public void SupermodelRecognizesSpacedGlobalSectionHeader()
+    {
+        CopySampleToEmuDir("Supermodel", "Supermodel", "Supermodel.ini");
+
+        var settings = CreateSettingsManager();
+        settings.Supermodel.New3DEngine = true;
+
+        var emuDir = Path.Combine(_testDirectory, "Supermodel");
+        SupermodelConfigurationService.InjectSettings(FakeEmulatorExePath(emuDir), settings, Log.Logger);
+
+        var configPath = Path.Combine(emuDir, "Supermodel.ini");
+        var lines = File.ReadAllLines(configPath);
+
+        var globalHeaders = lines.Count(static line =>
+        {
+            var trimmed = line.Trim();
+            return trimmed.Length >= 2 && trimmed[0] == '[' && trimmed[^1] == ']' &&
+                   trimmed[1..^1].Trim().Equals("Global", StringComparison.OrdinalIgnoreCase);
+        });
+        Assert.Equal(1, globalHeaders);
+
+        var globalIndex = Array.FindIndex(lines, static line =>
+            line.Trim().Equals("[ Global ]", StringComparison.OrdinalIgnoreCase));
+        Assert.True(globalIndex >= 0, "The original [ Global ] header must be preserved");
+        Assert.Contains(
+            lines.Skip(globalIndex + 1).TakeWhile(static line => !line.Trim().StartsWith('[')),
+            static line => line.Contains("New3DEngine = 1", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     ///     Verifies that Supermodel defaults to xinput when an invalid input system value is provided.
     /// </summary>
     [Fact]

@@ -81,17 +81,30 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
         _localization = localization;
         _configuration = configuration;
 
-        InitializeSystemNames();
+        RefreshSystemNames();
     }
 
-    private void InitializeSystemNames()
+    /// <summary>
+    ///     Rebuilds the system dropdown from the current system configuration while keeping
+    ///     the user's selection when that system still exists. Called when the Global Search
+    ///     section is shown and after system configuration changes, because this ViewModel
+    ///     is a singleton and would otherwise keep a stale list until restart.
+    /// </summary>
+    public void RefreshSystemNames()
     {
+        var previous = SelectedSystemIndex >= 0 && SelectedSystemIndex < SystemNames.Count
+            ? SystemNames[SelectedSystemIndex]
+            : null;
+
         var names = new List<string> { "All Systems" };
         names.AddRange(_systemManagerService.LoadSystems()
             .Select(static s => s.SystemName)
             .OrderBy(static name => name, StringComparer.Ordinal));
+
         SystemNames = names;
-        SelectedSystemIndex = 0;
+        SelectedSystemIndex = previous is null
+            ? 0
+            : Math.Max(0, names.FindIndex(name => string.Equals(name, previous, StringComparison.OrdinalIgnoreCase)));
     }
 
     partial void OnSelectedResultChanged(SearchResult? value)
@@ -104,10 +117,22 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
     {
         try
         {
-            await _cancellationTokenSource.CancelAsync();
-            _cancellationTokenSource.Dispose();
-            _cancellationTokenSource = new CancellationTokenSource();
-            var token = _cancellationTokenSource.Token;
+            // Capture the token source in a local: the field is replaced by the next
+            // search, and the finally block must inspect THIS search's source.
+            var cts = new CancellationTokenSource();
+            var previous = _cancellationTokenSource;
+            _cancellationTokenSource = cts;
+            try
+            {
+                await previous.CancelAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+                // A concurrent cancel already disposed the previous source.
+            }
+
+            previous.Dispose();
+            var token = cts.Token;
 
             var searchTerm = SearchText;
             var parsedTerms = ParseSearchTerms(searchTerm);
@@ -178,7 +203,9 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
             }
             finally
             {
-                if (!_cancellationTokenSource.IsCancellationRequested) IsLoading = false;
+                // Only clear the spinner when THIS search was not superseded/cancelled;
+                // reading the shared field could clear a newer search's loading state.
+                if (!cts.IsCancellationRequested) IsLoading = false;
             }
         }
         catch (Exception ex)
@@ -334,7 +361,14 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
     /// <summary>Cancels any in-progress search operation.</summary>
     public void CancelSearch()
     {
-        _cancellationTokenSource.Cancel();
+        try
+        {
+            _cancellationTokenSource.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // The search completed and disposed its token source — nothing to cancel.
+        }
     }
 
     private static List<SearchResult> ScoreResults(List<SearchResult> results, List<string> searchTerms)

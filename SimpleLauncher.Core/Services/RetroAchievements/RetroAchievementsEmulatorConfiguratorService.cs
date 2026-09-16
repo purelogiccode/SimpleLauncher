@@ -423,7 +423,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
             // Add any settings that were not found
             foreach (var key in updatedSettings) lines.Add($"{key}{separator}{FormatString(settingsToUpdate[key])}");
 
-            File.WriteAllLines(filePath, lines, Encoding.UTF8);
+            File.WriteAllLines(filePath, lines, new UTF8Encoding(false));
             return true;
         }
         catch (Exception ex)
@@ -514,7 +514,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
                 foreach (var kvp in settingsToUpdate) lines.Add($"{kvp.Key} = {kvp.Value}");
             }
 
-            File.WriteAllLines(filePath, lines, Encoding.UTF8);
+            File.WriteAllLines(filePath, lines, new UTF8Encoding(false));
             return true;
         }
         catch (Exception ex)

@@ -1282,7 +1282,7 @@
                                         <DataGridTextColumn Header="{ext:Translate PlayTimeColumnHeader}"
                                                             Binding="{Binding FormattedPlayTime}" Width="110" />
                                         <DataGridTextColumn Header="{ext:Translate LastPlayedDateColumnHeader}"
-                                                            Binding="{Binding LastPlayedDate}" Width="130" />
+                                                            Binding="{Binding LastPlayDate}" Width="130" />
                                         <DataGridTextColumn Header="{ext:Translate LastPlayedTimeColumnHeader}"
                                                             Binding="{Binding LastPlayTime}" Width="130" />
                                     </DataGrid.Columns>
@@ -1465,12 +1465,12 @@
                                        Foreground="{DynamicResource TextMutedBrush}"
                                        FontSize="11" VerticalAlignment="Center" />
                         </StackPanel>
-                        <!-- Far right: secondary status (kept for toast compatibility) -->
+                        <!-- Far right: secondary status (No Games Found; auto-cleared by the status-bar timer) -->
                         <TextBlock x:Name="StatusRight" Grid.Column="4"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontSize="11" VerticalAlignment="Center"
                                    HorizontalAlignment="Right"
-                                   IsVisible="False" />
+                                   IsVisible="True" />
                     </Grid>
                 </Border>
 

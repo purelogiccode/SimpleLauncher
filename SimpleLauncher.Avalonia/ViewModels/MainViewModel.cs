@@ -73,6 +73,12 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private List<GameCardViewModel> _currentBaseGames = [];
 
+    /// <summary>
+    ///     Gets the unfiltered full game list of the current view (read-only snapshot).
+    ///     The DataGrid header sort reads this list so the sort is applied before pagination.
+    /// </summary>
+    public IReadOnlyList<GameCardViewModel> CurrentBaseGames => _currentBaseGames;
+
     private HashSet<string> _favoritePaths;
 
     [ObservableProperty] public partial string GameCountText { get; set; } = "0 games";
@@ -356,6 +362,18 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         _currentAllGames = ApplyLetterFilter(_currentBaseGames);
         ReapplyPagination();
+    }
+
+    /// <summary>
+    ///     Replaces the backing list of the current view with the given sorted list and
+    ///     re-applies the letter filter and pagination. Sorting the backing collection
+    ///     (instead of the displayed <see cref="Games" /> slice) keeps the order stable
+    ///     across paging and filter changes.
+    /// </summary>
+    public void ApplySortedCurrentView(List<GameCardViewModel> sortedGames)
+    {
+        _currentBaseGames = sortedGames;
+        ReapplyLetterFilterAndPagination();
     }
 
     /// <summary>

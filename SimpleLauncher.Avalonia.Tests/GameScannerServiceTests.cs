@@ -135,9 +135,13 @@ public class GameScannerServiceTests : IDisposable
         var second = await scanner.ScanForStoreGamesCoreAsync();
 
         Assert.Equal(2, first.ShortcutsCreated);
+        Assert.Equal(2, first.GamesFound);
         Assert.True(first.SystemWasCreated);
 
         Assert.Equal(0, second.ShortcutsCreated);
+        // Rescanning an already-configured library must still report the games it found
+        // (regression: GamesFound used to equal the number of NEW shortcuts).
+        Assert.Equal(2, second.GamesFound);
         Assert.False(second.SystemWasCreated);
         Assert.False(scanner.WasNewSystemCreated);
 

@@ -299,6 +299,7 @@ public class AvaloniaContextMenuFunctions(
     public async Task OpenRetroAchievementsWindowAsync(AvaloniaRightClickContext context)
     {
         string? tempExtractionPath = null;
+        var loadingStateShown = false;
         try
         {
             var settings = context.Settings;
@@ -394,6 +395,7 @@ public class AvaloniaContextMenuFunctions(
 
             // Show loading overlay before starting the hash calculation
             context.MainViewModel.SetLoadingState(true, preparingRaMsg);
+            loadingStateShown = true;
             context.MainViewModel.StatusText = preparingRaMsg;
 
             // Allow the UI to render the overlay before starting CPU-intensive hash calculation
@@ -477,8 +479,9 @@ public class AvaloniaContextMenuFunctions(
         }
         finally
         {
-            // Ensure loading indicator is hidden
-            context.MainViewModel.SetLoadingState(false);
+            // Only decrement when this call incremented: every early return before the
+            // hash calculation must not clear another operation's loading overlay.
+            if (loadingStateShown) context.MainViewModel.SetLoadingState(false);
 
             // --- Remove temporary extraction folder ---
             if (!string.IsNullOrEmpty(tempExtractionPath))

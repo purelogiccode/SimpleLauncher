@@ -68,6 +68,17 @@ public class AvaloniaStartupInitializationService
     /// </summary>
     public void InitializeStatusBarTimer()
     {
+        RestartStatusBarTimer();
+        _logger.Debug("StatusBarTimer was initialized");
+    }
+
+    /// <summary>
+    ///     (Re)starts the one-shot status-bar timeout timer. Call this whenever a status
+    ///     message is shown so it auto-clears after the configured timeout; without the
+    ///     restart the timer stops after its first tick and later messages never clear.
+    /// </summary>
+    public void RestartStatusBarTimer()
+    {
         try
         {
             var statusBarTimeoutSeconds = _configuration.GetValue("StatusBarTimeoutSeconds", 3);
@@ -82,11 +93,10 @@ public class AvaloniaStartupInitializationService
                 _statusBarTimer.Stop();
             };
             _statusBarTimer.Start();
-            _logger.Debug("StatusBarTimer was initialized");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to initialize the status bar timer");
+            _logger.Error(ex, "Failed to restart the status bar timer");
         }
     }
 

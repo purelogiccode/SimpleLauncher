@@ -105,7 +105,7 @@ public static class SupermodelConfigurationService
         {
             var line = lines[i].Trim();
 
-            if (line.Equals("[Global]", StringComparison.OrdinalIgnoreCase))
+            if (IsGlobalSectionHeader(line))
             {
                 inGlobalSection = true;
                 globalSectionIndex = i;
@@ -162,6 +162,18 @@ public static class SupermodelConfigurationService
             logger.Error(ex, $"[SupermodelConfig] Fail to inject configuration changes: {ex.Message}");
             throw;
         }
+    }
+
+    /// <summary>
+    ///     Returns true when the line is a section header for the Global section. Whitespace
+    ///     inside the brackets is ignored because the bundled sample uses <c>[ Global ]</c>.
+    /// </summary>
+    private static bool IsGlobalSectionHeader(string line)
+    {
+        if (line.Length < 2 || line[0] != '[' || line[^1] != ']') return false;
+
+        var sectionName = line[1..^1].Trim();
+        return sectionName.Equals("Global", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

@@ -205,6 +205,32 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
+    public void ApplySortedCurrentView_SortsBackingListAndSurvivesLetterFilterChanges()
+    {
+        _viewModel.NavigateToAllGamesCommand.Execute(null);
+
+        var descending = _viewModel.CurrentBaseGames
+            .OrderByDescending(static g => g.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        _viewModel.ApplySortedCurrentView(descending);
+
+        Assert.Equal(
+            descending.Select(static g => g.FileName),
+            _viewModel.Games.Select(static g => g.FileName),
+            StringComparer.OrdinalIgnoreCase);
+
+        // The order must survive a letter-filter round trip: sorting the displayed
+        // slice (the old behavior) was reverted by every re-filter/re-page.
+        _viewModel.SetLetterFilter("B");
+        _viewModel.ClearLetterFilter();
+
+        Assert.Equal(
+            descending.Select(static g => g.FileName),
+            _viewModel.Games.Select(static g => g.FileName),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task PickRandomGame_ReplacesViewWithSingleGameFromSelectedSystem()
     {
         _viewModel.NavigateToSystemCommand.Execute("Test System");

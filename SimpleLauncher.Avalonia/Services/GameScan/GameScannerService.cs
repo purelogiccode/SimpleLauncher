@@ -137,7 +137,10 @@ public class GameScannerService
 
             _logger.Debug("[GameScannerService] All store game scans completed");
 
-            return new StorefrontScanResult(shortcutsCreated, shortcutsCreated, WasNewSystemCreated);
+            // GamesFound counts every game shortcut present after the scan (new and
+            // pre-existing): reporting only the new shortcuts made a re-scan of an
+            // already-configured library say "No PC games were found".
+            return new StorefrontScanResult(shortcutsAfter.Count, shortcutsCreated, WasNewSystemCreated);
         }
         catch (Exception ex)
         {
