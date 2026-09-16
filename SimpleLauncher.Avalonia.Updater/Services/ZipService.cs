@@ -174,6 +174,14 @@ internal class ZipService
 
                         LogMessage?.Invoke(this, new EventArgs<string>($"Extracted: {entryKey}"));
                     }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        // User cancel (Cancel button / window close) is not a bug and not an
+                        // error: keep it below the bug-report sink's Warning threshold.
+                        // Bugs #66949/#66950: user-cancelled extractions were reported as errors.
+                        Log.Information("Extraction cancelled by user while processing: {EntryKey}", entryKey);
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         // UPD-24: log here with entry context, but report the bug ONCE

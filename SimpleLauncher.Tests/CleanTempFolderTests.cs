@@ -191,7 +191,7 @@ public class CleanTempFolderTests
         var lockedFile = Path.Combine(subDir, "locked.bin");
         await File.WriteAllTextAsync(lockedFile, "content");
 
-        using (new FileStream(lockedFile, FileMode.Open, FileAccess.Read, FileShare.None))
+        await using (new FileStream(lockedFile, FileMode.Open, FileAccess.Read, FileShare.None))
         {
             await CleanTempFolder.CleanupPartialExtractionAsync(tempDir);
         }

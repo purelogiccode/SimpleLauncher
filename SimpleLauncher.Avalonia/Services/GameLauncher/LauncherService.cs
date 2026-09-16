@@ -1045,14 +1045,12 @@ public class LauncherService : ILauncherService
         {
             try
             {
-                using var process = new Process
+                using var process = new Process();
+                process.StartInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = resolvedFilePath,
-                        UseShellExecute = true,
-                        WorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? ""
-                    }
+                    FileName = resolvedFilePath,
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? ""
                 };
                 process.Start();
 
@@ -1197,25 +1195,34 @@ public class LauncherService : ILauncherService
         {
             try
             {
-                using var process = new Process
+                using var process = new Process();
+                process.StartInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        // Launch the extracted URL directly for .url files, not the shortcut itself
-                        FileName = targetUrl ?? resolvedFilePath,
-                        UseShellExecute = true
-                    }
+                    // Launch the extracted URL directly for .url files, not the shortcut itself
+                    FileName = targetUrl ?? resolvedFilePath,
+                    UseShellExecute = true
                 };
                 process.Start();
             }
             catch (Exception ex)
             {
+                // Expected user-environment/user-error Win32 conditions must not fall
+                // through to the generic Error log below — that reported them as bugs.
                 if (ex is Win32Exception win32Ex)
                 {
                     if (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(win32Ex))
+                    {
                         Log.Information(win32Ex, "Application control policy blocked launching shortcut file");
-                    else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                        error = ex;
+                        return;
+                    }
+
+                    if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                    {
                         Log.Information(win32Ex, "Elevation required to launch shortcut file");
+                        error = ex;
+                        return;
+                    }
                 }
 
                 Log.Error(ex, "Failed to launch {Path}", resolvedFilePath);
@@ -1241,14 +1248,12 @@ public class LauncherService : ILauncherService
         {
             try
             {
-                using var process = new Process
+                using var process = new Process();
+                process.StartInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = resolvedFilePath,
-                        UseShellExecute = true,
-                        WorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? ""
-                    }
+                    FileName = resolvedFilePath,
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? ""
                 };
                 process.Start();
                 process.WaitForExit();
@@ -1258,14 +1263,30 @@ public class LauncherService : ILauncherService
             }
             catch (Exception ex)
             {
+                // Expected user-environment/user-error Win32 conditions must not fall
+                // through to the generic Error log below — that reported them as bugs.
                 if (ex is Win32Exception win32Ex)
                 {
                     if (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(win32Ex))
+                    {
                         Log.Information(win32Ex, "Application control policy blocked launching executable");
-                    else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                        error = ex;
+                        return;
+                    }
+
+                    if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                    {
                         Log.Information(win32Ex, "Elevation required to launch executable");
-                    else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
+                        error = ex;
+                        return;
+                    }
+
+                    if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
+                    {
                         Log.Information(win32Ex, "Invalid executable format: {Path}", resolvedFilePath);
+                        error = ex;
+                        return;
+                    }
                 }
 
                 Log.Error(ex, "Failed to launch {Path}", resolvedFilePath);
@@ -1335,7 +1356,8 @@ public class LauncherService : ILauncherService
     }
 
     // ── Post-exit error analysis constants ──
-    private const int MemoryAccessViolation = -1073741819;    private const int DepViolation = -1073740791;
+    private const int MemoryAccessViolation = -1073741819;
+    private const int DepViolation = -1073740791;
 
     /// <summary>
     ///     Post-exit error analysis — port of the WPF GameLauncherService's

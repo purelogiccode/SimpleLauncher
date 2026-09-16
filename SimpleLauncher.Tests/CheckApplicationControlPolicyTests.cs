@@ -176,6 +176,50 @@ public class CheckApplicationControlPolicyTests
         Assert.True(CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex));
     }
 
+    // IsInvalidExecutableFormat tests
+
+    /// <summary>
+    ///     Verifies that Win32 error code 193 (ERROR_BAD_EXE_FORMAT) marks the executable as invalid.
+    /// </summary>
+    [Fact]
+    public void IsInvalidExecutableFormatWithWin32Exception193ReturnsTrue()
+    {
+        var ex = new Win32Exception(193);
+        Assert.True(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex));
+    }
+
+    /// <summary>
+    ///     Verifies that Win32 error code 216 (ERROR_EXE_MACHINE_TYPE_MISMATCH) — what modern .NET
+    ///     reports for Process.Start on a non-executable file — also marks the executable as invalid
+    ///     (bug #66951).
+    /// </summary>
+    [Fact]
+    public void IsInvalidExecutableFormatWithWin32Exception216ReturnsTrue()
+    {
+        var ex = new Win32Exception(216);
+        Assert.True(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex));
+    }
+
+    /// <summary>
+    ///     Verifies that unrelated Win32 error codes do not mark the executable as invalid.
+    /// </summary>
+    [Fact]
+    public void IsInvalidExecutableFormatWithOtherWin32CodeReturnsFalse()
+    {
+        var ex = new Win32Exception(5);
+        Assert.False(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex));
+    }
+
+    /// <summary>
+    ///     Verifies that a non-Win32 exception does not mark the executable as invalid.
+    /// </summary>
+    [Fact]
+    public void IsInvalidExecutableFormatWithInvalidOperationExceptionReturnsFalse()
+    {
+        var ex = new InvalidOperationException();
+        Assert.False(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex));
+    }
+
     // Edge case tests
 
     /// <summary>
@@ -218,6 +262,7 @@ public class CheckApplicationControlPolicyTests
         Assert.False(CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(ex));
         Assert.False(CheckApplicationControlPolicyService.IsElevationRequired(ex));
         Assert.False(CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex));
+        Assert.False(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex));
     }
 
     /// <summary>
@@ -230,6 +275,7 @@ public class CheckApplicationControlPolicyTests
         Assert.False(CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(ex));
         Assert.False(CheckApplicationControlPolicyService.IsElevationRequired(ex));
         Assert.False(CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex));
+        Assert.False(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex));
     }
 
     /// <summary>

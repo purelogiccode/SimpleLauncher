@@ -575,7 +575,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     ///     Deletes a generated DOSBox conf file after use. Cleanup failures are logged at Debug:
     ///     the next startup cleanup of %TEMP%\SimpleLauncher removes any file left behind.
     /// </summary>
-    private void TryDeleteConfFile(string confPath)
+    private static void TryDeleteConfFile(string confPath)
     {
         try
         {
