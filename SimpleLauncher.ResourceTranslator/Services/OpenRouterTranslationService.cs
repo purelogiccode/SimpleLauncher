@@ -211,16 +211,16 @@ public class OpenRouterTranslationService
             // Unescape pipes and newline markers
             value = value.Replace("\\|", "|").Replace("\\n", "\n");
 
-            if (remainingKeys.Contains(key))
+            if (remainingKeys.Contains(key) && !string.IsNullOrEmpty(value))
             {
                 result[key] = value;
                 remainingKeys.Remove(key);
             }
         }
 
-        // Fill any missing translations with empty string
-        foreach (var key in remainingKeys) result[key] = "";
-
+        // Keys the model omitted (e.g. truncated output reported as "stop") are simply
+        // absent: the analyzer treats them as missing and the next run retries them.
+        // Filling "" here used to make the blank permanent.
         return result;
     }
 }

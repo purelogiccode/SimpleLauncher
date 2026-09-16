@@ -40,6 +40,40 @@ public class PaginationServiceExtendedTests
     }
 
     /// <summary>
+    ///     Verifies that CurrentPage is clamped when the result set shrinks below the
+    ///     current page (filter change, delete, watcher reload), so the slice is never
+    ///     empty and the status label cannot read e.g. "801 to 200 out of 200".
+    /// </summary>
+    [Fact]
+    public void ApplyPaginationClampsCurrentPageWhenResultSetShrinks()
+    {
+        var service = CreateService(5, 2);
+        var files = Enumerable.Range(1, 20).Select(static i => $"file{i}.zip").ToList();
+        service.ApplyPagination(files);
+        service.GoToNextPage();
+        service.GoToNextPage();
+        service.GoToNextPage();
+        Assert.Equal(4, service.CurrentPage);
+
+        // The new result set only has two pages; the old page 4 must clamp to page 2.
+        var remaining = Enumerable.Range(1, 7).Select(static i => $"file{i}.zip").ToList();
+        var result = service.ApplyPagination(remaining);
+
+        Assert.Equal(2, service.CurrentPage);
+        Assert.Equal(2, result.Count);
+        Assert.Equal("file6.zip", result[0]);
+        Assert.Equal("file7.zip", result[1]);
+
+        // Below the threshold the page is clamped to the single page as well.
+        var tiny = Enumerable.Range(1, 2).Select(static i => $"file{i}.zip").ToList();
+        service.ApplyPagination(tiny);
+
+        Assert.Equal(1, service.CurrentPage);
+        Assert.False(service.CanGoPrev());
+        Assert.False(service.CanGoNext());
+    }
+
+    /// <summary>
     ///     Verifies that ApplyPagination returns all files when the file count equals the threshold.
     /// </summary>
     [Fact]

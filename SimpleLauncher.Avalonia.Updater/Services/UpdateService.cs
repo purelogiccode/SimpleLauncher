@@ -118,6 +118,13 @@ internal class UpdateService
             {
                 await _processService.WaitForProcessExitAsync(processId, targetAppProcessName, cancellationToken);
             }
+            catch (TimeoutException ex)
+            {
+                // Expected condition: the app did not exit in time. The caller turns this
+                // into a manual-update result; it is not a bug and must not be reported.
+                Log.Information(ex, "Timed out waiting for the main application to exit");
+                throw;
+            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Log.Error(ex, "Error waiting for main application to exit");
@@ -215,10 +222,10 @@ internal class UpdateService
         }
         catch (Exception ex)
         {
-            // Network/transport failures (both sources already retried) are expected
-            // user conditions — log at Information, not as a bug. Only unexpected
-            // exceptions are errors.
-            if (ex is HttpRequestException or IOException)
+            // Network/transport failures (both sources already retried) and the
+            // app-did-not-exit timeout are expected user conditions — log at
+            // Information, not as a bug. Only unexpected exceptions are errors.
+            if (ex is HttpRequestException or IOException or TimeoutException)
                 Log.Information(ex, "Automatic update failed");
             else
                 Log.Error(ex, "Automatic update failed");
@@ -356,8 +363,11 @@ internal class UpdateService
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error during Dokan installation check");
-            await BugReportService.ReportBugAsync(ex, "Error during Dokan installation check");
+            // Download/install failures are expected user conditions (DokanService logs
+            // them at Information) and unexpected ones were already reported there.
+            // Stay at Information here so the bug-report sink never sees a second
+            // Warning+ event for the same error.
+            Log.Information(ex, "Error during Dokan installation check");
             LogMessage?.Invoke(this, new EventArgs<string>($"Error during Dokan check/installation: {ex.Message}"));
         }
     }

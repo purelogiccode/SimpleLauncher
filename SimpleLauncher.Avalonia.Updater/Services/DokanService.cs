@@ -195,6 +195,14 @@ internal class DokanService
             // UPD-19: user cancellation is not an error — propagate without a bug report.
             throw;
         }
+        catch (Exception ex) when (ex is HttpRequestException or IOException)
+        {
+            // Offline/transport failures and local disk conditions (e.g. no space to stage
+            // the MSI) are expected user errors — Information level, never a bug report.
+            Log.Information(ex, "Error downloading or installing Dokan");
+            LogMessage?.Invoke(this, new EventArgs<string>($"Error during Dokan installation: {ex.Message}"));
+            throw;
+        }
         catch (Exception ex)
         {
             Log.Error(ex, "Error downloading or installing Dokan");

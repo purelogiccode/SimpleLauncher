@@ -9,9 +9,24 @@ namespace SimpleLauncher.Services.DebugAndBugReport;
 /// </summary>
 public class DebugWindowSink : ILogEventSink
 {
+    internal const int MaxBufferedMessages = 5000;
     private static readonly Lock SinkLock = new();
-    private static readonly List<string> MessageBuffer = [];
+    private static readonly Queue<string> MessageBuffer = new();
     private static DebugViewModel? _viewModel;
+
+    /// <summary>
+    ///     Gets the number of messages currently held in the pre-connect buffer (test hook).
+    /// </summary>
+    internal static int BufferedMessageCount
+    {
+        get
+        {
+            lock (SinkLock)
+            {
+                return MessageBuffer.Count;
+            }
+        }
+    }
 
     /// <summary>
     ///     Gets the debug view model currently connected to the sink.
@@ -38,10 +53,51 @@ public class DebugWindowSink : ILogEventSink
 
         lock (SinkLock)
         {
-            MessageBuffer.Add(formattedMessage);
+            AppendToBufferLocked(formattedMessage);
 
             _viewModel?.AppendLogMessage(formattedMessage);
         }
+    }
+
+    /// <summary>
+    ///     Appends one message to the pre-connect buffer (applying the cap) without
+    ///     forwarding it to a connected view model. Test hook: emitting thousands of
+    ///     events through the sink would flood the UI dispatcher when a debug view
+    ///     model happens to be connected by a parallel test.
+    /// </summary>
+    /// <param name="formattedMessage">The formatted message to buffer.</param>
+    internal static void BufferMessage(string formattedMessage)
+    {
+        lock (SinkLock)
+        {
+            AppendToBufferLocked(formattedMessage);
+        }
+    }
+
+    /// <summary>
+    ///     Empties the pre-connect buffer. Test hook: the buffer is static, so a test that
+    ///     fills it would otherwise leak thousands of entries into unrelated tests.
+    /// </summary>
+    internal static void ClearBuffer()
+    {
+        lock (SinkLock)
+        {
+            MessageBuffer.Clear();
+        }
+    }
+
+    /// <summary>
+    ///     Enqueues a message and trims the oldest entries beyond the cap. Callers must hold
+    ///     <see cref="SinkLock" />.
+    /// </summary>
+    private static void AppendToBufferLocked(string formattedMessage)
+    {
+        MessageBuffer.Enqueue(formattedMessage);
+
+        // Ring-buffer behavior: the connected view model keeps at most
+        // MaxBufferedMessages lines, so the pre-connect buffer is capped the same way
+        // to keep a long-running process from growing without bound.
+        if (MessageBuffer.Count > MaxBufferedMessages) MessageBuffer.Dequeue();
     }
 
     /// <summary>

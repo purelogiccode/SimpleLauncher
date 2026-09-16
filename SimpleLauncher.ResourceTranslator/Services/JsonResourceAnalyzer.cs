@@ -95,7 +95,8 @@ public static class JsonResourceAnalyzer
             }
 
             var missing = englishKeys
-                .Where(kvp => !existingKeys.ContainsKey(kvp.Key))
+                .Where(kvp => !existingKeys.TryGetValue(kvp.Key, out var translated) ||
+                              string.IsNullOrWhiteSpace(translated))
                 .Select(static kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value))
                 .ToList();
 

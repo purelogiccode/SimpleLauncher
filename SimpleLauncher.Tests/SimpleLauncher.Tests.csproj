@@ -44,5 +44,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SimpleLauncher\SimpleLauncher.csproj" />
+        <ProjectReference Include="..\Tools\XmlToBinaryConverter\XmlToBinaryConverter.csproj" />
+        <ProjectReference Include="..\SimpleLauncher.ResourceTranslator\SimpleLauncher.ResourceTranslator.csproj" />
     </ItemGroup>
 </Project>

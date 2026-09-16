@@ -172,7 +172,7 @@ public class PlayHistoryManager
         {
             try
             {
-                var bytes = MessagePackSerializer.Serialize(this);
+                var bytes = SerializeSnapshot();
                 File.WriteAllBytes(TempFilePath, bytes);
                 AtomicReplace(TempFilePath, FilePath);
                 return;
@@ -224,6 +224,19 @@ public class PlayHistoryManager
     }
 
     /// <summary>
+    ///     Serializes the legacy MessagePack snapshot while holding the history lock so a
+    ///     concurrent play-record update cannot mutate the collection mid-serialization
+    ///     (which threw "Collection was modified" or persisted a partial list).
+    /// </summary>
+    private byte[] SerializeSnapshot()
+    {
+        lock (_historyLock)
+        {
+            return MessagePackSerializer.Serialize(this);
+        }
+    }
+
+    /// <summary>
     ///     Replaces the destination file atomically. Falls back to delete-then-move
     ///     when the OS refuses an in-place overwrite (e.g. file locked by another handle).
     /// </summary>
@@ -268,7 +281,7 @@ public class PlayHistoryManager
         {
             try
             {
-                var bytes = MessagePackSerializer.Serialize(this);
+                var bytes = SerializeSnapshot();
                 await File.WriteAllBytesAsync(TempFilePath, bytes);
                 AtomicReplace(TempFilePath, FilePath);
                 return;

@@ -101,7 +101,18 @@ public class QuitSimpleLauncher
             {
                 await using var memoryStream = new MemoryStream();
                 await updateChecker.DownloadUpdateFileToMemoryAsync(updaterZipUrl, memoryStream);
-                CheckForUpdatesService.ExtractAllFromZip(memoryStream, appDirectory, null, _logger);
+                var extractionSucceeded =
+                    CheckForUpdatesService.ExtractAllFromZip(memoryStream, appDirectory, null, _logger);
+
+                // A corrupt archive can leave a truncated Updater.exe behind; never trust
+                // File.Exists alone after a failed extraction or the broken binary is
+                // launched (the sibling ReinstallSimpleLauncher checks the same result).
+                if (!extractionSucceeded)
+                {
+                    await messageBox.UpdaterLaunchFailedMessageBoxAsync();
+                    return;
+                }
+
                 if (File.Exists(updaterPath)) downloaded = true;
             }
         }

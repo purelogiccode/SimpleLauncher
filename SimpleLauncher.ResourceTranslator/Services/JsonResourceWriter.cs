@@ -23,27 +23,29 @@ public static class JsonResourceWriter
     /// </summary>
     /// <param name="filePath">The path to the JSON resource file.</param>
     /// <param name="newTranslations">Dictionary of key-value pairs to add or update.</param>
-    /// <param name="duplicatesToRemove">List of duplicate keys to remove.</param>
     public static void UpdateResourceFile(
         string filePath,
-        IDictionary<string, string> newTranslations,
-        IList<string> duplicatesToRemove)
+        IDictionary<string, string> newTranslations)
     {
         var json = File.ReadAllText(filePath);
         var doc = JsonDocument.Parse(json);
 
         var existingEntries = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var duplicatesRemoved = new HashSet<string>(duplicatesToRemove, StringComparer.Ordinal);
 
+        // Keep the first occurrence of every key and drop the later duplicates. The old
+        // name-based skip removed every occurrence of a duplicated key, so the key
+        // disappeared entirely (and was never re-added because it was not "missing").
         foreach (var property in doc.RootElement.EnumerateObject())
         {
-            if (!duplicatesRemoved.Contains(property.Name) && !existingEntries.ContainsKey(property.Name))
+            if (!existingEntries.ContainsKey(property.Name))
                 existingEntries[property.Name] = property.Value.GetString() ?? "";
         }
 
-        // Merge new translations
+        // Merge new translations. Blank fills are ignored so an empty value written by an
+        // older run can be retried instead of permanently overwriting a good translation.
         foreach (var kvp in newTranslations)
-            existingEntries[kvp.Key] = kvp.Value;
+            if (!string.IsNullOrEmpty(kvp.Value))
+                existingEntries[kvp.Key] = kvp.Value;
 
         // Write back as UTF-8 without BOM, matching the committed resource files.
         var output = JsonSerializer.Serialize(existingEntries, JsonOptions) + Environment.NewLine;

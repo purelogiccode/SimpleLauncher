@@ -330,12 +330,28 @@ public class AvaloniaContextMenuService
         }
     }
 
+    private static readonly Dictionary<string, Bitmap> IconCache = new(StringComparer.Ordinal);
+
     private static Control CreateIcon(string imageFileName)
     {
         try
         {
-            var uri = new Uri($"avares://SimpleLauncher.Avalonia/images/{imageFileName}");
-            var bitmap = new Bitmap(AssetLoader.Open(uri));
+            // ~12 icons are requested per right-click; creating (and never disposing) a
+            // native Bitmap each time leaked them. Cache one Bitmap per asset and reuse
+            // it for every menu instance.
+            Bitmap bitmap;
+            lock (IconCache)
+            {
+                if (!IconCache.TryGetValue(imageFileName, out var cached))
+                {
+                    var uri = new Uri($"avares://SimpleLauncher.Avalonia/images/{imageFileName}");
+                    cached = new Bitmap(AssetLoader.Open(uri));
+                    IconCache[imageFileName] = cached;
+                }
+
+                bitmap = cached;
+            }
+
             return new Image
             {
                 Source = bitmap,

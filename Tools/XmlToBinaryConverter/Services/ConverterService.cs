@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -98,13 +99,26 @@ public class ConverterService
 
             progress.Report("Saving XML file...");
 
-            // Serialize objects back to XML
+            // Serialize objects back to XML. A StringWriter reports UTF-16 and makes the
+            // serializer declare encoding="utf-16" while the file itself is written as
+            // UTF-8; serialize through an XmlWriter over a UTF-8 stream instead so the
+            // declaration matches the bytes (standard readers reject the mismatch).
             var serializer = new XmlSerializer(typeof(History));
-            await using (var writer = new StringWriter())
+            await using (var stream = new MemoryStream())
             {
-                serializer.Serialize(writer, history);
-                var xmlContent = writer.ToString();
-                await File.WriteAllTextAsync(outputPath, xmlContent);
+                var settings = new XmlWriterSettings
+                {
+                    Encoding = new UTF8Encoding(false),
+                    Indent = true,
+                    Async = true
+                };
+                await using (var xmlWriter = XmlWriter.Create(stream, settings))
+                {
+                    serializer.Serialize(xmlWriter, history);
+                    await xmlWriter.FlushAsync();
+                }
+
+                await File.WriteAllBytesAsync(outputPath, stream.ToArray());
             }
 
             progress.Report("Conversion completed successfully!");

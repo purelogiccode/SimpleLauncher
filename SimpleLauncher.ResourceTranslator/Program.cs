@@ -141,7 +141,7 @@ public static class Program
         string englishFileName,
         Func<string, IDictionary<string, string>> readEnglishKeys,
         Func<string, IDictionary<string, string>, IList<MissingKeyBatch>> analyzeAllLanguages,
-        Action<string, IDictionary<string, string>, IList<string>> updateResourceFile,
+        Action<string, IDictionary<string, string>> updateResourceFile,
         OpenRouterTranslationService translator)
     {
         var englishFile = Path.Combine(resourcesPath, englishFileName);
@@ -229,7 +229,7 @@ public static class Program
             }
 
             // Write back to resource file
-            updateResourceFile(batch.FilePath, allTranslations, batch.DuplicateKeysRemoved);
+            updateResourceFile(batch.FilePath, allTranslations);
 
             languageStopwatch.Stop();
             Log.Information("Written {TranslationCount} entries to {FileName} in {ElapsedMs}ms",
