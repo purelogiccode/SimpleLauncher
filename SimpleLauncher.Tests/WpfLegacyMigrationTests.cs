@@ -178,6 +178,9 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         WriteLegacySettingsXml();
         WriteLegacySystemXml();
 
+        // The once-per-process guard must be reset: a fresh launch would now find
+        // the legacy files again and merge them into the existing database.
+        WpfLegacyMigrator.ResetForTests();
         var result = WpfLegacyMigrator.EnsureMigrated(
             BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
 
@@ -207,10 +210,12 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         Assert.Equal("300", app["ThumbnailSize"]);
         Assert.Equal("keepme", app["DbOnlyKey"]);
 
-        // Emulators: legacy config overwrote Mame; RetroArch survived.
+        // Emulators: legacy config overwrote Mame; RetroArch survived. The legacy
+        // export also seeds defaults for every other known emulator, so the table
+        // grows — assert on the merged rows, not the total count.
         var emulators = UnifiedSettingsDatabase.LoadEmulatorConfigs(_dbPath);
-        Assert.Equal(2, emulators.Count);
         Assert.Contains("vulkan", emulators["Mame"], StringComparison.Ordinal);
+        Assert.True(emulators.ContainsKey("RetroArch"));
 
         // System play times: legacy value overwrote NES.
         var playTimes = UnifiedSettingsDatabase.LoadSystemPlayTimes(_dbPath);
