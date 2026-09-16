@@ -19,11 +19,17 @@ namespace SimpleLauncher.Avalonia.Services.SettingsDatabase;
 ///     (<c>settings.dat</c> in AppData).
 /// </summary>
 /// <remarks>
-///     Runs once per process (idempotent). On success every legacy file that was read is
-///     renamed to <c>&lt;name&gt;.bak</c> (overwriting any previous backup) so the old
-///     paths disappear but the data is recoverable. On failure the database file (if newly
-///     created) is deleted and legacy files are left untouched, so the app falls back to
-///     the legacy readers and the next launch retries.
+///     Runs once per process (idempotent). When no valid database exists, the legacy
+///     files are imported into a fresh <c>settings.dat</c>. When a valid database already
+///     exists (e.g. the other app variant migrated already, or the files reappeared after
+///     a restore), the legacy data is merged into it instead: entries are appended and
+///     existing rows with the same key are overwritten, so no duplicates appear.
+///     On success every legacy file that was read is renamed to <c>&lt;name&gt;.bak</c>
+///     (overwriting any previous backup) so the old paths disappear but the data is
+///     recoverable. On failure the new database file (if newly created) is deleted and
+///     legacy files are left untouched, so the app falls back to the legacy readers and
+///     the next launch retries. An existing valid database is never deleted.
+///     Mirrors <c>WpfLegacyMigrator</c>; both apps share the same database format.
 /// </remarks>
 public static class AvaloniaLegacyMigrator
 {
@@ -37,14 +43,13 @@ public static class AvaloniaLegacyMigrator
     public static MigrationResult EnsureMigrated(
         IConfiguration configuration,
         ILogger logger,
-        ICredentialProtector credentialProtector,
-        IMessageBoxLibraryService? messageBox = null)
+        ICredentialProtector credentialProtector)
     {
-        return EnsureMigrated(configuration, logger, credentialProtector, messageBox, null, null);
+        return EnsureMigrated(configuration, logger, credentialProtector, null, null);
     }
 
     /// <summary>
-    ///     Test seam: like <see cref="EnsureMigrated(IConfiguration,ILogger,ICredentialProtector,IMessageBoxLibraryService)" />,
+    ///     Test seam: like <see cref="EnsureMigrated(IConfiguration,ILogger,ICredentialProtector)" />,
     ///     but redirects the database path and the legacy-file folders (both the portable
     ///     folder and the AppData folder) so tests never touch real user data.
     /// </summary>
@@ -52,7 +57,6 @@ public static class AvaloniaLegacyMigrator
         IConfiguration configuration,
         ILogger logger,
         ICredentialProtector credentialProtector,
-        IMessageBoxLibraryService? messageBox,
         string? dbPathOverride,
         string? legacyFolderOverride)
     {
@@ -69,7 +73,7 @@ public static class AvaloniaLegacyMigrator
         }
 
         if (UnifiedSettingsDatabase.IsValidDatabase(dbPath))
-            return new MigrationResult(MigrationStatus.AlreadyCurrent, 0, 0, 0);
+            return MergeLegacyFilesIntoExistingDatabase(dbPath, configuration, logger, credentialProtector, legacyFolderOverride);
 
         var dbExistedBefore = File.Exists(dbPath);
         var legacyFiles = ResolveLegacyFiles(configuration, legacyFolderOverride);
@@ -159,6 +163,122 @@ public static class AvaloniaLegacyMigrator
         {
             _migrationAttempted = false;
         }
+    }
+
+    /// <summary>
+    ///     A valid settings.dat already exists, but legacy files were found (application
+    ///     folder or AppData): upsert the legacy data into the existing database and shelve
+    ///     the files. New entries are appended; rows with the same key are overwritten by
+    ///     the legacy values (first wins on the case-insensitive bulk saves), so nothing
+    ///     is duplicated and database-only data is kept. On failure the database is left
+    ///     untouched and the legacy files stay for the next launch to retry.
+    /// </summary>
+    private static MigrationResult MergeLegacyFilesIntoExistingDatabase(
+        string dbPath,
+        IConfiguration configuration,
+        ILogger logger,
+        ICredentialProtector credentialProtector,
+        string? legacyFolderOverride)
+    {
+        var legacyFiles = ResolveLegacyFiles(configuration, legacyFolderOverride);
+        var anyLegacy = legacyFiles.FavoritesPath is not null
+                        || legacyFiles.HistoryPath is not null
+                        || legacyFiles.SettingsPath is not null
+                        || legacyFiles.SystemXmlPath is not null;
+
+        if (!anyLegacy)
+            return new MigrationResult(MigrationStatus.AlreadyCurrent, 0, 0, 0);
+
+        try
+        {
+            // ── Read legacy state (best effort; corrupt files become empty) ──
+            var legacyFavorites = ReadLegacyFavorites(legacyFiles.FavoritesPath, logger);
+            var legacyHistory = ReadLegacyHistory(legacyFiles.HistoryPath, logger);
+            var legacySettings = ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPath);
+            var legacySystems = ReadLegacySystems(configuration, logger, legacyFiles.SystemXmlPath);
+
+            // ── Merge (legacy first: the first-wins dedupe makes legacy overwrite existing rows) ──
+            var existingFavorites = UnifiedSettingsDatabase.LoadFavorites(dbPath);
+            var existingHistory = UnifiedSettingsDatabase.LoadPlayHistory(dbPath);
+            var existingSystems = UnifiedSettingsDatabase.LoadSystems(dbPath);
+
+            var mergedFavorites = DedupeByFileName(legacyFavorites, existingFavorites,
+                static f => f.FileName);
+            var mergedHistory = DedupeByFileName(legacyHistory, existingHistory,
+                static h => h.FileName);
+
+            var mergedSystems = new Dictionary<string, string>(existingSystems, StringComparer.OrdinalIgnoreCase);
+            foreach (var system in legacySystems)
+                mergedSystems[system.SystemName] = SystemConfigStore.Serialize(system);
+
+            var mergedPlayTimes = legacySettings.ExportSystemPlayTimes()
+                .Concat(UnifiedSettingsDatabase.LoadSystemPlayTimes(dbPath))
+                .ToList();
+            var mergedAppSettings = new Dictionary<string, string>(UnifiedSettingsDatabase.LoadAppSettings(dbPath), StringComparer.OrdinalIgnoreCase);
+            foreach (var (key, value) in legacySettings.ExportAppSettings())
+                mergedAppSettings[key] = value ?? "";
+            var mergedEmulators = new Dictionary<string, string>(UnifiedSettingsDatabase.LoadEmulatorConfigs(dbPath), StringComparer.OrdinalIgnoreCase);
+            foreach (var (key, value) in legacySettings.ExportEmulatorSettings())
+                mergedEmulators[key] = value ?? "{}";
+
+            // ── Write the database ──
+            UnifiedSettingsDatabase.SaveFavorites(mergedFavorites, dbPath);
+            UnifiedSettingsDatabase.SavePlayHistory(mergedHistory, dbPath);
+            UnifiedSettingsDatabase.SaveAppSettings(mergedAppSettings, dbPath);
+            UnifiedSettingsDatabase.SaveAllEmulatorConfigs(mergedEmulators, dbPath);
+            UnifiedSettingsDatabase.SaveSystemPlayTimes(mergedPlayTimes, dbPath);
+            UnifiedSettingsDatabase.SaveAllSystems(mergedSystems, dbPath);
+
+            // ── Verify the round-trip before touching legacy files ──
+            VerifyMigration(dbPath, mergedFavorites.Count, mergedHistory.Count, mergedSystems.Count);
+
+            var favoritesAdded = mergedFavorites.Count - existingFavorites.Count;
+            var historyAdded = mergedHistory.Count - existingHistory.Count;
+            var systemsAdded = mergedSystems.Count - existingSystems.Count;
+
+            // ── Shelve legacy files as .bak (originals disappear) ──
+            var shelved = 0;
+            shelved += ShelveLegacyFile(legacyFiles.FavoritesPath, logger);
+            shelved += ShelveLegacyFile(legacyFiles.HistoryPath, logger);
+            shelved += ShelveLegacyFile(legacyFiles.SettingsPath, logger);
+            shelved += ShelveLegacyFile(legacyFiles.SystemXmlPath, logger);
+            CleanupTempLeftovers(logger, legacyFolderOverride);
+
+            logger.Information(
+                "[Migration] Merged legacy files into the existing database '{Path}': added {Fav} favorites, {Hist} history entries, {Sys} systems; shelved {N} legacy files as .bak",
+                dbPath, favoritesAdded, historyAdded, systemsAdded, shelved);
+            return new MigrationResult(MigrationStatus.Merged, favoritesAdded, historyAdded, systemsAdded);
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex,
+                "[Migration] Failed to merge legacy files into the existing database '{Path}'. Legacy files left untouched; the next launch retries",
+                dbPath);
+            return new MigrationResult(MigrationStatus.Failed, 0, 0, 0);
+        }
+    }
+
+    /// <summary>
+    ///     Concatenates the legacy records with the existing ones and removes duplicates by
+    ///     key (case-insensitive, first wins), so the legacy values overwrite matching
+    ///     database rows and nothing is duplicated.
+    /// </summary>
+    private static List<T> DedupeByFileName<T>(
+        IEnumerable<T> legacyRecords,
+        IEnumerable<T> existingRecords,
+        Func<T, string> fileNameSelector)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<T>();
+        foreach (var record in legacyRecords.Concat(existingRecords))
+        {
+            var fileName = fileNameSelector(record);
+            if (string.IsNullOrWhiteSpace(fileName) || !seen.Add(fileName))
+                continue;
+            result.Add(record);
+        }
+
+        return result;
     }
 
     // ── Legacy file resolution ──────────────────────────────────────

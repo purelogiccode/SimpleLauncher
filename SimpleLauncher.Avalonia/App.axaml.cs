@@ -291,8 +291,7 @@ public class App : Application, IDisposable
             AvaloniaLegacyMigrator.EnsureMigrated(
                 ServiceProvider.GetRequiredService<IConfiguration>(),
                 ServiceProvider.GetRequiredService<ILogger>(),
-                ServiceProvider.GetRequiredService<ICredentialProtector>(),
-                ServiceProvider.GetService<IMessageBoxLibraryService>());
+                ServiceProvider.GetRequiredService<ICredentialProtector>());
         }
         catch (Exception ex)
         {

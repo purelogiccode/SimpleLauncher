@@ -260,14 +260,6 @@ public sealed class GameFileWatcherService : IDisposable
         }, CancellationToken.None);
     }
 
-    private void CancelPendingDebounce()
-    {
-        lock (_lock)
-        {
-            CancelPendingDebounceLocked();
-        }
-    }
-
     /// <summary>
     ///     Cancels and disposes the pending debounce. Caller must hold <see cref="_lock" />
     ///     (System.Threading.Lock is non-reentrant, so this never locks itself).

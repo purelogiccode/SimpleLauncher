@@ -133,6 +133,140 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         Assert.True(UnifiedSettingsDatabase.IsValidDatabase(_dbPath));
     }
 
+    [Fact]
+    public void Merge_ValidDatabasePlusLegacyFiles_UpsertsAndShelvesWithoutDuplicates()
+    {
+        // First run: fresh database (no legacy files present yet).
+        var logger = new NoOpLogger();
+        var first = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.FreshCreated, first.Status);
+
+        // Seed the database with data that conflicts and data that does not.
+        UnifiedSettingsDatabase.SaveFavorites(
+        [
+            new FavoriteRecord("GAME1.ZIP", "OLD-NES"),
+            new FavoriteRecord("game9.zip", "Genesis")
+        ], _dbPath);
+        UnifiedSettingsDatabase.SavePlayHistory(
+        [
+            new PlayHistoryRecord("game2.iso", "PS1", 9, 9000, "2026-01-01", "10:00:00"),
+            new PlayHistoryRecord("game8.iso", "MegaDrive", 2, 100, "2026-02-02", "11:00:00")
+        ], _dbPath);
+        UnifiedSettingsDatabase.SaveAppSettings(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Language"] = "de",
+            ["DbOnlyKey"] = "keepme"
+        }, _dbPath);
+        UnifiedSettingsDatabase.SaveAllEmulatorConfigs(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Mame"] = """{"Video":"opengl"}""",
+            ["RetroArch"] = "{}"
+        }, _dbPath);
+        UnifiedSettingsDatabase.SaveSystemPlayTimes([new SystemPlayTimeRecord("NES", 111)], _dbPath);
+        UnifiedSettingsDatabase.SaveAllSystems(
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["NES"] = SystemConfigStore.Serialize(BuildSystemConfig("NES", "old-image-folder")),
+                ["GBA"] = SystemConfigStore.Serialize(BuildSystemConfig("GBA", "old-image-folder"))
+            }, _dbPath);
+
+        // Legacy files reappear (restored folder): GAME1.zip conflicts with GAME1.ZIP
+        // case-insensitively; game2.iso conflicts with the database history entry.
+        WriteLegacyFavorites(("GAME1.zip", "NES"), ("game3.bin", "Saturn"));
+        WriteLegacyHistory();
+        WriteLegacySettingsXml();
+        WriteLegacySystemXml();
+
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Merged, result.Status);
+        Assert.Equal(1, result.Favorites);
+        Assert.Equal(0, result.HistoryEntries);
+        Assert.Equal(1, result.Systems);
+
+        // Favorites: appended, no duplicate rows; the legacy value won on conflict.
+        var favorites = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
+        Assert.Equal(3, favorites.Count);
+        var game1 = favorites.Single(f => f.FileName.Equals("GAME1.zip", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("NES", game1.SystemName);
+        Assert.Contains(favorites, f => string.Equals(f.FileName, "game9.zip", StringComparison.Ordinal));
+        Assert.Contains(favorites, f => string.Equals(f.FileName, "game3.bin", StringComparison.Ordinal));
+
+        // History: legacy overwrote game2.iso; the database-only entry survived.
+        var history = UnifiedSettingsDatabase.LoadPlayHistory(_dbPath);
+        Assert.Equal(2, history.Count);
+        var game2 = history.Single(h => h.FileName.Equals("game2.iso", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(5, game2.TimesPlayed);
+        Assert.Contains(history, h => string.Equals(h.FileName, "game8.iso", StringComparison.Ordinal));
+
+        // App settings: legacy values win; database-only keys survive.
+        var app = UnifiedSettingsDatabase.LoadAppSettings(_dbPath);
+        Assert.Equal("fr", app["Language"]);
+        Assert.Equal("300", app["ThumbnailSize"]);
+        Assert.Equal("keepme", app["DbOnlyKey"]);
+
+        // Emulators: legacy config overwrote Mame; RetroArch survived.
+        var emulators = UnifiedSettingsDatabase.LoadEmulatorConfigs(_dbPath);
+        Assert.Equal(2, emulators.Count);
+        Assert.Contains("vulkan", emulators["Mame"], StringComparison.Ordinal);
+
+        // System play times: legacy value overwrote NES.
+        var playTimes = UnifiedSettingsDatabase.LoadSystemPlayTimes(_dbPath);
+        Assert.Equal(3600,
+            playTimes.Single(p => p.SystemName.Equals("NES", StringComparison.OrdinalIgnoreCase)).PlayTimeSeconds);
+
+        // Systems: legacy NES overwrote, GBA survived, SNES appended.
+        var systems = UnifiedSettingsDatabase.LoadSystems(_dbPath);
+        Assert.Equal(3, systems.Count);
+        var nes = SystemConfigStore.Deserialize("NES", systems["NES"]);
+        Assert.Equal("C:\\images\\nes", nes?.SystemImageFolder);
+        Assert.True(systems.ContainsKey("GBA"));
+        Assert.True(systems.ContainsKey("SNES"));
+
+        // Legacy originals are gone; .bak backups remain.
+        foreach (var name in new[] { "favorites.dat", "playhistory.dat", "settings.xml", "system.xml" })
+        {
+            Assert.False(File.Exists(Path.Combine(_legacyFolder, name)));
+            Assert.True(File.Exists(Path.Combine(_legacyFolder, name + ".bak")));
+        }
+
+        // The once-per-process guard is set: a second call is a no-op.
+        WpfLegacyMigrator.ResetForTests();
+        var second = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.AlreadyCurrent, second.Status);
+    }
+
+    [Fact]
+    public void Merge_ValidDatabaseNoLegacyFiles_AlreadyCurrent()
+    {
+        var logger = new NoOpLogger();
+        var first = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.FreshCreated, first.Status);
+
+        WpfLegacyMigrator.ResetForTests();
+        var second = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.AlreadyCurrent, second.Status);
+        Assert.False(File.Exists(Path.Combine(_legacyFolder, "settings.dat")));
+    }
+
+    private static SystemManagerConfig BuildSystemConfig(string systemName, string imageFolder)
+    {
+        return new SystemManagerConfig
+        {
+            SystemName = systemName,
+            SystemFolders = [$"C:\\roms\\{systemName.ToLowerInvariant()}"],
+            SystemImageFolder = imageFolder,
+            FileFormatsToSearch = ["zip"],
+            FileFormatsToLaunch = ["zip"],
+            Emulators = []
+        };
+    }
+
     private static IConfiguration BuildConfiguration()
     {
         return new ConfigurationBuilder()

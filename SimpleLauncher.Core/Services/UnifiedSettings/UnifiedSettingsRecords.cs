@@ -34,6 +34,9 @@ public enum MigrationStatus
     /// <summary>Legacy files were imported into a fresh settings.dat and shelved as .bak.</summary>
     Migrated,
 
+    /// <summary>Legacy files were merged (append/overwrite) into an existing settings.dat and shelved as .bak.</summary>
+    Merged,
+
     /// <summary>No legacy files existed; a fresh settings.dat was seeded with defaults.</summary>
     FreshCreated,
 
