@@ -420,4 +420,5 @@ AVALONIABUGS.md
 
 # Local-only files (untracked, never pushed to GitHub)
 BUGSNEEDFIX.md
+BUGSTOBEFIXED.md
 AGENTS.md
