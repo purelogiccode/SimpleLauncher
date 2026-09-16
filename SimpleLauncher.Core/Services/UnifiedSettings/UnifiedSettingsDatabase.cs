@@ -118,8 +118,9 @@ public static class UnifiedSettingsDatabase
             """);
         ExecuteNonQuery(connection, transaction, """
             CREATE TABLE IF NOT EXISTS Favorites (
-                FileName TEXT PRIMARY KEY COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT ''
+                FileName TEXT NOT NULL COLLATE NOCASE,
+                SystemName TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (FileName, SystemName)
             );
             """);
         ExecuteNonQuery(connection, transaction, """
@@ -144,6 +145,10 @@ public static class UnifiedSettingsDatabase
                 PlayTimeSeconds INTEGER NOT NULL DEFAULT 0
             );
             """);
+
+        // Databases created before the composite key carry a single-column Favorites PK
+        // (CREATE TABLE IF NOT EXISTS left them untouched above): rebuild them in place.
+        UpgradeFavoritesToCompositeKey(connection, transaction);
 
         using (var cmd = connection.CreateCommand())
         {
@@ -218,6 +223,48 @@ public static class UnifiedSettingsDatabase
         cmd.Transaction = transaction;
         cmd.CommandText = sql;
         cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    ///     Rebuilds a legacy single-column-PK Favorites table as a (FileName, SystemName)
+    ///     composite key. Databases created before the composite key silently dropped a
+    ///     favorite when the same file name was already favorited in another system.
+    /// </summary>
+    private static void UpgradeFavoritesToCompositeKey(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        var hasSystemNameKey = false;
+        using (var pragma = connection.CreateCommand())
+        {
+            pragma.Transaction = transaction;
+            pragma.CommandText = "PRAGMA table_info(Favorites);";
+            using var reader = pragma.ExecuteReader();
+            while (reader.Read())
+            {
+                // Columns: cid, name, type, notnull, dflt_value, pk (0 = not part of the key).
+                if (reader.GetString(1).Equals("SystemName", StringComparison.OrdinalIgnoreCase) &&
+                    reader.GetInt32(5) > 0)
+                {
+                    hasSystemNameKey = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasSystemNameKey) return;
+
+        ExecuteNonQuery(connection, transaction, "ALTER TABLE Favorites RENAME TO Favorites_legacy_single_key;");
+        ExecuteNonQuery(connection, transaction, """
+            CREATE TABLE Favorites (
+                FileName TEXT NOT NULL COLLATE NOCASE,
+                SystemName TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (FileName, SystemName)
+            );
+            """);
+        ExecuteNonQuery(connection, transaction, """
+            INSERT OR IGNORE INTO Favorites (FileName, SystemName)
+            SELECT FileName, SystemName FROM Favorites_legacy_single_key;
+            """);
+        ExecuteNonQuery(connection, transaction, "DROP TABLE Favorites_legacy_single_key;");
     }
 
     /// <summary>
@@ -457,11 +504,13 @@ public static class UnifiedSettingsDatabase
                 clear.ExecuteNonQuery();
             }
 
-            // First wins on case-insensitive duplicates (the key is COLLATE NOCASE).
+            // First wins on case-insensitive (FileName, SystemName) duplicates — the same
+            // file name may be a favorite in more than one system.
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var fav in favorites)
             {
-                if (string.IsNullOrWhiteSpace(fav.FileName) || !seen.Add(fav.FileName))
+                if (string.IsNullOrWhiteSpace(fav.FileName) ||
+                    !seen.Add(fav.FileName + "\u0000" + fav.SystemName))
                     continue;
                 using var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;

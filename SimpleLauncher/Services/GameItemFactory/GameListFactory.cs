@@ -86,8 +86,10 @@ public class GameListFactory(
             .Any(f => f.FileName.Equals(fileNameWithExtension, StringComparison.OrdinalIgnoreCase) &&
                       f.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
 
+        // Play history stores the full path in FileName (see AddOrUpdatePlayHistoryItem),
+        // so it must be matched against entityPath, not the bare file name.
         var playHistoryItem = _playHistoryManager.PlayHistoryList
-            .FirstOrDefault(h => h.FileName.Equals(fileNameWithExtension, StringComparison.OrdinalIgnoreCase) &&
+            .FirstOrDefault(h => h.FileName.Equals(entityPath, StringComparison.OrdinalIgnoreCase) &&
                                  h.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
 
         var timesPlayed = "0";

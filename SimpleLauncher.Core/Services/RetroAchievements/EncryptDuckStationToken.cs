@@ -59,7 +59,14 @@ public static class EncryptDuckStationToken
         if (!isPortable && OperatingSystem.IsWindows())
         {
             var machineGuid = GetWindowsMachineGuid();
-            if (!string.IsNullOrEmpty(machineGuid)) inputBytes.AddRange(Encoding.UTF8.GetBytes(machineGuid));
+            if (!string.IsNullOrEmpty(machineGuid))
+            {
+                inputBytes.AddRange(Encoding.UTF8.GetBytes(machineGuid));
+
+                // DuckStation hashes the REG_SZ value returned by RegGetValueA including its
+                // terminating NUL (registry length), so the key only matches when it is included.
+                inputBytes.Add(0);
+            }
         }
 
         inputBytes.AddRange(Encoding.UTF8.GetBytes(username));

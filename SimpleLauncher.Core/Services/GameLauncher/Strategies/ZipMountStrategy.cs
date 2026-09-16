@@ -57,14 +57,16 @@ public class ZipMountStrategy : ILaunchStrategy
     public Task ExecuteAsync(LaunchContext context, ILauncherService launcher)
     {
         var log = PathHelper.ResolveLogFilePath(_configuration);
-        if (context.EmulatorName.Contains("RPCS3", StringComparison.Ordinal))
+
+        // Match the case-insensitive tests in IsMatch: "rpcs3" must take the RPCS3 branch.
+        if (context.EmulatorName.Contains("RPCS3", StringComparison.OrdinalIgnoreCase))
         {
             return _mountZipFiles.MountZipFileAndLoadEbootBinAsync(context.ResolvedFilePath, context.SystemName,
                 context.EmulatorName, context.SystemManagerService!, context.EmulatorManager!, context.Parameters,
                 context.WindowContext!, log, launcher, _logger, _messageBox);
         }
 
-        if (context.SystemName.Contains("Scumm", StringComparison.Ordinal))
+        if (context.SystemName.Contains("Scumm", StringComparison.OrdinalIgnoreCase))
         {
             return _mountZipFiles.MountZipFileAndLoadWithScummVmAsync(context.ResolvedFilePath, context.SystemName,
                 context.EmulatorName, context.SystemManagerService!, context.EmulatorManager!, context.Parameters, log,

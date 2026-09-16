@@ -146,7 +146,7 @@ public sealed class LegacyMigrationTests : IDisposable
         // Seed the database with data that conflicts and data that does not.
         UnifiedSettingsDatabase.SaveFavorites(
         [
-            new FavoriteRecord("GAME1.ZIP", "OLD-NES"),
+            new FavoriteRecord("GAME1.ZIP", "NES"),
             new FavoriteRecord("game9.zip", "Genesis")
         ], _dbPath);
         UnifiedSettingsDatabase.SavePlayHistory(
@@ -173,8 +173,10 @@ public sealed class LegacyMigrationTests : IDisposable
             }, _dbPath);
 
         // Legacy files reappear (restored folder): GAME1.zip conflicts with GAME1.ZIP
-        // case-insensitively; game2.iso conflicts with the database history entry.
-        WriteLegacyFavorites(("GAME1.zip", "NES"), ("game3.bin", "Saturn"));
+        // (same system) case-insensitively; game9.zip is the same file name in a different
+        // system and must survive as a second entry; game2.iso conflicts with the database
+        // history entry.
+        WriteLegacyFavorites(("GAME1.zip", "NES"), ("game3.bin", "Saturn"), ("game9.zip", "NES"));
         WriteLegacyHistory();
         WriteLegacySettingsXml();
         WriteLegacySystemXml();
@@ -190,16 +192,19 @@ public sealed class LegacyMigrationTests : IDisposable
             _legacyFolder);
 
         Assert.Equal(MigrationStatus.Merged, result.Status);
-        Assert.Equal(1, result.Favorites);
+        Assert.Equal(2, result.Favorites);
         Assert.Equal(0, result.HistoryEntries);
         Assert.Equal(1, result.Systems);
 
-        // Favorites: appended, no duplicate rows; the legacy value won on conflict.
+        // Favorites: appended, no duplicate rows for the same (file, system) pair; the
+        // legacy value won on conflict, and the same file name in another system survived.
         var favorites = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
-        Assert.Equal(3, favorites.Count);
+        Assert.Equal(4, favorites.Count);
         var game1 = favorites.Single(f => f.FileName.Equals("GAME1.zip", StringComparison.OrdinalIgnoreCase));
         Assert.Equal("NES", game1.SystemName);
         Assert.Contains(favorites, f => string.Equals(f.FileName, "game9.zip", StringComparison.Ordinal));
+        Assert.Contains(favorites, f => string.Equals(f.FileName, "game9.zip", StringComparison.Ordinal) &&
+                                        string.Equals(f.SystemName, "NES", StringComparison.Ordinal));
         Assert.Contains(favorites, f => string.Equals(f.FileName, "game3.bin", StringComparison.Ordinal));
 
         // History: legacy overwrote game2.iso; the database-only entry survived.

@@ -101,15 +101,53 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         [
             new FavoriteRecord("zebra.zip", "NES"),
             new FavoriteRecord("apple.iso", "PS1"),
-            // Case-insensitive duplicate of zebra.zip: first wins, no PK violation.
-            new FavoriteRecord("ZEBRA.zip", "SNES")
+            // Same file name in another system = a distinct favorite.
+            new FavoriteRecord("ZEBRA.zip", "SNES"),
+            // Case-insensitive duplicate of zebra.zip/NES: first wins, no PK violation.
+            new FavoriteRecord("ZEBRA.ZIP", "nes")
+        ], _dbPath);
+
+        var loaded = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
+        Assert.Equal(3, loaded.Count);
+        Assert.Equal("apple.iso", loaded[0].FileName);
+        Assert.Contains(loaded, f => f.FileName.Equals("zebra.zip", StringComparison.OrdinalIgnoreCase) &&
+                                     f.SystemName == "NES");
+        Assert.Contains(loaded, f => f.FileName.Equals("zebra.zip", StringComparison.OrdinalIgnoreCase) &&
+                                     f.SystemName == "SNES");
+
+    }
+
+    [Fact]
+    public void Favorites_LegacySingleColumnPrimaryKey_IsUpgradedInPlace()
+    {
+        // Recreate the pre-composite-key schema with a favorite already stored.
+        using (var connection = UnifiedSettingsDatabase.CreateOpenConnection(_dbPath))
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = """
+                CREATE TABLE Meta (Key TEXT PRIMARY KEY, Value TEXT NOT NULL);
+                INSERT INTO Meta (Key, Value) VALUES ('schema_version', '1');
+                CREATE TABLE Favorites (FileName TEXT PRIMARY KEY COLLATE NOCASE, SystemName TEXT NOT NULL DEFAULT '');
+                INSERT INTO Favorites (FileName, SystemName) VALUES ('game.zip', 'NES');
+                """;
+            cmd.ExecuteNonQuery();
+        }
+
+        Assert.True(UnifiedSettingsDatabase.IsValidDatabase(_dbPath));
+
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+
+        // The upgrade preserved the existing row and allows the same file name in another system.
+        UnifiedSettingsDatabase.SaveFavorites(
+        [
+            new FavoriteRecord("game.zip", "NES"),
+            new FavoriteRecord("game.zip", "SNES")
         ], _dbPath);
 
         var loaded = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
         Assert.Equal(2, loaded.Count);
-        Assert.Equal("apple.iso", loaded[0].FileName);
-        Assert.Equal("zebra.zip", loaded[1].FileName);
-        Assert.Equal("NES", loaded[1].SystemName);
+        Assert.Contains(loaded, f => f.FileName == "game.zip" && f.SystemName == "NES");
+        Assert.Contains(loaded, f => f.FileName == "game.zip" && f.SystemName == "SNES");
     }
 
     [Fact]

@@ -213,7 +213,9 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
         // Create and integrate FilterMenu
         _topLetterNumberMenu.OnLetterSelected += TopLetterNumberMenu_OnLetterSelectedAsync;
 
-        Closing += MainWindow_Closing;
+        // Closing is wired in MainWindow.xaml (Closing="MainWindow_Closing"); subscribing
+        // it again here made both handlers run, and the second one tore the window down
+        // before the deferred settings save finished.
         Activated += MainWindow_Activated;
         Deactivated += MainWindow_Deactivated;
 

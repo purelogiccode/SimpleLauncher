@@ -917,9 +917,11 @@ public partial class SystemManagerService : ISystemManager
                     var systemIdentifier = originalSystemName ?? systemConfig.SystemName;
                     if (root != null)
                     {
+                        // OrdinalIgnoreCase to match SystemExists: saving "nes" must update
+                        // the existing "NES" row instead of appending a duplicate.
                         var existingSystem = root.Elements("SystemConfig")
                             .FirstOrDefault(el => string.Equals(el.Element("SystemName")?.Value, systemIdentifier,
-                                StringComparison.Ordinal));
+                                StringComparison.OrdinalIgnoreCase));
 
                         if (existingSystem != null)
                             UpdateSystemXElement(existingSystem, systemConfig);
@@ -1113,9 +1115,10 @@ public partial class SystemManagerService : ISystemManager
                         throw new InvalidOperationException("Failed to load system configuration for deletion.", ex);
                     }
 
+                    // OrdinalIgnoreCase to match SystemExists, so deleting "nes" removes "NES".
                     var systemNode = xmlDoc.Root?.Descendants("SystemConfig")
                         .FirstOrDefault(element => string.Equals(element.Element("SystemName")?.Value,
-                            systemNameToDelete, StringComparison.Ordinal));
+                            systemNameToDelete, StringComparison.OrdinalIgnoreCase));
 
                     if (systemNode != null)
                     {

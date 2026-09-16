@@ -83,6 +83,19 @@ internal partial class EditSystemWindow
             // Validate SystemName (now with sanitized value)
             if (await ValidateSystemNameAsync(systemNameText)) return;
 
+            // Refuse to save over another existing system (case-insensitive): the unified
+            // database upsert would silently replace it, and the legacy XML path would append
+            // a duplicate. A case-only rename of the same system remains allowed.
+            if (SystemManagerService.SystemExists(systemNameText, _configuration) &&
+                !string.Equals(systemNameText, _originalSystemName, StringComparison.OrdinalIgnoreCase))
+            {
+                await _messageBox.CustomErrorMessageBoxAsync(
+                    $"A system named '{systemNameText}' already exists. Please choose a different name.",
+                    "System Name Already In Use");
+                MarkInvalid(SystemNameTextBox);
+                return;
+            }
+
             // Validate SystemFolder (uses the potentially prefixed value)
             var firstFolder = allSystemFolders.FirstOrDefault() ?? "";
             var systemFolderResult = await ValidateSystemFolderAsync(systemNameText, firstFolder);

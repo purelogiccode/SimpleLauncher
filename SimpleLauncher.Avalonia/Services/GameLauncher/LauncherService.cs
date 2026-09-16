@@ -340,11 +340,13 @@ public class LauncherService : ILauncherService
 
             // ── Emulator input validation (ported from the WPF launcher) ──
             // Checked on the post-extraction/mount path (actualFilePath), mirroring the
-            // WPF launcher which validates after archive extraction.
+            // WPF launcher which validates after archive extraction. The extension is
+            // recomputed here (lower-case, so ".CHD"/".ZIP" match too) because the
+            // pre-extraction one is stale once an archive was extracted to a real file.
+            var actualExtension = Path.GetExtension(actualFilePath).ToLowerInvariant();
             var isOotakeEmulator = emulatorName.Contains("Ootake", StringComparison.OrdinalIgnoreCase) ||
                                    emulatorLocation.Contains("ootake.exe", StringComparison.OrdinalIgnoreCase);
-            if (isOotakeEmulator &&
-                Path.GetExtension(actualFilePath) is ".chd" or ".bin" or ".cue" or ".iso")
+            if (isOotakeEmulator && actualExtension is ".chd" or ".bin" or ".cue" or ".iso")
             {
                 Log.Information(
                     "Ootake does not support CHD/ISO/CUE-BIN image files. Launch blocked. File: {Path}",
@@ -355,8 +357,7 @@ public class LauncherService : ILauncherService
 
             var isGeolithCore = (selectedEmulatorManager.EmulatorParameters ?? "")
                 .Contains("geolith_libretro", StringComparison.OrdinalIgnoreCase);
-            if (isGeolithCore &&
-                Path.GetExtension(actualFilePath) is ".zip" or ".7z" or ".rar")
+            if (isGeolithCore && actualExtension is ".zip" or ".7z" or ".rar")
             {
                 Log.Information(
                     "The Geolith libretro core only supports NEO files. Launch blocked. File: {Path}",
@@ -509,7 +510,9 @@ public class LauncherService : ILauncherService
                 var space = string.IsNullOrWhiteSpace(trimmedParameters) || trimmedParameters.EndsWith('=')
                     ? ""
                     : " ";
-                var isNeoGeoCd = ext is ".CUE" or ".ISO" or ".BIN";
+                // Recompute from the post-extraction path: a .cue extracted from a .zip
+                // must still be treated as NeoGeo CD.
+                var isNeoGeoCd = actualExtension is ".cue" or ".iso" or ".bin";
                 if ((isMame || isRaine) && !isNeoGeoCd)
                 {
                     // MAME/Raine: stripped path call — launch by ROM name

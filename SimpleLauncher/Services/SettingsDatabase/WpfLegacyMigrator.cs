@@ -202,8 +202,10 @@ public static class WpfLegacyMigrator
             var existingHistory = UnifiedSettingsDatabase.LoadPlayHistory(dbPath);
             var existingSystems = UnifiedSettingsDatabase.LoadSystems(dbPath);
 
+            // Favorites are (bare FileName, SystemName) pairs, so key on both: the same file
+            // name can exist in two systems and must not collapse into one entry.
             var mergedFavorites = DedupeByFileName(legacyFavorites, existingFavorites,
-                static f => f.FileName);
+                static f => f.FileName + "\u0000" + f.SystemName);
             var mergedHistory = DedupeByFileName(legacyHistory, existingHistory,
                 static h => h.FileName);
 
