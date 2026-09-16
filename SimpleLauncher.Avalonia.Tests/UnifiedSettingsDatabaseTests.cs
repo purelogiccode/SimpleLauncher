@@ -110,11 +110,12 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         var loaded = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
         Assert.Equal(3, loaded.Count);
         Assert.Equal("apple.iso", loaded[0].FileName);
-        Assert.Contains(loaded, f => f.FileName.Equals("zebra.zip", StringComparison.OrdinalIgnoreCase) &&
-                                     f.SystemName == "NES");
-        Assert.Contains(loaded, f => f.FileName.Equals("zebra.zip", StringComparison.OrdinalIgnoreCase) &&
-                                     f.SystemName == "SNES");
-
+        Assert.Contains(loaded, f =>
+            string.Equals(f.FileName, "zebra.zip", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(f.SystemName, "NES", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(loaded, f =>
+            string.Equals(f.FileName, "zebra.zip", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(f.SystemName, "SNES", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -146,8 +147,12 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
 
         var loaded = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
         Assert.Equal(2, loaded.Count);
-        Assert.Contains(loaded, f => f.FileName == "game.zip" && f.SystemName == "NES");
-        Assert.Contains(loaded, f => f.FileName == "game.zip" && f.SystemName == "SNES");
+        Assert.Contains(loaded, f =>
+            string.Equals(f.FileName, "game.zip", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(f.SystemName, "NES", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(loaded, f =>
+            string.Equals(f.FileName, "game.zip", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(f.SystemName, "SNES", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
