@@ -112,12 +112,17 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <!-- Localization packs are shared with the WPF app and live in SimpleLauncher.Core\Localization.
-             They are linked into the output as Resources\strings.*.json, which is where
-             LocalizationService loads them from. -->
-        <None Include="..\SimpleLauncher.Core\Localization\strings.*.json"
-              Link="Resources\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+             They are embedded into the assembly (the Avalonia equivalent of the WPF pack resources,
+             which SimpleLauncher.csproj embeds as resources/strings.*.json) and loaded by
+             LocalizationService via Assembly.GetManifestResourceStream. No loose Resources folder
+             ships, so the app cannot lose its translations when files are missing or moved. -->
+        <EmbeddedResource Include="..\SimpleLauncher.Core\Localization\strings.*.json"
+                          Link="Resources\%(Filename)%(Extension)">
+            <LogicalName>SimpleLauncher.Avalonia.Resources.%(Filename)%(Extension)</LogicalName>
+            <!-- The pack names end in a culture code (strings.en, strings.pt-BR); without this
+                 opt-out MSBuild would move every pack into its own satellite assembly. -->
+            <WithCulture>false</WithCulture>
+        </EmbeddedResource>
         <None Update="images\systems\Amiga.png">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

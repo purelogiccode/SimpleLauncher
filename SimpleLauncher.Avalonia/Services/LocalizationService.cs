@@ -1,13 +1,24 @@
+using System.Text;
 using System.Text.Json;
 
 namespace SimpleLauncher.Avalonia.Services;
 
 /// <summary>
-///     JSON-based localization service. Loads strings from Resources/strings.{lang}.json.
+///     JSON-based localization service. Loads strings from the language packs embedded in the
+///     assembly as SimpleLauncher.Avalonia.Resources.strings.{lang}.json (the Avalonia equivalent
+///     of the WPF pack resources), or from a directory on disk when a test seam is supplied.
 ///     Falls back to English for missing keys.
 /// </summary>
 public class LocalizationService
 {
+    /// <summary>
+    ///     Manifest-resource prefix for the embedded language packs. Matches the
+    ///     LogicalName in SimpleLauncher.Avalonia.csproj.
+    /// </summary>
+    internal const string EmbeddedResourcePrefix = "SimpleLauncher.Avalonia.Resources.strings.";
+
+    internal const string EmbeddedResourceSuffix = ".json";
+
     /// <summary>
     ///     Available languages with display names (canonical set matches the WPF app).
     /// </summary>
@@ -34,18 +45,18 @@ public class LocalizationService
     };
 
     private readonly Dictionary<string, string> _enFallback;
-    private readonly string _resourcesDir;
+    private readonly string? _resourcesDir;
     private readonly Dictionary<string, string> _strings = new(StringComparer.OrdinalIgnoreCase);
 
-    public LocalizationService() : this(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources"))
+    public LocalizationService() : this(null)
     {
     }
 
     /// <summary>
     ///     Test seam: allows tests to load strings from an isolated directory instead of
-    ///     mutating the shared output Resources folder (which races with LocalizationTests).
+    ///     the embedded packs (which mutate nothing and are shared by every test).
     /// </summary>
-    internal LocalizationService(string resourcesDir)
+    internal LocalizationService(string? resourcesDir)
     {
         _resourcesDir = resourcesDir;
         LoadLanguage("en");
@@ -64,29 +75,16 @@ public class LocalizationService
         CurrentLanguage = lang;
         _strings.Clear();
 
-        // Resolve the resource file case-insensitively (settings may store codes
-        // like 'pt-br' or 'zh-hans' from the WPF app while the files use 'pt-BR'/'zh-Hans').
-        var path = Directory.Exists(_resourcesDir)
-            ? Directory.EnumerateFiles(_resourcesDir, "strings.*.json")
-                .FirstOrDefault(f => string.Equals(Path.GetFileNameWithoutExtension(f).Substring("strings.".Length),
-                    lang, StringComparison.OrdinalIgnoreCase))
-            : null;
-        path ??= Path.Combine(_resourcesDir, $"strings.{lang}.json");
+        var (canonicalCode, sourceName, json) = LoadLanguageSource(lang);
 
-        if (File.Exists(path))
-        {
-            // Canonicalize CurrentLanguage to the actual file's code (e.g. 'pt-br' -> 'pt-BR')
-            var fileName = Path.GetFileNameWithoutExtension(path);
-            CurrentLanguage = fileName.StartsWith("strings.", StringComparison.Ordinal)
-                ? fileName["strings.".Length..]
-                : lang;
-        }
+        // Canonicalize CurrentLanguage to the actual pack's code (e.g. 'pt-br' -> 'pt-BR')
+        if (canonicalCode is not null)
+            CurrentLanguage = canonicalCode;
 
-        if (File.Exists(path))
+        if (json is not null)
         {
             try
             {
-                var json = File.ReadAllText(path);
                 var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
                 if (dict is not null)
                 {
@@ -97,7 +95,7 @@ public class LocalizationService
             catch (Exception ex)
             {
                 // Fall through to English
-                Log.Error(ex, "Failed to load language file {Path}", path);
+                Log.Error(ex, "Failed to load language file {Path}", sourceName ?? lang);
             }
         }
 
@@ -106,6 +104,74 @@ public class LocalizationService
         {
             foreach (var kvp in _enFallback)
                 _strings.TryAdd(kvp.Key, kvp.Value);
+        }
+    }
+
+    /// <summary>
+    ///     Resolves a language pack from the embedded manifest resources (the default) or,
+    ///     when the test seam directory is supplied, from files on disk. The lookup is
+    ///     case-insensitive because settings may store codes like 'pt-br' or 'zh-hans'
+    ///     from the WPF app while the packs use 'pt-BR'/'zh-Hans'.
+    /// </summary>
+    /// <returns>
+    ///     The canonical language code, a human-readable source name for logging, and the
+    ///     pack JSON; nulls when the language is not available.
+    /// </returns>
+    private (string? CanonicalCode, string? SourceName, string? Json) LoadLanguageSource(string lang)
+    {
+        if (_resourcesDir is not null)
+        {
+            // Test seam: packs are read from an isolated directory on disk.
+            var path = Directory.Exists(_resourcesDir)
+                ? Directory.EnumerateFiles(_resourcesDir, "strings.*.json")
+                    .FirstOrDefault(f => string.Equals(
+                        Path.GetFileNameWithoutExtension(f).Substring("strings.".Length),
+                        lang, StringComparison.OrdinalIgnoreCase))
+                : null;
+            path ??= Path.Combine(_resourcesDir, $"strings.{lang}.json");
+
+            if (!File.Exists(path)) return (null, path, null);
+
+            var fileName = Path.GetFileNameWithoutExtension(path);
+            var fileCode = fileName.StartsWith("strings.", StringComparison.Ordinal)
+                ? fileName["strings.".Length..]
+                : lang;
+
+            try
+            {
+                return (fileCode, path, File.ReadAllText(path));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load language file {Path}", path);
+                return (fileCode, path, null);
+            }
+        }
+
+        var assembly = typeof(LocalizationService).Assembly;
+        var resourceName = assembly.GetManifestResourceNames()
+            .Where(static name => name.StartsWith(EmbeddedResourcePrefix, StringComparison.Ordinal)
+                                  && name.EndsWith(EmbeddedResourceSuffix, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault(name => string.Equals(
+                name[EmbeddedResourcePrefix.Length..^EmbeddedResourceSuffix.Length],
+                lang, StringComparison.OrdinalIgnoreCase));
+
+        if (resourceName is null) return (null, null, null);
+
+        var canonicalCode = resourceName[EmbeddedResourcePrefix.Length..^EmbeddedResourceSuffix.Length];
+
+        try
+        {
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream is null) return (canonicalCode, resourceName, null);
+
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            return (canonicalCode, resourceName, reader.ReadToEnd());
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to load language file {Path}", resourceName);
+            return (canonicalCode, resourceName, null);
         }
     }
 

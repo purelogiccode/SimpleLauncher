@@ -187,7 +187,7 @@ public class AvaloniaHelpUserServiceTests
             "Nodetailsavailablefor", "Noinformationavailableforsystem", "Nosystemnameprovided"
         };
 
-        var resourcesDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+        var resourcesDir = TestHelpers.AvaloniaProjectPathHelper.GetLocalizationResourcesPath();
         var files = Directory.EnumerateFiles(resourcesDir, "strings.*.json").ToList();
         Assert.Equal(18, files.Count);
 

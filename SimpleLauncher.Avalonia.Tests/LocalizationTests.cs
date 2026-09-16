@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SimpleLauncher.Avalonia.Services;
+using SimpleLauncher.Avalonia.Tests.TestHelpers;
 
 namespace SimpleLauncher.Avalonia.Tests;
 
@@ -10,7 +11,9 @@ namespace SimpleLauncher.Avalonia.Tests;
 /// </summary>
 public class LocalizationTests
 {
-    private static string ResourcesDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+    // The canonical packs live in SimpleLauncher.Core\Localization and are embedded into
+    // the Avalonia assembly; the tests verify both the source files and the embedding.
+    private static string ResourcesDir => AvaloniaProjectPathHelper.GetLocalizationResourcesPath();
 
     private static IEnumerable<string> LanguageFiles()
     {
@@ -40,6 +43,27 @@ public class LocalizationTests
             .OrderBy(n => n, StringComparer.Ordinal).ToList();
 
         Assert.Equal(expected, actual);
+    }
+
+    /// <summary>
+    ///     Guards the PACKAGING step: every selectable language must be embedded in the
+    ///     Avalonia assembly (no loose Resources folder ships), otherwise LocalizationService
+    ///     silently falls back to English at runtime.
+    /// </summary>
+    [Fact]
+    public void EveryLanguagePackIsEmbeddedInTheAssembly()
+    {
+        var embeddedNames = typeof(LocalizationService).Assembly.GetManifestResourceNames();
+
+        foreach (var lang in LocalizationService.AvailableLanguages.Keys)
+        {
+            var expected = LocalizationService.EmbeddedResourcePrefix + lang +
+                           LocalizationService.EmbeddedResourceSuffix;
+            Assert.True(embeddedNames.Contains(expected, StringComparer.OrdinalIgnoreCase),
+                $"'{expected}' is NOT embedded in the assembly. Check SimpleLauncher.Avalonia.csproj: " +
+                "the shared packs need the " +
+                "<EmbeddedResource Include=\"..\\SimpleLauncher.Core\\Localization\\strings.*.json\" /> entry.");
+        }
     }
 
     [Fact]
