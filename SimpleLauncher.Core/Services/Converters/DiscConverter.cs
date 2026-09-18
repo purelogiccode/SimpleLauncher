@@ -265,7 +265,9 @@ public class DiscConverter : IDiscConverter
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[ConvertPbpToCueBin] Error converting PBP to CUE/BIN");
+            // Expected user-data condition (corrupt or unsupported PBP file): Information
+            // level so it is never reported as a bug.
+            _logger.Information(ex, "[ConvertPbpToCueBin] Error converting PBP to CUE/BIN");
             // An exception can leave partial .bin/.cue files behind; delete them here because
             // the non-throwing failure paths are already handled inside the conversion lambda.
             TryDeleteTempFiles(tempCuePath!, tempBinPath!);

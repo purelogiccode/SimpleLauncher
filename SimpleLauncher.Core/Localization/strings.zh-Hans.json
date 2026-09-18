@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "系统图片文件夹路径无效或不存在:",
   "SystemImageLabel": "系统图片",
   "SystemLoadCancelled": "系统加载已取消。",
+  "SystemNameAlreadyExists": "名为 '{0}' 的系统已存在。请选择其他名称。",
+  "SystemNameAlreadyInUse": "系统名称已被使用",
   "SystemNamecannotbeemptyor": "“系统名称”不能为空或只包含空格。",
   "SystemNamecontainsinvalid": "“系统名称”包含无效字符：",
   "SystemNameHeader": "系统名称",

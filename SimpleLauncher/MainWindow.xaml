@@ -1102,6 +1102,8 @@
                                             Width="80"
                                             Minimum="50"
                                             Maximum="800"
+                                            IsSnapToTickEnabled="True"
+                                            TickFrequency="50"
                                             Margin="4,0"
                                             VerticalAlignment="Center"
                                             AutomationProperties.HelpText="{DynamicResource TooltipButtonSizeMenu}" />

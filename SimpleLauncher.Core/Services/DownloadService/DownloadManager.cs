@@ -188,12 +188,24 @@ public class DownloadManager : IDisposable
         }
     }
 
-    private void ResetCancellationToken()
+    /// <summary>
+    ///     Replaces the cancellation token source for a new download attempt, but only when no
+    ///     stop request arrived since <paramref name="expectedEpoch" /> was captured. Returns
+    ///     false (leaving <see cref="IsUserCancellation" /> set) when a cancel raced with the
+    ///     reset, so the request can never be swallowed by a fresh, uncancelled token source.
+    /// </summary>
+    private bool TryResetCancellationToken(long expectedEpoch)
     {
         CancellationTokenSource? oldCts;
         lock (_lock)
         {
             ObjectDisposedException.ThrowIf(_disposed, nameof(DownloadManager));
+
+            if (_cancelEpoch != expectedEpoch)
+            {
+                IsUserCancellation = true;
+                return false;
+            }
 
             oldCts = _cancellationTokenSource;
             _cancellationTokenSource = new CancellationTokenSource();
@@ -209,6 +221,7 @@ public class DownloadManager : IDisposable
         }
 
         oldCts?.Dispose();
+        return true;
     }
 
     /// <summary>
@@ -274,8 +287,14 @@ public class DownloadManager : IDisposable
             }
 
             // Reset the cancellation token source at the beginning of every download attempt.
-            // Safe here: the gate guarantees no other download is using the old CTS.
-            ResetCancellationToken();
+            // Safe here: the gate guarantees no other download is using the old CTS. The reset
+            // is atomic against CancelDownload (epoch check), so a stop request that lands
+            // between the queued check above and this point is honored, not swallowed.
+            if (!TryResetCancellationToken(cancelEpochAtStart))
+            {
+                _logger.Debug($"Download start aborted by a stop request: {downloadUrl}");
+                return null;
+            }
 
         // Determine a safe file name confined to TempFolder (CORE-05).
         // Both the caller-supplied fileName and the URL-derived name are untrusted:

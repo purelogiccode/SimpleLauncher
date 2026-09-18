@@ -91,8 +91,7 @@ public class LauncherService : ILauncherService
                 "Emulicious", "Emulicious.exe",
                 "Speccy", "Speccy.exe",
                 "ProSystem.exe", "ProSystem",
-                "fMSX.exe", "fMSX",
-                "Projec(t)64.exe"
+                "fMSX.exe", "fMSX"
             };
         }
 
@@ -1220,6 +1219,13 @@ public class LauncherService : ILauncherService
                     if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
                     {
                         Log.Information(win32Ex, "Elevation required to launch shortcut file");
+                        error = ex;
+                        return;
+                    }
+
+                    if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
+                    {
+                        Log.Information(win32Ex, "Invalid executable format: {Path}", resolvedFilePath);
                         error = ex;
                         return;
                     }

@@ -342,6 +342,25 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         }
     }
 
+    [Fact]
+    public void BackupDatabase_CapturesLatestWritesAndIsIndependent()
+    {
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+        UnifiedSettingsDatabase.SaveAppSettings(
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["Language"] = "fr" }, _dbPath);
+
+        var backupPath = NewTempDbPath();
+        UnifiedSettingsDatabase.BackupDatabase(backupPath, _dbPath);
+
+        // The snapshot carries the latest write (including WAL content).
+        Assert.Equal("fr", UnifiedSettingsDatabase.GetAppSetting("Language", backupPath));
+
+        // Later writes to the source do not leak into the snapshot.
+        UnifiedSettingsDatabase.SetAppSetting("Language", "de", _dbPath);
+        Assert.Equal("fr", UnifiedSettingsDatabase.GetAppSetting("Language", backupPath));
+        Assert.Equal("de", UnifiedSettingsDatabase.GetAppSetting("Language", _dbPath));
+    }
+
     private string NewTempDbPath()
     {
         var path = Path.Combine(Path.GetTempPath(), "SLDbTest_" + Guid.NewGuid().ToString("N") + ".dat");

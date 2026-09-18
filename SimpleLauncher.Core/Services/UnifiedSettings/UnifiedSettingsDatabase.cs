@@ -31,7 +31,11 @@ public static class UnifiedSettingsDatabase
     /// <summary>File name of the unified database (SQLite content, legacy extension).</summary>
     public const string DatabaseFileName = "settings.dat";
 
-    /// <summary>Current schema version stored in the Meta table.</summary>
+    /// <summary>
+    ///     Current schema version stored in the Meta table. Older databases (version 1+) stay
+    ///     valid and are upgraded in place by <see cref="EnsureCreated" />; the Favorites
+    ///     composite-key rebuild is detected structurally (PRAGMA table_info), not by version.
+    /// </summary>
     public const int CurrentSchemaVersion = 1;
 
     private static readonly Lock WriteLock = new();
@@ -70,7 +74,12 @@ public static class UnifiedSettingsDatabase
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT Value FROM Meta WHERE Key = 'schema_version';";
             var value = Convert.ToString(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
-            return string.Equals(value, CurrentSchemaVersion.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+            // Any readable schema from version 1 up to the current one is valid: EnsureCreated
+            // upgrades older databases in place, so treating a known-old schema as corrupt
+            // would quarantine the user's data instead of migrating it.
+            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var schemaVersion) &&
+                   schemaVersion >= 1 &&
+                   schemaVersion <= CurrentSchemaVersion;
         }
         catch (Exception ex)
         {
@@ -343,6 +352,30 @@ public static class UnifiedSettingsDatabase
             {
                 Log.Debug(ex, "[UnifiedSettings] Failed to delete journal sibling '{Path}'", path + suffix);
             }
+        }
+    }
+
+    /// <summary>
+    ///     Creates a consistent copy of the database (including any content still in the
+    ///     write-ahead log) at <paramref name="destinationPath" /> using SQLite's
+    ///     <c>VACUUM INTO</c>. A plain <c>File.Copy</c> of a WAL database can silently omit
+    ///     the most recent transactions.
+    /// </summary>
+    public static void BackupDatabase(string destinationPath, string? dbPath = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        var sourcePath = dbPath ?? GetDatabasePath();
+        lock (WriteLock)
+        {
+            // VACUUM INTO refuses to overwrite an existing file.
+            if (File.Exists(destinationPath))
+                File.Delete(destinationPath);
+
+            using var connection = CreateOpenConnection(sourcePath);
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "VACUUM INTO $dest;";
+            cmd.Parameters.AddWithValue("$dest", destinationPath);
+            cmd.ExecuteNonQuery();
         }
     }
 

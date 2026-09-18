@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "Sistem görüntü klasörü yolu geçerli değil veya mevcut değil:",
   "SystemImageLabel": "Sistem Resmi",
   "SystemLoadCancelled": "Sistem yüklemesi iptal edildi.",
+  "SystemNameAlreadyExists": "'{0}' adlı bir sistem zaten var. Lütfen farklı bir ad seçin.",
+  "SystemNameAlreadyInUse": "Sistem Adı Zaten Kullanılıyor",
   "SystemNamecannotbeemptyor": "‘Sistem Adı’ boş olamaz veya yalnızca boşluk içeremez.",
   "SystemNamecontainsinvalid": "'Sistem Adı' geçersiz karakterler içeriyor:",
   "SystemNameHeader": "Sistem Adı",

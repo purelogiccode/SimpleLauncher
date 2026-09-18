@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "سسٹم امیج فولڈر کا راستہ درست نہیں ہے یا موجود نہیں ہے:",
   "SystemImageLabel": "سسٹم کی تصویر",
   "SystemLoadCancelled": "سسٹم لوڈ منسوخ کر دیا گیا۔",
+  "SystemNameAlreadyExists": "'{0}' نام کا سسٹم پہلے سے موجود ہے۔ براہ کرم کوئی مختلف نام منتخب کریں۔",
+  "SystemNameAlreadyInUse": "سسٹم کا نام پہلے سے استعمال میں ہے",
   "SystemNamecannotbeemptyor": "سسٹم کا نام خالی نہیں ہو سکتا۔",
   "SystemNamecontainsinvalid": "'سسٹم کا نام' میں غیر موزوں حروف شامل ہیں:",
   "SystemNameHeader": "سسٹم کا نام",

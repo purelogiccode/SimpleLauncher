@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "Systeemafbeeldingmap pad is ongeldig of bestaat niet:",
   "SystemImageLabel": "Systeemafbeelding",
   "SystemLoadCancelled": "Systeemladen geannuleerd.",
+  "SystemNameAlreadyExists": "Er bestaat al een systeem met de naam '{0}'. Kies een andere naam.",
+  "SystemNameAlreadyInUse": "Systeemnaam al in gebruik",
   "SystemNamecannotbeemptyor": "De 'Systeemnaam' mag niet leeg zijn of alleen spaties bevatten.",
   "SystemNamecontainsinvalid": "'Systeemnaam' bevat ongeldige tekens:",
   "SystemNameHeader": "Systeemnaam",

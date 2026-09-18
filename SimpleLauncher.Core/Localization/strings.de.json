@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "Der System-Image-Ordnerpfad ist ungültig oder existiert nicht:",
   "SystemImageLabel": "Systembild",
   "SystemLoadCancelled": "Systemladung abgebrochen.",
+  "SystemNameAlreadyExists": "Ein System namens '{0}' existiert bereits. Bitte wählen Sie einen anderen Namen.",
+  "SystemNameAlreadyInUse": "Systemname bereits in Verwendung",
   "SystemNamecannotbeemptyor": "'Systemname' darf nicht leer sein oder nur Leerzeichen enthalten.",
   "SystemNamecontainsinvalid": "„Systemname“ enthält ungültige Zeichen:",
   "SystemNameHeader": "Systemname",

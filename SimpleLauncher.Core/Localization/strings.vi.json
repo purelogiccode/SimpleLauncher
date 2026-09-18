@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "Đường dẫn thư mục hình ảnh hệ thống không hợp lệ hoặc không tồn tại:",
   "SystemImageLabel": "Hình ảnh Hệ thống",
   "SystemLoadCancelled": "Tải hệ thống đã bị hủy.",
+  "SystemNameAlreadyExists": "Hệ thống có tên '{0}' đã tồn tại. Vui lòng chọn tên khác.",
+  "SystemNameAlreadyInUse": "Tên hệ thống đã được sử dụng",
   "SystemNamecannotbeemptyor": "'Tên hệ thống' không được để trống hoặc chỉ chứa khoảng trắng.",
   "SystemNamecontainsinvalid": "'Tên hệ thống' chứa các ký tự không hợp lệ:",
   "SystemNameHeader": "Tên hệ thống",

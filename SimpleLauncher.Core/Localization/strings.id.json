@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "Path folder gambar sistem tidak valid atau tidak ada:",
   "SystemImageLabel": "Gambar Sistem",
   "SystemLoadCancelled": "Pemuatan sistem dibatalkan.",
+  "SystemNameAlreadyExists": "Sistem bernama '{0}' sudah ada. Silakan pilih nama lain.",
+  "SystemNameAlreadyInUse": "Nama Sistem Sudah Digunakan",
   "SystemNamecannotbeemptyor": "'Nama Sistem' tidak boleh kosong atau hanya berisi spasi.",
   "SystemNamecontainsinvalid": "'Nama Sistem' mengandung karakter yang tidak valid:",
   "SystemNameHeader": "Nama Sistem",

@@ -756,6 +756,13 @@ public class MenuActionHandlerService
             {
                 _playSoundEffects.PlayNotificationSound();
 
+                // Keep the persisted size on the 50-px grid the settings whitelist accepts:
+                // an arbitrary value (e.g. straight from a slider drag) would silently reset
+                // to 250 on the next launch.
+                newSize = Math.Clamp(
+                    (int)Math.Round(newSize / (double)ZoomStep, MidpointRounding.AwayFromZero) * ZoomStep,
+                    MinThumbnailSize, MaxThumbnailSize);
+
                 _host.SetGameButtonImageHeight(newSize);
                 _settings.ThumbnailSize = newSize;
                 await _settings.SaveAsync();

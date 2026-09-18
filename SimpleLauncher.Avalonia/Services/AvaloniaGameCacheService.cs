@@ -13,6 +13,10 @@ public sealed class AvaloniaGameCacheService
     private readonly Dictionary<string, List<string>> _cache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _lock = new();
 
+    // Incremented whenever the cache is invalidated/cleared/replaced. A scan that started
+    // before the change must not repopulate the cache with its stale list afterwards.
+    private long _generation;
+
     /// <summary>
     ///     Gets the number of systems currently cached.
     /// </summary>
@@ -58,6 +62,7 @@ public sealed class AvaloniaGameCacheService
         lock (_lock)
         {
             _cache[systemName] = [.. files];
+            _generation++;
             Log.Debug("[AvaloniaGameCacheService] SetAllGames for '{System}'. Count: {Count}", systemName,
                 files.Count);
         }
@@ -88,6 +93,7 @@ public sealed class AvaloniaGameCacheService
         // AV-19: fast path under the lock, disk I/O outside of it. Holding the
         // lock across enumeration blocked every reader for the whole scan and
         // deadlocked when the enumerator re-entered the cache.
+        long generationAtStart;
         lock (_lock)
         {
             if (_cache.TryGetValue(system.SystemName, out var cached))
@@ -96,6 +102,8 @@ public sealed class AvaloniaGameCacheService
                     system.SystemName, cached.Count);
                 return [.. cached];
             }
+
+            generationAtStart = _generation;
         }
 
         var files = enumerateFiles(system).ToList();
@@ -109,6 +117,17 @@ public sealed class AvaloniaGameCacheService
                 Log.Debug("[AvaloniaGameCacheService] Reusing cached list for '{System}'. Count: {Count}",
                     system.SystemName, cached.Count);
                 return [.. cached];
+            }
+
+            // The cache was invalidated (system change / refresh) while we were scanning:
+            // do not repopulate it with a list that predates the change — the next call
+            // rescans instead of serving a stale list until the next invalidation.
+            if (_generation != generationAtStart)
+            {
+                Log.Debug(
+                    "[AvaloniaGameCacheService] Cache changed while scanning '{System}'; not caching the stale list",
+                    system.SystemName);
+                return files;
             }
 
             _cache[system.SystemName] = [.. files];
@@ -128,6 +147,7 @@ public sealed class AvaloniaGameCacheService
         lock (_lock)
         {
             _cache.Remove(systemName);
+            _generation++;
         }
     }
 
@@ -139,6 +159,7 @@ public sealed class AvaloniaGameCacheService
         lock (_lock)
         {
             _cache.Clear();
+            _generation++;
         }
     }
 }

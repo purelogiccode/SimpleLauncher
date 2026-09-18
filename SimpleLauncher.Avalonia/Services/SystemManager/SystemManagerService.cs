@@ -29,7 +29,7 @@ public class SystemManagerService
             TimeSpan.FromSeconds(1));
 
     private static readonly Regex SystemNameRegexInstance =
-        new(@"<SystemName>\s*(.*?)\s*</SystemName>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture,
+        new(@"<SystemName>\s*(?<name>.*?)\s*</SystemName>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture,
             TimeSpan.FromSeconds(1));
 
     private readonly IConfiguration _configuration;
@@ -158,7 +158,7 @@ public class SystemManagerService
                     catch (Exception innerEx)
                     {
                         var nameMatch = SystemNameRegexInstance.Match(match.Value);
-                        var sysName = nameMatch.Success ? nameMatch.Groups[1].Value : "Unknown";
+                        var sysName = nameMatch.Success ? nameMatch.Groups["name"].Value : "Unknown";
                         invalidErrors.Add(
                             $"The system '{sysName}' was removed due to structural corruption in the XML.");
                         Log.Error(innerEx, "Failed to validate system configuration during recovery for '{SysName}'",

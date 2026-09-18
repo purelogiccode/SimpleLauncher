@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "システムイメージフォルダのパスが無効か存在しません:",
   "SystemImageLabel": "システム画像",
   "SystemLoadCancelled": "システム読み込みがキャンセルされました。",
+  "SystemNameAlreadyExists": "'{0}' という名前のシステムは既に存在します。別の名前を選択してください。",
+  "SystemNameAlreadyInUse": "システム名は既に使用されています",
   "SystemNamecannotbeemptyor": "「システム名」は空白やスペースのみであってはいけません。",
   "SystemNamecontainsinvalid": "「システム名」に無効な文字が含まれています：",
   "SystemNameHeader": "システム名",

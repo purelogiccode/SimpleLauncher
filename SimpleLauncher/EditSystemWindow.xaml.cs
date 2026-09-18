@@ -497,7 +497,9 @@ internal partial class EditSystemWindow : ILoadingState
                 if (dbFolder is not null && File.Exists(dbPath))
                 {
                     var backupFileName = $"settings_backup{DateTime.Now:yyyyMMdd_HHmmss}.dat";
-                    File.Copy(dbPath, Path.Combine(dbFolder, backupFileName), true);
+                    // VACUUM INTO: a plain File.Copy of a WAL database can omit the most
+                    // recent transactions (the system write that just happened).
+                    UnifiedSettingsDatabase.BackupDatabase(Path.Combine(dbFolder, backupFileName));
                 }
 
                 return;

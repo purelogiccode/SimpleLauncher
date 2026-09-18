@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using SimpleLauncher.Core.Models;
@@ -89,9 +90,12 @@ internal partial class EditSystemWindow
             if (SystemManagerService.SystemExists(systemNameText, _configuration) &&
                 !string.Equals(systemNameText, _originalSystemName, StringComparison.OrdinalIgnoreCase))
             {
+                var messageTemplate = (string?)Application.Current.TryFindResource("SystemNameAlreadyExists")
+                                      ?? "A system named '{0}' already exists. Please choose a different name.";
+                var title = (string?)Application.Current.TryFindResource("SystemNameAlreadyInUse")
+                            ?? "System Name Already In Use";
                 await _messageBox.CustomErrorMessageBoxAsync(
-                    $"A system named '{systemNameText}' already exists. Please choose a different name.",
-                    "System Name Already In Use");
+                    string.Format(CultureInfo.CurrentCulture, messageTemplate, systemNameText), title);
                 MarkInvalid(SystemNameTextBox);
                 return;
             }

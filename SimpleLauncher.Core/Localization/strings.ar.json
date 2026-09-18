@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "مسار مجلد صورة النظام غير صالح أو غير موجود:",
   "SystemImageLabel": "صورة النظام",
   "SystemLoadCancelled": "تم إلغاء تحميل النظام.",
+  "SystemNameAlreadyExists": "يوجد بالفعل نظام بالاسم '{0}'. الرجاء اختيار اسم آخر.",
+  "SystemNameAlreadyInUse": "اسم النظام مستخدم بالفعل",
   "SystemNamecannotbeemptyor": "'اسم النظام' لا يمكن أن يكون فارغًا أو يحتوي فقط على مسافات.",
   "SystemNamecontainsinvalid": "'اسم النظام' يحتوي على أحرف غير صالحة:",
   "SystemNameHeader": "اسم النظام",

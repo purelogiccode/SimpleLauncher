@@ -1090,15 +1090,49 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task ThereWasAnErrorMountingTheFileMessageBoxAsync(int? exitCode = null)
+    public async Task ThereWasAnErrorMountingTheFileMessageBoxAsync(int? exitCode = null)
     {
-        if (O == null) return Task.CompletedTask;
+        if (O == null) return;
         Log.Debug("File mounting error. Exit code: {ExitCode}", exitCode);
-        return ShowAsync(O,
-            _localization.GetString("Anerroroccurredwhileopeningyourbrowser",
-                "An error occurred while opening your browser."), _localization.GetString("Error", "Error"),
-            MessageButtons.Ok,
-            MessageIcon.Error);
+        var simpleLauncherCouldNotMount = _localization.GetString("SimpleLaunchercouldnotmount",
+            "'Simple Launcher' could not mount the selected game.");
+        var reasonMessage = exitCode switch
+        {
+            -1073741510 => _localization.GetString("ThisDokanVersionIncompatible",
+                "The installed version of Dokan may be incompatible. Try reinstalling or updating Dokan."),
+            -1073741515 => _localization.GetString("Dokannotinstalled",
+                "Dokan library is not installed. Dokan is required for mounting ZIP, CHD and disk image files."),
+            _ => _localization.GetString("ThismaybeduetoDokannotbeinginstalled2",
+                "This may be due to Dokan not being installed. Dokan is required for mounting ZIP, CHD and disk image files.")
+        };
+        var doYouWantToOpenBrowser = _localization.GetString("DoyouwanttoopenyourbrowsertodownloadDokan",
+            "Do you want to open your browser to download Dokan?");
+        var error = _localization.GetString("Error", "Error");
+        var messageBoxResult = await ShowAsync(O,
+            $"{simpleLauncherCouldNotMount}\n\n{reasonMessage}\n\n{doYouWantToOpenBrowser}",
+            error, MessageButtons.YesNo, MessageIcon.Question);
+
+        if (messageBoxResult != MessageBoxResult.Yes) return;
+
+        var downloadPageUrl = _configuration.GetValue<string>("Urls:DokanyWebsite")
+                              ?? "https://github.com/dokan-dev/dokany";
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadPageUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Expected condition (no default browser / headless session): not a bug report.
+            Log.Information(ex, "Could not open the Dokan website");
+            await ShowAsync(O,
+                _localization.GetString("Anerroroccurredwhileopeningyourbrowser",
+                    "An error occurred while opening your browser."),
+                error, MessageButtons.Ok, MessageIcon.Error);
+        }
     }
 
 
@@ -2913,14 +2947,35 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task FileIsLockedMessageBoxAsync(string? tempFolderPath)
+    public async Task FileIsLockedMessageBoxAsync(string? tempFolderPath)
     {
-        if (O == null) return Task.CompletedTask;
+        if (O == null) return;
         Log.Debug("File is locked. Temp folder: {TempFolderPath}", tempFolderPath);
-        return ShowAsync(O,
+        var downloadedFileIsLocked =
+            _localization.GetString("Downloadedfileislocked", "Downloaded file is locked.");
+        var grantAdministrative = _localization.GetString("GrantSimpleLauncheradministrative",
+            "Grant 'Simple Launcher' administrative access and try again.");
+        var disableAntivirus = _localization.GetString("Youcanalsotemporarilydisableyourantivirussoftware",
+            "You can also temporarily disable your antivirus software or add 'Simple Launcher' folder to the antivirus exclusion list.");
+        var ensureWritable = _localization.GetString("EnsuretheSimpleLauncher",
+            "Ensure the 'Simple Launcher' folder is a writable directory.");
+        var openTempFolderQuestion = _localization.GetString("OpenTempFolderQuestion",
+            "Would you like to open the temporary folder to inspect the file?");
+        var error = _localization.GetString("Error", "Error");
+
+        var result = await ShowAsync(O,
+            $"{downloadedFileIsLocked}\n\n{grantAdministrative}\n\n{disableAntivirus}\n\n{ensureWritable}\n\n{openTempFolderQuestion}",
+            error, MessageButtons.YesNo, MessageIcon.Question);
+
+        if (result != MessageBoxResult.Yes || string.IsNullOrWhiteSpace(tempFolderPath)) return;
+
+        // WPF parity: open the temp folder and surface an error only when that fails.
+        if (await ExternalLinkHelper.TryOpenFolderAsync(tempFolderPath, O)) return;
+
+        await ShowAsync(O,
             _localization.GetString("ErrorOpeningFolderMessage", "Could not open the temporary folder."),
-            _localization.GetString("ErrorOpeningFolderTitle", "Error Opening Folder"), MessageButtons.Ok,
-            MessageIcon.Error);
+            _localization.GetString("ErrorOpeningFolderTitle", "Error Opening Folder"),
+            MessageButtons.Ok, MessageIcon.Error);
     }
 
 

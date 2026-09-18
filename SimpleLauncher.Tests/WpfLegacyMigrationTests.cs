@@ -264,6 +264,97 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         Assert.False(File.Exists(Path.Combine(_legacyFolder, "settings.dat")));
     }
 
+    [Fact]
+    public void Merge_OnlyFavoritesLegacyFile_KeepsDatabaseAppAndEmulatorSettings()
+    {
+        // First run: fresh database (no legacy files present yet).
+        var logger = new NoOpLogger();
+        var first = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.FreshCreated, first.Status);
+
+        UnifiedSettingsDatabase.SaveAppSettings(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Language"] = "de",
+            ["ThumbnailSize"] = "500"
+        }, _dbPath);
+        UnifiedSettingsDatabase.SaveAllEmulatorConfigs(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Mame"] = """{"Video":"bgfx"}"""
+        }, _dbPath);
+
+        // Only favorites.dat reappears — no settings.xml. The defaults carried by the freshly
+        // created SettingsManagerService must never be merged over the database (regression:
+        // that wiped theme, language, RA credentials and every emulator configuration).
+        WriteLegacyFavorites(("game1.zip", "NES"));
+
+        WpfLegacyMigrator.ResetForTests();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Merged, result.Status);
+
+        var app = UnifiedSettingsDatabase.LoadAppSettings(_dbPath);
+        Assert.Equal("de", app["Language"]);
+        Assert.Equal("500", app["ThumbnailSize"]);
+        Assert.Contains("bgfx", UnifiedSettingsDatabase.LoadEmulatorConfigs(_dbPath)["Mame"], StringComparison.Ordinal);
+        Assert.Single(UnifiedSettingsDatabase.LoadFavorites(_dbPath));
+    }
+
+    [Fact]
+    public void Merge_CorruptSettingsXml_KeepsDatabaseAppSettings()
+    {
+        var logger = new NoOpLogger();
+        var first = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.FreshCreated, first.Status);
+
+        UnifiedSettingsDatabase.SaveAppSettings(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Language"] = "de"
+        }, _dbPath);
+
+        // A corrupt settings.xml cannot be read: the untouched service defaults must not
+        // be merged over the database (Loaded=false), and the corrupt file is still shelved.
+        File.WriteAllText(Path.Combine(_legacyFolder, "settings.xml"), "<Settings><Application>");
+        WriteLegacyFavorites(("game1.zip", "NES"));
+
+        WpfLegacyMigrator.ResetForTests();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Merged, result.Status);
+        Assert.Equal("de", UnifiedSettingsDatabase.LoadAppSettings(_dbPath)["Language"]);
+        Assert.False(File.Exists(Path.Combine(_legacyFolder, "settings.xml")));
+        Assert.True(File.Exists(Path.Combine(_legacyFolder, "settings.xml.bak")));
+    }
+
+    [Fact]
+    public void Migrate_DuplicateLegacyEntries_AreDeduplicatedAndSucceed()
+    {
+        // Same favorite twice (system differs only by case), two history entries with the
+        // same file name, and two system blocks whose names differ only by case. The database
+        // collapses each duplicate; the migration must verify against the canonicalized
+        // counts instead of failing (and retrying) forever.
+        WriteLegacyFavorites(("game1.zip", "NES"), ("GAME1.ZIP", "nes"), ("game2.zip", "SNES"));
+        WriteLegacyHistoryDuplicates();
+        WriteLegacySystemXmlWithCaseDuplicateNames();
+
+        var logger = new NoOpLogger();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Migrated, result.Status);
+        Assert.Equal(2, result.Favorites);
+        Assert.Equal(1, result.HistoryEntries);
+        Assert.Equal(1, result.Systems);
+
+        Assert.True(UnifiedSettingsDatabase.IsValidDatabase(_dbPath));
+        Assert.Equal(2, UnifiedSettingsDatabase.LoadFavorites(_dbPath).Count);
+        Assert.Single(UnifiedSettingsDatabase.LoadPlayHistory(_dbPath));
+        Assert.Single(UnifiedSettingsDatabase.LoadSystems(_dbPath));
+    }
+
     private static SystemManagerConfig BuildSystemConfig(string systemName, string imageFolder)
     {
         return new SystemManagerConfig
@@ -386,6 +477,87 @@ public sealed class WpfLegacyMigrationTests : IDisposable
                     <EmulatorName>SNES9x</EmulatorName>
                     <EmulatorLocation>D:\emu\snes9x.exe</EmulatorLocation>
                     <EmulatorParameters>%ROM%</EmulatorParameters>
+                  </Emulator>
+                </Emulators>
+              </SystemConfig>
+            </SystemConfigs>
+            """);
+    }
+
+    private void WriteLegacyHistoryDuplicates()
+    {
+        var manager = new PlayHistoryManager
+        {
+            PlayHistoryList =
+            [
+                new PlayHistoryItem
+                {
+                    FileName = "game2.iso",
+                    SystemName = "PS1",
+                    TimesPlayed = 5,
+                    TotalPlayTime = 7200,
+                    LastPlayDate = "2026-09-10",
+                    LastPlayTime = "21:30:00"
+                },
+                new PlayHistoryItem
+                {
+                    FileName = "GAME2.ISO",
+                    SystemName = "PS1",
+                    TimesPlayed = 1,
+                    TotalPlayTime = 10,
+                    LastPlayDate = "2026-09-11",
+                    LastPlayTime = "10:00:00"
+                }
+            ]
+        };
+        File.WriteAllBytes(
+            Path.Combine(_legacyFolder, "playhistory.dat"),
+            MessagePackSerializer.Serialize(manager));
+    }
+
+    private void WriteLegacySystemXmlWithCaseDuplicateNames()
+    {
+        File.WriteAllText(Path.Combine(_legacyFolder, "system.xml"), """
+            <SystemConfigs>
+              <SystemConfig>
+                <SystemName>NES</SystemName>
+                <SystemFolders>
+                  <SystemFolder>C:\roms\nes</SystemFolder>
+                </SystemFolders>
+                <SystemImageFolder>C:\images\nes</SystemImageFolder>
+                <FileFormatsToSearch>
+                  <FormatToSearch>zip</FormatToSearch>
+                </FileFormatsToSearch>
+                <FileFormatsToLaunch>
+                  <FormatToLaunch>zip</FormatToLaunch>
+                </FileFormatsToLaunch>
+                <Emulators>
+                  <Emulator>
+                    <EmulatorName>Mesen</EmulatorName>
+                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                    <EmulatorParameters></EmulatorParameters>
+                    <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
+                  </Emulator>
+                </Emulators>
+              </SystemConfig>
+              <SystemConfig>
+                <SystemName>nes</SystemName>
+                <SystemFolders>
+                  <SystemFolder>D:\roms\nes</SystemFolder>
+                </SystemFolders>
+                <SystemImageFolder>D:\images\nes</SystemImageFolder>
+                <FileFormatsToSearch>
+                  <FormatToSearch>nes</FormatToSearch>
+                </FileFormatsToSearch>
+                <FileFormatsToLaunch>
+                  <FormatToLaunch>nes</FormatToLaunch>
+                </FileFormatsToLaunch>
+                <Emulators>
+                  <Emulator>
+                    <EmulatorName>Mesen</EmulatorName>
+                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                    <EmulatorParameters></EmulatorParameters>
+                    <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
                   </Emulator>
                 </Emulators>
               </SystemConfig>

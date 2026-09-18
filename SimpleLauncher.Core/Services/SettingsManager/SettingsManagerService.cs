@@ -305,7 +305,11 @@ public class SettingsManagerService : IDisposable
     ///     When the file is missing or corrupt the current values are kept and no
     ///     file is created (unlike <see cref="Load" />).
     /// </summary>
-    internal void LoadFromLegacyFile(string path)
+    /// <returns>
+    ///     True when the file existed and was parsed; false when it is missing or unreadable
+    ///     (callers must not treat the untouched defaults as user data in that case).
+    /// </returns>
+    internal bool LoadFromLegacyFile(string path)
     {
         XElement? settings = null;
 
@@ -323,12 +327,14 @@ public class SettingsManagerService : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error loading legacy settings file '{Path}'", path);
+                // Expected user-data condition (a corrupt legacy file simply imports as
+                // empty): Information level so it is never reported as a bug.
+                _logger.Information(ex, "Error loading legacy settings file '{Path}'", path);
             }
         }
 
         if (settings is null)
-            return;
+            return false;
 
         _settingsLock.EnterWriteLock();
         try
@@ -339,6 +345,8 @@ public class SettingsManagerService : IDisposable
         {
             _settingsLock.ExitWriteLock();
         }
+
+        return true;
     }
 
     private string EncryptString(string plainText)

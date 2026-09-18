@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "O caminho da pasta de imagens do sistema não é válido ou não existe:",
   "SystemImageLabel": "Imagem do Sistema",
   "SystemLoadCancelled": "Carregamento do sistema cancelado.",
+  "SystemNameAlreadyExists": "Já existe um sistema chamado '{0}'. Escolha um nome diferente.",
+  "SystemNameAlreadyInUse": "Nome do sistema já está em uso",
   "SystemNamecannotbeemptyor": "O 'Nome do Sistema' não pode estar vazio ou conter apenas espaços.",
   "SystemNamecontainsinvalid": "'Nome do Sistema' contém caracteres inválidos:",
   "SystemNameHeader": "Nome do Sistema",

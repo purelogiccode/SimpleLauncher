@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "सिस्टम इमेज फ़ोल्डर पथ मान्य नहीं है या मौजूद नहीं है:",
   "SystemImageLabel": "सिस्टम छवि",
   "SystemLoadCancelled": "सिस्टम लोड रद्द कर दिया गया।",
+  "SystemNameAlreadyExists": "'{0}' नाम का सिस्टम पहले से मौजूद है। कृपया कोई अन्य नाम चुनें।",
+  "SystemNameAlreadyInUse": "सिस्टम नाम पहले से उपयोग में है",
   "SystemNamecannotbeemptyor": "'सिस्टम का नाम' खाली नहीं हो सकता या केवल स्पेस नहीं हो सकता।",
   "SystemNamecontainsinvalid": "'सिस्टम नाम' में अमान्य वर्ण हैं:",
   "SystemNameHeader": "सिस्टम का नाम",

@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "সিস্টেম ইমেজ ফোল্ডারের পথ অবৈধ বা বিদ্যমান নেই:",
   "SystemImageLabel": "সিস্টেম ছবি",
   "SystemLoadCancelled": "সিস্টেম লোড বাতিল করা হয়েছে।",
+  "SystemNameAlreadyExists": "'{0}' নামে একটি সিস্টেম ইতিমধ্যে বিদ্যমান। অনুগ্রহ করে একটি ভিন্ন নাম চয়ন করুন।",
+  "SystemNameAlreadyInUse": "সিস্টেমের নাম ইতিমধ্যে ব্যবহৃত",
   "SystemNamecannotbeemptyor": "‘সিস্টেম নাম’ খালি বা শুধুমাত্র স্পেস থাকতে পারবে না।",
   "SystemNamecontainsinvalid": "'সিস্টেমের নাম'-এ অবৈধ অক্ষর রয়েছে:",
   "SystemNameHeader": "সিস্টেমের নাম",

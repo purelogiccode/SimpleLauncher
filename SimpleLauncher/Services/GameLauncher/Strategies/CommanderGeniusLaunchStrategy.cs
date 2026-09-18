@@ -79,7 +79,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             if (string.IsNullOrEmpty(cgDataPath))
             {
                 _logger.Debug("[CommanderGeniusLaunchStrategy] Could not resolve CG data path");
-                LogErrorAsync("Could not resolve Commander Genius data path.");
+                LogInfo("Could not resolve Commander Genius data path.");
                 return;
             }
 
@@ -89,7 +89,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             {
                 _logger.Debug(
                     "[CommanderGeniusLaunchStrategy] Refusing to use an invalid archive name as the extraction folder");
-                LogErrorAsync($"Invalid archive name: {Path.GetFileName(context.ResolvedFilePath)}");
+                LogInfo($"Invalid archive name: {Path.GetFileName(context.ResolvedFilePath)}");
                 return;
             }
 
@@ -117,7 +117,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
                 if (string.IsNullOrEmpty(emulatorLocation) || !File.Exists(PathHelper.GetLongPath(emulatorLocation)))
                 {
                     _logger.Debug("[CommanderGeniusLaunchStrategy] Emulator executable not found");
-                    LogErrorAsync($"Emulator executable not found: {emulatorLocation}");
+                    LogInfo($"Emulator executable not found: {emulatorLocation}");
                     await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                         PathHelper.ResolveLogFilePath(_configuration));
                     return;
@@ -504,6 +504,12 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
         {
             return "Exit code: N/A";
         }
+    }
+
+    private static void LogInfo(string message)
+    {
+        var fullMessage = $"[CommanderGeniusLaunchStrategy] {message}";
+        _logger.Information(fullMessage);
     }
 
     private static void LogErrorAsync(string message)

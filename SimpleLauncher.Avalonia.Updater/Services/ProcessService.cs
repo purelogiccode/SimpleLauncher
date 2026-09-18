@@ -52,7 +52,9 @@ internal class ProcessService
             if (IsKnownAppProcessName(candidate))
                 return candidate;
 
-            Log.Warning("Ignoring unknown application argument '{Argument}'", appArgument);
+            // Expected condition (a manually launched updater or a stray argument):
+            // Information level so it is never reported as a bug.
+            Log.Information("Ignoring unknown application argument '{Argument}'", appArgument);
         }
 
         if (processId.HasValue)
@@ -69,8 +71,9 @@ internal class ProcessService
             }
             catch (Exception ex)
             {
-                // E.g. access denied reading an elevated process — never trust it.
-                Log.Warning(ex, "Could not detect the application from process ID {Pid}", processId);
+                // E.g. access denied reading an elevated process — never trust it, but this is
+                // an expected environment condition: Information level so it is not reported.
+                Log.Information(ex, "Could not detect the application from process ID {Pid}", processId);
             }
         }
 

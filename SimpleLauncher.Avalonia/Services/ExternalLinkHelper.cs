@@ -46,8 +46,10 @@ public static class ExternalLinkHelper
         {
             try
             {
-                await launcher.LaunchUriAsync(uri);
-                return true;
+                // LaunchUriAsync returns false when the platform could not open the URI
+                // (e.g. no browser registered); fall through to the shell fallback then.
+                if (await launcher.LaunchUriAsync(uri))
+                    return true;
             }
             catch
             {

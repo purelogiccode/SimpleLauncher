@@ -262,10 +262,11 @@ public class ExtractionService : IExtractionService
                         await using (var entryStream = await entry.OpenEntryStreamAsync())
                         await using (var fileStream = File.Create(destinationPath))
                         {
+                            // Track the file as soon as it exists on disk: if the copy fails
+                            // halfway the partial file must still be cleaned up.
+                            extractedFiles.Add(destinationPath);
                             await entryStream.CopyToAsync(fileStream);
                         }
-
-                        extractedFiles.Add(destinationPath);
 
                         // Preserve file time if available
                         if (entry.LastModifiedTime.HasValue)
@@ -308,13 +309,10 @@ public class ExtractionService : IExtractionService
             {
                 try
                 {
-                    // Only remove the tracking marker plus files written by this run.
+                    // Only remove files written by this run plus the tracking marker.
                     // Never wipe the whole destination folder: it may contain pre-existing
-                    // user files (CORE-01).
-                    var extractionTrackingFile = Path.Combine(resolvedDestinationFolder, ".extraction_in_progress");
-                    if (File.Exists(extractionTrackingFile))
-                        await DeleteFiles.TryDeleteFileAsync(extractionTrackingFile);
-
+                    // user files (CORE-01). The marker is removed last so a failed cleanup
+                    // stays recognizable for CleanupPartialExtractionAsync.
                     foreach (var extractedFile in extractedFiles)
                     {
                         try
@@ -327,6 +325,10 @@ public class ExtractionService : IExtractionService
                             _logger.Error(cleanupEx, $"Failed to clean up partial extraction file: {extractedFile}");
                         }
                     }
+
+                    var extractionTrackingFile = Path.Combine(resolvedDestinationFolder, ".extraction_in_progress");
+                    if (File.Exists(extractionTrackingFile))
+                        await DeleteFiles.TryDeleteFileAsync(extractionTrackingFile);
                 }
                 catch (Exception cleanupEx)
                 {

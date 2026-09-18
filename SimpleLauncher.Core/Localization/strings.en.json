@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "System Image Folder path is not valid or does not exist:",
   "SystemImageLabel": "System Image",
   "SystemLoadCancelled": "System load cancelled.",
+  "SystemNameAlreadyExists": "A system named '{0}' already exists. Please choose a different name.",
+  "SystemNameAlreadyInUse": "System Name Already In Use",
   "SystemNamecannotbeemptyor": "'System Name' cannot be empty or contain only spaces.",
   "SystemNamecontainsinvalid": "'System Name' contains invalid characters:",
   "SystemNameHeader": "System Name",

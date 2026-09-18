@@ -853,6 +853,8 @@
                                        FontSize="10" VerticalAlignment="Center" />
                             <Slider x:Name="CardSizeSlider"
                                     Width="80" Minimum="50" Maximum="800"
+                                    IsSnapToTickEnabled="True"
+                                    TickFrequency="50"
                                     Value="{Binding CardWidth}"
                                     Margin="4,0" VerticalAlignment="Center" />
                             <TextBlock Text="○" Foreground="{DynamicResource TextMutedBrush}"

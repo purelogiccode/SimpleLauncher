@@ -139,6 +139,39 @@ public class AvaloniaGameCacheServiceTests
         Assert.Single(result);
     }
 
+    [Fact]
+    public async Task GetCachedOrScan_InvalidatedDuringScan_DoesNotCacheStaleList()
+    {
+        var cache = new AvaloniaGameCacheService();
+        var system = System("NES", @"C:\roms\nes");
+        var scanStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseScan = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var scanTask = Task.Run(() => cache.GetCachedOrScan(system, _ =>
+        {
+            scanStarted.SetResult();
+            releaseScan.Task.Wait(TimeSpan.FromSeconds(30));
+            return (IEnumerable<string>)["stale.zip"];
+        }));
+
+        Assert.True(await Task.Run(() => scanStarted.Task.Wait(TimeSpan.FromSeconds(30))));
+
+        // The system changes (or the library refreshes) while the scan is still running:
+        // the completed scan must not repopulate the cache with its pre-change list.
+        cache.Invalidate("NES");
+
+        releaseScan.SetResult();
+        var result = await scanTask.WaitAsync(TimeSpan.FromSeconds(30));
+
+        Assert.Single(result);
+        Assert.False(cache.IsPopulated("NES"));
+
+        // The next call rescans and caches the fresh list.
+        var fresh = cache.GetCachedOrScan(system, _ => (IEnumerable<string>)["fresh.zip"]);
+        Assert.Equal("fresh.zip", Assert.Single(fresh));
+        Assert.True(cache.IsPopulated("NES"));
+    }
+
     // ── Orchestrator ──
 
     [Fact]

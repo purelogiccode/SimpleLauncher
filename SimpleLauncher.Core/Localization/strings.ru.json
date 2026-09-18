@@ -2101,6 +2101,8 @@
   "SystemImageFolderpathisnotvalid": "Путь к папке изображений системы недействителен или не существует:",
   "SystemImageLabel": "Изображение системы",
   "SystemLoadCancelled": "Загрузка системы отменена.",
+  "SystemNameAlreadyExists": "Система с именем '{0}' уже существует. Выберите другое имя.",
+  "SystemNameAlreadyInUse": "Имя системы уже используется",
   "SystemNamecannotbeemptyor": "Имя системы не может быть пустым или содержать только пробелы.",
   "SystemNamecontainsinvalid": "«Имя системы» содержит недопустимые символы:",
   "SystemNameHeader": "Название системы",

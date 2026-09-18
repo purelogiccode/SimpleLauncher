@@ -81,9 +81,16 @@ public static class WpfLegacyMigrator
         try
         {
             // ── Read legacy state (best effort; corrupt files become empty) ──
-            var favorites = ReadLegacyFavorites(legacyFiles.FavoritesPath, logger);
-            var history = ReadLegacyHistory(legacyFiles.HistoryPath, logger);
-            var settings = ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPath);
+            // Canonicalize exactly the way the database keys the rows, so the round-trip
+            // verification below cannot fail on duplicates that the database legitimately
+            // collapses (the same file favorited twice, duplicate history file names).
+            var favorites = DedupeByFileName(
+                ReadLegacyFavorites(legacyFiles.FavoritesPath, logger), [],
+                static f => f.FileName + "\u0000" + f.SystemName);
+            var history = DedupeByFileName(
+                ReadLegacyHistory(legacyFiles.HistoryPath, logger), [],
+                static h => h.FileName);
+            var (settings, _) = ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPath);
             var systems = ReadLegacySystems(logger, legacyFiles.SystemXmlPath);
 
             var anyLegacy = legacyFiles.FavoritesPath is not null
@@ -110,7 +117,9 @@ public static class WpfLegacyMigrator
             UnifiedSettingsDatabase.SaveAllSystems(systemsByName, dbPath);
 
             // ── Verify the round-trip before touching legacy files ──
-            VerifyMigration(dbPath, favorites.Count, history.Count, systems.Count);
+            // A freshly created database is always seeded with the (default) application
+            // and emulator settings, so expect them here.
+            VerifyMigration(dbPath, favorites.Count, history.Count, systemsByName.Count, expectSettings: true);
 
             if (!anyLegacy)
             {
@@ -129,8 +138,8 @@ public static class WpfLegacyMigrator
 
             logger.Information(
                 "[Migration] Imported {Fav} favorites, {Hist} history entries, {Sys} systems into '{Path}'; shelved {N} legacy files as .bak",
-                favorites.Count, history.Count, systems.Count, dbPath, shelved);
-            return new MigrationResult(MigrationStatus.Migrated, favorites.Count, history.Count, systems.Count);
+                favorites.Count, history.Count, systemsByName.Count, dbPath, shelved);
+            return new MigrationResult(MigrationStatus.Migrated, favorites.Count, history.Count, systemsByName.Count);
         }
         catch (Exception ex)
         {
@@ -170,8 +179,11 @@ public static class WpfLegacyMigrator
     ///     folder or AppData): upsert the legacy data into the existing database and shelve
     ///     the files. New entries are appended; rows with the same key are overwritten by
     ///     the legacy values (first wins on the case-insensitive bulk saves), so nothing
-    ///     is duplicated and database-only data is kept. On failure the database is left
-    ///     untouched and the legacy files stay for the next launch to retry.
+    ///     is duplicated and database-only data is kept. Application/emulator settings are
+    ///     only merged when a legacy <c>settings.xml</c> was actually read — otherwise the
+    ///     database values stay untouched (merging the service defaults would wipe them).
+    ///     On failure the database is left untouched and the legacy files stay for the next
+    ///     launch to retry.
     /// </summary>
     private static MigrationResult MergeLegacyFilesIntoExistingDatabase(
         string dbPath,
@@ -194,8 +206,13 @@ public static class WpfLegacyMigrator
             // ── Read legacy state (best effort; corrupt files become empty) ──
             var legacyFavorites = ReadLegacyFavorites(legacyFiles.FavoritesPath, logger);
             var legacyHistory = ReadLegacyHistory(legacyFiles.HistoryPath, logger);
-            var legacySettings = ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPath);
+            var (legacySettings, legacySettingsLoaded) =
+                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPath);
             var legacySystems = ReadLegacySystems(logger, legacyFiles.SystemXmlPath);
+
+            // Make sure the existing database has every table and structural upgrade before
+            // the first write touches a possibly older schema.
+            UnifiedSettingsDatabase.EnsureCreated(dbPath);
 
             // ── Merge (legacy first: the first-wins dedupe makes legacy overwrite existing rows) ──
             var existingFavorites = UnifiedSettingsDatabase.LoadFavorites(dbPath);
@@ -213,15 +230,26 @@ public static class WpfLegacyMigrator
             foreach (var system in legacySystems)
                 mergedSystems[system.SystemName] = SystemConfigStore.Serialize(system);
 
-            var mergedPlayTimes = legacySettings.ExportSystemPlayTimes()
+            // Application/emulator settings are only merged when the legacy settings file was
+            // actually read: without it the service carries defaults, and merging those over
+            // the database would wipe the user's theme, language, RA credentials and every
+            // emulator configuration.
+            var mergedPlayTimes = (legacySettingsLoaded
+                    ? legacySettings.ExportSystemPlayTimes()
+                    : new List<SystemPlayTimeRecord>())
                 .Concat(UnifiedSettingsDatabase.LoadSystemPlayTimes(dbPath))
                 .ToList();
-            var mergedAppSettings = new Dictionary<string, string>(UnifiedSettingsDatabase.LoadAppSettings(dbPath), StringComparer.OrdinalIgnoreCase);
-            foreach (var (key, value) in legacySettings.ExportAppSettings())
-                mergedAppSettings[key] = value ?? "";
-            var mergedEmulators = new Dictionary<string, string>(UnifiedSettingsDatabase.LoadEmulatorConfigs(dbPath), StringComparer.OrdinalIgnoreCase);
-            foreach (var (key, value) in legacySettings.ExportEmulatorSettings())
-                mergedEmulators[key] = value ?? "{}";
+            var mergedAppSettings = new Dictionary<string, string>(
+                UnifiedSettingsDatabase.LoadAppSettings(dbPath), StringComparer.OrdinalIgnoreCase);
+            var mergedEmulators = new Dictionary<string, string>(
+                UnifiedSettingsDatabase.LoadEmulatorConfigs(dbPath), StringComparer.OrdinalIgnoreCase);
+            if (legacySettingsLoaded)
+            {
+                foreach (var (key, value) in legacySettings.ExportAppSettings())
+                    mergedAppSettings[key] = value ?? "";
+                foreach (var (key, value) in legacySettings.ExportEmulatorSettings())
+                    mergedEmulators[key] = value ?? "{}";
+            }
 
             // ── Write the database ──
             UnifiedSettingsDatabase.SaveFavorites(mergedFavorites, dbPath);
@@ -232,7 +260,8 @@ public static class WpfLegacyMigrator
             UnifiedSettingsDatabase.SaveAllSystems(mergedSystems, dbPath);
 
             // ── Verify the round-trip before touching legacy files ──
-            VerifyMigration(dbPath, mergedFavorites.Count, mergedHistory.Count, mergedSystems.Count);
+            VerifyMigration(dbPath, mergedFavorites.Count, mergedHistory.Count, mergedSystems.Count,
+                expectSettings: legacySettingsLoaded);
 
             var favoritesAdded = mergedFavorites.Count - existingFavorites.Count;
             var historyAdded = mergedHistory.Count - existingHistory.Count;
@@ -384,7 +413,7 @@ public static class WpfLegacyMigrator
         }
     }
 
-    private static SettingsManagerService ReadLegacySettings(
+    private static (SettingsManagerService Settings, bool Loaded) ReadLegacySettings(
         IConfiguration configuration,
         ILogger logger,
         ICredentialProtector credentialProtector,
@@ -392,14 +421,14 @@ public static class WpfLegacyMigrator
     {
         // Legacy (XML) mode: never opts into the unified database.
         var settings = new SettingsManagerService(configuration, logger, credentialProtector, null);
-        if (settingsPath is not null)
-        {
-            // Explicit path (no DataFileLocation side effects): a missing file keeps
-            // the defaults, and unlike Load() nothing is ever written back.
-            settings.LoadFromLegacyFile(settingsPath);
-        }
+        if (settingsPath is null)
+            return (settings, false);
 
-        return settings;
+        // Explicit path (no DataFileLocation side effects): when the file is missing or
+        // corrupt the untouched defaults are returned with Loaded=false, and unlike Load()
+        // nothing is ever written back.
+        var loaded = settings.LoadFromLegacyFile(settingsPath);
+        return (settings, loaded);
     }
 
     private static List<SystemManagerConfig> ReadLegacySystems(
@@ -425,7 +454,8 @@ public static class WpfLegacyMigrator
 
     // ── Verification ────────────────────────────────────────────────
 
-    private static void VerifyMigration(string dbPath, int favorites, int history, int systems)
+    private static void VerifyMigration(string dbPath, int favorites, int history, int systems,
+        bool expectSettings)
     {
         if (!UnifiedSettingsDatabase.IsValidDatabase(dbPath))
             throw new InvalidOperationException("The migrated database failed validation.");
@@ -433,8 +463,6 @@ public static class WpfLegacyMigrator
         var backFavorites = UnifiedSettingsDatabase.LoadFavorites(dbPath);
         var backHistory = UnifiedSettingsDatabase.LoadPlayHistory(dbPath);
         var backSystems = UnifiedSettingsDatabase.LoadSystems(dbPath);
-        var backApp = UnifiedSettingsDatabase.LoadAppSettings(dbPath);
-        var backEmulators = UnifiedSettingsDatabase.LoadEmulatorConfigs(dbPath);
 
         if (backFavorites.Count != favorites)
             throw new InvalidOperationException(
@@ -445,9 +473,15 @@ public static class WpfLegacyMigrator
         if (backSystems.Count != systems)
             throw new InvalidOperationException(
                 $"Systems count mismatch after migration (expected {systems}, got {backSystems.Count}).");
-        if (backApp.Count == 0)
+
+        // Application/emulator settings are only verified when the migration actually
+        // wrote them (a merge without a legacy settings file must keep the database rows
+        // untouched instead of failing when they happen to be empty).
+        if (!expectSettings) return;
+
+        if (UnifiedSettingsDatabase.LoadAppSettings(dbPath).Count == 0)
             throw new InvalidOperationException("Application settings are missing after migration.");
-        if (backEmulators.Count == 0)
+        if (UnifiedSettingsDatabase.LoadEmulatorConfigs(dbPath).Count == 0)
             throw new InvalidOperationException("Emulator settings are missing after migration.");
     }
 

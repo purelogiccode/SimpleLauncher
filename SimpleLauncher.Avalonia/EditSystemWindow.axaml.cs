@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -489,7 +490,9 @@ public partial class EditSystemWindow : Window
                 if (dbFolder is not null && File.Exists(dbPath))
                 {
                     var backupFileName = $"settings_backup{DateTime.Now:yyyyMMdd_HHmmss}.dat";
-                    File.Copy(dbPath, Path.Combine(dbFolder, backupFileName), true);
+                    // VACUUM INTO: a plain File.Copy of a WAL database can omit the most
+                    // recent transactions (the system write that just happened).
+                    UnifiedSettingsDatabase.BackupDatabase(Path.Combine(dbFolder, backupFileName));
                 }
 
                 return;
@@ -1135,6 +1138,20 @@ public partial class EditSystemWindow : Window
             if (!isSystemFolderValid || !isSystemImageFolderValid) return;
 
             if (await ValidateSystemNameAsync(systemNameText)) return;
+
+            // Refuse to save over another existing system (case-insensitive): the shared
+            // database upsert would silently replace it. A case-only rename of the same
+            // system stays allowed.
+            if (_systems.Any(s => string.Equals(s.SystemName, systemNameText, StringComparison.OrdinalIgnoreCase)) &&
+                !string.Equals(systemNameText, _originalSystemName, StringComparison.OrdinalIgnoreCase))
+            {
+                var messageTemplate = _localization.GetString("SystemNameAlreadyExists",
+                    "A system named '{0}' already exists. Please choose a different name.");
+                var title = _localization.GetString("SystemNameAlreadyInUse", "System Name Already In Use");
+                await _messageBox.CustomErrorMessageBoxAsync(
+                    string.Format(CultureInfo.CurrentCulture, messageTemplate, systemNameText), title);
+                return;
+            }
 
             var systemFolderResult = await ValidateSystemFolderAsync(systemNameText, firstFolder);
             if (systemFolderResult.IsFailed) return;
