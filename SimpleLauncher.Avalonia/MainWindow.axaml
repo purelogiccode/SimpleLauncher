@@ -661,7 +661,6 @@
                         <Image Source="avares://SimpleLauncher.Avalonia/images/settings.png" Width="16" Height="16" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <Separator />
                 <MenuItem Header="{ext:Translate Exit}" Click="Exit_Click"
                           ToolTip.Tip="{ext:Translate TooltipExitMenu}">
                     <MenuItem.Icon>
