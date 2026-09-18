@@ -12,9 +12,9 @@
         <DebugSymbols>true</DebugSymbols>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <AssemblyVersion>5.7.0</AssemblyVersion>
-        <FileVersion>5.7.0</FileVersion>
-        <Version>5.7.0</Version>
+        <AssemblyVersion>5.8.0</AssemblyVersion>
+        <FileVersion>5.8.0</FileVersion>
+        <Version>5.8.0</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     </PropertyGroup>
 

@@ -84,7 +84,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 `SimpleLauncher.Core\Services\ExtractFiles\ExtractionService.cs`
 
 - `ExtractToTempAndGetLaunchFileAsync` (`:41`), `ExtractToFolderAsync` (`:70`); only 7z/zip/rar (`:126`); **file-lock retry 10×1 s** (`:100-123`).
-- **`.extraction_in_progress` marker** written before extract (`:152-153`), removed on success (`:253-256`, `:270-274`), triggers `CleanupPartialExtractionAsync` on failure (`:286-290`).
+- **`.extraction_in_progress` marker** written before extract, removed on success. On failure only the marker plus the files written by that run are deleted — destination folders are never wiped (CORE-01), and tracked files are removed before the marker.
 - **Disk-space check:** estimated size × 1.2 vs `DriveInfo.AvailableFreeSpace` → `DiskSpaceErrorMessageBoxAsync` + IOException (`:165-196`).
 - **Path-traversal guard:** every entry must resolve under the destination root (`:199-219`, `:364-382`); random temp names (`:351-354`).
 - **7za fallback:** SharpCompress failure on `.7z` → `tools\SevenZip\7za.exe`/`_arm64.exe` (`:446-448`), args `x -o"dest" -y "archive"` (`:460`), **30-minute timeout** with kill (`:485-503`).

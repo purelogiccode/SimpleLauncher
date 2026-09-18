@@ -169,7 +169,7 @@ Missing/0-byte configs are restored from `samples\{emulatorFolderName}\{filename
 - `RetroAchievementsSettingsWindow` — credentials + "Configure Emulator" for the 7 supported emulators.
 - `SystemSelectionWindow` — system picker when auto-matching is unsure.
 
-Credentials (username/API key/password/token) are stored **DPAPI-encrypted** in `settings.xml` (see [05 — Configuration](05-configuration.md#credentials)).
+Credentials (username/API key/password/token) are stored **DPAPI-encrypted** in the unified `settings.dat` database (legacy: `settings.xml`) — see [05 — Configuration](05-configuration.md#credentials).
 
 ## Related docs
 

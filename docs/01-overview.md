@@ -41,21 +41,21 @@ Three code projects implement it:
 
 ## Localization
 
-18 languages ship as **one shared set of JSON packs**: `SimpleLauncher.Core\Localization\strings.{code}.json` (2669 keys per file, UTF-8 without BOM, key-sorted). The Avalonia app links/copies them to `Resources\strings.{code}.json` and loads them via `LocalizationService`; the WPF app embeds them as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`) and `App.ApplyLanguage` builds the WPF `ResourceDictionary` from the JSON. Switching language restarts the app. See [08 — UI Layer](08-ui-layer.md#themes--language).
+18 languages ship as **one shared set of JSON packs**: `SimpleLauncher.Core\Localization\strings.{code}.json` (2669 keys per file, UTF-8 without BOM, key-sorted). Both apps embed them in their assemblies — Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService`) and WPF as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, with `App.ApplyLanguage` building the WPF `ResourceDictionary` from the JSON). Switching language restarts the app. See [08 — UI Layer](08-ui-layer.md#themes--language).
 
 `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) propagates missing keys from `strings.en.json` to all other languages; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 
 ## Version & license
 
-- Current version: **5.7.0** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.7.0) and ships in the same release bundle.
-- The secondary server publishes a `version.txt` (e.g. `release5.7.0`) used by the update-check fallback.
+- Current version: **5.8.0** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.0) and ships in the same release bundle.
+- The secondary server publishes a `version.txt` (e.g. `release5.8.0`) used by the update-check fallback.
 - Framework: **.NET 10** (`net10.0-windows`), **C# 14**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).
 - Repository: https://github.com/purelogiccode/SimpleLauncher
 
 ## Release history
 
-See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.6.0 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
+See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.8.0 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
 
 ## Related docs
 

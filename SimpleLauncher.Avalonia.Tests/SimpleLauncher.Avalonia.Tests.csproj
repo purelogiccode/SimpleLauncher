@@ -9,9 +9,9 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <NoWarn>NU1903;xUnit1026</NoWarn>
-        <AssemblyVersion>5.7.0</AssemblyVersion>
-        <FileVersion>5.7.0</FileVersion>
-        <Version>5.7.0</Version>
+        <AssemblyVersion>5.8.0</AssemblyVersion>
+        <FileVersion>5.8.0</FileVersion>
+        <Version>5.8.0</Version>
     </PropertyGroup>
 
     <ItemGroup>

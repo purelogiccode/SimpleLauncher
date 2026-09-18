@@ -1,3 +1,44 @@
+# Release 5.8.0
+*2026-09-18*
+---
+
+## Unified Windows Release (WPF + Avalonia)
+- **One download for both apps** — The release zip now places `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) side by side with a single shared content set (`images/`, `tools/`, `samples/`, `appsettings.json`) and ships one `Updater.exe` that updates either app.
+- **Shared single-instance guard** — Only one of the two apps can run at a time; launching the other brings the running instance to the foreground.
+- **Updater relaunches the app that started it** — and still works on legacy WPF-only installs.
+
+## Unified Settings Database (`settings.dat`)
+- **One SQLite store for both apps** — Favorites, play history, application settings, emulator settings, per-system play times, and system configurations now live in a single `settings.dat` in `%LocalAppData%\SimpleLauncher` (or the portable folder).
+- **Automatic migration** — The first launch migrates `settings.xml`, `system.xml`, `favorites.dat`, and `playhistory.dat`, verifies the result, and shelves the legacy files as `.bak`; on failure nothing is changed and the next launch retries.
+- **Merge support** — If a database already exists, any remaining legacy files are merged into it without losing database-only data or duplicating entries.
+- **Read-only database recovery** — A read-only `settings.dat` is detected and recovered instead of crashing; failed saves are observed and logged.
+- **Cross-app consistency** — Systems renamed or deleted in one app stay in sync with favorites and play history.
+
+## WPF: Card Size Slider
+- **Top-bar slider** — Resize game thumbnails with a slider next to the view controls (debounced when dragging), kept in sync with "Set Button Size" and Ctrl+Mouse wheel zoom.
+
+## Shared Localization
+- **One JSON pack set for both apps** — The 18 language packs (2669 keys each) now live once in `SimpleLauncher.Core\Localization`; WPF embeds them as pack resources and Avalonia embeds them in its assembly.
+- **Legacy XAML resources removed** — The per-language `strings.*.xaml` files are gone.
+- **Avalonia message boxes fully localized**.
+
+## Reliability & Security
+- **Extraction** — Zip-Slip validation fails closed, extraction no longer wipes destination folders (only files written by the failed run are removed), partial files are cleaned up, and locked archives are retried.
+- **Downloads** — User cancellation is honored promptly, downloaded file names are sanitized against path traversal, and failures retry.
+- **Launching** — Launch gating, rename migration, elevation handling, and invalid/missing executable dialogs were repaired; user cancellations and invalid executables are no longer reported as bugs.
+- **Updater** — Staged-file swap with rollback safety, path containment checks, safe restart, and retry, so a failed update no longer leaves a half-updated install.
+- **Stability** — Fixed a gamepad-reconnect deadlock, a hash-pipe deadlock, a shutdown stall that left a clickable orphan tray icon, and play-history races (now serialized under lock); debug logging buffers are bounded.
+- **RetroAchievements** — Hardened account handling, system-name matching, favorites/play-history sync, emulator credential injection, hashing and extraction paths.
+- **Avalonia fixes** — Edit System help rendering, status bar visibility in the system selection screen, no-credentials panel in the RA window, loading the clicked system card after closing Edit System, in-app path guards, INI encoding, and a window title matching WPF.
+- **Filtering** — Accent-insensitive game filtering restored, and Commander Genius archive deletion fixed.
+
+## Tooling
+- **PBPSharp** — Replaced the vendored library with the NuGet package **1.1.1**.
+- **Dependencies** — Meziantou.Analyzer **3.0.259**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**.
+- **Zero analyzer warnings** across all projects; both test suites pass.
+
+---
+
 # Release 5.7.0
 *2026-09-07*
 ---

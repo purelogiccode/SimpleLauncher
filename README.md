@@ -25,6 +25,7 @@
 ## ✨ Feature List
 
 ### 🚀 Performance & Core Infrastructure
+* **Unified Settings Database:** Both apps share one SQLite `settings.dat` (settings, favorites, play history, systems) with automatic migration of the legacy XML/dat files
 * **MessagePack Engine:** High-speed MessagePack serialization for near-instant settings loading
 * **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) alongside x64
 * **Asynchronous Architecture:** Multi-threaded game scanning and validation with fluid UI
@@ -96,7 +97,6 @@ Simple Launcher includes a comprehensive suite of specialized utilities:
   - BatchConvertToCompressedFile: Convert to 7z/Zip format
 * **Metadata & Cover Tools:**
   - FindRomCover: Intelligent cover art finder
-  - GameCoverScraper: Web-based cover art scraper
   - RetroGameCoverDownloader: Download retro game covers
 * **Batch File Creators:**
   - CreateBatchFilesForPS3Games: PS3 game launchers
@@ -190,12 +190,12 @@ Simple Launcher is translated into **18 languages**:
 
 ## 💻 Technical Specifications
 
-* **Framework:** .NET 10 (WPF)
+* **Framework:** .NET 10 (WPF + Avalonia)
 * **Language:** C# 14
-* **Data Serialization:** MessagePack (Binary) & XML
-* **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 (Audio), YamlDotNet, Tomlyn — RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)
+* **Data Serialization:** Unified SQLite `settings.dat` (settings, favorites, play history, systems), MessagePack (RA/MAME/history databases) & XML (legacy migration)
+* **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 (Audio), YamlDotNet, Tomlyn, PBPSharp — RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)
 * **Architecture:** Modular service-based architecture with dependency injection
-* **Storage:** SQLite for play history, MessagePack for favorites, XML for settings
+* **Storage:** Unified SQLite `settings.dat` shared by both apps; legacy `settings.xml` / `favorites.dat` / `playhistory.dat` / `system.xml` are migrated automatically on first launch
 
 ---
 
@@ -204,9 +204,9 @@ Simple Launcher is translated into **18 languages**:
 An **Avalonia-based cross-platform port** (`SimpleLauncher.Avalonia`) is being developed alongside the WPF app. It reuses all business logic, models, data access, and emulator config handling from `SimpleLauncher.Core`:
 
 - **Platforms:** Windows (x64/ARM64) and Linux (x64/ARM64) — dual-target `net10.0` (Linux) + `net10.0-windows` (Windows)
-- **Windows delivery:** ships in the same unified release zip as the WPF app (`SimpleLauncher.Avalonia.exe` next to `SimpleLauncher.exe`); both are framework-dependent and share the same content files and settings. A single `Updater.exe` updates either app.
+- **Windows delivery:** ships in the same unified release zip as the WPF app (`SimpleLauncher.Avalonia.exe` next to `SimpleLauncher.exe`); both are framework-dependent single executables that share the same content files and settings. A single `Updater.exe` updates either app.
 - **Port status:** menu bar with full options (language, button size, aspect ratio, view mode, filename preferences, RetroAchievements, inject emulator config for all 21 emulators, tools, donate, about), per-game context menus (launch, favorites, details, RetroAchievements, copy path/name, show in folder, edit system), 15 utility windows, Favorites / Play History / Global Search pages, RetroAchievements UI (profile / unlocks / progress + settings), tray icon with native menu, F8 global screenshot hotkey (Windows), single dark theme, fully localized UI via the shared JSON packs (18 languages, 2669 keys each, `SimpleLauncher.Core\Localization`)
-- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **518 Avalonia tests** + **2054 WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite)
+- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **534 Avalonia tests** + **2105 WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite, unified settings database + legacy migration)
 - **Build & test (Windows):** `dotnet build SimpleLauncher.sln -c Debug` · `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (headless, no display required)
 - **Build & test (Linux / WSL2):** `dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (net10.0, runs on Ubuntu 24.04) · `dotnet publish -f net10.0 -r linux-x64` / `linux-arm64` for self-contained folders
 

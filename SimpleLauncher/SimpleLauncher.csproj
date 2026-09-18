@@ -29,10 +29,10 @@
         <PackageIcon>icon\icon2.png</PackageIcon>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <AssemblyVersion>5.7.0</AssemblyVersion>
-        <FileVersion>5.7.0</FileVersion>
+        <AssemblyVersion>5.8.0</AssemblyVersion>
+        <FileVersion>5.8.0</FileVersion>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-        <Version>5.7.0</Version>
+        <Version>5.8.0</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <PackageProjectUrl>https://github.com/purelogiccode/SimpleLauncher</PackageProjectUrl>
         <UseWindowsForms>False</UseWindowsForms>
@@ -741,7 +741,7 @@
         <Resource Include="images\theme.png" />
         <Resource Include="images\setnumber.png" />
         <Resource Include="images\show.png" />
-        <Resource Include="icon\icon.ico" />
+        <None Include="icon\icon.ico" />
         <Resource Include="images\tools.png" />
         <Resource Include="images\findromcover.png" />
         <Resource Include="images\romhistory.png" />
@@ -809,8 +809,6 @@
         <Resource Include="images\filename.png" />
         <None Remove="images\home.png" />
         <Resource Include="images\home.png" />
-        <None Remove="images\chd.png" />
-        <Resource Include="images\chd.png" />
         <None Remove="images\rvz.png" />
         <Resource Include="images\rvz.png" />
         <None Remove="images\xiso.png" />
@@ -825,8 +823,6 @@
         <Resource Include="images\scummvm.png" />
         <None Remove="images\xboxxbla.png" />
         <Resource Include="images\xboxxbla.png" />
-        <None Remove="images\add.png" />
-        <Resource Include="images\add.png" />
         <Page Update="InjectConfigWindows\InjectAresConfigWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
             <XamlRuntime>Wpf</XamlRuntime>
@@ -932,13 +928,20 @@
             <XamlRuntime>Wpf</XamlRuntime>
             <SubType>Designer</SubType>
         </Page>
+        <None Remove="images\logo.png" />
+        <Resource Include="images\logo.png">
+          <CopyToOutputDirectory></CopyToOutputDirectory>
+        </Resource>
+        <None Remove="images\add.png" />
+        <Resource Include="images\add.png" />
+        <None Remove="images\chd.png" />
+        <Resource Include="images\chd.png" />
+        <None Remove="images\clickheretogethelp_original.png" />
+        <Resource Include="images\clickheretogethelp_original.png" />
     </ItemGroup>
     <ItemGroup>
         <None Update="images\default.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="images\logo.png">
-            <CopyToOutputDirectory />
         </None>
     </ItemGroup>
     <ItemGroup>

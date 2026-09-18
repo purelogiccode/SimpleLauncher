@@ -54,13 +54,13 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 `scripts/package-release.ps1` reproduces the unified release artifacts (also used by CI):
 
 ```powershell
-pwsh scripts/package-release.ps1 -Version 5.7.0
-# -> artifacts\release\release_5.7.0_win-x64.zip, release_5.7.0_win-arm64.zip
+pwsh scripts/package-release.ps1 -Version 5.8.0
+# -> artifacts\release\release_5.8.0_win-x64.zip, release_5.8.0_win-arm64.zip
 # -> artifacts\release\updater_win-x64.zip, updater_win-arm64.zip
 ```
 
 - The bundle places `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other and ships one shared set of content files (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Users choose which app to run.
-- Both apps are published **framework-dependent** (the **.NET 10 Desktop Runtime** is required on the target machine), so the payload carries no runtime: WPF as a single file, Avalonia as a normal multi-file publish. The updater is published framework-dependent single-file with its Avalonia native libraries bundled (`IncludeNativeLibrariesForSelfExtract`), so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
+- Both apps are published **framework-dependent** (the **.NET 10 Desktop Runtime** is required on the target machine), so the payload carries no runtime: each is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
 - Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing.
 - Merges the two publish outputs and fails loudly when a shared file has different content (for example `appsettings.json` drift); `AppSettingsFilesAreIdentical` guards the two appsettings sources in the test suite.
 - Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `RetroAchievementsSharp` binaries) and packages `Updater.exe` alone into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate).
@@ -90,11 +90,11 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` — window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (518 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (534 tests via `Avalonia.Headless`).
 
 ## Versioning
 
-Version `5.7.0` must stay in sync across:
+Version `5.8.0` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)
@@ -111,7 +111,7 @@ packaging. Bump all of them together.
 ## Localization
 
 - **One shared pack set for both apps**: `SimpleLauncher.Core\Localization\strings.{code}.json` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-BR, ru, tr, ur, vi, zh-Hans) — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical key set (2669 keys, all files in full key parity).
-- The Avalonia app links/copies the packs to `Resources\strings.{code}.json` (`LocalizationService`); the WPF app embeds them as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, via `<Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json" />` in `SimpleLauncher.csproj`) and `App.ApplyLanguage` builds the WPF language `ResourceDictionary` from the JSON, resolving codes like `pt-br`/`zh-hans` case-insensitively.
+- Both apps **embed** the packs in their assemblies: Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService` via `Assembly.GetManifestResourceStream`; no loose `Resources` folder ships); the WPF app as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, via `<Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json" />` in `SimpleLauncher.csproj`) with `App.ApplyLanguage` building the WPF language `ResourceDictionary` from the JSON, resolving codes like `pt-br`/`zh-hans` case-insensitively.
 - `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) translates missing keys into the shared packs; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 - Unit tests guard against common translation issues: keys used in source but missing from English (auto-added with fallbacks), duplicate keys, mismatched fallbacks, empty values, key parity and key counts.
   - WPF: `DetectMissingResourceProviderKeysTests` and `DetectMissingResourceStringsTests` scan the WPF sources (`_resourceProvider.GetString(...)`, `TryFindResource(...)`) and auto-add missing keys to `strings.en.json`; `DetectDuplicateResourceKeysTests`, `DetectAlphabeticalOrderingTests`, `ResourceFileLoadingTests` and `LocalizationResourcePackagingTests` cover the packs and the embedded payload.
@@ -121,7 +121,7 @@ packaging. Bump all of them together.
 
 ## Static analysis & code style
 
-- **Meziantou.Analyzer 3.0.139** and **Microsoft.CodeAnalysis.NetAnalyzers 10.0.302** (both `PrivateAssets`).
+- **Meziantou.Analyzer 3.0.259**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.401** and **Roslynator.Analyzers 5.0.0** (all `PrivateAssets`).
 - `Nullable` enabled everywhere; `LangVersion 14`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
 - `NoWarn` in app: `NU1903;CS0436`.
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).

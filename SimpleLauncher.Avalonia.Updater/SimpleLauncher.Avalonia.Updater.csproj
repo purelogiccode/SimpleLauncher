@@ -11,9 +11,9 @@
         <AssemblyName>Updater</AssemblyName>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <AssemblyVersion>5.7.0</AssemblyVersion>
-        <FileVersion>5.7.0</FileVersion>
-        <Version>5.7.0</Version>
+        <AssemblyVersion>5.8.0</AssemblyVersion>
+        <FileVersion>5.8.0</FileVersion>
+        <Version>5.8.0</Version>
         <IsPackable>false</IsPackable>
         <LangVersion>14</LangVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>

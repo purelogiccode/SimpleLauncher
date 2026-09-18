@@ -9,9 +9,11 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 
 | Class | Purpose / key API |
 |---|---|
-| `SettingsManager\SettingsManagerService` | User preferences (`settings.xml`): load/save with atomic temp-file move, 3 retries, whitelist validation, DPAPI-encrypted RA credentials. See [05 — Configuration](05-configuration.md) |
+| `SettingsManager\SettingsManagerService` | User preferences (`settings.dat` SQLite; legacy `settings.xml`): load/save with atomic temp-file move, 3 retries, whitelist validation, DPAPI-encrypted RA credentials. See [05 — Configuration](05-configuration.md) |
+| `SettingsDatabase\UnifiedSettingsDatabase` | Schema/read/write for the shared `settings.dat` (app + emulator settings, favorites, play history, systems, play times) used by both apps |
+| `SettingsDatabase\WpfLegacyMigrator` / `SettingsDatabase\AvaloniaLegacyMigrator` (each app) | First-launch/merge migration of `settings.xml`, `system.xml`, `favorites.dat`, `playhistory.dat` into `settings.dat` with verification and `.bak` shelving |
 | `SettingsManager\EmulatorXmlHelpers` | Static typed XML readers (`ReadBool/ReadInt/ReadDouble/ReadString`) with section → flattened-root → default fallback |
-| `SettingsManager\EmulatorSettings\*` (21) | `XxxSettings` classes (Ares…Yumir) backing the inject-config dialogs; composed into `settings.xml` |
+| `SettingsManager\EmulatorSettings\*` (21) | `XxxSettings` classes (Ares…Yumir) backing the inject-config dialogs; stored in `settings.dat` (`EmulatorSettings`; legacy `settings.xml`) |
 | `SystemConfiguration\SystemConfigurationWriterService` | Read/write/delete/`SystemExists` on `system.xml`; alphabetical sort, retry, temp-file+move. See [05](05-configuration.md#systemxml) |
 | `DataFileLocation` | Portable vs `%LocalAppData%\SimpleLauncher` file resolution (portable wins if newer) |
 

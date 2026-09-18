@@ -13,9 +13,13 @@ For every runtime identifier this produces, in the output folder:
                                 single-file) used by both apps
 
 Both apps are published framework-dependent (the .NET 10 Desktop Runtime is required on
-the target machine), so the payload does not carry a runtime. The updater is the same
-binary for both apps: it receives the target application in its command line (older WPF
-releases pass only the PID and the updater detects the app from the process name).
+the target machine), so the payload does not carry a runtime. Each app ships as a single
+executable containing its managed assemblies; the small set of native libraries it needs
+(SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater
+is additionally published with its Avalonia natives bundled for self-extraction, so it is
+one file that also works from a legacy WPF-only install. The updater is the same binary for
+both apps: it receives the target application in its command line (older WPF releases pass
+only the PID and the updater detects the app from the process name).
 
 The WPF and Avalonia payloads are merged into one folder. Files that exist in both
 payloads must be byte-identical (the two appsettings.json sources are kept in sync and
@@ -35,7 +39,7 @@ projects/manifests, SimpleLauncher.Core.csproj and the Avalonia updater project)
 publishing.
 
 .PARAMETER Version
-The release version, e.g. 5.7.0. Must match the csproj/manifest values.
+The release version, e.g. 5.8.0. Must match the csproj/manifest values.
 
 .PARAMETER RuntimeIdentifiers
 RIDs to package. Defaults to win-x64 and win-arm64.
@@ -47,7 +51,7 @@ Where the zips are written. Defaults to artifacts\release.
 Scratch folder for the publish outputs. Defaults to artifacts\publish.
 
 .EXAMPLE
-pwsh scripts/package-release.ps1 -Version 5.7.0
+pwsh scripts/package-release.ps1 -Version 5.8.0
 #>
 [CmdletBinding()]
 param(
@@ -81,7 +85,7 @@ $OutputDir = [System.IO.Path]::GetFullPath($OutputDir)
 $WorkDir = [System.IO.Path]::GetFullPath($WorkDir)
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
-    throw "Version '$Version' is not in Major.Minor.Patch form (e.g. 5.7.0)."
+    throw "Version '$Version' is not in Major.Minor.Patch form (e.g. 5.8.0)."
 }
 
 foreach ($rid in $RuntimeIdentifiers) {
@@ -340,7 +344,9 @@ foreach ($rid in $RuntimeIdentifiers) {
     Write-Host ""
     Write-Host "=== SimpleLauncher (WPF + Avalonia) $Version ($rid) ==="
 
-    # WPF: framework-dependent single file (managed assemblies bundled into SimpleLauncher.exe).
+    # WPF: framework-dependent single file (managed assemblies bundled into SimpleLauncher.exe;
+    # the native SQLite library ships beside the exe). Never enable native self-extraction here:
+    # that would pull the Windows Desktop runtime's native components into the bundle.
     Invoke-DotnetPublish @(
         'publish',
         $wpfProject,
@@ -352,8 +358,10 @@ foreach ($rid in $RuntimeIdentifiers) {
         '-o', $wpfPublishDir
     )
 
-    # Avalonia: framework-dependent multi-file. The app project publishes the single
-    # updater (framework-dependent single file) and copies Updater.exe into this output.
+    # Avalonia: framework-dependent single file (managed assemblies bundled; the Avalonia/Skia/
+    # HarfBuzz/GLES/SQLite native libraries ship beside the exe). The app project publishes the
+    # single updater (framework-dependent single file, Avalonia natives bundled for
+    # self-extraction) and copies Updater.exe into this output.
     Invoke-DotnetPublish @(
         'publish',
         $avaloniaProject,
@@ -361,6 +369,7 @@ foreach ($rid in $RuntimeIdentifiers) {
         '-f', 'net10.0-windows',
         '-r', $rid,
         '--self-contained', 'false',
+        '-p:PublishSingleFile=true',
         '--nologo',
         '-o', $avaloniaPublishDir
     )

@@ -2,7 +2,26 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
-## 5.6.1 — 2026-08-11 (current)
+## 5.8.0 — 2026-09-18 (current)
+
+- **Unified Windows release**: one zip ships `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) side by side with a single shared `Updater.exe` that relaunches whichever app started it; single-instance guard shared across both apps.
+- **Unified SQLite settings database** (`settings.dat`, WPF + Avalonia): favorites, play history, app/emulator settings, per-system play times and system configs in one store; automatic legacy migration (`settings.xml`, `system.xml`, `favorites.dat`, `playhistory.dat`) with verification + `.bak` shelving, merge into an existing database, read-only recovery, and cross-app rename/delete consistency.
+- **WPF top-bar card-size slider** for game thumbnails (debounced, synced with the menu and Ctrl+wheel).
+- **Shared localization packs**: one JSON pack set (18 languages, 2669 keys) in `SimpleLauncher.Core\Localization`; WPF embeds them, Avalonia embeds them in the assembly; old `strings.*.xaml` packs removed; Avalonia message boxes fully localized.
+- **Reliability/security hardening**: Zip-Slip fail-closed extraction without wiping destination folders, partial-file cleanup, download cancel/path sanitization, updater staged-swap rollback, launch gating + invalid executable handling, gamepad/hash-pipe deadlocks, shutdown/tray-icon stall, play-history locking, RA account/system/hash hardening.
+- **Avalonia fixes**: Edit System help rendering, system-selection status bar, RA no-credentials panel, clicked-card load after Edit System, in-app path guard, INI encoding, WPF-matching title.
+- **Tooling**: vendored PBPSharp replaced by NuGet 1.1.1; Meziantou.Analyzer 3.0.259, NetAnalyzers 10.0.401, Microsoft.Extensions 10.0.12, Http.Resilience 10.10.0, NAudio 3.1.0.
+
+## 5.7.0 — 2026-09-07
+
+- **Hash-based RA compatibility filter**: matches games by real ROM hash (archive-aware, background scanning with progress toasts) via the bundled RetroAchievementsSharp CLI.
+- **Update flow**: multi-source fallback chain (primary GitHub repo → transferred org → `assets.purelogiccode.com`), updater process-handle fixes, 5-minute download timeout, toast notifications.
+- **Launch fixes**: actionable dialogs for missing emulator executables and invalid executables (Win32 193), Ymir force-extraction, elevation guidance (both apps), parameter API validation.
+- **Favorites & play history**: rename/remove sync, subfolder resolution, protection against wiping favorites when `system.xml` fails.
+- **Other**: Easy Mode temp-folder fix, unified log-path resolution, storefront icon extraction fix, Windows/Microsoft folders creation, Raine config null-path fix, Edit System stability, standalone Debug window.
+- **Tooling**: NAudio 3, Markdown.Avalonia 12, Meziantou.Analyzer 3.0.224.
+
+## 5.6.1 — 2026-08-11
 
 - **Update check fallback**: when the GitHub API is unreachable, the check falls back to the secondary server (`assets.purelogiccode.com` `version.txt`) and resolves both the release and updater packages; the Updater also retries the download from the secondary server when the primary source fails.
 - **List-view right-click "Launch Game" fix**: the context menu now uses the selected emulator (falling back to the system's first emulator) instead of always failing.

@@ -101,7 +101,7 @@ public partial class AvaloniaCheckForUpdatesService
 
     /// <summary>
     ///     Name of the unified release package asset for a raw version and runtime identifier,
-    ///     e.g. release_5.7.0_win-x64.zip. The bundle contains both the WPF and the Avalonia
+    ///     e.g. release_5.8.0_win-x64.zip. The bundle contains both the WPF and the Avalonia
     ///     app next to each other.
     /// </summary>
     internal static string ReleaseAssetName(string rawVersion, string rid)

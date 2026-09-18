@@ -13,7 +13,7 @@
   2. Secondary server `assets.purelogiccode.com/Simple Launcher/Simple Launcher/version.txt` (Cloudflare-hosted) — builds the release/updater URLs from it (`release_{version}_{rid}.zip` / `updater_{rid}.zip`).
 - **Silent check** at startup. If every GitHub source is unreachable (offline, rate-limited, blocked), the check falls back to the secondary server.
 - **Manual check**: About window "Check for Updates".
-- Version comparison against the current `5.7.0`; new version → prompts to download.
+- Version comparison against the current `5.8.0`; new version → prompts to download.
 
 ## Update assets
 
@@ -21,8 +21,9 @@ Both apps read the same GitHub release, which ships the unified bundle and a sin
 
 - `release_{version}_{rid}.zip` — the unified payload: `SimpleLauncher.exe` (WPF) and
   `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other plus the shared content files
-  (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Both apps are framework-dependent,
-  so the .NET 10 Desktop Runtime is required.
+  (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Both apps are framework-dependent
+  single executables (managed assemblies bundled; native libraries such as SQLite/Skia ship
+  beside the exe), so the .NET 10 Desktop Runtime is required.
 - `updater_{rid}.zip` — the single standalone `Updater.exe` (framework-dependent single file)
   shared by both apps. It bundles the Avalonia native libraries it needs (`libSkiaSharp.dll`,
   `libHarfBuzzSharp.dll`, `av_libglesv2.dll`, `IncludeNativeLibrariesForSelfExtract`) and

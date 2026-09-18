@@ -18,9 +18,9 @@
         <AssemblyName>SimpleLauncher.Avalonia</AssemblyName>
         <RootNamespace>SimpleLauncher.Avalonia</RootNamespace>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-        <AssemblyVersion>5.7.0</AssemblyVersion>
-        <FileVersion>5.7.0</FileVersion>
-        <Version>5.7.0</Version>
+        <AssemblyVersion>5.8.0</AssemblyVersion>
+        <FileVersion>5.8.0</FileVersion>
+        <Version>5.8.0</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>
         <PackageIcon>icon\icon2.png</PackageIcon>
@@ -32,6 +32,12 @@
         <StartupObject>SimpleLauncher.Avalonia.Program</StartupObject>
         <!-- Avalonia single-project (no .xaml split) -->
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+        <!-- The updater project is referenced only so the publish target below can invoke its
+             publish (ReferenceOutputAssembly=false; Private=false) — there is no assembly
+             dependency. The SDK's exe-reference self-contained validation rejects a
+             framework-dependent single-file publish of this app against that publish-only
+             reference (NETSDK1151), so it is disabled for this project. -->
+        <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
     </PropertyGroup>
 
     <!-- Cross-platform target (net10.0): Linux + macOS RIDs. A Windows RID on this TFM builds
@@ -462,20 +468,17 @@
         </None>
     </ItemGroup>
 
-    <!-- UI icons (root of images\) — physical copies kept in this project -->
+    <!-- UI icons (root of images\) — embedded into the binary (Avalonia equivalent of the WPF
+         <Resource Include="images\*.png" /> entries) and loaded via
+         avares://SimpleLauncher.Avalonia/images/*.png. Only images\default.png is copied loose:
+         appsettings.json (RequiredFiles/DefaultImagePath), PathToImageConverter and the system
+         image resolver load it from disk by path, exactly like the WPF app ships it. -->
     <ItemGroup>
-        <None Include="images\*.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <!-- UI icons embedded into the binary (Avalonia equivalent of the WPF
-             <Resource Include="images\*.png" /> entries) — loaded via
-             avares://SimpleLauncher.Avalonia/images/*.png. Loose copies below are kept
-             because appsettings.json / user config reference some icons by file path
-             (e.g. images\default.png), exactly like the WPF app ships them. -->
         <AvaloniaResource Include="images\*.png" />
-        <None Include="icon\icon.ico">
+        <None Update="images\default.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Include="icon\icon.ico" />
     </ItemGroup>
 
     <!-- Emulator sample config files (injection + easy mode) -->

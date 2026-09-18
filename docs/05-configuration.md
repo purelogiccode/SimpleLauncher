@@ -1,6 +1,6 @@
 # 05 — Configuration
 
-> appsettings.json, settings.xml, system.xml, data-file locations, credentials.
+> appsettings.json, settings.dat (SQLite), legacy settings.xml/system.xml, data-file locations, credentials.
 > Related: [04 — Architecture](04-architecture.md) · [12 — Data Formats](12-data-formats.md)
 
 ## Overview of config layers
@@ -8,10 +8,10 @@
 | Concern | Storage | Class |
 |---|---|---|
 | App-level keys (URLs, paths, lists) | `appsettings.json` (copied to output) | `Microsoft.Extensions.Configuration` |
-| User preferences (UI, theme, gamepad, RA…) | `settings.xml` (LINQ-to-XML) | `SettingsManagerService` |
-| System/game definitions | `system.xml` | `SystemManagerService` / `SystemConfigurationWriterService` |
-| Favorites / play history / RA data / MAME data | `favorites.dat`, `playhistory.dat`, `history.dat`, `mame.dat`, `RetroAchievements.dat` (MessagePack) | see [12 — Data Formats](12-data-formats.md) |
-| Credentials (RA) | DPAPI-encrypted values inside `settings.xml` | `WindowsCredentialProtector` |
+| User preferences (UI, theme, gamepad, RA…) | `settings.dat` (SQLite `AppSettings` table, both apps); legacy `settings.xml` (LINQ-to-XML) | `SettingsManagerService` + `UnifiedSettingsDatabase` |
+| System/game definitions | `settings.dat` (SQLite `Systems` table, both apps); legacy `system.xml` | `SystemManagerService` / `SystemConfigurationWriterService` |
+| Favorites / play history / RA data / MAME data | Favorites + play history in `settings.dat` (`Favorites`/`PlayHistory` tables); `history.dat`, `mame.dat`, `RetroAchievements.dat` (MessagePack) | see [12 — Data Formats](12-data-formats.md) |
+| Credentials (RA) | DPAPI-encrypted values inside `settings.dat` (`AppSettings`; legacy `settings.xml`) | `WindowsCredentialProtector` |
 | Emulator-specific settings | each emulator's own config file + `samples\{Emulator}\*` templates | `InjectEmulatorConfig` services |
 
 ## appsettings.json keys (as read in code)
@@ -39,9 +39,17 @@
 2. **LocalAppData**: `%LocalAppData%\SimpleLauncher\{fileName}` — fallback when the portable file is missing or older.
 3. `TryFallbackToLocalAppData` (`:122-141`) handles write failures by relocating.
 
-Affected files: `settings.xml`, `favorites.dat`, `playhistory.dat`, `RetroAchievements.dat`, `system.xml` (via `SystemXmlPath`).
+Affected files: `settings.dat`, `settings.xml`, `favorites.dat`, `playhistory.dat`, `RetroAchievements.dat`, `system.xml` (via `SystemXmlPath`).
 
-## settings.xml (`SettingsManagerService`)
+## Unified database (`settings.dat`)
+
+Since 5.8.0 both apps persist **all** user data in one SQLite database (`settings.dat`) in the
+portable folder or `%LocalAppData%\SimpleLauncher\`; see
+[12 — Data Formats](12-data-formats.md#unified-database-settingsdat) for the schema, migration
+and merge behavior. The legacy files below are still read (first-launch migration) and can be
+exported, but the database is the live store.
+
+## settings.xml (`SettingsManagerService`) — legacy
 
 `SimpleLauncher.Core\Services\SettingsManager\SettingsManagerService.cs`
 

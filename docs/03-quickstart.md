@@ -41,11 +41,10 @@ SimpleLauncher/
 │   └── [SystemName]/          additional media (context menu → View Media)
 ├── cabinets/ carts/ flyers/ pcbs/   arcade media folders
 ├── tools/                     bundled utilities (see 11 — Bundled Tools)
-├── samples/                   emulator config templates
-└── resources/                 language strings
+└── samples/                   emulator config templates
 ```
 
-Data files (`settings.xml`, `system.xml`, `favorites.dat`, `playhistory.dat`, …) live next to the exe (portable mode) or in `%LocalAppData%\SimpleLauncher\` — see [05 — Configuration](05-configuration.md).
+Data files: user data lives in the unified SQLite database `settings.dat` (next to the exe in portable mode or in `%LocalAppData%\SimpleLauncher\`); legacy `settings.xml`, `system.xml`, `favorites.dat`, and `playhistory.dat` are migrated automatically on first launch — see [05 — Configuration](05-configuration.md).
 
 ## Easy Mode (guided setup)
 

@@ -22,7 +22,7 @@ flowchart TB
     subgraph Infra [Infrastructure]
         OS[Emulators, Dokan, CHDMounter, PowerShell, 7za, chdman…]
         HTTP[RetroAchievements / ParameterResolver / Stats / GitHub APIs]
-        FS[system.xml, settings.xml, *.dat, tools\\ payloads]
+        FS[settings.dat, system.xml, legacy *.dat/.xml, tools\\ payloads]
     end
     V --> VM --> US
     US --> S

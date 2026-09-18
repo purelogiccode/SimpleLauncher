@@ -35,7 +35,7 @@ Companion files: [`ManualTests.md`](manual-tests.md) (manual test checklist for 
 | [14 — Testing](14-testing.md) | Test project, helpers, coverage summary, running tests, known slow test |
 | [15 — Development](15-development.md) | Build/publish, versioning, localization, analyzers, release workflow |
 | [16 — Updater](16-updater.md) | Update check, Updater.exe flow, restart/reinstall |
-| [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.6.0 → 1.1 |
+| [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.8.0 → 1.1 |
 | [18 — Emulator Parameters](18-emulator-parameters.md) | parameters.md conventions + full system → emulator index (84 systems / 352 entries) |
 
 ## Conventions used in these docs
@@ -43,4 +43,4 @@ Companion files: [`ManualTests.md`](manual-tests.md) (manual test checklist for 
 - Code facts are cited with `path:line` references into the repository.
 - `⚠` marks behavior that should be verified before relying on it.
 - Relative links (`xx-*.md`) work from within `docs\`; `../` links point to the repo root.
-- Version-specific numbers (package versions, test counts) reflect the repository at doc-write time (5.6.0).
+- Version-specific numbers (package versions, test counts) reflect the repository at doc-write time (5.8.0).
