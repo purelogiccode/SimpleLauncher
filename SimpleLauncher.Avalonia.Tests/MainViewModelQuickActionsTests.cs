@@ -34,6 +34,7 @@ public class MainViewModelQuickActionsTests : IDisposable
     private readonly Mock<ILogger> _logger = new();
     private readonly Mock<IMameDataService> _mameData = new();
     private readonly Mock<IMessageBoxLibraryService> _messageBox = new();
+    private readonly FakeLoadingOverlayHost _loadingHost = new();
     private readonly string _romsFolder;
     private readonly string _systemXmlPath;
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"SL_QuickActionsTest_{Guid.NewGuid():N}");
@@ -81,6 +82,11 @@ public class MainViewModelQuickActionsTests : IDisposable
             new AvaloniaGameCacheService(), _logger.Object);
         var pagination = new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object);
 
+        // Wire the reference-counted loading overlay to a recording host so tests can
+        // assert the WPF-parity wait overlay is shown/hidden around long operations.
+        var loadingOverlay = new AvaloniaLoadingOverlayService(new PlaySoundEffects(settings, _logger.Object));
+        loadingOverlay.Initialize(_loadingHost);
+
         _mameData.Setup(m => m.Lookup).Returns(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "beyond", "Beyond the Beyond" },
@@ -103,7 +109,7 @@ public class MainViewModelQuickActionsTests : IDisposable
             _messageBox.Object,
             _mameData.Object,
             new AvaloniaGameFilterService(new Mock<IFindCoverImageService>().Object, settings, _mameData.Object),
-            new AvaloniaLoadingOverlayService(new PlaySoundEffects(settings, _logger.Object)),
+            loadingOverlay,
             new LocalizationService());
 
         // Paginate only above 1 million games so the test views are never sliced.
@@ -168,9 +174,9 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
-    public void LetterFilter_FiltersByFirstLetterOfFileName()
+    public async Task LetterFilter_FiltersByFirstLetterOfFileName()
     {
-        _viewModel.NavigateToAllGamesCommand.Execute(null);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
 
         _viewModel.SetLetterFilter("B");
 
@@ -182,9 +188,9 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
-    public void LetterFilter_HashMatchesDigitLedFiles()
+    public async Task LetterFilter_HashMatchesDigitLedFiles()
     {
-        _viewModel.NavigateToAllGamesCommand.Execute(null);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
         _viewModel.SetLetterFilter("#");
 
         var titles = _viewModel.Games.Select(static g => Path.GetFileName(g.FilePath)).ToList();
@@ -193,9 +199,9 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
-    public void LetterFilter_ClearRestoresAllGames()
+    public async Task LetterFilter_ClearRestoresAllGames()
     {
-        _viewModel.NavigateToAllGamesCommand.Execute(null);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
         _viewModel.SetLetterFilter("C");
 
         Assert.True(_viewModel.Games.Count < FullGameCount());
@@ -206,9 +212,9 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
-    public void ApplySortedCurrentView_SortsBackingListAndSurvivesLetterFilterChanges()
+    public async Task ApplySortedCurrentView_SortsBackingListAndSurvivesLetterFilterChanges()
     {
-        _viewModel.NavigateToAllGamesCommand.Execute(null);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
 
         var descending = _viewModel.CurrentBaseGames
             .OrderByDescending(static g => g.FileName, StringComparer.OrdinalIgnoreCase)
@@ -255,20 +261,49 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
-    public void ShowSystemInformation_HiddenWhenNavigatingToSystem()
+    public async Task ShowSystemInformation_HiddenWhenNavigatingToSystem()
     {
         _viewModel.ShowSystemInformation([new SystemInfoLine { Text = "System Folder: C:\\roms" }]);
 
-        _viewModel.NavigateToSystemCommand.Execute("Test System");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
 
         Assert.False(_viewModel.IsSystemInfoVisible);
         Assert.NotEmpty(_viewModel.Games);
     }
 
+    // ── Loading overlay (WPF wait-overlay parity) ──
+
+    [Fact]
+    public async Task NavigateToSystem_ShowsAndHidesLoadingOverlay()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            _loadingHost.States.Count > 0 && !_loadingHost.IsLoading);
+
+        Assert.Contains(true, _loadingHost.States);
+        Assert.False(_loadingHost.IsLoading);
+        Assert.Contains(_loadingHost.Messages,
+            static m => m.Contains("Loading system", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Search_ShowsLoadingOverlay()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        _viewModel.SearchText = "abyss";
+
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            _loadingHost.Messages.Any(static m => m.Contains("Searching", StringComparison.OrdinalIgnoreCase)));
+
+        await HeadlessAvalonia.WaitUntilAsync(() => !_loadingHost.IsLoading);
+    }
+
     [Fact]
     public async Task PickRandomGame_ReplacesViewWithSingleGameFromSelectedSystem()
     {
-        _viewModel.NavigateToSystemCommand.Execute("Test System");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
 
         var randomGame = await _viewModel.PickRandomGameAsync();
 
@@ -281,7 +316,7 @@ public class MainViewModelQuickActionsTests : IDisposable
     [Fact]
     public async Task PickRandomGame_WithoutSelectedSystemReturnsNullAndKeepsView()
     {
-        _viewModel.NavigateToAllGamesCommand.Execute(null);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
         var countBefore = _viewModel.Games.Count;
 
         var randomGame = await _viewModel.PickRandomGameAsync();
@@ -293,7 +328,7 @@ public class MainViewModelQuickActionsTests : IDisposable
     [Fact]
     public async Task PickRandomGame_ClearsLetterFilterAndPicksFromFullLibrary()
     {
-        _viewModel.NavigateToSystemCommand.Execute("Test System");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
         _viewModel.SetLetterFilter("A");
 
         var randomGame = await _viewModel.PickRandomGameAsync();
@@ -306,9 +341,9 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
-    public void ToggleMameSortOrder_ReordersByMachineDescription()
+    public async Task ToggleMameSortOrder_ReordersByMachineDescription()
     {
-        _viewModel.NavigateToAllGamesCommand.Execute(null);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
 
         _viewModel.ToggleMameSortOrder();
 

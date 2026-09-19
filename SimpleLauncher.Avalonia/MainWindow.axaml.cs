@@ -296,7 +296,7 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Live library refresh: when a watched ROM folder changes on disk, reload the
         // current view on the UI thread (same debounced behavior as the WPF app).
-        _gameFilesChangedHandler = (_, e) =>
+        _gameFilesChangedHandler = (o, e) =>
         {
             try
             {
@@ -315,7 +315,7 @@ public partial class MainWindow : Window, IPaginationHost
                     // The affected system's cached file list is stale — drop it so the
                     // refresh below re-scans that system's folders from disk.
                     _viewModel.InvalidateGameFileCacheForSystem(e.Value);
-                    _viewModel.RefreshCurrentView();
+                    o = _viewModel.RefreshCurrentViewAsync();
                     RefreshSidebarCounts();
                     ShowToast(_localization.GetString("GameLibrary", "Game Library"),
                         _localization.GetString("Toast.Refreshed", "Game list reloaded."));
@@ -1198,16 +1198,38 @@ public partial class MainWindow : Window, IPaginationHost
         switch (section)
         {
             case MainSection.Favorites:
-                await FavoritesSection.LoadFavoritesAsync();
+                await RunWithLoadingOverlayAsync(
+                    _localization.GetString("LoadingGames", "Loading Games..."),
+                    FavoritesSection.LoadFavoritesAsync);
                 break;
             case MainSection.PlayHistory:
-                await PlayHistorySection.LoadHistoryAsync();
+                await RunWithLoadingOverlayAsync(
+                    _localization.GetString("LoadingGames", "Loading Games..."),
+                    PlayHistorySection.LoadHistoryAsync);
                 break;
             case MainSection.GlobalSearch:
                 // The section ViewModel is a singleton: refresh the system dropdown so
                 // systems added/renamed/deleted since the last visit are reflected.
                 GlobalSearchSection.RefreshSystemNames();
                 break;
+        }
+    }
+
+    /// <summary>
+    ///     Runs an awaited operation with the reference-counted loading overlay visible
+    ///     (WPF parity for long shell operations that are not game-file loads). The
+    ///     overlay hides again when the operation completes or throws.
+    /// </summary>
+    private async Task RunWithLoadingOverlayAsync(string message, Func<Task> operation)
+    {
+        _loadingOverlay.SetLoadingState(true, message);
+        try
+        {
+            await operation();
+        }
+        finally
+        {
+            _loadingOverlay.SetLoadingState(false);
         }
     }
 
@@ -1737,6 +1759,18 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
+    private async void GlobalSearchButton_Click(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await RunGlobalSearchAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in method GlobalSearchButton_Click");
+        }
+    }
+
     private async void GlobalSearchTextBox_KeyDown(object? sender, KeyEventArgs e)
     {
         try
@@ -1744,12 +1778,23 @@ public partial class MainWindow : Window, IPaginationHost
             if (e.Key != Key.Enter) return;
 
             e.Handled = true;
-            await GlobalSearchSection.SearchCommand.ExecuteAsync(null);
+            await RunGlobalSearchAsync();
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error in the method GlobalSearchTextBox_KeyDown");
         }
+    }
+
+    /// <summary>
+    ///     Runs the global search with the loading overlay visible (WPF parity: the
+    ///     search enumerates every configured system's folders).
+    /// </summary>
+    private Task RunGlobalSearchAsync()
+    {
+        return RunWithLoadingOverlayAsync(
+            _localization.GetString("Searchingpleasewait", "Searching, please wait..."),
+            () => GlobalSearchSection.SearchCommand.ExecuteAsync(null));
     }
 
     private async void GlobalSearchResults_DoubleTapped(object? sender, TappedEventArgs e)
@@ -1975,7 +2020,7 @@ public partial class MainWindow : Window, IPaginationHost
             UpdateGamesPerPageCheckMarks(page);
             _viewModel.ConfigurePagination(page);
             Log.Information("Games per page changed to {GamesPerPage}", page);
-            _viewModel.ReloadGames();
+            await _viewModel.ReloadGamesAsync();
             _playSound.PlayNotificationSound();
             var preferenceSavedTemplate =
                 _localization.GetString("Preferencesavedgamesperpage", "Preference saved: {0} games per page.");
@@ -2029,7 +2074,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.ShowGames = mode;
             await _settings.SaveAsync();
             UpdateShowGamesCheckMarks(mode);
-            _viewModel.ReloadGames();
+            await _viewModel.ReloadGamesAsync();
             Log.Information("Show games filter changed to {ShowGamesMode}", mode);
             _playSound.PlayNotificationSound();
         }
@@ -2057,7 +2102,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.FilenameDisplayMode = mode;
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
-            _viewModel.ReloadGames();
+            await _viewModel.ReloadGamesAsync();
             Log.Information("Filename display mode changed to {FilenameDisplayMode}", mode);
             _playSound.PlayNotificationSound();
         }
@@ -2076,7 +2121,7 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.DisplayMachineName = item.IsChecked;
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
-            _viewModel.ReloadGames();
+            await _viewModel.ReloadGamesAsync();
             Log.Information("Display machine name changed to {DisplayMachineName}", _settings.DisplayMachineName);
             _playSound.PlayNotificationSound();
         }
@@ -2317,7 +2362,7 @@ public partial class MainWindow : Window, IPaginationHost
 
             _settings.EnableFuzzyMatching = item.IsChecked;
             await _settings.SaveAsync();
-            _viewModel.ReloadGames();
+            await _viewModel.ReloadGamesAsync();
             Log.Information("Fuzzy matching {State}", item.IsChecked ? "enabled" : "disabled");
             _playSound.PlayNotificationSound();
         }
@@ -2335,7 +2380,7 @@ public partial class MainWindow : Window, IPaginationHost
 
             _settings.EnableAnnotationStripping = item.IsChecked;
             await _settings.SaveAsync();
-            _viewModel.ReloadGames();
+            await _viewModel.ReloadGamesAsync();
             Log.Information("Annotation stripping {State}", item.IsChecked ? "enabled" : "disabled");
             _playSound.PlayNotificationSound();
         }
@@ -2412,7 +2457,6 @@ public partial class MainWindow : Window, IPaginationHost
             _playSound.PlayNotificationSound();
             var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
             _loadingOverlay.SetLoadingState(true, scanningText);
-            _viewModel.IsLoading = true;
             _viewModel.StatusText = scanningText;
             await Task.Yield();
 
@@ -2489,7 +2533,6 @@ public partial class MainWindow : Window, IPaginationHost
         finally
         {
             _loadingOverlay.SetLoadingState(false);
-            _viewModel.IsLoading = false;
         }
     }
 
@@ -2503,13 +2546,18 @@ public partial class MainWindow : Window, IPaginationHost
     private async Task RefreshAfterSystemConfigurationChangeAsync()
     {
         Log.Debug("Refreshing the UI after a system configuration change");
-        await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
-        // Refresh the view-model's system snapshot + counts: without this, opening a
-        // newly added system filters the stale snapshot and shows 0 games.
-        await _viewModel.ReloadSystemsAfterConfigurationChangeAsync();
-        GlobalSearchSection.RefreshSystemNames();
-        RefreshSidebarCounts();
-        await ShowSystemSelectionScreenAsync();
+        await RunWithLoadingOverlayAsync(
+            _localization.GetString("Loadingsystems", "Loading systems..."),
+            async () =>
+            {
+                await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+                // Refresh the view-model's system snapshot + counts: without this, opening a
+                // newly added system filters the stale snapshot and shows 0 games.
+                await _viewModel.ReloadSystemsAfterConfigurationChangeAsync();
+                GlobalSearchSection.RefreshSystemNames();
+                RefreshSidebarCounts();
+                await ShowSystemSelectionScreenAsync();
+            });
     }
 
     /// <summary>
@@ -2725,12 +2773,17 @@ public partial class MainWindow : Window, IPaginationHost
             Log.Information("Deleting system {System}", systemName);
             _playSound.PlayNotificationSound();
 
-            var writer = App.ServiceProvider.GetRequiredService<ISystemConfigurationWriterService>();
-            await writer.DeleteSystemAsync(systemName);
+            await RunWithLoadingOverlayAsync(
+                _localization.GetString("Loadingsystems", "Loading systems..."),
+                async () =>
+                {
+                    var writer = App.ServiceProvider.GetRequiredService<ISystemConfigurationWriterService>();
+                    await writer.DeleteSystemAsync(systemName);
 
-            await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
-            RefreshSidebarCounts();
-            await ShowSystemSelectionScreenAsync();
+                    await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+                    RefreshSidebarCounts();
+                    await ShowSystemSelectionScreenAsync();
+                });
 
             await messageBox.SystemHasBeenDeletedMessageBoxAsync(systemName);
         }

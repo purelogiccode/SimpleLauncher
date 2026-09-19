@@ -137,7 +137,7 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 
         _service.HandleSystemSelectionChanged();
 
-        _host.Verify(h => h.NavigateToSystem("NES"), Times.Once);
+        _host.Verify(h => h.NavigateToSystemAsync("NES"), Times.Once);
         _host.Verify(h => h.SetEmulatorComboBoxItems(It.IsAny<IReadOnlyList<string>>()), Times.Once);
     }
 
@@ -148,7 +148,7 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 
         _service.HandleSystemSelectionChanged();
 
-        _host.Verify(h => h.NavigateToSystem(It.IsAny<string>()), Times.Never);
+        _host.Verify(h => h.NavigateToSystemAsync(It.IsAny<string>()), Times.Never);
         _host.Verify(h => h.SetEmulatorComboBoxItems(It.IsAny<IReadOnlyList<string>>()), Times.Never);
     }
 
@@ -159,7 +159,7 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 
         _service.HandleSystemSelectionChanged();
 
-        _host.Verify(h => h.NavigateToSystem("Atari 2600"), Times.Once);
+        _host.Verify(h => h.NavigateToSystemAsync("Atari 2600"), Times.Once);
         _host.Verify(h => h.SetEmulatorComboBoxItems(It.IsAny<IReadOnlyList<string>>()), Times.Once);
     }
 

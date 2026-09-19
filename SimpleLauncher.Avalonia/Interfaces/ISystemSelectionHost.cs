@@ -29,8 +29,12 @@ public interface ISystemSelectionHost
     /// </summary>
     void SetEmulatorComboBoxItems(IReadOnlyList<string> emulatorNames);
 
-    /// <summary>Navigates the game browser to the given system (empty string = All Games).</summary>
-    void NavigateToSystem(string systemName);
+    /// <summary>
+    ///     Navigates the game browser to the given system (empty string = All Games).
+    ///     Awaited so the selection pipeline can show the loading overlay and display the
+    ///     configuration summary only after the scan finished.
+    /// </summary>
+    Task NavigateToSystemAsync(string systemName);
 
     /// <summary>
     ///     Displays the selected system's configuration summary in the game browser

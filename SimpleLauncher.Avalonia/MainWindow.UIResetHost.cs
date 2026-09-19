@@ -69,7 +69,10 @@ public partial class MainWindow : IUiResetHost
 
     void IUiResetHost.SetLoadingOverlayVisible(bool isVisible)
     {
-        _viewModel.SetLoadingState(isVisible);
+        // Force-reset the visual only: the reference-counted overlay service keeps
+        // owning the operation count, so decrementing here could re-show the overlay
+        // while another operation is still active.
+        _viewModel.IsLoading = isVisible;
     }
 
     void IUiResetHost.SetSearchTextBoxText(string text)

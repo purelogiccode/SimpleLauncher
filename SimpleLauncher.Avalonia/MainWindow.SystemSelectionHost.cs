@@ -25,7 +25,7 @@ public partial class MainWindow : ISystemSelectionHost
         EmulatorComboBox.SelectedIndex = emulatorNames.Count > 0 ? 0 : -1;
     }
 
-    void ISystemSelectionHost.NavigateToSystem(string systemName)
+    async Task ISystemSelectionHost.NavigateToSystemAsync(string systemName)
     {
         // WPF parity: the top system-selection bar and the status bar come back once
         // a system is loaded (SystemSelectionOrchestratorService lines 170-171).
@@ -34,8 +34,8 @@ public partial class MainWindow : ISystemSelectionHost
 
         // Selecting a system always returns to the game browser — otherwise games
         // would load invisibly behind an open Favorites / History / Search section.
-        _ = ShowSectionAsync(MainSection.None);
-        _viewModel.NavigateToSystemCommand.Execute(systemName);
+        await ShowSectionAsync(MainSection.None);
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync(systemName);
     }
 
     void ISystemSelectionHost.ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines)

@@ -146,7 +146,9 @@ public class AvaloniaSystemSelectionOrchestratorService
             _logger.Debug("[AvaloniaSystemSelectionOrchestrator] System '{System}' selected; navigating the game browser",
                 systemName);
 
-            _host.NavigateToSystem(systemName);
+            // Awaited: the navigation shows the loading overlay and scans the system's
+            // folders; the info panel below must only appear once the scan is done.
+            await _host.NavigateToSystemAsync(systemName);
 
             // WPF parity: display the selected system's configuration summary. It stays
             // visible until the user loads games with the letter buttons (ShowGames

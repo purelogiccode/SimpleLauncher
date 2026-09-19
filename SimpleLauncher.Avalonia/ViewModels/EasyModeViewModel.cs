@@ -389,14 +389,18 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             try
             {
                 IsAddSystemEnabled = false;
+                // WPF parity: the add + folder creation runs behind the loading overlay.
+                IsLoading = true;
                 DownloadStatus = _localization.GetString("Addingsystemtoconfiguration",
                     "Adding system to configuration...");
+                LoadingMessage = DownloadStatus;
                 DownloadProgress = 0;
 
                 await SystemManagerService.AddOrUpdateSystemFromEasyModeAsync(
                     selectedSystem, systemFolder, _configuration, _logger, _systemManager);
 
                 DownloadStatus = _localization.GetString("Creatingsystemfolders", "Creating system folders...");
+                LoadingMessage = DownloadStatus;
                 await Task.Yield();
 
                 var resolvedSystemFolder = PathHelper.ResolveRelativeToAppDirectory(systemFolder);
@@ -441,6 +445,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             finally
             {
                 IsAddSystemEnabled = true;
+                IsLoading = false;
                 EndOperation();
             }
         }

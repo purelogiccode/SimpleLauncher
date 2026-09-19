@@ -54,6 +54,11 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private readonly SystemManagerService _systemManager;
     private List<SystemManagerConfig> _allSystems;
 
+    // Incremented by every view load (navigation / search / reload / random pick). An
+    // async load whose generation changed while it was scanning was superseded by a
+    // newer request and must not overwrite the current view.
+    private int _viewGeneration;
+
     /// <summary>
     ///     Font size for the game title caption on cards (from the Filename Font Size setting).
     /// </summary>
@@ -288,13 +293,13 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     /// <summary>
-    ///     Reloads the game library and reapplies the Show Games filter, filename
+    ///     Reloads the game list and reapplies the Show Games filter, filename
     ///     display mode, and card sizing (called after menu-driven setting changes).
     /// </summary>
-    public void ReloadGames()
+    public async Task ReloadGamesAsync()
     {
         Log.Debug("Reloading the game list");
-        LoadAllGames();
+        await LoadAllGamesAsync();
     }
 
     /// <summary>
@@ -380,6 +385,29 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         IsSystemInfoVisible = false;
         _currentBaseGames = fullList;
         ReapplyLetterFilterAndPagination();
+    }
+
+    /// <summary>
+    ///     Scans and filters the library on the thread pool while the reference-counted
+    ///     loading overlay is visible (WPF LoadGameFilesAsync parity: the overlay covers
+    ///     the disk scan, not just the UI update). Returns null when a newer view load
+    ///     superseded this one while it was scanning — callers must not apply the result.
+    /// </summary>
+    /// <param name="loadingMessage">The message shown on the loading overlay.</param>
+    /// <param name="load">The background work producing the view data.</param>
+    private async Task<T?> RunViewLoadAsync<T>(string loadingMessage, Func<T> load) where T : class
+    {
+        var generation = ++_viewGeneration;
+        SetLoadingState(true, loadingMessage);
+        try
+        {
+            var result = await Task.Run(load);
+            return generation == _viewGeneration ? result : null;
+        }
+        finally
+        {
+            SetLoadingState(false);
+        }
     }
 
     /// <summary>
@@ -486,12 +514,15 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             _suppressSearchReload = false;
         }
 
+        var generation = ++_viewGeneration;
         SetLoadingState(true, _localization.GetString("LoadingGames", "Loading Games..."));
         try
         {
             // Full library scan for the selected system — ignores letter/search/
             // cover-image filters exactly like the WPF RANDOM_SELECTION mode
             var pool = await Task.Run(() => ScanGames(systems));
+
+            if (generation != _viewGeneration) return null; // superseded by a newer view load
 
             GameCardViewModel? picked = null;
             if (pool.Count > 0)
@@ -612,34 +643,34 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     after the game file watcher detects changes on disk. Keeps the user where
     ///     they were instead of resetting to the All Games view.
     /// </summary>
-    public void RefreshCurrentView()
+    public async Task RefreshCurrentViewAsync()
     {
         Log.Debug("Refreshing the current view");
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            _ = ExecuteSearchAsync(SearchText);
+            await ExecuteSearchAsync(SearchText);
             return;
         }
 
         if (IsShowingRetroAchievements)
         {
-            _ = RefreshRetroAchievementsViewAsync();
+            await RefreshRetroAchievementsViewAsync();
             return;
         }
 
         if (IsShowingFavorites)
         {
-            NavigateToFavoritesCommand.Execute(null);
+            await NavigateToFavoritesAsync();
             return;
         }
 
         if (!string.IsNullOrEmpty(SelectedSystem))
         {
-            NavigateToSystemCommand.Execute(SelectedSystem);
+            await NavigateToSystemAsync(SelectedSystem);
             return;
         }
 
-        LoadAllGames();
+        await LoadAllGamesAsync();
     }
 
     /// <summary>
@@ -760,6 +791,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private async Task ShowRetroAchievementsGamesAsync(List<SystemManagerConfig> systems)
     {
+        var generation = ++_viewGeneration;
         var (matched, total) = await Task.Run(() =>
         {
             var allGames = ScanGames(systems);
@@ -785,6 +817,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             return (matched, allGames.Count);
         });
+
+        if (generation != _viewGeneration) return; // superseded by a newer view load
 
         Log.Debug("RetroAchievements filter matched {MatchedCount} of {TotalCount} game(s)", matched.Count, total);
 
@@ -890,7 +924,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     public async Task InitializeAsync()
     {
-        IsLoading = true;
+        SetLoadingState(true, _localization.GetString("Loadingsystems", "Loading systems..."));
         try
         {
             Log.Debug("Initializing game library");
@@ -937,7 +971,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         }
         finally
         {
-            IsLoading = false;
+            SetLoadingState(false);
         }
     }
 
@@ -964,7 +998,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
                 if (string.IsNullOrWhiteSpace(query))
                 {
-                    LoadAllGames();
+                    await LoadAllGamesAsync();
                     StatusText = _localization.GetString("Status.Ready", "Ready");
                 }
                 else
@@ -1027,10 +1061,18 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         IsShowingRetroAchievements = false;
         LetterFilter = "";
 
-        var allGames = ScanGames(_allSystems);
-        var results = AvaloniaGameFilterService.FilterBySearchQuery(allGames, validation.ValidatedQuery);
+        var results = await RunViewLoadAsync(
+            _localization.GetString("Searchingpleasewait", "Searching, please wait..."),
+            () =>
+            {
+                var allGames = ScanGames(_allSystems);
+                var filtered = AvaloniaGameFilterService.FilterBySearchQuery(allGames, validation.ValidatedQuery);
+                ApplyFavoritesAndHistory(filtered);
+                return filtered;
+            });
 
-        ApplyFavoritesAndHistory(results);
+        if (results is null) return; // superseded by a newer view load
+
         ShowGames(results);
         var searchResultsTemplate = _localization.GetString("Status.SearchResults", "{0} result(s) for \"{1}\"");
         StatusText = string.Format(CultureInfo.InvariantCulture, searchResultsTemplate, results.Count,
@@ -1038,7 +1080,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     [RelayCommand]
-    private void NavigateToSystem(string systemName)
+    private async Task NavigateToSystemAsync(string systemName)
     {
         try
         {
@@ -1064,8 +1106,17 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 if (current is not null) systems = [current];
             }
 
-            var games = ScanGames(systems);
-            ApplyFavoritesAndHistory(games);
+            var games = await RunViewLoadAsync(
+                _localization.GetString("LoadingSystem", "Loading system..."),
+                () =>
+                {
+                    var scanned = ScanGames(systems);
+                    ApplyFavoritesAndHistory(scanned);
+                    return scanned;
+                });
+
+            if (games is null) return; // superseded by a newer view load
+
             ShowGames(games);
             StatusText = string.IsNullOrEmpty(systemName)
                 ? _localization.GetString("Status.AllGames", "All Games")
@@ -1079,12 +1130,12 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     [RelayCommand]
-    private void NavigateToAllGames()
+    private async Task NavigateToAllGamesAsync()
     {
         try
         {
             Log.Debug("Navigating to All Games");
-            LoadAllGames();
+            await LoadAllGamesAsync();
         }
         catch (Exception ex)
         {
@@ -1094,7 +1145,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     [RelayCommand]
-    private void NavigateToFavorites()
+    private async Task NavigateToFavoritesAsync()
     {
         try
         {
@@ -1112,9 +1163,16 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 _ = _settings.SaveAsync();
             }
 
-            var allGames = ScanGames(_allSystems);
-            ApplyFavoritesAndHistory(allGames);
-            var favorites = allGames.Where(g => g.IsFavorite).ToList();
+            var favorites = await RunViewLoadAsync(
+                _localization.GetString("LoadingGames", "Loading Games..."),
+                () =>
+                {
+                    var allGames = ScanGames(_allSystems);
+                    ApplyFavoritesAndHistory(allGames);
+                    return allGames.Where(g => g.IsFavorite).ToList();
+                });
+
+            if (favorites is null) return; // superseded by a newer view load
 
             ShowGames(favorites);
             StatusText = _localization.GetString("Status.Favorites", "Favorites");
@@ -1131,7 +1189,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     for the currently selected system (all systems when none is selected).
     /// </summary>
     [RelayCommand]
-    private void NavigateToSelectedSystemFavorites()
+    private async Task NavigateToSelectedSystemFavoritesAsync()
     {
         try
         {
@@ -1155,9 +1213,16 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                     .Where(s => string.Equals(s.SystemName, SelectedSystem, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-            var allGames = ScanGames(systems);
-            ApplyFavoritesAndHistory(allGames);
-            var favorites = allGames.Where(g => g.IsFavorite).ToList();
+            var favorites = await RunViewLoadAsync(
+                _localization.GetString("LoadingFavoriteGamesForSystem", "Loading favorite games for system..."),
+                () =>
+                {
+                    var allGames = ScanGames(systems);
+                    ApplyFavoritesAndHistory(allGames);
+                    return allGames.Where(g => g.IsFavorite).ToList();
+                });
+
+            if (favorites is null) return; // superseded by a newer view load
 
             ShowGames(favorites);
 
@@ -1178,7 +1243,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     [RelayCommand]
-    private void NavigateToRecentlyPlayed()
+    private async Task NavigateToRecentlyPlayedAsync()
     {
         try
         {
@@ -1186,15 +1251,23 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             IsShowingRetroAchievements = false;
             LetterFilter = "";
 
-            var historyLookup = _playHistoryManager.GetHistoryLookup();
-            var allGames = ScanGames(_allSystems);
-            ApplyFavoritesAndHistory(allGames);
+            var recent = await RunViewLoadAsync(
+                _localization.GetString("LoadingGames", "Loading Games..."),
+                () =>
+                {
+                    var historyLookup = _playHistoryManager.GetHistoryLookup();
+                    var allGames = ScanGames(_allSystems);
+                    ApplyFavoritesAndHistory(allGames);
 
-            var recent = allGames
-                .Where(g => historyLookup.ContainsKey(g.FilePath))
-                .OrderByDescending(g => historyLookup[g.FilePath].LastPlayDate, StringComparer.OrdinalIgnoreCase)
-                .Take(20)
-                .ToList();
+                    return allGames
+                        .Where(g => historyLookup.ContainsKey(g.FilePath))
+                        .OrderByDescending(g => historyLookup[g.FilePath].LastPlayDate,
+                            StringComparer.OrdinalIgnoreCase)
+                        .Take(20)
+                        .ToList();
+                });
+
+            if (recent is null) return; // superseded by a newer view load
 
             ShowGames(recent);
             StatusText = _localization.GetString("Status.RecentlyPlayed", "Recently Played");
@@ -1207,7 +1280,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     [RelayCommand]
-    private void NavigateToRecentlyAdded()
+    private async Task NavigateToRecentlyAddedAsync()
     {
         try
         {
@@ -1215,26 +1288,33 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             IsShowingRetroAchievements = false;
             LetterFilter = "";
 
-            var allGames = ScanGames(_allSystems);
-            ApplyFavoritesAndHistory(allGames);
-
-            // Sort by file creation/modification date (newest first)
-            var recent = allGames
-                .Where(g => File.Exists(g.FilePath))
-                .OrderByDescending(g =>
+            var recent = await RunViewLoadAsync(
+                _localization.GetString("LoadingGames", "Loading Games..."),
+                () =>
                 {
-                    try
-                    {
-                        return new FileInfo(g.FilePath).LastWriteTime;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Debug(ex, "Failed to read LastWriteTime for {Path}", g.FilePath);
-                        return DateTime.MinValue;
-                    }
-                })
-                .Take(50)
-                .ToList();
+                    var allGames = ScanGames(_allSystems);
+                    ApplyFavoritesAndHistory(allGames);
+
+                    // Sort by file creation/modification date (newest first)
+                    return allGames
+                        .Where(g => File.Exists(g.FilePath))
+                        .OrderByDescending(g =>
+                        {
+                            try
+                            {
+                                return new FileInfo(g.FilePath).LastWriteTime;
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Debug(ex, "Failed to read LastWriteTime for {Path}", g.FilePath);
+                                return DateTime.MinValue;
+                            }
+                        })
+                        .Take(50)
+                        .ToList();
+                });
+
+            if (recent is null) return; // superseded by a newer view load
 
             ShowGames(recent);
             StatusText = _localization.GetString("Status.RecentlyAdded", "Recently Added");
@@ -1312,7 +1392,9 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             return TimeSpan.Zero;
         }
 
-        IsLoading = true;
+        SetLoadingState(true, string.Format(CultureInfo.InvariantCulture,
+            _localization.GetString("Launch.Launching", "Launching: {0}..."),
+            Path.GetFileNameWithoutExtension(filePath)));
         StatusText = string.Format(CultureInfo.InvariantCulture,
             _localization.GetString("Launch.Launching", "Launching: {0}..."),
             Path.GetFileNameWithoutExtension(filePath));
@@ -1347,7 +1429,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         }
         finally
         {
-            IsLoading = false;
+            SetLoadingState(false);
         }
     }
 
@@ -1470,7 +1552,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _loadingOrchestrator.InvalidateAll();
     }
 
-    private void LoadAllGames()
+    private async Task LoadAllGamesAsync()
     {
         try
         {
@@ -1481,10 +1563,19 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             LetterFilter = "";
             _allSystems = _systemManager.LoadSystems();
 
-            RefreshSystemCounts();
+            var games = await RunViewLoadAsync(
+                _localization.GetString("LoadingGames", "Loading Games..."),
+                () =>
+                {
+                    // Per-system counts share the file-list cache with the scan below.
+                    SystemGameCounts = ComputeSystemCounts(_allSystems);
+                    var scanned = ScanGames(_allSystems);
+                    ApplyFavoritesAndHistory(scanned);
+                    return scanned;
+                });
 
-            var games = ScanGames(_allSystems);
-            ApplyFavoritesAndHistory(games);
+            if (games is null) return; // superseded by a newer view load
+
             ShowGames(games);
             StatusText = _localization.GetString("Status.AllGames", "All Games");
         }
@@ -1534,22 +1625,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     {
         UpdateGameCount(value.Count);
         OnPropertyChanged(nameof(IsEmpty));
-    }
-
-    /// <summary>
-    ///     Recomputes per-system game counts from a full scan of all configured system folders
-    ///     (resolving %BASEFOLDER% / relative paths), independent of the current view.
-    /// </summary>
-    private void RefreshSystemCounts()
-    {
-        try
-        {
-            SystemGameCounts = ComputeSystemCounts(_allSystems);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Failed to refresh system game counts");
-        }
     }
 
     /// <summary>

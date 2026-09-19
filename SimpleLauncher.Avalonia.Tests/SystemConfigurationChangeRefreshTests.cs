@@ -96,7 +96,7 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
         Assert.True(_viewModel.SystemGameCounts.TryGetValue("Microsoft Xbox", out var count));
         Assert.Equal(2, count);
 
-        _viewModel.NavigateToSystemCommand.Execute("Microsoft Xbox");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Microsoft Xbox");
         Assert.Equal(2, _viewModel.Games.Count);
     }
 
@@ -108,7 +108,7 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
 
         // No ReloadSystemsAfterConfigurationChange call: the snapshot is stale,
         // but navigation must still find the configured system.
-        _viewModel.NavigateToSystemCommand.Execute("Microsoft Xbox");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Microsoft Xbox");
         Assert.Equal(2, _viewModel.Games.Count);
     }
 
@@ -120,7 +120,7 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
         await SystemManagerService.AddOrUpdateSystemFromEasyModeAsync(
             CreateXboxPreset(), _xboxFolder, _config, _logger.Object, _systemManager);
         await _viewModel.ReloadSystemsAfterConfigurationChangeAsync();
-        _viewModel.NavigateToSystemCommand.Execute("Microsoft Xbox");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Microsoft Xbox");
         Assert.Equal(2, _viewModel.Games.Count);
 
         // Edit the system to point at another folder (1 game) without reloading the
@@ -134,7 +134,7 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
             CreateXboxPreset(), editedFolder, _config, _logger.Object, _systemManager);
         _systemManager.InvalidateCache();
 
-        _viewModel.NavigateToSystemCommand.Execute("Microsoft Xbox");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Microsoft Xbox");
 
         // The fresh configuration must win over both the stale snapshot and the
         // cached old-folder file list.

@@ -1348,7 +1348,7 @@
                                           ToolTip.Tip="{ext:Translate TooltipSelectSystem}" />
                                 <Button Classes="secondary" Content="{ext:Translate Search}" VerticalAlignment="Center"
                                         ToolTip.Tip="{ext:Translate TooltipGlobalSearchButton}"
-                                        Command="{Binding SearchCommand}" />
+                                        Click="GlobalSearchButton_Click" />
                                 <Button Classes="primary" Content="{ext:Translate LaunchSelectedGame}"
                                         VerticalAlignment="Center"
                                         ToolTip.Tip="{ext:Translate TooltipLaunchFromSearch}"
