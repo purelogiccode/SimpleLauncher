@@ -68,6 +68,78 @@ public class AvaloniaGameCacheServiceTests
     }
 
     [Fact]
+    public void GetCachedOrScan_Rescans_WhenSystemFoldersChange()
+    {
+        // Regression: editing a system's folder keeps the same system name, so the
+        // cached list keyed by name alone was served for the old folder forever.
+        var cache = new AvaloniaGameCacheService();
+        var scanCount = 0;
+
+        var before = cache.GetCachedOrScan(System("NES", @"C:\roms\nes-old"), _ =>
+        {
+            scanCount++;
+            return ["old.zip"];
+        });
+        var afterEdit = cache.GetCachedOrScan(System("NES", @"C:\roms\nes-new"), _ =>
+        {
+            scanCount++;
+            return ["new.zip"];
+        });
+        var repeat = cache.GetCachedOrScan(System("NES", @"C:\roms\nes-new"), _ =>
+        {
+            scanCount++;
+            return ["unexpected.zip"];
+        });
+
+        Assert.Equal(2, scanCount);
+        Assert.Equal("old.zip", Assert.Single(before));
+        Assert.Equal("new.zip", Assert.Single(afterEdit));
+        Assert.Equal("new.zip", Assert.Single(repeat));
+    }
+
+    [Fact]
+    public void GetCachedOrScan_Rescans_WhenFileFormatsChange()
+    {
+        var cache = new AvaloniaGameCacheService();
+        var scanCount = 0;
+        var system = System("NES", @"C:\roms\nes");
+
+        cache.GetCachedOrScan(system, _ =>
+        {
+            scanCount++;
+            return ["mario.zip"];
+        });
+
+        var changedFormats = new SystemManagerConfig
+        {
+            SystemName = "NES",
+            SystemFolders = [@"C:\roms\nes"],
+            FileFormatsToSearch = [".nes"]
+        };
+        var afterEdit = cache.GetCachedOrScan(changedFormats, _ =>
+        {
+            scanCount++;
+            return ["mario.nes"];
+        });
+
+        Assert.Equal(2, scanCount);
+        Assert.Equal("mario.nes", Assert.Single(afterEdit));
+    }
+
+    [Fact]
+    public void GetCachedOrScan_IgnoresUnvalidatedSetCachedFilesEntry()
+    {
+        // SetCachedFiles stores no configuration signature: it must never satisfy a
+        // GetCachedOrScan request for a real configuration.
+        var cache = new AvaloniaGameCacheService();
+        cache.SetCachedFiles("NES", ["seeded.zip"]);
+
+        var scanned = cache.GetCachedOrScan(System("NES", @"C:\roms\nes"), _ => ["scanned.zip"]);
+
+        Assert.Equal("scanned.zip", Assert.Single(scanned));
+    }
+
+    [Fact]
     public void Invalidate_ForcesRescan()
     {
         var cache = new AvaloniaGameCacheService();

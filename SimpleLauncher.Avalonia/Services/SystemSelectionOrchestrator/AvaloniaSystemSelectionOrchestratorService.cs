@@ -148,6 +148,12 @@ public class AvaloniaSystemSelectionOrchestratorService
 
             _host.NavigateToSystem(systemName);
 
+            // WPF parity: display the selected system's configuration summary. It stays
+            // visible until the user loads games with the letter buttons (ShowGames
+            // hides it again — in WPF the info panel is replaced by the game buttons).
+            if (_displaySystemInformation is { } systemInfoDisplay)
+                _host.ShowSystemInformation(systemInfoDisplay.BuildSystemInfoLines(selectedManager));
+
             // WPF parity: restart the file watcher for the selected system
             // so only the current system's folders are monitored.
             _host.RestartFileWatcher();

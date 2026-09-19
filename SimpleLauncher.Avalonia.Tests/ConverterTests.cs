@@ -1,4 +1,5 @@
 using System.Globalization;
+using Avalonia.Media;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using SimpleLauncher.Avalonia.Converters;
@@ -179,6 +180,30 @@ public class ConverterTests
     {
         var converter = new BooleanToFavoriteStatusConverter();
         BooleanToFavoriteStatusConverter.SetLocalizationService(new LocalizationService());
+        Assert.Throws<NotSupportedException>(() =>
+            converter.ConvertBack(true, typeof(bool), null, CultureInfo.InvariantCulture));
+    }
+
+    #endregion
+
+    #region SystemInfoLineBrushConverter
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SystemInfoLineBrush_ReturnsBrushForBothStates(bool isError)
+    {
+        var converter = new SystemInfoLineBrushConverter();
+
+        var result = converter.Convert(isError, typeof(IBrush), null, CultureInfo.InvariantCulture);
+
+        Assert.IsAssignableFrom<IBrush>(result);
+    }
+
+    [Fact]
+    public void SystemInfoLineBrush_ConvertBackThrows()
+    {
+        var converter = new SystemInfoLineBrushConverter();
         Assert.Throws<NotSupportedException>(() =>
             converter.ConvertBack(true, typeof(bool), null, CultureInfo.InvariantCulture));
     }

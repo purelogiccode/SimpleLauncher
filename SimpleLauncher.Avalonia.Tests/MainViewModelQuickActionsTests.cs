@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Moq;
+using SimpleLauncher.Avalonia.Models;
 using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.Services.Favorites;
 using SimpleLauncher.Avalonia.Services.GameFilter;
@@ -228,6 +229,40 @@ public class MainViewModelQuickActionsTests : IDisposable
             descending.Select(static g => g.FileName),
             _viewModel.Games.Select(static g => g.FileName),
             StringComparer.OrdinalIgnoreCase);
+    }
+
+    // ── System information panel (WPF DisplaySystemInformation parity) ──
+
+    [Fact]
+    public void ShowSystemInformation_VisibleUntilLetterFilterLoadsGames()
+    {
+        var lines = new List<SystemInfoLine>
+        {
+            new() { Text = "Click on the letter buttons above to see the games" },
+            new() { Text = " " },
+            new() { Text = "System Folder: C:\\roms" }
+        };
+
+        _viewModel.ShowSystemInformation(lines);
+
+        Assert.True(_viewModel.IsSystemInfoVisible);
+        Assert.Same(lines, _viewModel.SystemInfoLines);
+
+        // The letter buttons are the "load games" action: they replace the info panel.
+        _viewModel.SetLetterFilter("A");
+
+        Assert.False(_viewModel.IsSystemInfoVisible);
+    }
+
+    [Fact]
+    public void ShowSystemInformation_HiddenWhenNavigatingToSystem()
+    {
+        _viewModel.ShowSystemInformation([new SystemInfoLine { Text = "System Folder: C:\\roms" }]);
+
+        _viewModel.NavigateToSystemCommand.Execute("Test System");
+
+        Assert.False(_viewModel.IsSystemInfoVisible);
+        Assert.NotEmpty(_viewModel.Games);
     }
 
     [Fact]

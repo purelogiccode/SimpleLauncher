@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Avalonia.Interfaces;
+using SimpleLauncher.Avalonia.Models;
 using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.Services.Favorites;
 using SimpleLauncher.Avalonia.Services.GameFilter;
@@ -107,6 +108,21 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     public partial bool IsPlayTimeVisible { get; set; } = true;
 
     [ObservableProperty] public partial bool IsShowingFavorites { get; set; }
+
+    /// <summary>
+    ///     True while the selected system's configuration summary is shown in the game
+    ///     browser (WPF DisplaySystemInformation parity). Games are hidden until the user
+    ///     picks a letter filter or another view loads games.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsSystemInfoVisible { get; set; }
+
+    /// <summary>
+    ///     Display lines of the selected system's configuration summary (empty when none
+    ///     is shown). Populated by <see cref="ShowSystemInformation" />.
+    /// </summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<SystemInfoLine> SystemInfoLines { get; set; } = [];
 
     /// <summary>
     ///     True when the game list is filtered to RetroAchievements-compatible games
@@ -359,6 +375,9 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private void ShowGames(List<GameCardViewModel> fullList)
     {
+        // Loading games replaces the system configuration summary (WPF parity: the
+        // letter buttons clear the info panel and render the game buttons).
+        IsSystemInfoVisible = false;
         _currentBaseGames = fullList;
         ReapplyLetterFilterAndPagination();
     }
@@ -399,11 +418,25 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     public void SetLetterFilter(string letter)
     {
+        // The letter buttons are the "load the games" action (WPF parity): reveal the
+        // game browser and drop the selected system's configuration summary.
+        IsSystemInfoVisible = false;
         LetterFilter = letter ?? "";
         ReapplyLetterFilterAndPagination();
         StatusText = string.IsNullOrEmpty(LetterFilter)
             ? _localization.GetString("Status.AllGames", "All Games")
             : string.Format(_localization.GetString("Filteringby", "Filtering by {0}"), LetterFilter);
+    }
+
+    /// <summary>
+    ///     Displays the selected system's configuration summary in the game browser
+    ///     (WPF DisplaySystemInformation parity). Replaced as soon as games are loaded
+    ///     (letter filter, search, favorites, …).
+    /// </summary>
+    public void ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines)
+    {
+        SystemInfoLines = lines;
+        IsSystemInfoVisible = lines.Count > 0;
     }
 
     /// <summary>
@@ -1020,13 +1053,15 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 : _allSystems.Where(s => string.Equals(s.SystemName, systemName, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-            // Snapshot safety net: if the snapshot predates a configuration change,
-            // fall back to a direct lookup so a configured system never shows 0 games.
-            if (!string.IsNullOrEmpty(systemName) && systems.Count == 0)
+            // Always prefer the configuration from the system manager: the snapshot may
+            // still predate an edit that is being applied asynchronously (the user can
+            // click a system card while the post-edit reload is still scanning). Using
+            // the stale snapshot would enumerate the system's old folders and cache
+            // them under the same system name.
+            if (!string.IsNullOrEmpty(systemName))
             {
-                var direct = _systemManager.GetSystem(systemName);
-                if (direct is not null)
-                    systems = [direct];
+                var current = _systemManager.GetSystem(systemName);
+                if (current is not null) systems = [current];
             }
 
             var games = ScanGames(systems);

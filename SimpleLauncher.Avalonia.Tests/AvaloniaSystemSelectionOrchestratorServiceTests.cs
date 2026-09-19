@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Moq;
 using SimpleLauncher.Avalonia.Interfaces;
+using SimpleLauncher.Avalonia.Models;
 using SimpleLauncher.Avalonia.Services;
+using SimpleLauncher.Avalonia.Services.DisplaySystemInfo;
 using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Avalonia.Services.SystemSelectionOrchestrator;
 
@@ -159,6 +161,23 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 
         _host.Verify(h => h.NavigateToSystem("Atari 2600"), Times.Once);
         _host.Verify(h => h.SetEmulatorComboBoxItems(It.IsAny<IReadOnlyList<string>>()), Times.Once);
+    }
+
+    [Fact]
+    public void HandleSystemSelectionChanged_ShowsSystemInformation()
+    {
+        // WPF DisplaySystemInformation parity: the selected system's configuration
+        // summary is shown until the user loads games with the letter buttons.
+        var service = new AvaloniaSystemSelectionOrchestratorService(
+            _systemManager, _loadingOrchestrator, _logger.Object, new AvaloniaDisplaySystemInformation());
+        service.Initialize(_host.Object);
+        _host.Setup(h => h.GetSelectedSystem()).Returns("NES");
+
+        service.HandleSystemSelectionChanged();
+
+        _host.Verify(h => h.ShowSystemInformation(
+            It.Is<IReadOnlyList<SystemInfoLine>>(lines =>
+                lines.Any(l => l.Text.Contains("System Folder", StringComparison.Ordinal)))), Times.Once);
     }
 
     // ── ReloadAfterConfigurationChangeAsync ───────────────────────────────

@@ -1,5 +1,7 @@
 namespace SimpleLauncher.Avalonia.Interfaces;
 
+using Models;
+
 /// <summary>
 ///     UI surface the system selection orchestrator drives: the top System/Emulator
 ///     combo boxes, the sidebar, and the ROM folder watcher.
@@ -29,6 +31,12 @@ public interface ISystemSelectionHost
 
     /// <summary>Navigates the game browser to the given system (empty string = All Games).</summary>
     void NavigateToSystem(string systemName);
+
+    /// <summary>
+    ///     Displays the selected system's configuration summary in the game browser
+    ///     (WPF DisplaySystemInformation parity). Hidden again as soon as games load.
+    /// </summary>
+    void ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines);
 
     /// <summary>Rebuilds the sidebar from system.xml and refreshes its count badges.</summary>
     void RefreshSidebar();

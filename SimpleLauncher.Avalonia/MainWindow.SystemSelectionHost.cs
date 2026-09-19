@@ -1,4 +1,5 @@
 using SimpleLauncher.Avalonia.Interfaces;
+using SimpleLauncher.Avalonia.Models;
 
 namespace SimpleLauncher.Avalonia;
 
@@ -35,6 +36,13 @@ public partial class MainWindow : ISystemSelectionHost
         // would load invisibly behind an open Favorites / History / Search section.
         _ = ShowSectionAsync(MainSection.None);
         _viewModel.NavigateToSystemCommand.Execute(systemName);
+    }
+
+    void ISystemSelectionHost.ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines)
+    {
+        // WPF parity: the configuration summary replaces the game grid until the
+        // user loads games with the letter buttons (ShowGames hides it again).
+        _viewModel.ShowSystemInformation(lines);
     }
 
     void ISystemSelectionHost.RefreshSidebar()

@@ -112,6 +112,36 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
         Assert.Equal(2, _viewModel.Games.Count);
     }
 
+    [Fact]
+    public async Task NavigateToSystem_UsesFreshConfiguration_WhenSnapshotPredatesAnEdit()
+    {
+        // First configuration: the original folder (2 games), opened once so the
+        // game cache holds the old file list.
+        await SystemManagerService.AddOrUpdateSystemFromEasyModeAsync(
+            CreateXboxPreset(), _xboxFolder, _config, _logger.Object, _systemManager);
+        await _viewModel.ReloadSystemsAfterConfigurationChangeAsync();
+        _viewModel.NavigateToSystemCommand.Execute("Microsoft Xbox");
+        Assert.Equal(2, _viewModel.Games.Count);
+
+        // Edit the system to point at another folder (1 game) without reloading the
+        // view-model snapshot or invalidating the game cache. This is the post-edit
+        // race window: the still-visible system card can be clicked before the
+        // asynchronous reload has applied the new configuration.
+        var editedFolder = Path.Combine(_tempRoot, "xboxgames-edited");
+        Directory.CreateDirectory(editedFolder);
+        File.WriteAllText(Path.Combine(editedFolder, "newgame.iso"), "fake rom");
+        await SystemManagerService.AddOrUpdateSystemFromEasyModeAsync(
+            CreateXboxPreset(), editedFolder, _config, _logger.Object, _systemManager);
+        _systemManager.InvalidateCache();
+
+        _viewModel.NavigateToSystemCommand.Execute("Microsoft Xbox");
+
+        // The fresh configuration must win over both the stale snapshot and the
+        // cached old-folder file list.
+        var game = Assert.Single(_viewModel.Games);
+        Assert.Contains(editedFolder, game.FilePath, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static EasyModeSystemConfig CreateXboxPreset()
     {
         return new EasyModeSystemConfig

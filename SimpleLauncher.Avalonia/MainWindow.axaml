@@ -2,6 +2,7 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ext="using:SimpleLauncher.Avalonia.Extensions"
+        xmlns:models="using:SimpleLauncher.Avalonia.Models"
         xmlns:vm="using:SimpleLauncher.Avalonia.ViewModels"
         Title="Simple Launcher"
         Height="800" Width="1280"
@@ -1114,6 +1115,28 @@
                                            HorizontalAlignment="Center"
                                            FontFamily="{DynamicResource PrimaryFont}" />
                             </StackPanel>
+
+                            <!-- System information panel (WPF DisplaySystemInformation parity):
+                                 shown when a system is selected; the letter buttons (or any
+                                 other game load) replace it with the game browser. Opaque and
+                                 last in the grid so it covers the game views while visible. -->
+                            <ScrollViewer x:Name="SystemInfoPanel"
+                                          IsVisible="{Binding IsSystemInfoVisible}"
+                                          Background="{DynamicResource BgPrimaryBrush}"
+                                          VerticalScrollBarVisibility="Auto"
+                                          ToolTip.Tip="{ext:Translate TooltipCurrentSystemInfo}">
+                                <ItemsControl ItemsSource="{Binding SystemInfoLines}"
+                                              Margin="10,30,10,10">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type models:SystemInfoLine}">
+                                            <TextBlock Text="{Binding Text}"
+                                                       TextWrapping="Wrap"
+                                                       FontFamily="{DynamicResource PrimaryFont}"
+                                                       Foreground="{Binding IsError, Converter={StaticResource SystemInfoLineBrush}}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
                         </Grid>
 
                         <!-- Loading overlay — ZIndex 9999 parity with WPF ContentControl Panel.ZIndex=9999 -->

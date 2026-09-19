@@ -75,6 +75,97 @@ public class AvaloniaDisplaySystemInformation
     }
 
     /// <summary>
+    ///     Builds the flat list of display lines shown when a system is selected,
+    ///     mirroring the WPF <c>DisplaySystemInformation.DisplaySystemInfoAsync</c>
+    ///     text block (hint line, configuration lines, one block per emulator).
+    ///     Invalid folder/emulator paths are flagged so the UI renders them in red.
+    /// </summary>
+    public List<SystemInfoLine> BuildSystemInfoLines(SystemManagerConfig config)
+    {
+        var info = BuildSystemInfo(config);
+
+        var lines = new List<SystemInfoLine>
+        {
+            new()
+            {
+                Text = Localized("Clickontheletterbuttonsabove",
+                    "Click on the letter buttons above to see the games")
+            },
+            Blank(),
+            new()
+            {
+                Text = $"{Localized("SystemFolder", "System Folder")}: {string.Join("; ", info.SystemFolders)}",
+                IsError = !info.AreSystemFoldersValid
+            },
+            new()
+            {
+                Text =
+                    $"{Localized("SystemImageFolder", "System Image Folder")}: {info.SystemImageFolder ?? Localized("DefaultImageFolder", "Using default image folder")}",
+                IsError = !info.IsSystemImageFolderValid
+            },
+            new()
+            {
+                Text =
+                    $"{Localized("ExtensiontoSearchintheSystemFolder2", "Extension to Search in the System Folder")}: {string.Join(", ", info.FileFormatsToSearch)}"
+            },
+            new()
+            {
+                Text = $"{Localized("ExtractFileBeforeLaunch", "Extract File Before Launch?")}: {info.ExtractFileBeforeLaunch}"
+            },
+            new()
+            {
+                Text =
+                    $"{Localized("ExtensiontoLaunchAfterExtraction2", "Extension to Launch After Extraction")}: {string.Join(", ", info.FileFormatsToLaunch)}"
+            },
+            new()
+            {
+                Text = $"{Localized("GroupFilesByFolder", "Group Files by Folder?")}: {info.GroupByFolder}"
+            },
+            new()
+            {
+                Text = $"{Localized("DisableRecursiveSearch", "Disable recursive search")}: {info.DisableRecursiveSearch}"
+            }
+        };
+
+        foreach (var emulator in info.Emulators)
+        {
+            lines.Add(Blank());
+            lines.Add(new SystemInfoLine { Text = $"{Localized("EmulatorName", "Emulator Name")}: {emulator.Name}" });
+            lines.Add(new SystemInfoLine
+            {
+                Text = $"{Localized("EmulatorPath", "Emulator Path")}: {emulator.Location}",
+                IsError = !emulator.IsLocationValid
+            });
+            lines.Add(new SystemInfoLine
+            {
+                Text = $"{Localized("EmulatorParameters", "Emulator Parameters")}: {emulator.Parameters}"
+            });
+            lines.Add(new SystemInfoLine
+            {
+                Text =
+                    $"{Localized("receiveNotificationEmulatorError", "Receive a Notification on Emulator Error?")}: {emulator.ReceiveErrorNotification}"
+            });
+        }
+
+        return lines;
+
+        // WPF used LineBreak between sections; a single space keeps the same line
+        // height in Avalonia (an empty TextBlock would collapse to zero height).
+        static SystemInfoLine Blank()
+        {
+            return new SystemInfoLine { Text = " " };
+        }
+
+        string Localized(string key, string fallback)
+        {
+            var value = _localization?.GetString(key);
+            return string.IsNullOrEmpty(value) || string.Equals(value, key, StringComparison.OrdinalIgnoreCase)
+                ? fallback
+                : value;
+        }
+    }
+
+    /// <summary>
     ///     Builds a structured system information model for display in any Avalonia UI.
     /// </summary>
     public SystemInfoModel BuildSystemInfo(SystemManagerConfig config)

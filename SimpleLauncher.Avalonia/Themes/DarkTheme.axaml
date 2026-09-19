@@ -19,6 +19,7 @@
         <converters:SmartTitleCaseConverter x:Key="SmartTitleCase" />
         <converters:ConsoleToCardHeightConverter x:Key="CardHeightConverter" />
         <converters:BooleanToFavoriteStatusConverter x:Key="FavoriteStatusConverter" />
+        <converters:SystemInfoLineBrushConverter x:Key="SystemInfoLineBrush" />
 
         <!-- ═══ SURFACE COLORS ═══ -->
         <Color x:Key="BgPrimaryColor">#1E1E1E</Color>
