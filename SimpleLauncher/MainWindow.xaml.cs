@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

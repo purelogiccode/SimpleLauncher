@@ -67,7 +67,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     library rescan needed (a full ReloadGames here froze the UI on large libraries).
     /// </summary>
     [ObservableProperty]
-    public partial string ButtonAspectRatio { get; set; } = "Square";
+    public partial string ButtonAspectRatio { get; set; }
 
     /// <summary>
     ///     The full (un-paginated) game list of the current view. Pagination slices this
