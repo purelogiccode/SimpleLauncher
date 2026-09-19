@@ -76,7 +76,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.259">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.262">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -478,7 +478,12 @@
         <None Update="images\default.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="icon\icon.ico" />
+        <!-- Loose copy for AvaloniaTrayIconManager.LoadIcon (tray icon is loaded from
+            disk by path next to the exe). Stays None (not embedded) so ApplicationIcon
+            remains the single source of the exe icon. -->
+        <None Include="icon\icon.ico">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <!-- Emulator sample config files (injection + easy mode) -->
