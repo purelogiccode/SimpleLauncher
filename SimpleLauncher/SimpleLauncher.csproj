@@ -741,7 +741,7 @@
         <Resource Include="images\theme.png" />
         <Resource Include="images\setnumber.png" />
         <Resource Include="images\show.png" />
-        <None Include="icon\icon.ico" />
+        <Resource Include="icon\icon.ico" />
         <Resource Include="images\tools.png" />
         <Resource Include="images\findromcover.png" />
         <Resource Include="images\romhistory.png" />
@@ -962,11 +962,11 @@
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="MahApps.Metro" Version="2.4.11" />
         <PackageReference Include="MdXaml" Version="1.27.0" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.259">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.262">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MessagePack" Version="3.1.8" />
+        <PackageReference Include="MessagePack" Version="3.1.9" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

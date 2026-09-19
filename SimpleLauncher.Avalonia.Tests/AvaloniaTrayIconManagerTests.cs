@@ -1,6 +1,7 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform;
 using Moq;
 using SimpleLauncher.Avalonia.Services.TrayIcon;
 using SimpleLauncher.Core.Interfaces;
@@ -157,6 +158,19 @@ public class AvaloniaTrayIconManagerTests
         {
             HeadlessAvalonia.RunOnUiThread(window.Close);
         }
+    }
+
+    [Fact]
+    public void TrayIconAsset_IsEmbeddedInAssembly()
+    {
+        // Regression guard: the tray icon must ship inside the assembly (avares), not
+        // as a loose file — a missing asset leaves the tray icon imageless.
+        HeadlessAvalonia.EnsureInitialized();
+
+        var uri = new Uri("avares://SimpleLauncher.Avalonia/icon/icon.ico");
+        Assert.True(AssetLoader.Exists(uri));
+        using var stream = AssetLoader.Open(uri);
+        Assert.True(stream.Length > 0);
     }
 
     /// <summary>

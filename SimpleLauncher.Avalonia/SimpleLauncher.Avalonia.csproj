@@ -475,13 +475,8 @@
          image resolver load it from disk by path, exactly like the WPF app ships it. -->
     <ItemGroup>
         <AvaloniaResource Include="images\*.png" />
+        <AvaloniaResource Include="icon\icon.ico" />
         <None Update="images\default.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <!-- Loose copy for AvaloniaTrayIconManager.LoadIcon (tray icon is loaded from
-            disk by path next to the exe). Stays None (not embedded) so ApplicationIcon
-            remains the single source of the exe icon. -->
-        <None Include="icon\icon.ico">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

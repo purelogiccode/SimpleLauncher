@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform;
 using SimpleLauncher.Avalonia.Models;
 using SimpleLauncher.Core.Interfaces;
 using TrayIconControl = Avalonia.Controls.TrayIcon;
@@ -79,6 +80,18 @@ public class AvaloniaTrayIconManager : IDisposable
 
     private static WindowIcon? LoadIcon()
     {
+        // Embedded first: always ships inside the single-file exe (Avalonia equivalent
+        // of the WPF pack://application URI). The loose icon/icon.ico next to the exe
+        // is the legacy fallback (e.g. a user-replaced file).
+        try
+        {
+            return new WindowIcon(AssetLoader.Open(new Uri("avares://SimpleLauncher.Avalonia/icon/icon.ico")));
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Failed to load the embedded tray icon; trying the loose file");
+        }
+
         try
         {
             var iconPath = Path.Combine(AppContext.BaseDirectory, "icon", "icon.ico");
