@@ -934,6 +934,9 @@
                                                     <Binding Path="DataContext.IsMixedView"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="False" />
+                                                    <Binding Path="DataContext.ButtonAspectRatio"
+                                                             RelativeSource="{RelativeSource AncestorType=ListBox}"
+                                                             FallbackValue="Square" />
                                                 </MultiBinding>
                                             </Button.Height>
 

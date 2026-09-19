@@ -153,13 +153,16 @@ public class SystemArtRatioService
 
     /// <summary>
     ///     Returns the art height given a card width and system name.
+    ///     An explicit aspect-ratio key wins over the stored setting (used by the card
+    ///     Height binding so ratio changes re-render without a library rescan).
     /// </summary>
-    public double GetArtHeight(double cardWidth, string systemName, bool isMixedView = false)
+    public double GetArtHeight(double cardWidth, string systemName, bool isMixedView = false,
+        string? aspectRatioOverride = null)
     {
         // The "Set Button Aspect Ratio" setting drives card sizing globally
         // (same as the WPF GameButtonFactory). Unknown values fall back to the
         // per-system art ratio for the current view.
-        var overrideRatio = GetAspectRatioOverride(_settings.ButtonAspectRatio);
+        var overrideRatio = GetAspectRatioOverride(aspectRatioOverride ?? _settings.ButtonAspectRatio);
         var ratio = overrideRatio > 0.0 ? overrideRatio :
             isMixedView ? 0.73 : GetRatio(systemName);
         return cardWidth * ratio;

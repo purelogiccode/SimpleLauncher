@@ -244,6 +244,24 @@ public class ConverterTests
     }
 
     [Fact]
+    public void ConsoleToCardHeight_AspectRatioInput_ChangesHeightWithoutRescan()
+    {
+        // The card Height MultiBinding carries the aspect key as 4th input: changing
+        // the ratio must re-evaluate heights in place (regression: the handlers used
+        // to ReloadGames, rescanning the library on the UI thread and freezing).
+        var converter = CreateHeightConverter();
+        var square = converter.Convert([200.0, "NES", true, "Square"], typeof(double), null,
+            CultureInfo.InvariantCulture);
+        var wider = converter.Convert([200.0, "NES", true, "Wider"], typeof(double), null,
+            CultureInfo.InvariantCulture);
+        var taller = converter.Convert([200.0, "NES", true, "Taller"], typeof(double), null,
+            CultureInfo.InvariantCulture);
+        Assert.Equal((200.0 * (1.0 / 1.1)) + 48.0, (double)square!, 3);
+        Assert.Equal((200.0 * (1.0 / 1.5)) + 48.0, (double)wider!, 3);
+        Assert.Equal((200.0 * 1.3) + 48.0, (double)taller!, 3);
+    }
+
+    [Fact]
     public void ConsoleToCardHeight_ConvertBackThrows()
     {
         var converter = CreateHeightConverter();

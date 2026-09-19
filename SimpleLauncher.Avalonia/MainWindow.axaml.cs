@@ -1349,9 +1349,12 @@ public partial class MainWindow : Window, IPaginationHost
 
             _settings.ButtonAspectRatio = newAspectRatio;
             await _settings.SaveAsync();
+            // Binding-driven refresh: the card Height MultiBinding carries
+            // ButtonAspectRatio, so heights re-render in place. A full ReloadGames
+            // here rescans the whole library on the UI thread and freezes the app.
+            _viewModel.ButtonAspectRatio = newAspectRatio;
             UpdateButtonAspectRatioCheckMarks(newAspectRatio);
             Log.Information("Button aspect ratio toggled to {AspectRatio}", newAspectRatio);
-            _viewModel.ReloadGames();
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("ButtonAspectRatio", "Button Aspect Ratio"),
                 $"{_localization.GetString("TogglingButtonAspectRatio", "Toggling button aspect ratio...")} {newAspectRatio}");
@@ -1941,9 +1944,11 @@ public partial class MainWindow : Window, IPaginationHost
             var ratio = item.Name ?? "Square";
             _settings.ButtonAspectRatio = ratio;
             await _settings.SaveAsync();
+            // Binding-driven refresh (see NavToggleButtonAspectRatioButton_Click):
+            // no library rescan, so no UI freeze on large collections.
+            _viewModel.ButtonAspectRatio = ratio;
             UpdateButtonAspectRatioCheckMarks(ratio);
             Log.Information("Button aspect ratio changed to {AspectRatio}", ratio);
-            _viewModel.ReloadGames();
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("ButtonAspectRatio", "Button Aspect Ratio"), ratio);
         }

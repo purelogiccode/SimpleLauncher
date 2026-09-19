@@ -62,6 +62,14 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     [ObservableProperty] public partial double CardWidth { get; set; } = 168;
 
     /// <summary>
+    ///     Button aspect-ratio override key (Square/Wider/Taller/…). Bound into the card
+    ///     Height MultiBinding so ratio changes re-render card heights in place — no
+    ///     library rescan needed (a full ReloadGames here froze the UI on large libraries).
+    /// </summary>
+    [ObservableProperty]
+    public partial string ButtonAspectRatio { get; set; } = "Square";
+
+    /// <summary>
     ///     The full (un-paginated) game list of the current view. Pagination slices this
     ///     into <see cref="Games" /> when the total exceeds the configured page size.
     /// </summary>
@@ -185,6 +193,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         // Apply the saved preferences (settings.xml): default view mode and card size
         IsGridView = !string.Equals(settings.ViewMode, "ListView", StringComparison.OrdinalIgnoreCase);
         if (settings.ThumbnailSize is >= 50 and <= 800) CardWidth = settings.ThumbnailSize;
+        ButtonAspectRatio = settings.ButtonAspectRatio ?? "Square";
 
         CaptionFontSize = settings.FilenameFontSize switch
         {

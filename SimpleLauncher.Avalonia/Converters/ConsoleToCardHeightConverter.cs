@@ -7,8 +7,10 @@ using SimpleLauncher.Avalonia.Services;
 namespace SimpleLauncher.Avalonia.Converters;
 
 /// <summary>
-///     Converts (cardWidth, systemName, isMixedView) → card height using SystemArtRatioService.
-///     Used in MultiBinding for the game card DataTemplate.
+///     Converts (cardWidth, systemName, isMixedView[, buttonAspectRatio]) → card height
+///     using SystemArtRatioService. Used in MultiBinding for the game card DataTemplate.
+///     The optional 4th input carries the aspect-ratio key so ratio changes re-evaluate
+///     heights in place (without it, only width/system/view changes would refresh).
 /// </summary>
 public class ConsoleToCardHeightConverter : IMultiValueConverter
 {
@@ -46,11 +48,12 @@ public class ConsoleToCardHeightConverter : IMultiValueConverter
         }
 
         var isMixedView = values.Count > 2 && values[2] is true;
+        var aspectRatio = values.Count > 3 ? values[3] as string : null;
 
         var ratioService = GetRatioService();
         if (ratioService is null) return cardWidth * 0.73;
 
-        var artHeight = ratioService.GetArtHeight(cardWidth, systemName, isMixedView);
+        var artHeight = ratioService.GetArtHeight(cardWidth, systemName, isMixedView, aspectRatio);
         return artHeight + CaptionHeight;
     }
 
