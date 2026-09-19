@@ -87,6 +87,18 @@ public class SystemManagerService
     /// </summary>
     internal List<SystemManagerConfig> LoadSystemsFromPath(string? explicitPath)
     {
+        return LoadSystemsFromPath(explicitPath, out _);
+    }
+
+    /// <summary>
+    ///     Like <see cref="LoadSystemsFromPath(string?)" />, additionally reporting whether
+    ///     the regex fallback recovery engaged (structurally corrupt file): callers must
+    ///     shelve such files under a distinct <c>.partial.*.bak</c> name so the data loss
+    ///     is visible instead of masquerading as a clean migration.
+    /// </summary>
+    internal List<SystemManagerConfig> LoadSystemsFromPath(string? explicitPath, out bool recoveredPartial)
+    {
+        recoveredPartial = false;
         var result = new List<SystemManagerConfig>();
 
         // Unified-database path: single source of truth once migrated.
@@ -142,6 +154,7 @@ public class SystemManagerService
         catch (XmlException ex)
         {
             Log.Error(ex, "Structural corruption in 'system.xml'. Attempting partial recovery");
+            recoveredPartial = true;
             dirty = true;
 
             try
@@ -186,8 +199,14 @@ public class SystemManagerService
                 _ = NotifyCorruptedAndMaybeRestoreAsync(path);
         }
 
-        // Notify the user about each invalid system that was removed.
-        foreach (var error in invalidErrors) _ = _messageBox?.InvalidSystemConfigurationMessageBoxAsync(error);
+        // Notify the user about each invalid system that was removed. Skipped systems
+        // are also logged at Information (expected user-data condition, never a bug —
+        // during migration there is no message box, so the log is the only trace).
+        foreach (var error in invalidErrors)
+        {
+            Log.Information("Skipped invalid system configuration: {Error}", error);
+            _ = _messageBox?.InvalidSystemConfigurationMessageBoxAsync(error);
+        }
 
         // Rewrite a cleaned, sorted copy so future loads don't re-corrupt.
         // Skipped for explicit paths (migration must not modify the source file).
@@ -211,8 +230,9 @@ public class SystemManagerService
     {
         try
         {
-            _ = _messageBox?.SystemXmlIsCorruptedMessageBoxAsync(
-                PathHelper.ResolveLogFilePath(_configuration));
+            if (_messageBox is not null)
+                await _messageBox.SystemXmlIsCorruptedMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
 
             var backup = FindLatestBackup(path);
             if (backup is null) return;

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MessagePack;
+using Microsoft.Data.Sqlite;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.UnifiedSettings;
@@ -143,9 +144,21 @@ public class FavoritesManager
                 SaveToDatabase();
                 return;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
+            {
+                // Environment issue (locked/read-only/newer database): never resurrect a
+                // legacy favorites.dat once the unified database exists. Keep the
+                // in-memory state instead.
+                _logger?.Information(ex,
+                    "Error saving favorites to the unified database; keeping in-memory state");
+                return;
+            }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error saving favorites to the unified database; trying the legacy file");
+                // Unexpected errors stay visible but must not resurrect the legacy file.
+                _logger?.Error(ex, "Error saving favorites to the unified database");
+                return;
             }
         }
 
@@ -244,7 +257,8 @@ public class FavoritesManager
 
     /// <summary>
     ///     Saves favorites atomically with retry logic. Writes to the unified database
-    ///     when it exists; otherwise falls back to the legacy DAT file.
+    ///     when it exists; otherwise falls back to the legacy DAT file. Once a valid
+    ///     database exists the legacy file is never rewritten; failures keep in-memory state.
     /// </summary>
     public async Task SaveFavoritesAsync()
     {
@@ -255,9 +269,21 @@ public class FavoritesManager
                 SaveToDatabase();
                 return;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
+            {
+                // Environment issue (locked/read-only/newer database): never resurrect a
+                // legacy favorites.dat once the unified database exists. Keep the
+                // in-memory state instead.
+                _logger?.Information(ex,
+                    "Error saving favorites to the unified database; keeping in-memory state");
+                return;
+            }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error saving favorites to the unified database; trying the legacy file");
+                // Unexpected errors stay visible but must not resurrect the legacy file.
+                _logger?.Error(ex, "Error saving favorites to the unified database");
+                return;
             }
         }
 

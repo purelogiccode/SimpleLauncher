@@ -412,6 +412,8 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             .Replace(" ", string.Empty)
             .Replace(".", string.Empty)
             .Replace("'", string.Empty)
+            .Replace("_", string.Empty)
+            .Replace("+", string.Empty)
             .Replace("™", string.Empty)
             .Replace("®", string.Empty);
     }

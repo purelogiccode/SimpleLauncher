@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using MessagePack;
+using Microsoft.Data.Sqlite;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.UnifiedSettings;
@@ -13,9 +14,9 @@ namespace SimpleLauncher.Services.PlayHistory;
 /// <summary>
 ///     Manages play history tracking, persistence, and date format migration.
 ///     The app persists history in the unified SQLite database
-///     (<c>settings.dat</c> in AppData); the legacy MessagePack <c>playhistory.dat</c>
-///     format is only read during the one-time migration (and as a fallback when no
-///     database exists yet).
+///     (<c>settings.dat</c> in the portable folder or AppData); the legacy MessagePack
+///     <c>playhistory.dat</c> format is only read during the one-time migration (and as a
+///     fallback when no database exists yet).
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public class PlayHistoryManager
@@ -298,7 +299,9 @@ public class PlayHistoryManager
 
     /// <summary>
     ///     Saves the play history: to the unified database when it exists, otherwise to
-    ///     the legacy MessagePack file with retry logic.
+    ///     the legacy MessagePack file with retry logic. Once a valid database exists the
+    ///     legacy file is never rewritten (it would be re-merged over the database on the
+    ///     next launch); failures keep in-memory state.
     /// </summary>
     internal Task SavePlayHistoryAsync()
     {
@@ -309,9 +312,21 @@ public class PlayHistoryManager
                 SaveToDatabase();
                 return Task.CompletedTask;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
+            {
+                // Environment issue (locked/read-only/newer database): never resurrect a
+                // legacy playhistory.dat once the unified database exists. Keep the
+                // in-memory state instead.
+                _logger?.Information(ex,
+                    "Error saving play history to the unified database; keeping in-memory state");
+                return Task.CompletedTask;
+            }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error saving play history to the unified database; trying the legacy file");
+                // Unexpected errors stay visible but must not resurrect the legacy file.
+                _logger?.Error(ex, "Error saving play history to the unified database");
+                return Task.CompletedTask;
             }
         }
 

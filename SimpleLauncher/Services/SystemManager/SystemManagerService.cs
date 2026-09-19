@@ -437,6 +437,49 @@ public partial class SystemManagerService : ISystemManager
     }
 
     /// <summary>
+    ///     Parses a format/folder list from either the legacy shape (container with child
+    ///     elements) or the simplified shape (container value, comma-separated). Mirrors the
+    ///     Avalonia reader so both apps import the same systems from one system.xml.
+    /// </summary>
+    private static List<string> ParseFormatListCompat(
+        XElement systemConfigElement, string containerName, string itemElementName)
+    {
+        var container = systemConfigElement.Element(containerName);
+        if (container is null) return [];
+
+        var childItems = container.Elements(itemElementName).ToList();
+        if (childItems.Count > 0)
+        {
+            return childItems
+                .Select(static e => e.Value.Trim())
+                .Where(static v => !string.IsNullOrWhiteSpace(v))
+                .ToList();
+        }
+
+        return ParseCommaList(container.Value);
+    }
+
+    private static List<string> ParseSemicolonList(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+
+        return value.Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(static f => f.Trim())
+            .Where(static f => !string.IsNullOrEmpty(f))
+            .ToList();
+    }
+
+    private static List<string> ParseCommaList(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+
+        return value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(static f => f.Trim())
+            .Where(static f => !string.IsNullOrEmpty(f))
+            .ToList();
+    }
+
+    /// <summary>
     ///     Parses and validates a single &lt;SystemConfig&gt; element. Throws when the
     ///     configuration is invalid (callers log and skip the entry).
     ///     Shared by the XML loader and the one-time legacy migration, so both paths
@@ -455,14 +498,15 @@ public partial class SystemManagerService : ISystemManager
         if (systemFoldersElement != null)
         {
             systemFolders = systemFoldersElement.Elements("SystemFolder")
-                .Select(static f => f.Value)
+                .Select(static f => f.Value.Trim())
                 .Where(static f => !string.IsNullOrWhiteSpace(f))
                 .ToList();
         }
         else
         {
-            var singleFolder = sysConfigElement.Element("SystemFolder")?.Value;
-            systemFolders = !string.IsNullOrWhiteSpace(singleFolder) ? [singleFolder] : new List<string>();
+            // Simplified format: direct <SystemFolder> child, semicolon-separated
+            // (Avalonia parity — both apps must import the same systems).
+            systemFolders = ParseSemicolonList(sysConfigElement.Element("SystemFolder")?.Value);
         }
 
         if (systemFolders.Count == 0)
@@ -478,14 +522,10 @@ public partial class SystemManagerService : ISystemManager
                 $"System '{systemName}': Missing or empty 'System Image Folder' in XML.");
         }
 
-        // Validate FileFormatsToSearch
-        var formatsToSearch = sysConfigElement.Element("FileFormatsToSearch")
-            ?.Elements("FormatToSearch")
-            .Select(static e => e.Value.Trim())
-            .Where(static value =>
-                !string.IsNullOrWhiteSpace(value)) // Ensure no empty or whitespace-only entries
-            .ToList();
-        if (formatsToSearch == null || formatsToSearch.Count == 0)
+        // Validate FileFormatsToSearch (legacy child elements, or a simplified
+        // comma-separated container value — Avalonia parity).
+        var formatsToSearch = ParseFormatListCompat(sysConfigElement, "FileFormatsToSearch", "FormatToSearch");
+        if (formatsToSearch.Count == 0)
         {
             throw new InvalidOperationException(
                 $"System '{systemName}': 'File Extension To Search' should have at least one value.");
@@ -513,15 +553,10 @@ public partial class SystemManagerService : ISystemManager
                 $"System '{systemName}': When 'Extract File Before Launch' is set to true, 'Extension to Search in the System Folder' must ONLY contain 'zip', '7z', or 'rar'.");
         }
 
-        // Validate FileFormatsToLaunch
-        var formatsToLaunch = sysConfigElement.Element("FileFormatsToLaunch")
-            ?.Elements("FormatToLaunch")
-            .Select(static e => e.Value.Trim())
-            .Where(static value =>
-                !string.IsNullOrWhiteSpace(value)) // Ensure no empty or whitespace-only entries
-            .ToList();
+        // Validate FileFormatsToLaunch (same compat rule as FileFormatsToSearch).
+        var formatsToLaunch = ParseFormatListCompat(sysConfigElement, "FileFormatsToLaunch", "FormatToLaunch");
         // If ExtractFileBeforeLaunch is true, FileFormatsToLaunch must have values.
-        if (extractFileBeforeLaunch && (formatsToLaunch == null || formatsToLaunch.Count == 0))
+        if (extractFileBeforeLaunch && formatsToLaunch.Count == 0)
         {
             throw new InvalidOperationException(
                 $"System '{systemName}': 'File Extension To Launch' should have at least one value when 'Extract File Before Launch' is set to true.");
@@ -538,15 +573,12 @@ public partial class SystemManagerService : ISystemManager
             disableRecursiveSearch = false;
         }
 
-        // Validate emulator configurations
+        // Validate emulator configurations. A missing <Emulators> block means "no
+        // emulators configured" (Avalonia parity) rather than an invalid system, so
+        // both apps import the same systems from one system.xml.
         var emulators = new List<Emulator>();
-        var emulatorElements = sysConfigElement.Element("Emulators")?.Elements("Emulator").ToList();
-
-        if (emulatorElements == null || emulatorElements.Count == 0)
-        {
-            throw new InvalidOperationException(
-                $"System '{systemName}': Emulators list should not be empty or null."); // Need at least one EmulatorName element
-        }
+        var emulatorElements = sysConfigElement.Element("Emulators")?.Elements("Emulator").ToList()
+                               ?? [];
 
         foreach (var emulatorElement in emulatorElements)
         {
@@ -557,7 +589,8 @@ public partial class SystemManagerService : ISystemManager
                     $"System '{systemName}': An 'Emulator Name' should not be empty or null.");
             }
 
-            var emulatorLocation = emulatorElement.Element("EmulatorLocation")?.Value ?? ""; // can be empty
+            var emulatorLocation = emulatorElement.Element("EmulatorPath")?.Value
+                                   ?? emulatorElement.Element("EmulatorLocation")?.Value ?? ""; // can be empty
             var emulatorParameters = emulatorElement.Element("EmulatorParameters")?.Value ?? ""; // can be empty
 
             // Parse the ReceiveANotificationOnEmulatorError value with default = true
@@ -594,7 +627,7 @@ public partial class SystemManagerService : ISystemManager
             SystemImageFolder = systemImageFolder, // Store the raw string
             ExtractFileBeforeLaunch = extractFileBeforeLaunch,
             FileFormatsToSearch = formatsToSearch,
-            FileFormatsToLaunch = formatsToLaunch ?? [],
+            FileFormatsToLaunch = formatsToLaunch,
             Emulators = emulators,
             GroupByFolder = groupByFolder,
             DisableRecursiveSearch = disableRecursiveSearch
@@ -672,6 +705,19 @@ public partial class SystemManagerService : ISystemManager
     /// </summary>
     internal static List<SystemManagerService> LoadSystemsFromPath(string xmlPath, ILogger? logErrors = null)
     {
+        return LoadSystemsFromPath(xmlPath, logErrors, out _);
+    }
+
+    /// <summary>
+    ///     Like <see cref="LoadSystemsFromPath(string, ILogger?)" />, additionally reporting
+    ///     whether the regex fallback recovery engaged (structurally corrupt file): callers
+    ///     must shelve such files under a distinct <c>.partial.*.bak</c> name so the data
+    ///     loss is visible instead of masquerading as a clean migration.
+    /// </summary>
+    internal static List<SystemManagerService> LoadSystemsFromPath(
+        string xmlPath, ILogger? logErrors, out bool recoveredPartial)
+    {
+        recoveredPartial = false;
         var result = new List<SystemManagerService>();
         if (!File.Exists(xmlPath)) return result;
 
@@ -695,15 +741,18 @@ public partial class SystemManagerService : ISystemManager
                 }
                 catch (Exception ex)
                 {
+                    // Expected user-data condition (hand-edited system block): Information
+                    // level so invalid systems never file bug reports.
                     var systemName = sysConfigElement.Element("SystemName")?.Value ?? "Unnamed System";
-                    logErrors?.Error(ex, "Invalid system configuration '{SystemName}' in '{Path}'", systemName,
+                    logErrors?.Information(ex, "Invalid system configuration '{SystemName}' in '{Path}'", systemName,
                         xmlPath);
                 }
             }
         }
         catch (XmlException ex)
         {
-            logErrors?.Error(ex, "Structural corruption in '{Path}'. Attempting partial recovery", xmlPath);
+            recoveredPartial = true;
+            logErrors?.Information(ex, "Structural corruption in '{Path}'. Attempting partial recovery", xmlPath);
 
             try
             {
@@ -718,18 +767,18 @@ public partial class SystemManagerService : ISystemManager
                     {
                         var nameMatch = MyRegex1().Match(match.Value);
                         var sysName = nameMatch.Success ? nameMatch.Groups[1].Value : "Unknown";
-                        logErrors?.Error(innerEx, "Failed to validate system configuration for '{SystemName}'", sysName);
+                        logErrors?.Information(innerEx, "Failed to validate system configuration for '{SystemName}'", sysName);
                     }
                 }
             }
             catch (Exception recoveryEx)
             {
-                logErrors?.Error(recoveryEx, "Failed to perform regex recovery on '{Path}'", xmlPath);
+                logErrors?.Information(recoveryEx, "Failed to perform regex recovery on '{Path}'", xmlPath);
             }
         }
         catch (Exception ex)
         {
-            logErrors?.Error(ex, "Failed to parse '{Path}'", xmlPath);
+            logErrors?.Information(ex, "Failed to parse '{Path}'", xmlPath);
         }
 
         return result;

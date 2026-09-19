@@ -348,6 +348,8 @@ public partial class MainWindow
                 if (newSize == _settings.ThumbnailSize) return;
 
                 await _menuOrchestrator.HandleButtonSizeAsync(newSize);
+                // The handler snaps to the 50px grid, so re-sync the slider to the applied size.
+                SyncCardSizeSlider();
             }
             catch (Exception ex)
             {

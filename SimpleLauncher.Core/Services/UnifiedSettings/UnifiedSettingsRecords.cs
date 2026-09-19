@@ -50,3 +50,24 @@ public enum MigrationStatus
 /// <param name="HistoryEntries">Number of play-history entries imported.</param>
 /// <param name="Systems">Number of systems imported.</param>
 public sealed record MigrationResult(MigrationStatus Status, int Favorites, int HistoryEntries, int Systems);
+
+/// <summary>
+///     Thrown when a <c>settings.dat</c> file carries a schema version newer than
+///     <see cref="UnifiedSettingsDatabase.CurrentSchemaVersion" /> (written by a newer
+///     app build). The file is left untouched: it must never be quarantined, migrated
+///     over, or recreated, or the newer build's data would be destroyed.
+/// </summary>
+public sealed class NewerSchemaVersionException(string dbPath, int schemaVersion, int currentVersion)
+    : InvalidOperationException(
+        $"The database '{dbPath}' uses schema version {schemaVersion}, which is newer than the " +
+        $"supported version {currentVersion}. Upgrade the app to use it.")
+{
+    /// <summary>Path of the newer-schema database file.</summary>
+    public string DbPath { get; } = dbPath;
+
+    /// <summary>Schema version stored in the database file.</summary>
+    public int SchemaVersion { get; } = schemaVersion;
+
+    /// <summary>Schema version supported by this build.</summary>
+    public int CurrentVersion { get; } = currentVersion;
+}

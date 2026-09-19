@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using MessagePack;
+using Microsoft.Data.Sqlite;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
@@ -158,9 +159,21 @@ public class PlayHistoryManager
                 SaveToDatabase();
                 return;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
+            {
+                // Environment issue (locked/read-only/newer database): never resurrect a
+                // legacy playhistory.dat once the unified database exists. Keep the
+                // in-memory state instead.
+                _logger?.Information(ex,
+                    "Error saving play history to the unified database; keeping in-memory state");
+                return;
+            }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error saving play history to the unified database; trying the legacy file");
+                // Unexpected errors stay visible but must not resurrect the legacy file.
+                _logger?.Error(ex, "Error saving play history to the unified database");
+                return;
             }
         }
 
@@ -257,6 +270,7 @@ public class PlayHistoryManager
     /// <summary>
     ///     Saves play history atomically with retry logic and AppData fallback.
     ///     Writes to the unified database when it exists; otherwise falls back to the legacy file.
+    ///     Once a valid database exists the legacy file is never rewritten; failures keep in-memory state.
     /// </summary>
     public async Task SavePlayHistoryAsync()
     {
@@ -267,9 +281,21 @@ public class PlayHistoryManager
                 SaveToDatabase();
                 return;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
+            {
+                // Environment issue (locked/read-only/newer database): never resurrect a
+                // legacy playhistory.dat once the unified database exists. Keep the
+                // in-memory state instead.
+                _logger?.Information(ex,
+                    "Error saving play history to the unified database; keeping in-memory state");
+                return;
+            }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error saving play history to the unified database; trying the legacy file");
+                // Unexpected errors stay visible but must not resurrect the legacy file.
+                _logger?.Error(ex, "Error saving play history to the unified database");
+                return;
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
@@ -790,13 +791,20 @@ public class SettingsManagerService : IDisposable
             {
                 await WriteSnapshotAsync(snapshot);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
             {
                 // Settings persistence is best-effort and usually fire-and-forget:
                 // never let a failed background save fault the returned task (it would
                 // surface later as an unobserved task exception / bug report). A
-                // read-only or locked settings.dat is an environment issue, not a bug.
+                // read-only, locked, or newer-schema settings.dat is an environment
+                // issue, not a bug.
                 _logger.Information(ex, "Failed to save settings");
+            }
+            catch (Exception ex)
+            {
+                // Unexpected errors (serialization, programming bugs) stay visible.
+                _logger.Error(ex, "Failed to save settings");
             }
             finally
             {

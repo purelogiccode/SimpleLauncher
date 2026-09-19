@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -430,6 +431,12 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
             _logger.Debug("Silent check for updates was done");
             await _lifecycle.ReportUsageAsync();
             _logger.Debug("Stats API call was done");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TimeoutException)
+        {
+            // Expected network conditions (offline, rate limit, timeout) are never bugs.
+            _logger.Information(ex, "Silent update/stats check failed in the Loaded event");
+            _logger.Debug($"Silent update/stats check failed in the Loaded event: {ex.Message}");
         }
         catch (Exception ex)
         {

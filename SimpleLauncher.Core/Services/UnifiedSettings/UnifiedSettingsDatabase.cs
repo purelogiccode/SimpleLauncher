@@ -32,11 +32,14 @@ public static class UnifiedSettingsDatabase
     public const string DatabaseFileName = "settings.dat";
 
     /// <summary>
-    ///     Current schema version stored in the Meta table. Older databases (version 1+) stay
-    ///     valid and are upgraded in place by <see cref="EnsureCreated" />; the Favorites
-    ///     composite-key rebuild is detected structurally (PRAGMA table_info), not by version.
+    ///     Current schema version stored in the Meta table. Older databases (version 1+)
+    ///     stay valid and are upgraded in place by <see cref="EnsureCreated" />; structural
+    ///     upgrades are detected by the stored version (and, for the pre-versioning
+    ///     Favorites composite key, structurally via PRAGMA table_info). A database with
+    ///     a NEWER version is never opened read-write (see
+    ///     <see cref="NewerSchemaVersionException" />): it belongs to a newer app build.
     /// </summary>
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     private static readonly Lock WriteLock = new();
 
@@ -47,10 +50,55 @@ public static class UnifiedSettingsDatabase
     /// </summary>
     internal static string? DatabasePathOverride { get; set; }
 
-    /// <summary>Resolves the database path (always inside the AppData folder, unless overridden by tests).</summary>
+    /// <summary>
+    ///     Resolves the database path, mirroring the legacy <c>DataFileLocation</c>
+    ///     precedence so portable installs keep working: an existing portable database
+    ///     wins over AppData (newest wins when both exist); otherwise a writable exe
+    ///     folder means portable mode, else AppData. Tests redirect via
+    ///     <see cref="DatabasePathOverride" />.
+    /// </summary>
     public static string GetDatabasePath()
     {
-        return DatabasePathOverride ?? Path.Combine(AppDataPaths.SimpleLauncherDataFolder, DatabaseFileName);
+        if (DatabasePathOverride is not null)
+            return DatabasePathOverride;
+
+        var portablePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DatabaseFileName);
+        var appDataPath = Path.Combine(AppDataPaths.SimpleLauncherDataFolder, DatabaseFileName);
+        var portableExists = File.Exists(portablePath);
+        var appDataExists = File.Exists(appDataPath);
+
+        if (portableExists && !appDataExists)
+            return portablePath;
+        if (appDataExists && !portableExists)
+            return appDataPath;
+        if (portableExists)
+        {
+            // Both exist (e.g. a copy was restored): newest wins, like the legacy files.
+            return new FileInfo(portablePath).LastWriteTimeUtc > new FileInfo(appDataPath).LastWriteTimeUtc
+                ? portablePath
+                : appDataPath;
+        }
+
+        return IsDirectoryWritable(AppDomain.CurrentDomain.BaseDirectory) ? portablePath : appDataPath;
+    }
+
+    private static bool IsDirectoryWritable(string directoryPath)
+    {
+        try
+        {
+            if (!Directory.Exists(directoryPath))
+                return false;
+
+            var testFilePath = Path.Combine(directoryPath, $".write_test_{Guid.NewGuid()}.tmp");
+            File.WriteAllText(testFilePath, "test");
+            File.Delete(testFilePath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "[UnifiedSettings] IsDirectoryWritable failed for '{Path}'", directoryPath);
+            return false;
+        }
     }
 
     /// <summary>Returns true when the database file exists on disk.</summary>
@@ -60,37 +108,55 @@ public static class UnifiedSettingsDatabase
     }
 
     /// <summary>
-    ///     Returns true when the file exists, is a readable SQLite database and carries the current schema version.
+    ///     Returns true when the file exists, is a readable SQLite database and carries a
+    ///     schema version this build understands (1..CurrentSchemaVersion). Read-only:
+    ///     validating never creates the file and never clears the read-only attribute.
     /// </summary>
     public static bool IsValidDatabase(string? dbPath = null)
     {
-        var path = dbPath ?? GetDatabasePath();
+        return TryGetSchemaVersion(dbPath ?? GetDatabasePath()) is { } schemaVersion &&
+               schemaVersion >= 1 &&
+               schemaVersion <= CurrentSchemaVersion;
+    }
+
+    /// <summary>
+    ///     Reads the stored schema version without side effects (read-only open: no file
+    ///     creation, no read-only-attribute clearing). Returns null when the file is
+    ///     missing or unreadable.
+    /// </summary>
+    internal static int? TryGetSchemaVersion(string path)
+    {
         if (!File.Exists(path))
-            return false;
+            return null;
 
         try
         {
-            using var connection = CreateOpenConnection(path);
+            using var connection = OpenReadConnection(path);
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT Value FROM Meta WHERE Key = 'schema_version';";
             var value = Convert.ToString(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
-            // Any readable schema from version 1 up to the current one is valid: EnsureCreated
-            // upgrades older databases in place, so treating a known-old schema as corrupt
-            // would quarantine the user's data instead of migrating it.
-            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var schemaVersion) &&
-                   schemaVersion >= 1 &&
-                   schemaVersion <= CurrentSchemaVersion;
+            // Any readable schema from version 1 up: EnsureCreated upgrades older
+            // databases in place, so treating a known-old schema as corrupt would
+            // quarantine the user's data instead of migrating it. Newer-than-current
+            // schemas are reported (not valid) but never quarantined — see EnsureCreated.
+            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var schemaVersion)
+                ? schemaVersion
+                : null;
         }
         catch (Exception ex)
         {
             Log.Debug(ex, "[UnifiedSettings] Database validation failed for '{Path}'", path);
-            return false;
+            return null;
         }
     }
 
     /// <summary>
     ///     Creates the database (and parent folder) when missing and ensures all tables exist.
     ///     A corrupt database file is quarantined to a <c>.corrupt.*.bak</c> sibling and recreated.
+    ///     A database with a NEWER schema version is never touched: a
+    ///     <see cref="NewerSchemaVersionException" /> is thrown so callers fail safe
+    ///     (migration leaves legacy files for the next launch; runtime saves keep state
+    ///     in memory) instead of wiping the newer build's data.
     /// </summary>
     public static void EnsureCreated(string? dbPath = null)
     {
@@ -99,9 +165,20 @@ public static class UnifiedSettingsDatabase
         if (!string.IsNullOrEmpty(folder) && !Directory.Exists(folder))
             Directory.CreateDirectory(folder);
 
-        if (File.Exists(path) && !IsValidDatabase(path))
+        if (File.Exists(path))
         {
-            QuarantineCorruptDatabase(path);
+            var storedVersion = TryGetSchemaVersion(path);
+            if (storedVersion is null)
+            {
+                QuarantineCorruptDatabase(path);
+            }
+            else if (storedVersion > CurrentSchemaVersion)
+            {
+                Log.Warning(
+                    "[UnifiedSettings] Database '{Path}' uses schema version {Version}, newer than this build (version {Current}). Leaving it untouched; upgrade the app to use it.",
+                    path, storedVersion, CurrentSchemaVersion);
+                throw new NewerSchemaVersionException(path, storedVersion.Value, CurrentSchemaVersion);
+            }
         }
 
         using var connection = CreateOpenConnection(path);
@@ -115,31 +192,32 @@ public static class UnifiedSettingsDatabase
             """);
         ExecuteNonQuery(connection, transaction, """
             CREATE TABLE IF NOT EXISTS AppSettings (
-                Key TEXT PRIMARY KEY,
+                Key TEXT PRIMARY KEY COLLATE NOCASE,
                 Value TEXT NOT NULL DEFAULT ''
             );
             """);
         ExecuteNonQuery(connection, transaction, """
             CREATE TABLE IF NOT EXISTS EmulatorSettings (
-                EmulatorName TEXT PRIMARY KEY,
+                EmulatorName TEXT PRIMARY KEY COLLATE NOCASE,
                 ConfigJson TEXT NOT NULL DEFAULT '{}'
             );
             """);
         ExecuteNonQuery(connection, transaction, """
             CREATE TABLE IF NOT EXISTS Favorites (
                 FileName TEXT NOT NULL COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT '',
+                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
                 PRIMARY KEY (FileName, SystemName)
             );
             """);
         ExecuteNonQuery(connection, transaction, """
             CREATE TABLE IF NOT EXISTS PlayHistory (
-                FileName TEXT PRIMARY KEY COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT '',
+                FileName TEXT NOT NULL COLLATE NOCASE,
+                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
                 TimesPlayed INTEGER NOT NULL DEFAULT 0,
                 TotalPlayTime INTEGER NOT NULL DEFAULT 0,
                 LastPlayDate TEXT NOT NULL DEFAULT '',
-                LastPlayTime TEXT NOT NULL DEFAULT ''
+                LastPlayTime TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (FileName, SystemName)
             );
             """);
         ExecuteNonQuery(connection, transaction, """
@@ -159,6 +237,15 @@ public static class UnifiedSettingsDatabase
         // (CREATE TABLE IF NOT EXISTS left them untouched above): rebuild them in place.
         UpgradeFavoritesToCompositeKey(connection, transaction);
 
+        // Schema-version-gated structural upgrades (schema 1 -> 2): case-insensitive
+        // keys and the composite play-history key. Fresh databases (no stored version)
+        // already use the canonical DDL above and skip the rebuilds.
+        if (ReadStoredSchemaVersion(connection, transaction) is { } existingVersion &&
+            existingVersion < CurrentSchemaVersion)
+        {
+            UpgradeSchemaToVersion2(connection, transaction);
+        }
+
         using (var cmd = connection.CreateCommand())
         {
             cmd.Transaction = transaction;
@@ -173,12 +260,47 @@ public static class UnifiedSettingsDatabase
 
     // ── Connection helpers ──────────────────────────────────────────
 
+    /// <summary>
+    ///     Opens a read-only connection: no file creation, no read-only-attribute
+    ///     clearing. All pure-read paths (validation, loads, single getters) use this
+    ///     so reads never mutate the user's files.
+    /// </summary>
+    internal static SqliteConnection OpenReadConnection(string path)
+    {
+        var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = SqliteOpenMode.ReadOnly,
+            // No pooling: quarantine/delete-then-recreate flows must never reuse a
+            // native handle that still points at the moved/deleted file.
+            Pooling = false
+        }.ToString());
+
+        connection.Open();
+
+        try
+        {
+            using var pragma = connection.CreateCommand();
+            pragma.CommandText = "PRAGMA busy_timeout = 5000;";
+            pragma.ExecuteNonQuery();
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+
+        return connection;
+    }
+
     internal static SqliteConnection CreateOpenConnection(string path)
     {
         // A settings.dat carrying the Windows read-only attribute (e.g. after a copy,
         // sync or restore that preserved it) makes SQLite fail with SQLITE_READONLY
         // ('attempt to write a readonly database') even for the application that owns
         // it. Clear the attribute (best effort) before opening so reads and writes work.
+        // NOTE: only write paths use this method; pure reads use OpenReadConnection
+        // and never clear user attributes.
         ClearReadOnlyAttributes(path);
 
         var connectionString = new SqliteConnectionStringBuilder
@@ -196,6 +318,14 @@ public static class UnifiedSettingsDatabase
 
         try
         {
+            using (var pragma = connection.CreateCommand())
+            {
+                // Transient cross-process locks (restart overlap, AV/indexer, backup)
+                // wait instead of failing immediately with SQLITE_BUSY.
+                pragma.CommandText = "PRAGMA busy_timeout = 5000;";
+                pragma.ExecuteNonQuery();
+            }
+
             using (var pragma = connection.CreateCommand())
             {
                 pragma.CommandText = "PRAGMA journal_mode=WAL;";
@@ -265,7 +395,7 @@ public static class UnifiedSettingsDatabase
         ExecuteNonQuery(connection, transaction, """
             CREATE TABLE Favorites (
                 FileName TEXT NOT NULL COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT '',
+                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
                 PRIMARY KEY (FileName, SystemName)
             );
             """);
@@ -274,6 +404,96 @@ public static class UnifiedSettingsDatabase
             SELECT FileName, SystemName FROM Favorites_legacy_single_key;
             """);
         ExecuteNonQuery(connection, transaction, "DROP TABLE Favorites_legacy_single_key;");
+    }
+
+    private static int? ReadStoredSchemaVersion(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.Transaction = transaction;
+        cmd.CommandText = "SELECT Value FROM Meta WHERE Key = 'schema_version';";
+        var value = Convert.ToString(cmd.ExecuteScalar(), CultureInfo.InvariantCulture);
+        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var version)
+            ? version
+            : null;
+    }
+
+    /// <summary>
+    ///     Schema 1 -&gt; 2 structural upgrades: case-insensitive keys
+    ///     (<c>AppSettings.Key</c>, <c>EmulatorSettings.EmulatorName</c>,
+    ///     <c>Favorites.SystemName</c>) and the composite
+    ///     <c>PlayHistory(FileName, SystemName)</c> key, so the database agrees with the
+    ///     case-insensitive in-memory dedupe everywhere. Duplicate rows collapse via
+    ///     INSERT OR IGNORE (oldest rowid wins); this runs once per database.
+    /// </summary>
+    private static void UpgradeSchemaToVersion2(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        RebuildWithCanonicalDdl(
+            connection,
+            transaction,
+            "AppSettings",
+            """
+            CREATE TABLE AppSettings (
+                Key TEXT PRIMARY KEY COLLATE NOCASE,
+                Value TEXT NOT NULL DEFAULT ''
+            );
+            """,
+            "Key, Value");
+
+        RebuildWithCanonicalDdl(
+            connection,
+            transaction,
+            "EmulatorSettings",
+            """
+            CREATE TABLE EmulatorSettings (
+                EmulatorName TEXT PRIMARY KEY COLLATE NOCASE,
+                ConfigJson TEXT NOT NULL DEFAULT '{}'
+            );
+            """,
+            "EmulatorName, ConfigJson");
+
+        RebuildWithCanonicalDdl(
+            connection,
+            transaction,
+            "Favorites",
+            """
+            CREATE TABLE Favorites (
+                FileName TEXT NOT NULL COLLATE NOCASE,
+                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
+                PRIMARY KEY (FileName, SystemName)
+            );
+            """,
+            "FileName, SystemName");
+
+        RebuildWithCanonicalDdl(
+            connection,
+            transaction,
+            "PlayHistory",
+            """
+            CREATE TABLE PlayHistory (
+                FileName TEXT NOT NULL COLLATE NOCASE,
+                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
+                TimesPlayed INTEGER NOT NULL DEFAULT 0,
+                TotalPlayTime INTEGER NOT NULL DEFAULT 0,
+                LastPlayDate TEXT NOT NULL DEFAULT '',
+                LastPlayTime TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (FileName, SystemName)
+            );
+            """,
+            "FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime");
+    }
+
+    private static void RebuildWithCanonicalDdl(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string tableName,
+        string createTableSql,
+        string columns)
+    {
+        ExecuteNonQuery(connection, transaction, $"ALTER TABLE {tableName} RENAME TO {tableName}_upgrade_bak;");
+        ExecuteNonQuery(connection, transaction, createTableSql);
+        ExecuteNonQuery(connection, transaction,
+            $"INSERT OR IGNORE INTO {tableName} ({columns}) SELECT {columns} FROM {tableName}_upgrade_bak;");
+        ExecuteNonQuery(connection, transaction, $"DROP TABLE {tableName}_upgrade_bak;");
     }
 
     /// <summary>
@@ -385,7 +605,7 @@ public static class UnifiedSettingsDatabase
     public static Dictionary<string, string> LoadAppSettings(string? dbPath = null)
     {
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT Key, Value FROM AppSettings;";
         using var reader = cmd.ExecuteReader();
@@ -426,7 +646,7 @@ public static class UnifiedSettingsDatabase
     /// <summary>Reads a single application setting (null when absent).</summary>
     public static string? GetAppSetting(string key, string? dbPath = null)
     {
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT Value FROM AppSettings WHERE Key = $k;";
         cmd.Parameters.AddWithValue("$k", key);
@@ -454,7 +674,7 @@ public static class UnifiedSettingsDatabase
     public static Dictionary<string, string> LoadEmulatorConfigs(string? dbPath = null)
     {
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT EmulatorName, ConfigJson FROM EmulatorSettings;";
         using var reader = cmd.ExecuteReader();
@@ -513,7 +733,7 @@ public static class UnifiedSettingsDatabase
     public static List<FavoriteRecord> LoadFavorites(string? dbPath = null)
     {
         var result = new List<FavoriteRecord>();
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT FileName, SystemName FROM Favorites ORDER BY FileName COLLATE NOCASE;";
         using var reader = cmd.ExecuteReader();
@@ -563,7 +783,7 @@ public static class UnifiedSettingsDatabase
     public static List<PlayHistoryRecord> LoadPlayHistory(string? dbPath = null)
     {
         var result = new List<PlayHistoryRecord>();
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime FROM PlayHistory;";
         using var reader = cmd.ExecuteReader();
@@ -596,12 +816,13 @@ public static class UnifiedSettingsDatabase
                 clear.ExecuteNonQuery();
             }
 
-            // First wins on case-insensitive duplicates (the key is COLLATE NOCASE).
+            // First wins on case-insensitive (FileName, SystemName) duplicates — the
+            // same file path may have history in more than one system.
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in history)
             {
-                // First wins on case-insensitive duplicates (the key is COLLATE NOCASE).
-                if (string.IsNullOrWhiteSpace(item.FileName) || !seen.Add(item.FileName))
+                if (string.IsNullOrWhiteSpace(item.FileName) ||
+                    !seen.Add(item.FileName + "\u0000" + item.SystemName))
                     continue;
                 using var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
@@ -628,7 +849,7 @@ public static class UnifiedSettingsDatabase
     public static Dictionary<string, string> LoadSystems(string? dbPath = null)
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT SystemName, ConfigJson FROM Systems;";
         using var reader = cmd.ExecuteReader();
@@ -711,7 +932,7 @@ public static class UnifiedSettingsDatabase
     /// <summary>Returns true when a system with the given name exists (case-insensitive).</summary>
     public static bool SystemExists(string systemName, string? dbPath = null)
     {
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT 1 FROM Systems WHERE SystemName = $n COLLATE NOCASE LIMIT 1;";
         cmd.Parameters.AddWithValue("$n", systemName);
@@ -724,7 +945,7 @@ public static class UnifiedSettingsDatabase
     public static List<SystemPlayTimeRecord> LoadSystemPlayTimes(string? dbPath = null)
     {
         var result = new List<SystemPlayTimeRecord>();
-        using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+        using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT SystemName, PlayTimeSeconds FROM SystemPlayTimes;";
         using var reader = cmd.ExecuteReader();
@@ -762,6 +983,121 @@ public static class UnifiedSettingsDatabase
                 cmd.CommandText = "INSERT INTO SystemPlayTimes (SystemName, PlayTimeSeconds) VALUES ($n, $s);";
                 cmd.Parameters.AddWithValue("$n", pt.SystemName);
                 cmd.Parameters.AddWithValue("$s", pt.PlayTimeSeconds);
+                cmd.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
+    }
+
+    /// <summary>
+    ///     Replaces all six tables in a single connection and a single transaction, so a
+    ///     migration either commits fully or not at all (no torn database is ever
+    ///     visible to other launches). Uses the same first-wins dedupe as the per-table
+    ///     saves, so counts stay consistent with the migration verification.
+    /// </summary>
+    public static void SaveAllTables(
+        IReadOnlyList<FavoriteRecord> favorites,
+        IReadOnlyList<PlayHistoryRecord> history,
+        IReadOnlyDictionary<string, string> appSettings,
+        IReadOnlyDictionary<string, string> emulatorConfigs,
+        IReadOnlyList<SystemPlayTimeRecord> playTimes,
+        IReadOnlyDictionary<string, string> systems,
+        string? dbPath = null)
+    {
+        ArgumentNullException.ThrowIfNull(favorites);
+        ArgumentNullException.ThrowIfNull(history);
+        ArgumentNullException.ThrowIfNull(appSettings);
+        ArgumentNullException.ThrowIfNull(emulatorConfigs);
+        ArgumentNullException.ThrowIfNull(playTimes);
+        ArgumentNullException.ThrowIfNull(systems);
+
+        lock (WriteLock)
+        {
+            using var connection = CreateOpenConnection(dbPath ?? GetDatabasePath());
+            using var transaction = connection.BeginTransaction();
+
+            ExecuteNonQuery(connection, transaction, "DELETE FROM Favorites;");
+            var seenFavorites = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var fav in favorites)
+            {
+                if (string.IsNullOrWhiteSpace(fav.FileName) ||
+                    !seenFavorites.Add(fav.FileName + "\u0000" + fav.SystemName))
+                    continue;
+                using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "INSERT INTO Favorites (FileName, SystemName) VALUES ($f, $s);";
+                cmd.Parameters.AddWithValue("$f", fav.FileName);
+                cmd.Parameters.AddWithValue("$s", fav.SystemName ?? "");
+                cmd.ExecuteNonQuery();
+            }
+
+            ExecuteNonQuery(connection, transaction, "DELETE FROM PlayHistory;");
+            var seenHistory = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in history)
+            {
+                if (string.IsNullOrWhiteSpace(item.FileName) ||
+                    !seenHistory.Add(item.FileName + "\u0000" + item.SystemName))
+                    continue;
+                using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = """
+                    INSERT INTO PlayHistory (FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime)
+                    VALUES ($f, $s, $t, $p, $d, $ti);
+                    """;
+                cmd.Parameters.AddWithValue("$f", item.FileName);
+                cmd.Parameters.AddWithValue("$s", item.SystemName ?? "");
+                cmd.Parameters.AddWithValue("$t", item.TimesPlayed);
+                cmd.Parameters.AddWithValue("$p", item.TotalPlayTime);
+                cmd.Parameters.AddWithValue("$d", item.LastPlayDate ?? "");
+                cmd.Parameters.AddWithValue("$ti", item.LastPlayTime ?? "");
+                cmd.ExecuteNonQuery();
+            }
+
+            ExecuteNonQuery(connection, transaction, "DELETE FROM AppSettings;");
+            foreach (var kvp in appSettings)
+            {
+                using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "INSERT INTO AppSettings (Key, Value) VALUES ($k, $v);";
+                cmd.Parameters.AddWithValue("$k", kvp.Key);
+                cmd.Parameters.AddWithValue("$v", kvp.Value ?? "");
+                cmd.ExecuteNonQuery();
+            }
+
+            ExecuteNonQuery(connection, transaction, "DELETE FROM EmulatorSettings;");
+            foreach (var kvp in emulatorConfigs)
+            {
+                using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "INSERT INTO EmulatorSettings (EmulatorName, ConfigJson) VALUES ($n, $j);";
+                cmd.Parameters.AddWithValue("$n", kvp.Key);
+                cmd.Parameters.AddWithValue("$j", kvp.Value ?? "{}");
+                cmd.ExecuteNonQuery();
+            }
+
+            ExecuteNonQuery(connection, transaction, "DELETE FROM SystemPlayTimes;");
+            var seenSystems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pt in playTimes)
+            {
+                if (string.IsNullOrWhiteSpace(pt.SystemName) || !seenSystems.Add(pt.SystemName))
+                    continue;
+                using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "INSERT INTO SystemPlayTimes (SystemName, PlayTimeSeconds) VALUES ($n, $s);";
+                cmd.Parameters.AddWithValue("$n", pt.SystemName);
+                cmd.Parameters.AddWithValue("$s", pt.PlayTimeSeconds);
+                cmd.ExecuteNonQuery();
+            }
+
+            ExecuteNonQuery(connection, transaction, "DELETE FROM Systems;");
+            foreach (var kvp in systems)
+            {
+                using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "INSERT INTO Systems (SystemName, ConfigJson) VALUES ($n, $j);";
+                cmd.Parameters.AddWithValue("$n", kvp.Key);
+                cmd.Parameters.AddWithValue("$j", kvp.Value);
                 cmd.ExecuteNonQuery();
             }
 

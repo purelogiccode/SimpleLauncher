@@ -104,7 +104,7 @@ public class ReinstallSimpleLauncher
                             {
                                 var startInfo = new ProcessStartInfo(updaterPath)
                                 {
-                                    Arguments = Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                                    Arguments = $"{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)} SimpleLauncher.exe",
                                     UseShellExecute = true,
                                     WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
                                 };

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using MessagePack;
+using Microsoft.Data.Sqlite;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.UnifiedSettings;
@@ -10,10 +11,10 @@ namespace SimpleLauncher.Services.Favorites;
 /// <summary>
 ///     Manages the user's favorite games list.
 ///     The app persists favorites in the unified SQLite database
-///     (<c>settings.dat</c> in AppData); the legacy MessagePack <c>favorites.dat</c>
-///     format is only read during the one-time migration (and as a fallback when no
-///     database exists yet). Supports load, save with atomic file replacement, and
-///     retry logic for the legacy file.
+///     (<c>settings.dat</c> in the portable folder or AppData); the legacy MessagePack
+///     <c>favorites.dat</c> format is only read during the one-time migration (and as a
+///     fallback when no database exists yet). Supports load, save with atomic file
+///     replacement, and retry logic for the legacy file.
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
 public class FavoritesManager
@@ -193,6 +194,8 @@ public class FavoritesManager
     /// <summary>
     ///     Saves favorites: to the unified database when it exists, otherwise to the
     ///     legacy DAT file. The favorites are ordered by FileName before saving.
+    ///     Once a valid database exists the legacy file is never rewritten (it would be
+    ///     re-merged over the database on the next launch); failures keep in-memory state.
     /// </summary>
     public Task SaveFavoritesAsync()
     {
@@ -203,9 +206,22 @@ public class FavoritesManager
                 SaveToDatabase();
                 return Task.CompletedTask;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                or NewerSchemaVersionException)
+            {
+                // Environment issue (locked/read-only/newer database): never resurrect a
+                // legacy favorites.dat once the unified database exists — the migration
+                // shelved those files, and rewriting one would be re-merged over the
+                // database on the next launch. Keep the in-memory state instead.
+                _logger?.Information(ex,
+                    "Error saving favorites to the unified database; keeping in-memory state");
+                return Task.CompletedTask;
+            }
             catch (Exception ex)
             {
-                _logger?.Error(ex, "Error saving favorites to the unified database; trying the legacy file");
+                // Unexpected errors stay visible but must not resurrect the legacy file.
+                _logger?.Error(ex, "Error saving favorites to the unified database");
+                return Task.CompletedTask;
             }
         }
 

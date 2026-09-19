@@ -205,7 +205,19 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
             {
                 // Only clear the spinner when THIS search was not superseded/cancelled;
                 // reading the shared field could clear a newer search's loading state.
-                if (!cts.IsCancellationRequested) IsLoading = false;
+                // The source may already be disposed by a superseding search — treat
+                // that as cancelled (a newer search owns the spinner now).
+                bool cancelled;
+                try
+                {
+                    cancelled = cts.IsCancellationRequested;
+                }
+                catch (ObjectDisposedException)
+                {
+                    cancelled = true;
+                }
+
+                if (!cancelled) IsLoading = false;
             }
         }
         catch (Exception ex)

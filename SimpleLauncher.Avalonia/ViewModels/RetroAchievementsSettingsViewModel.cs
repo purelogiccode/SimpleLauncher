@@ -62,7 +62,7 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
     {
         try
         {
-            ClearSessionTokenWhenUsernameChanged();
+            ClearSessionTokenWhenCredentialsChanged();
             _settings.RaUsername = Username.Trim();
             _settings.RaApiKey = ApiKey;
             _settings.RaPassword = Password;
@@ -159,7 +159,7 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
 
     private void SaveCurrentSettings()
     {
-        ClearSessionTokenWhenUsernameChanged();
+        ClearSessionTokenWhenCredentialsChanged();
         _settings.RaUsername = Username.Trim();
         _settings.RaApiKey = ApiKey;
         _settings.RaPassword = Password;
@@ -167,12 +167,13 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
     }
 
     /// <summary>
-    ///     Clears the stored RetroAchievements session token when the username changed, so
+    ///     Clears the stored RetroAchievements session token when the credentials changed, so
     ///     the previous account's token is never written into an emulator configuration.
     /// </summary>
-    private void ClearSessionTokenWhenUsernameChanged()
+    private void ClearSessionTokenWhenCredentialsChanged()
     {
-        if (!string.Equals(_settings.RaUsername, Username.Trim(), StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(_settings.RaUsername, Username.Trim(), StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(_settings.RaApiKey, ApiKey, StringComparison.Ordinal))
             _settings.RaToken = "";
     }
 }

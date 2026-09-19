@@ -1,5 +1,50 @@
 # BugNeedFix — review of all commits after 2df0b6ea (5.8.0 gate)
 
+> **FIX STATUS (2026-09-19): all items below are fixed in this commit, except B10
+> (deliberately left as-is: `AGENTS.md` was intentionally untracked in `c24a20d8`;
+> re-tracking it would reverse that decision — noted for the maintainer instead).
+> What changed, per finding:
+> - A1: `FindLegacyFiles` drains portable + AppData per file type (newest first) and
+>   shelves both; new `Migrate_DualLocationFiles_MergesBothAndShelvesBoth` tests.
+> - A2: merge takes a timestamped `VACUUM INTO` pre-merge backup (WAL-safe).
+> - A3/A15: database-wins on conflict everywhere (existing-first dedupe, fill-absent
+>   settings/emulators/systems); merge tests updated to the new expectations.
+> - A4: `NewerSchemaVersionException` — `EnsureCreated` throws and leaves newer-schema
+>   DBs untouched instead of quarantining; migration fails safe + retries.
+> - A5: defaults-only `settings.xml` is ignored on merge (+ downgrade test).
+> - A6: `GetDatabasePath` mirrors `DataFileLocation` precedence (portable DB next to
+>   the exe when appropriate) — code now matches `docs/03-quickstart.md:47`.
+> - A7: `PRAGMA busy_timeout = 5000` on all connections; managers never rewrite legacy
+>   DAT files once a valid DB exists (in-memory state + leveled logging instead).
+> - A8/A9: `SaveAllTables` writes all six tables in one transaction; fresh-failure
+>   cleanup deletes the just-created file regardless of validity.
+> - A10: WPF parser accepts simplified `<SystemFolder>`, comma-separated formats,
+>   missing `<Emulators>`, `EmulatorPath` fallback (Avalonia parity) + loose-XML test.
+> - A11: AppData system.xml candidate derives from the custom `SystemXmlPath` name.
+> - A12: per-system skip logs are Information (WPF) / added (Avalonia, was silent).
+> - A13: `PlayHistory(FileName, SystemName)` composite PK + upgrade + composite dedupe.
+> - A14: timestamped, never-overwriting `.bak` (`.partial.*.bak` for recoveries).
+> - A16/A21: `COLLATE NOCASE` on `Favorites.SystemName`, `AppSettings.Key`,
+>   `EmulatorSettings.EmulatorName` (+ schema v2 upgrade); dup semantics consistent.
+> - A17: unparseable files stay in place (never shelved as success).
+> - A18: regex recovery reported via `out recoveredPartial`, shelved as
+>   `.partial.*.bak` with a Warning.
+> - A19/B9: read-only connections for all pure reads; attribute clearing on writes only.
+> - A20: legacy DAT format version logged; unknown versions left in place.
+> - A22: in-process guard resets on `Failed` so the next call retries.
+> - B1: CTS `ObjectDisposedException` guard; B2: missing updater arg added;
+>   B3 (+WPF `MainWindow` twin): network failures → Information;
+>   B4: `SaveAsync` catch narrowed (env → Information, unexpected → Error);
+>   B5: slider re-sync; B6: token cleared on API-key change too;
+>   B7: corrupted-XML dialog awaited; B8: `_`/`+` stripped in matcher.
+> - Tests: dual-location, defaults-only, newer-schema (migration + DB level),
+>   loose-XML parity, case-insensitive keys, composite history tests added.
+> Full suites: Avalonia 540/540; WPF 2103/2109 (6 `MountChdFilesIntegrationTests`
+> failures are pre-existing environmental issues — missing X:\ drive — verified
+> identical on the pristine tree via `git stash`).
+> Residual accepted: WPF still rejects folder-less/imageless/format-less blocks that
+> Avalonia imports (degenerate configs; both now agree on all realistic files).
+
 Scope: `git log 2df0b6ea..HEAD` (70 commits, up to `f6246626` "prepare 5.8.0 release"),
 plus the deep review of the legacy migration
 `system.xml` / `settings.xml` / `favorites.dat` / `playhistory.dat` → unified `settings.dat`.

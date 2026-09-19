@@ -1,3 +1,5 @@
+using System.Globalization;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.SettingsManager;
@@ -49,6 +51,65 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         Assert.NotEmpty(Directory.GetFiles(
             Path.GetDirectoryName(corrupt)!,
             Path.GetFileName(corrupt) + ".corrupt.*.bak"));
+    }
+
+    [Fact]
+    public void NewerSchemaVersion_IsNeverTouched()
+    {
+        // A database written by a newer app build must never be quarantined or
+        // recreated: EnsureCreated throws and leaves the file byte-identical.
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+        using (var stamp = new SqliteConnection($"Data Source={_dbPath};Pooling=False"))
+        {
+            stamp.Open();
+            using var cmd = stamp.CreateCommand();
+            cmd.CommandText = "UPDATE Meta SET Value = $v WHERE Key = 'schema_version';";
+            cmd.Parameters.AddWithValue("$v", (UnifiedSettingsDatabase.CurrentSchemaVersion + 99).ToString(
+                CultureInfo.InvariantCulture));
+            cmd.ExecuteNonQuery();
+        }
+
+        var before = File.ReadAllBytes(_dbPath);
+
+        Assert.False(UnifiedSettingsDatabase.IsValidDatabase(_dbPath));
+        var ex = Assert.Throws<NewerSchemaVersionException>(() => UnifiedSettingsDatabase.EnsureCreated(_dbPath));
+        Assert.Equal(UnifiedSettingsDatabase.CurrentSchemaVersion + 99, ex.SchemaVersion);
+        Assert.Equal(before, File.ReadAllBytes(_dbPath));
+        Assert.Empty(Directory.GetFiles(
+            Path.GetDirectoryName(_dbPath)!,
+            Path.GetFileName(_dbPath) + ".corrupt.*.bak"));
+    }
+
+    [Fact]
+    public void AppSettings_KeysAreCaseInsensitive()
+    {
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+
+        UnifiedSettingsDatabase.SaveAppSettings(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Language"] = "de"
+        }, _dbPath);
+        UnifiedSettingsDatabase.SetAppSetting("LANGUAGE", "fr", _dbPath);
+
+        Assert.Equal("fr", UnifiedSettingsDatabase.GetAppSetting("language", _dbPath));
+        Assert.Single(UnifiedSettingsDatabase.LoadAppSettings(_dbPath));
+    }
+
+    [Fact]
+    public void PlayHistory_SameFileInTwoSystems_KeepsBothRows()
+    {
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+
+        UnifiedSettingsDatabase.SavePlayHistory(
+        [
+            new PlayHistoryRecord("game.zip", "NES", 3, 300, "2026-01-01", "10:00:00"),
+            new PlayHistoryRecord("GAME.ZIP", "nes", 1, 10, "2026-01-02", "11:00:00"),
+            new PlayHistoryRecord("game.zip", "SNES", 2, 200, "2026-01-03", "12:00:00")
+        ], _dbPath);
+
+        // Same file+system ignoring case collapses; same file in another system survives.
+        var history = UnifiedSettingsDatabase.LoadPlayHistory(_dbPath);
+        Assert.Equal(2, history.Count);
     }
 
     [Fact]

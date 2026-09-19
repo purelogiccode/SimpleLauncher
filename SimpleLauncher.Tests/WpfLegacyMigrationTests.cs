@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using MessagePack;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.UnifiedSettings;
@@ -77,11 +79,11 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         var systems = UnifiedSettingsDatabase.LoadSystems(_dbPath);
         Assert.Equal(2, systems.Count);
 
-        // Legacy originals are gone; .bak backups remain.
+        // Legacy originals are gone; timestamped .bak backups remain (never overwriting).
         foreach (var name in new[] { "favorites.dat", "playhistory.dat", "settings.xml", "system.xml" })
         {
             Assert.False(File.Exists(Path.Combine(_legacyFolder, name)));
-            Assert.True(File.Exists(Path.Combine(_legacyFolder, name + ".bak")));
+            Assert.Single(Directory.GetFiles(_legacyFolder, name + ".*.bak"));
         }
 
         // Second call is a no-op.
@@ -131,6 +133,9 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         Assert.Equal(0, result.Favorites);
         Assert.Equal(1, result.HistoryEntries);
         Assert.True(UnifiedSettingsDatabase.IsValidDatabase(_dbPath));
+
+        // The corrupt file stays in place for older versions; the rest still migrates.
+        Assert.True(File.Exists(Path.Combine(_legacyFolder, "favorites.dat")));
     }
 
     [Fact]
@@ -192,7 +197,7 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         Assert.Equal(1, result.Systems);
 
         // Favorites: appended, no duplicate rows for the same (file, system) pair; the
-        // legacy value won on conflict, and the same file name in another system survived.
+        // database value won on conflict, and the same file name in another system survived.
         var favorites = UnifiedSettingsDatabase.LoadFavorites(_dbPath);
         Assert.Equal(4, favorites.Count);
         var game1 = favorites.Single(f => f.FileName.Equals("GAME1.zip", StringComparison.OrdinalIgnoreCase));
@@ -202,44 +207,44 @@ public sealed class WpfLegacyMigrationTests : IDisposable
                                         string.Equals(f.SystemName, "NES", StringComparison.Ordinal));
         Assert.Contains(favorites, f => string.Equals(f.FileName, "game3.bin", StringComparison.Ordinal));
 
-        // History: legacy overwrote game2.iso; the database-only entry survived.
+        // History: the database kept game2.iso (database wins); the database-only entry survived.
         var history = UnifiedSettingsDatabase.LoadPlayHistory(_dbPath);
         Assert.Equal(2, history.Count);
         var game2 = history.Single(h => h.FileName.Equals("game2.iso", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal(5, game2.TimesPlayed);
+        Assert.Equal(9, game2.TimesPlayed);
         Assert.Contains(history, h => string.Equals(h.FileName, "game8.iso", StringComparison.Ordinal));
 
-        // App settings: legacy values win; database-only keys survive.
+        // App settings: database values win; legacy values only fill absent keys; database-only keys survive.
         var app = UnifiedSettingsDatabase.LoadAppSettings(_dbPath);
-        Assert.Equal("fr", app["Language"]);
+        Assert.Equal("de", app["Language"]);
         Assert.Equal("300", app["ThumbnailSize"]);
         Assert.Equal("keepme", app["DbOnlyKey"]);
 
-        // Emulators: legacy config overwrote Mame; RetroArch survived. The legacy
+        // Emulators: database config kept Mame; RetroArch survived. The legacy
         // export also seeds defaults for every other known emulator, so the table
         // grows — assert on the merged rows, not the total count.
         var emulators = UnifiedSettingsDatabase.LoadEmulatorConfigs(_dbPath);
-        Assert.Contains("vulkan", emulators["Mame"], StringComparison.Ordinal);
+        Assert.Contains("opengl", emulators["Mame"], StringComparison.Ordinal);
         Assert.True(emulators.ContainsKey("RetroArch"));
 
-        // System play times: legacy value overwrote NES.
+        // System play times: database value kept NES.
         var playTimes = UnifiedSettingsDatabase.LoadSystemPlayTimes(_dbPath);
-        Assert.Equal(3600,
+        Assert.Equal(111,
             playTimes.Single(p => p.SystemName.Equals("NES", StringComparison.OrdinalIgnoreCase)).PlayTimeSeconds);
 
-        // Systems: legacy NES overwrote, GBA survived, SNES appended.
+        // Systems: database NES kept, GBA survived, SNES appended.
         var systems = UnifiedSettingsDatabase.LoadSystems(_dbPath);
         Assert.Equal(3, systems.Count);
         var nes = SystemConfigStore.Deserialize("NES", systems["NES"]);
-        Assert.Equal("C:\\images\\nes", nes?.SystemImageFolder);
+        Assert.Equal("old-image-folder", nes?.SystemImageFolder);
         Assert.True(systems.ContainsKey("GBA"));
         Assert.True(systems.ContainsKey("SNES"));
 
-        // Legacy originals are gone; .bak backups remain.
+        // Legacy originals are gone; timestamped .bak backups remain (never overwriting).
         foreach (var name in new[] { "favorites.dat", "playhistory.dat", "settings.xml", "system.xml" })
         {
             Assert.False(File.Exists(Path.Combine(_legacyFolder, name)));
-            Assert.True(File.Exists(Path.Combine(_legacyFolder, name + ".bak")));
+            Assert.Single(Directory.GetFiles(_legacyFolder, name + ".*.bak"));
         }
 
         // The once-per-process guard is set: a second call is a no-op.
@@ -315,7 +320,8 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         }, _dbPath);
 
         // A corrupt settings.xml cannot be read: the untouched service defaults must not
-        // be merged over the database (Loaded=false), and the corrupt file is still shelved.
+        // be merged over the database (Loaded=false), and the corrupt file is left in
+        // place (not shelved) so older versions can still read it.
         File.WriteAllText(Path.Combine(_legacyFolder, "settings.xml"), "<Settings><Application>");
         WriteLegacyFavorites(("game1.zip", "NES"));
 
@@ -325,8 +331,8 @@ public sealed class WpfLegacyMigrationTests : IDisposable
 
         Assert.Equal(MigrationStatus.Merged, result.Status);
         Assert.Equal("de", UnifiedSettingsDatabase.LoadAppSettings(_dbPath)["Language"]);
-        Assert.False(File.Exists(Path.Combine(_legacyFolder, "settings.xml")));
-        Assert.True(File.Exists(Path.Combine(_legacyFolder, "settings.xml.bak")));
+        Assert.True(File.Exists(Path.Combine(_legacyFolder, "settings.xml")));
+        Assert.Empty(Directory.GetFiles(_legacyFolder, "settings.xml.*.bak"));
     }
 
     [Fact]
@@ -355,6 +361,158 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         Assert.Single(UnifiedSettingsDatabase.LoadSystems(_dbPath));
     }
 
+    [Fact]
+    public void Migrate_DualLocationFiles_MergesBothAndShelvesBoth()
+    {
+        // The same legacy file in the portable folder and AppData (stale shadow copy):
+        // both copies are drained, so the older one cannot resurrect on the next launch.
+        var portableFolder = Path.Combine(_tempRoot, "portable");
+        var appDataFolder = Path.Combine(_tempRoot, "appdata");
+        Directory.CreateDirectory(portableFolder);
+        Directory.CreateDirectory(appDataFolder);
+
+        WriteLegacyFavorites(portableFolder, ("new-game.zip", "NES"));
+        WriteLegacyFavorites(appDataFolder, ("old-game.zip", "NES"));
+        File.SetLastWriteTimeUtc(
+            Path.Combine(portableFolder, "favorites.dat"), DateTime.UtcNow);
+        File.SetLastWriteTimeUtc(
+            Path.Combine(appDataFolder, "favorites.dat"), DateTime.UtcNow.AddHours(-1));
+
+        var logger = new NoOpLogger();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, null,
+            portableFolder, appDataFolder);
+
+        Assert.Equal(MigrationStatus.Migrated, result.Status);
+        Assert.Equal(2, result.Favorites);
+        Assert.Equal(2, UnifiedSettingsDatabase.LoadFavorites(_dbPath).Count);
+
+        // Both copies are gone; each folder keeps its own timestamped backup.
+        Assert.False(File.Exists(Path.Combine(portableFolder, "favorites.dat")));
+        Assert.False(File.Exists(Path.Combine(appDataFolder, "favorites.dat")));
+        Assert.Single(Directory.GetFiles(portableFolder, "favorites.dat.*.bak"));
+        Assert.Single(Directory.GetFiles(appDataFolder, "favorites.dat.*.bak"));
+
+        // The next launch is a no-op: nothing reappears, nothing is reverted.
+        WpfLegacyMigrator.ResetForTests();
+        var second = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, null,
+            portableFolder, appDataFolder);
+        Assert.Equal(MigrationStatus.AlreadyCurrent, second.Status);
+        Assert.Equal(2, UnifiedSettingsDatabase.LoadFavorites(_dbPath).Count);
+    }
+
+    [Fact]
+    public void Merge_DefaultsOnlySettingsXml_KeepsDatabaseAppSettings()
+    {
+        var logger = new NoOpLogger();
+        var first = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.FreshCreated, first.Status);
+
+        UnifiedSettingsDatabase.SaveAppSettings(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Language"] = "de"
+        }, _dbPath);
+
+        // A settings.xml holding only default values (recreated by an older version
+        // after a downgrade) must not revert the database to defaults.
+        File.WriteAllText(Path.Combine(_legacyFolder, "settings.xml"), """
+            <Settings>
+              <Application>
+                <Language>en</Language>
+              </Application>
+            </Settings>
+            """);
+        WriteLegacyFavorites(("game1.zip", "NES"));
+
+        WpfLegacyMigrator.ResetForTests();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Merged, result.Status);
+        Assert.Equal("de", UnifiedSettingsDatabase.LoadAppSettings(_dbPath)["Language"]);
+        Assert.Single(UnifiedSettingsDatabase.LoadFavorites(_dbPath));
+    }
+
+    [Fact]
+    public void Migrate_NewerSchemaDatabase_FailsAndLeavesEverythingUntouched()
+    {
+        // Simulate a database written by a newer app build: migration must fail safe —
+        // no quarantine, no overwrite, legacy files untouched for the next launch.
+        UnifiedSettingsDatabase.EnsureCreated(_dbPath);
+        StampSchemaVersion(_dbPath, UnifiedSettingsDatabase.CurrentSchemaVersion + 99);
+        WriteLegacyFavorites(("game1.zip", "NES"));
+
+        var logger = new NoOpLogger();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Failed, result.Status);
+        Assert.True(File.Exists(Path.Combine(_legacyFolder, "favorites.dat")));
+        Assert.False(UnifiedSettingsDatabase.IsValidDatabase(_dbPath));
+        Assert.Empty(Directory.GetFiles(_tempRoot, "*.corrupt.*.bak", SearchOption.AllDirectories));
+
+        // The database file itself is untouched (still carries the newer version).
+        Assert.Equal(UnifiedSettingsDatabase.CurrentSchemaVersion + 99, ReadSchemaVersion(_dbPath));
+
+        // A retry in a new "launch" still fails safe instead of destroying data.
+        WpfLegacyMigrator.ResetForTests();
+        var retry = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+        Assert.Equal(MigrationStatus.Failed, retry.Status);
+        Assert.True(File.Exists(Path.Combine(_legacyFolder, "favorites.dat")));
+        Assert.Equal(UnifiedSettingsDatabase.CurrentSchemaVersion + 99, ReadSchemaVersion(_dbPath));
+    }
+
+    [Fact]
+    public void Migrate_LooseSystemXml_ImportsSameSystemsAsAvalonia()
+    {
+        // Compat shapes the Avalonia reader accepts (simplified SystemFolder,
+        // comma-separated formats, missing Emulators block) must import identically.
+        File.WriteAllText(Path.Combine(_legacyFolder, "system.xml"), """
+            <SystemConfigs>
+              <SystemConfig>
+                <SystemName>NES</SystemName>
+                <SystemFolders>
+                  <SystemFolder>C:\roms\nes</SystemFolder>
+                </SystemFolders>
+                <SystemImageFolder>C:\images\nes</SystemImageFolder>
+                <FileFormatsToSearch>
+                  <FormatToSearch>zip</FormatToSearch>
+                </FileFormatsToSearch>
+                <FileFormatsToLaunch>
+                  <FormatToLaunch>zip</FormatToLaunch>
+                </FileFormatsToLaunch>
+                <Emulators>
+                  <Emulator>
+                    <EmulatorName>Mesen</EmulatorName>
+                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                  </Emulator>
+                </Emulators>
+              </SystemConfig>
+              <SystemConfig>
+                <SystemName>SNES</SystemName>
+                <SystemFolder>D:\roms\snes</SystemFolder>
+                <SystemImageFolder>D:\images\snes</SystemImageFolder>
+                <FileFormatsToSearch>zip,sfc</FileFormatsToSearch>
+                <FileFormatsToLaunch>zip</FileFormatsToLaunch>
+              </SystemConfig>
+            </SystemConfigs>
+            """);
+
+        var logger = new NoOpLogger();
+        var result = WpfLegacyMigrator.EnsureMigrated(
+            BuildConfiguration(), logger, new WindowsCredentialProtector(), _dbPath, _legacyFolder);
+
+        Assert.Equal(MigrationStatus.Migrated, result.Status);
+        Assert.Equal(2, result.Systems);
+        var systems = UnifiedSettingsDatabase.LoadSystems(_dbPath);
+        Assert.Equal(2, systems.Count);
+        Assert.True(systems.ContainsKey("NES"));
+        Assert.True(systems.ContainsKey("SNES"));
+    }
+
     private static SystemManagerConfig BuildSystemConfig(string systemName, string imageFolder)
     {
         return new SystemManagerConfig
@@ -380,14 +538,39 @@ public sealed class WpfLegacyMigrationTests : IDisposable
 
     private void WriteLegacyFavorites(params (string File, string System)[] entries)
     {
+        WriteLegacyFavorites(_legacyFolder, entries);
+    }
+
+    private static void WriteLegacyFavorites(string folder, params (string File, string System)[] entries)
+    {
         var manager = new FavoritesManager
         {
             FavoriteList = new ObservableCollection<Favorite>(
                 entries.Select(e => new Favorite { FileName = e.File, SystemName = e.System }))
         };
         File.WriteAllBytes(
-            Path.Combine(_legacyFolder, "favorites.dat"),
+            Path.Combine(folder, "favorites.dat"),
             MessagePackSerializer.Serialize(manager));
+    }
+
+    private static void StampSchemaVersion(string dbPath, int version)
+    {
+        using var connection = new SqliteConnection($"Data Source={dbPath};Pooling=False");
+        connection.Open();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "UPDATE Meta SET Value = $v WHERE Key = 'schema_version';";
+        cmd.Parameters.AddWithValue("$v", version.ToString(CultureInfo.InvariantCulture));
+        cmd.ExecuteNonQuery();
+    }
+
+    private static int ReadSchemaVersion(string dbPath)
+    {
+        using var connection = new SqliteConnection($"Data Source={dbPath};Mode=ReadOnly;Pooling=False");
+        connection.Open();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT Value FROM Meta WHERE Key = 'schema_version';";
+        return int.Parse(Convert.ToString(cmd.ExecuteScalar(), CultureInfo.InvariantCulture)!,
+            CultureInfo.InvariantCulture);
     }
 
     private void WriteLegacyHistory()

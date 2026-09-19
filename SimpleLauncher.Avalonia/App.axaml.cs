@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Net.Security;
 using System.Security.Authentication;
 using Avalonia;
@@ -1037,6 +1038,11 @@ public class App : Application, IDisposable
         try
         {
             await lifecycle.SilentCheckForUpdatesAsync();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TimeoutException)
+        {
+            // Expected network conditions (offline, rate limit, timeout) are never bugs.
+            Log.Information(ex, "Silent update check failed on startup");
         }
         catch (Exception ex)
         {
