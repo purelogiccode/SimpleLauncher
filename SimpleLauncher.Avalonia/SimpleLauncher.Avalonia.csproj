@@ -41,9 +41,8 @@
     </PropertyGroup>
 
     <!-- Cross-platform target (net10.0): Linux + macOS RIDs. A Windows RID on this TFM builds
-         WITHOUT the WINDOWS symbol, so Core's PlaySoundEffects silently takes the
-         libsndfile/SoundFileReader path and crashes on Windows with
-         DllNotFoundException: libsndfile (no Windows native binary is shipped).
+         WITHOUT the WINDOWS symbol, so Core's PlaySoundEffects takes the managed/(lib)sndfile
+         decoder + ALSA output path, which fails on Windows (no libasound).
          Fail loudly instead of producing a broken publish. -->
     <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
         <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
@@ -52,7 +51,7 @@
     <Target Name="GuardWindowsRidOnLinuxTfm" BeforeTargets="Build;Publish">
         <Error
             Condition="'$(TargetFramework)' == 'net10.0' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))"
-            Text="Cannot build/publish net10.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net10.0 TFM is Linux-only (audio uses libsndfile). For Windows, use the net10.0-windows TFM, e.g. `dotnet publish -f net10.0-windows -r $(RuntimeIdentifier)`." />
+            Text="Cannot build/publish net10.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net10.0 TFM is Linux/macOS-only (audio output uses NAudio.Alsa). For Windows, use the net10.0-windows TFM, e.g. `dotnet publish -f net10.0-windows -r $(RuntimeIdentifier)`." />
     </Target>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

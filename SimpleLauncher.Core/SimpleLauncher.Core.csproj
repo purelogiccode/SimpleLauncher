@@ -107,13 +107,21 @@
         <PackageReference Include="Hexa.NET.SDL2" Version="1.2.17" />
     </ItemGroup>
 
-    <!-- net10.0 is the Linux TFM; the WINDOWS symbol is defined only for
+    <!-- Managed MP3 decoding on Linux/macOS (NLayer.NAudioSupport plugs NLayer into
+         NAudio's Mp3FileReaderBase), so the built-in UI sounds play without a system
+         libsndfile. Windows uses Media Foundation and does not need them. -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="NLayer" Version="3.0.0" />
+        <PackageReference Include="NLayer.NAudioSupport" Version="3.0.0" />
+    </ItemGroup>
+
+    <!-- net10.0 is the Linux/macOS TFM; the WINDOWS symbol is defined only for
          net10.0-windows. A Windows RID on net10.0 makes PlaySoundEffects take the
-         libsndfile/SoundFileReader path and crash on Windows (DllNotFoundException:
-         libsndfile, no Windows native binary shipped). Fail loudly instead. -->
+         managed/(lib)sndfile decoder + ALSA output path, so audio would fail on
+         Windows (no libasound). Fail loudly instead. -->
     <Target Name="GuardWindowsRidOnLinuxTfm" BeforeTargets="Build;Publish">
         <Error
             Condition="'$(TargetFramework)' == 'net10.0' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))"
-            Text="Cannot build/publish net10.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net10.0 TFM is Linux-only (audio uses libsndfile). For Windows, use the net10.0-windows TFM, e.g. `dotnet publish -f net10.0-windows -r $(RuntimeIdentifier)`." />
+            Text="Cannot build/publish net10.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net10.0 TFM is Linux/macOS-only (audio output uses NAudio.Alsa). For Windows, use the net10.0-windows TFM, e.g. `dotnet publish -f net10.0-windows -r $(RuntimeIdentifier)`." />
     </Target>
 </Project>
