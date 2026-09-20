@@ -75,6 +75,36 @@ public class PathHandlingCrossPlatformTests
     }
 
     [Fact]
+    public void CheckPath_IsValidEmulatorExecutablePath_AcceptsAppImageAndWrapperScriptsOnUnix()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        var folder = Directory.CreateTempSubdirectory("sl-checkpath-");
+        try
+        {
+            // LB-06: common Linux emulator distributions must be selectable/saveable without
+            // renaming or wrapping: AppImages, shell launchers and versioned .run installers.
+            foreach (var name in new[] { "RetroArch.AppImage", "retroarch.sh", "duckstation.run" })
+            {
+                var path = Path.Combine(folder.FullName, name);
+                File.WriteAllText(path, "");
+
+                Assert.True(CheckPath.IsValidEmulatorExecutablePath(path), name);
+            }
+
+            // The execute bit is not required: it is unreliable on FAT/network mounts and the
+            // OS reports an unusable binary at launch time.
+            var notExecutable = Path.Combine(folder.FullName, "RetroArch.AppImage");
+            Assert.False(File.GetUnixFileMode(notExecutable).HasFlag(UnixFileMode.UserExecute));
+            Assert.True(CheckPath.IsValidEmulatorExecutablePath(notExecutable));
+        }
+        finally
+        {
+            folder.Delete(true);
+        }
+    }
+
+    [Fact]
     public async Task DeleteFiles_TryDeleteFileAsync_DeletesExistingFile()
     {
         var folder = Directory.CreateTempSubdirectory("sl-deletefiles-");
