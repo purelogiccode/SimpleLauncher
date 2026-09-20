@@ -268,6 +268,14 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
     private async Task ExecuteIsoAsync(LaunchContext context, ILauncherService launcher)
     {
+        // PowerShell Mount-DiskImage is Windows-only. On Linux/macOS DOSBox mounts the ISO
+        // itself through 'imgmount' and the launch file is listed from the ISO9660 directory.
+        if (!OperatingSystem.IsWindows())
+        {
+            await ExecuteIsoWithImgmountAsync(context, launcher);
+            return;
+        }
+
         string mountPath;
         string selectedFile;
 
@@ -422,6 +430,61 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
         _logger.Debug($"[DosBoxLaunchStrategy] Generated ISO conf file: {confPath}");
 
         return confPath;
+    }
+
+    /// <summary>
+    ///     Non-Windows fallback for ISO images: PowerShell Mount-DiskImage does not exist on
+    ///     Linux/macOS, so DOSBox mounts the ISO itself through 'imgmount' and the executables
+    ///     are listed from the ISO9660 directory (Windows mounts the same contents through
+    ///     PowerShell and scans the drive).
+    /// </summary>
+    private async Task ExecuteIsoWithImgmountAsync(LaunchContext context, ILauncherService launcher)
+    {
+        var isoPath = context.ResolvedFilePath;
+
+        try
+        {
+            var gameFiles = FindGameFilesInImage(isoPath);
+            if (gameFiles.Count == 0)
+            {
+                _logger.Debug($"[DosBoxLaunchStrategy] No game file (bat/exe/com) found in ISO image at {isoPath}");
+                // Expected user-input condition (ISO contains no DOS executable): not a bug.
+                _logger.Information($"No DOS game executable found in ISO: {isoPath}");
+                await _messageBox.CouldNotFindAFileMessageBoxAsync();
+                return;
+            }
+
+            var selectedFile = await SelectGameFileFromImageAsync(context, gameFiles);
+            if (selectedFile == null) return; // user cancelled
+
+            var confPath = GenerateImageConf(isoPath, "iso", selectedFile);
+            var launchParameters = BuildLaunchParameters(context.Parameters);
+
+            try
+            {
+                await launcher.LaunchRegularEmulatorAsync(
+                    confPath,
+                    context.EmulatorName,
+                    context.SystemManagerService!,
+                    context.EmulatorManager!,
+                    launchParameters,
+                    context.WindowContext!,
+                    context.LoadingState,
+                    isoPath);
+            }
+            finally
+            {
+                // The conf references the user's ROM paths and is single-use: delete it once
+                // DOSBox has exited (or the launch failed) instead of leaking it in %TEMP%.
+                TryDeleteConfFile(confPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, $"[DosBoxLaunchStrategy] Error launching ISO: {isoPath}");
+            await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+        }
     }
 
     private static string BuildLaunchParameters(string parameters)
@@ -643,7 +706,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     }
 
     /// <summary>
-    ///     Asks the user to choose between multiple DOS executables found inside a CHD image
+    ///     Asks the user to choose between multiple DOS executables found inside a disc image
     ///     (auto-selects when there is only one, or when no owner window is available). Returns
     ///     the image-relative path ('/'-separated) of the selected file, or null on cancel.
     /// </summary>
@@ -651,7 +714,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     {
         if (gameFiles.Count == 1)
         {
-            _logger.Debug($"[DosBoxLaunchStrategy] Single game file found in CHD, auto-selecting: {gameFiles[0]}");
+            _logger.Debug($"[DosBoxLaunchStrategy] Single game file found in disc image, auto-selecting: {gameFiles[0]}");
             return gameFiles[0];
         }
 
@@ -659,7 +722,8 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
         if (owner is null)
         {
             // No owner window (e.g. headless/test run): pick the first file
-            _logger.Debug("[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file on CHD");
+            _logger.Debug(
+                "[DosBoxLaunchStrategy] No owner window available; auto-selecting the first game file in the disc image");
             return gameFiles[0];
         }
 
@@ -672,11 +736,11 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
         if (string.IsNullOrEmpty(dialog.SelectedFilePath))
         {
-            _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for CHD");
+            _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for the disc image");
             return null;
         }
 
-        _logger.Debug($"[DosBoxLaunchStrategy] User selected file from CHD: {dialog.SelectedFilePath}");
+        _logger.Debug($"[DosBoxLaunchStrategy] User selected file from the disc image: {dialog.SelectedFilePath}");
         return dialog.SelectedFilePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase)
             ? dialog.SelectedFilePath[imageRoot.Length..]
             : dialog.SelectedFilePath;

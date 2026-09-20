@@ -72,7 +72,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 |---|---|---|---|
 | `DefaultLaunchStrategy` | 999 | everything else | `.BAT` → batch, `.LNK/.URL` → shortcut, `.EXE` → executable, else regular emulator launch |
 | `ZipMountStrategy` | 30 | `.zip/.7z/.rar` + RPCS3 / ScummVM / XBLA | Windows: mount archive; load `EBOOT.BIN`, ScummVM auto-detect, or XBLA nested exe. Linux/macOS: extract to a temp directory and launch from there (same search logic) |
-| `DosBoxLaunchStrategy` | 25 | DOSBox-family emulator + directory/archive/ISO/CHD | ISO/CHD mount, archive extract, `.conf/.bat/.exe/.com` detection or `DosBoxFileSelectionWindow`, temp conf, `-conf` append. Windows mounts ISO/CHD as a drive; Linux/macOS converts CHD with CHDSharp and `imgmount`s the converted image |
+| `DosBoxLaunchStrategy` | 25 | DOSBox-family emulator + directory/archive/ISO/CHD | ISO/CHD mount, archive extract, `.conf/.bat/.exe/.com` detection or `DosBoxFileSelectionWindow`, temp conf, `-conf` append. Windows mounts ISO/CHD as a drive; Linux/macOS `imgmount`s ISO files directly and converts CHD with CHDSharp first |
 | `ChdToCueStrategy` | 25 | `.chd` + 4DO / Raine | `ConvertChdToCueBinAsync` → launch `.cue` → delete temp |
 | `XisoMountStrategy` | 20 | Cxbx + `.iso` | mount XISO → launch mounted `default.xbe` |
 | `CommanderGeniusLaunchStrategy` | 20 | Commander Genius + archive | resolve CG data path, extract to `games\<zipname>`, `dir="games/<zipname>"` |
