@@ -134,8 +134,7 @@ public class MountZipFilesCrossPlatformTests
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>(
-                (path, _, _, _, _, _, _, _) => launchedPath = path)
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path, _, _, _, _, _, _, _) => launchedPath = path)
             .Returns(Task.CompletedTask);
 
         var messageBox = new Mock<IMessageBoxLibraryService>();

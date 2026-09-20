@@ -49,8 +49,7 @@ public class DosBoxChdLinuxTests : IDisposable
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>(
-                (path, _, _, _, _, _, _, _) =>
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path, _, _, _, _, _, _, _) =>
                 {
                     confPath = path;
                     confContent = File.Exists(path) ? File.ReadAllText(path) : null;
@@ -190,8 +189,7 @@ public class DosBoxChdLinuxTests : IDisposable
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>(
-                (path, _, _, _, _, _, _, _) => onConf(File.Exists(path) ? File.ReadAllText(path) : null))
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path, _, _, _, _, _, _, _) => onConf(File.Exists(path) ? File.ReadAllText(path) : null))
             .Returns(Task.CompletedTask);
     }
 

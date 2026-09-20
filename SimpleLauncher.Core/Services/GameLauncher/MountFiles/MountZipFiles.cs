@@ -1382,6 +1382,7 @@ public class MountZipFiles : IMountZipFiles
     /// </summary>
     private async Task LaunchScummVmWithGameRootAsync(string scummVmPath, string resolvedZipFilePath,
         string selectedEmulatorName, ISystemManager selectedSystemManager, Emulator selectedEmulatorManager,
+        // ReSharper disable once UnusedParameter.Local
         string selectedEmulatorParameters, ILogger logErrors)
     {
         // 1. Resolve Emulator Path
