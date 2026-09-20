@@ -68,8 +68,8 @@ pwsh scripts/package-release.ps1 -Version 5.8.0
 
 ### Linux release packaging script
 
-`scripts/package-release-linux.ps1` produces the Linux counterparts (same asset names the
-in-app updater looks up in the GitHub release):
+`scripts/package-release-linux.ps1` produces the Linux counterparts (also used by CI; same
+asset names the in-app updater looks up in the GitHub release):
 
 ```powershell
 pwsh scripts/package-release-linux.ps1 -Version 5.8.0
@@ -165,7 +165,7 @@ suites (they include live endpoints and real app launches; run them locally).
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip`. Options: skip release creation, provide custom release notes. |
+| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the self-contained Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and
@@ -204,7 +204,7 @@ The script maps `docs/README.md` → `Home`, copies all `docs/NN-*.md` as pages,
 1. Implement features/fixes; keep `WhatsNew.md` updated with a release section.
 2. Bump version in the places listed under [Versioning](#versioning).
 3. Run the full test suite (minus the slow URL test).
-4. Run **Actions → Publish release** with the new version — it packages both RIDs (`release_{version}_{rid}.zip` + `updater_{rid}.zip`) and creates the GitHub release. Locally, `pwsh scripts/package-release.ps1 -Version <version>` produces the same packages.
+4. Run **Actions → Publish release** with the new version — it packages the Windows and Linux RIDs (`release_{version}_{rid}.zip` + `updater_{rid}.zip` for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`) and creates the GitHub release. Locally, `pwsh scripts/package-release.ps1 -Version <version>` and `pwsh scripts/package-release-linux.ps1 -Version <version>` produce the same packages. The workflow can also be run with **Create or update the GitHub release** unchecked to only build the zips as workflow artifacts.
 5. The in-app updater and silent update check use the GitHub `releases/latest` API.
 
 ## Related docs

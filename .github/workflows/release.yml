@@ -1,12 +1,14 @@
 name: Publish release
 
-# Manual release: packages the unified WPF + Avalonia bundle for win-x64 and win-arm64
-# via scripts/package-release.ps1, uploads the zips as workflow artifacts and
+# Manual release: packages the Windows WPF + Avalonia bundle for win-x64 and win-arm64 via
+# scripts/package-release.ps1 and the self-contained Linux bundle for linux-x64 and linux-arm64
+# via scripts/package-release-linux.ps1, uploads the zips as workflow artifacts and
 # creates/updates the GitHub release the in-app updater reads.
 #
 # Assets produced per RID:
-#   release_{version}_{rid}.zip   SimpleLauncher.exe + SimpleLauncher.Avalonia.exe side by side
-#   updater_{rid}.zip             the single Updater.exe shared by both apps
+#   release_{version}_{rid}.zip   Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe side by side
+#                                 Linux:   the self-contained SimpleLauncher.Avalonia payload
+#   updater_{rid}.zip             the standalone updater shared by the apps (Updater.exe / Updater)
 
 on:
   workflow_dispatch:
@@ -35,7 +37,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Package unified bundle (win-x64, win-arm64)
+    name: Package release bundles (win-x64, win-arm64, linux-x64, linux-arm64)
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -46,7 +48,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Package release
+      - name: Package Windows release
         shell: pwsh
         env:
           VERSION: ${{ inputs.version }}
@@ -55,6 +57,16 @@ jobs:
           -Version $env:VERSION
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
+
+      - name: Package Linux release
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: >
+          ./scripts/package-release-linux.ps1
+          -Version $env:VERSION
+          -OutputDir '${{ github.workspace }}/artifacts/release'
+          -WorkDir '${{ runner.temp }}/sl-publish-linux'
 
       - name: Upload packages as workflow artifacts
         uses: actions/upload-artifact@v7

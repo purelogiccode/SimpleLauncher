@@ -17,7 +17,8 @@
 
 ## Update assets
 
-Both apps read the same GitHub release, which ships the unified bundle and a single updater:
+Both apps read the same GitHub release, which ships the Windows and Linux bundles plus a
+standalone updater per RID:
 
 - `release_{version}_{rid}.zip` — the unified payload: `SimpleLauncher.exe` (WPF) and
   `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other plus the shared content files
@@ -30,6 +31,10 @@ Both apps read the same GitHub release, which ships the unified bundle and a sin
   self-extracts them at launch, so the one file runs from either app folder **and** on legacy
   WPF-only installs that never had those natives (which is how the old WPF updater asset name is
   reused for the unified release).
+- On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the self-contained
+  `SimpleLauncher.Avalonia` payload and the self-contained single-file `Updater`; the ZIP entries
+  carry Unix permission bits (0755 for the executables) — see
+  [15 — Development](15-development.md#linux-release-packaging-script).
 
 ## Update install flow
 
