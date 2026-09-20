@@ -13,19 +13,19 @@ Three code projects implement it:
 |---|---|
 | `SimpleLauncher` (WPF app) | The launcher itself: windows, pages, ViewModels, UI services, launch handlers, game scanners, DI composition root |
 | `SimpleLauncher.Core` (class library) | Platform-independent services, models, interfaces, data persistence, emulator config injection |
-| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux) reusing all of Core; port status tracked in [`AvaloniaPlan.md`](../AvaloniaPlan.md) |
+| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux/macOS) reusing all of Core. Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden or no-ops elsewhere; native implementations replace the launch pipeline on Linux/macOS (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
 
 ## Key differentiators
 
 - **Configuration injection into 21 emulators** — Ares, Azahar, Blastem, Cemu, Daphne, Dolphin, DuckStation, Flycast, MAME, Mednafen, Mesen, PCSX2, Raine, Redream, RetroArch, RPCS3, Sega Model 2, Stella, Supermodel, Xenia, Yumir. Settings are written into each emulator's own config file before launch (see [06 — Systems & Launch](06-systems-and-launch.md)).
 - **Universal CHD support** — the bundled **CHDMounter** mounts CHD files as virtual drives for 15+ emulators without native CHD support (Xenia, RPCS3, Xemu, Cxbx-Reloaded, Mednafen, Mesen, Raine, FinalBurn Neo/Alpha, 4DO, Gens, Blastem, Yabause, PCSX-Redux, CD-i Emulator, Tsugaru, Kega Fusion, DOSBox).
-- **On-the-fly mounting** — launch games directly from `.zip`, `.iso`, `.xiso`, `.chd` without manual extraction (requires **Dokan**).
+- **On-the-fly mounting** — launch games directly from `.zip`, `.iso`, `.xiso`, `.chd` without manual extraction (requires **Dokan** on Windows; Linux/macOS extract archives to a temp folder, convert CHD with CHDSharp and `imgmount` ISOs inside DOSBox instead).
 - **Modern store integration** — automatic scanning for games from Steam, Epic, GOG, Microsoft Store, Amazon, Battle.net, EA App, Humble, itch.io, Rockstar, Uplay (see [10 — Game Scanning](10-game-scanning.md)).
 - **RetroAchievements integration** — login, per-game achievements/rankings, profile, completion progress, hashing for complex systems, and automatic credential injection into supported emulators (see [09 — RetroAchievements](09-retroachievements.md)).
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
 - **Performance** — MessagePack binary storage (`favorites.dat`, `playhistory.dat`, `history.dat`, `mame.dat`, `RetroAchievements.dat`), async scanning/loading, pagination.
-- **Platform coverage** — native **x64 and ARM64** builds; Windows 10+; .NET 10 runtime.
+- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 10 runtime.
 
 ## Feature surface (summary)
 
@@ -41,7 +41,7 @@ Three code projects implement it:
 
 ## Localization
 
-18 languages ship as **one shared set of JSON packs**: `SimpleLauncher.Core\Localization\strings.{code}.json` (2669 keys per file, UTF-8 without BOM, key-sorted). Both apps embed them in their assemblies — Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService`) and WPF as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, with `App.ApplyLanguage` building the WPF `ResourceDictionary` from the JSON). Switching language restarts the app. See [08 — UI Layer](08-ui-layer.md#themes--language).
+18 languages ship as **one shared set of JSON packs**: `SimpleLauncher.Core\Localization\strings.{code}.json` (2671 keys per file, UTF-8 without BOM, key-sorted). Both apps embed them in their assemblies — Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService`) and WPF as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, with `App.ApplyLanguage` building the WPF `ResourceDictionary` from the JSON). Switching language restarts the app. See [08 — UI Layer](08-ui-layer.md#themes--language).
 
 `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) propagates missing keys from `strings.en.json` to all other languages; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 

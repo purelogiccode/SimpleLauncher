@@ -40,7 +40,7 @@
   - Ares, Azahar, Blastem, Cemu, Daphne, Dolphin, DuckStation, Flycast, MAME, Mednafen, Mesen, PCSX2, Raine, Redream, RetroArch, RPCS3, Sega Model 2, Stella, Supermodel, Xenia, Yumir
 * **Universal CHD Support:** Built-in **CHDMounter** utility brings CHD support to emulators without native support:
   - RPCS3, Xemu, Xenia, Cxbx-Reloaded, Mednafen, PCSX Redux, 4DO, Gens, Blastem, Yabause, Mesen, FinalBurn Neo, FinalBurn Alpha, Raine, CD-i Emulator, Tsugaru
-* **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration
+* **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration (Windows); on Linux/macOS the Avalonia app extracts archives to a temp folder, converts CHD images on the fly, and mounts ISOs inside DOSBox — no Dokan needed
 * **Expert Mode:** Granular control over launch parameters, multiple ROM paths per system, and custom environment variables
 * **Format Conversion:** Built-in converters for CHD, RVZ, XISO, 7z/Zip with integrity verification
 * **File Mounting Strategies:** Advanced strategies for XISO, CHD, ZIP, PBP-to-CUE, and CHD-to-CUE conversions
@@ -193,7 +193,7 @@ Simple Launcher is translated into **18 languages**:
 * **Framework:** .NET 10 (WPF + Avalonia)
 * **Language:** C# 14
 * **Data Serialization:** Unified SQLite `settings.dat` (settings, favorites, play history, systems), MessagePack (RA/MAME/history databases) & XML (legacy migration)
-* **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 (Audio), YamlDotNet, Tomlyn, PBPSharp — RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)
+* **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 + NLayer (Audio; managed MP3/WAV on Linux/macOS), YamlDotNet, Tomlyn, PBPSharp — RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)
 * **Architecture:** Modular service-based architecture with dependency injection
 * **Storage:** Unified SQLite `settings.dat` shared by both apps; legacy `settings.xml` / `favorites.dat` / `playhistory.dat` / `system.xml` are migrated automatically on first launch
 
@@ -205,12 +205,13 @@ An **Avalonia-based cross-platform port** (`SimpleLauncher.Avalonia`) is being d
 
 - **Platforms:** Windows (x64/ARM64) and Linux (x64/ARM64) — dual-target `net10.0` (Linux) + `net10.0-windows` (Windows)
 - **Windows delivery:** ships in the same unified release zip as the WPF app (`SimpleLauncher.Avalonia.exe` next to `SimpleLauncher.exe`); both are framework-dependent single executables that share the same content files and settings. A single `Updater.exe` updates either app.
-- **Port status:** menu bar with full options (language, button size, aspect ratio, view mode, filename preferences, RetroAchievements, inject emulator config for all 21 emulators, tools, donate, about), per-game context menus (launch, favorites, details, RetroAchievements, copy path/name, show in folder, edit system), 15 utility windows, Favorites / Play History / Global Search pages, RetroAchievements UI (profile / unlocks / progress + settings), tray icon with native menu, F8 global screenshot hotkey (Windows), single dark theme, fully localized UI via the shared JSON packs (18 languages, 2669 keys each, `SimpleLauncher.Core\Localization`)
-- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **534 Avalonia tests** + **2105 WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite, unified settings database + legacy migration)
+- **Port status:** menu bar with full options (language, button size, aspect ratio, view mode, filename preferences, RetroAchievements, donate, about — the emulator config injection and tools menus are Windows-only and hidden elsewhere), per-game context menus (launch, favorites, details, RetroAchievements, copy path/name, show in folder, edit system), 15 utility windows, Favorites / Play History / Global Search pages, RetroAchievements UI (profile / unlocks / progress + settings; the emulator-integration section is Windows-only), tray icon with native menu, F8 global screenshot hotkey (Windows), single dark theme, fully localized UI via the shared JSON packs (18 languages, 2671 keys each, `SimpleLauncher.Core\Localization`)
+- **Linux/macOS specifics:** ZIP/7Z/RAR launch extracts to a temp folder, CHD is converted on the fly (CHDSharp) and ISOs are mounted inside DOSBox — the Windows mounting tools (Dokan, CHDMounter, SimpleZipDrive, SimpleXisoDrive) are not used; MP3/WAV UI sounds play with no extra packages (FLAC/Ogg/Opus need the system `libsndfile`, `sudo apt install libsndfile1`)
+- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **637 Avalonia tests** + **2109 WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite, unified settings database + legacy migration)
 - **Build & test (Windows):** `dotnet build SimpleLauncher.sln -c Debug` · `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (headless, no display required)
 - **Build & test (Linux / WSL2):** `dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (net10.0, runs on Ubuntu 24.04) · `dotnet publish -f net10.0 -r linux-x64` / `linux-arm64` for self-contained folders
 
-Development status and the step-by-step plan are tracked in [`References/AvaloniaPlan.md`](References/AvaloniaPlan.md) and [`References/TODO.md`](References/TODO.md).
+Development status and the step-by-step plan are tracked in [`References/TODO.md`](References/TODO.md).
 
 ---
 

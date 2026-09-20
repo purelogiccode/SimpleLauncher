@@ -75,7 +75,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 | `DosBoxLaunchStrategy` | 25 | DOSBox-family emulator + directory/archive/ISO/CHD | ISO/CHD mount, archive extract, `.conf/.bat/.exe/.com` detection or `DosBoxFileSelectionWindow`, temp conf, `-conf` append. Windows mounts ISO/CHD as a drive; Linux/macOS `imgmount`s ISO files directly and converts CHD with CHDSharp first |
 | `ChdToCueStrategy` | 25 | `.chd` + 4DO / Raine | `ConvertChdToCueBinAsync` → launch `.cue` → delete temp |
 | `XisoMountStrategy` | 20 | Cxbx + `.iso` | mount XISO → launch mounted `default.xbe` |
-| `CommanderGeniusLaunchStrategy` | 20 | Commander Genius + archive | resolve CG data path, extract to `games\<zipname>`, `dir="games/<zipname>"` |
+| `CommanderGeniusLaunchStrategy` | 20 | Commander Genius + archive | resolve CG data path (Windows: Documents\Commander Genius; Linux/macOS: `~/.CommanderGenius` — LB-11), extract to `games\<zipname>`, `dir="games/<zipname>"` |
 | `PbpToCueStrategy` | 15 | `.pbp` + Mednafen | `ConvertPbpToCueBinAsync` → launch `.cue` → clean temp |
 | `ChdMountStrategy` | 10 | `.chd` (not RetroArch/DOSBox) + 19-emulator list | mount via CHDMounter, find launch file per emulator (EBOOT.BIN/default.xex/image.iso/default.xbe/`.bin`/`.cue`), regular launch |
 
@@ -86,17 +86,17 @@ Ordered by `Priority`; first `IsMatch` wins:
 - `ExtractToTempAndGetLaunchFileAsync` (`:41`), `ExtractToFolderAsync` (`:70`); only 7z/zip/rar (`:126`); **file-lock retry 10×1 s** (`:100-123`).
 - **`.extraction_in_progress` marker** written before extract, removed on success. On failure only the marker plus the files written by that run are deleted — destination folders are never wiped (CORE-01), and tracked files are removed before the marker.
 - **Disk-space check:** estimated size × 1.2 vs `DriveInfo.AvailableFreeSpace` → `DiskSpaceErrorMessageBoxAsync` + IOException (`:165-196`).
-- **Path-traversal guard:** every entry must resolve under the destination root (`:199-219`, `:364-382`); random temp names (`:351-354`).
-- **7-Zip fallback:** SharpCompress failure on `.7z` → `tools\SevenZip\7za.exe`/`_arm64.exe` on Windows, `tools/SevenZip/7zz`/`7zz_arm64` on Linux/macOS (`GetSevenZipExecutableName`, `:490-497`), args `x -o"dest" -y "archive"`, **30-minute timeout** with kill.
+- **Path-traversal guard:** every entry must resolve under the destination root (`:199-219`, `:364-382`); the comparison is Ordinal on case-sensitive filesystems, and `DIR\FILE.BIN` entry names are normalized to the platform separator before combining (LB-16); random temp names (`:351-354`).
+- **7-Zip fallback:** SharpCompress failure on `.7z` → `tools\SevenZip\7za.exe`/`_arm64.exe` on Windows, `tools/SevenZip/7zz`/`7zz_arm64` on Linux/macOS (`GetSevenZipExecutableName`, `:490-497`), args `x -o"dest" -y "archive"`, **30-minute timeout** with kill; on Unix the execute bits are set on 7zz before launch (LB-15).
 - Temp root: `%TEMP%\SimpleLauncher` (`:20`); `ValidateAndFindGameFileAsync` (`:540`) searches `FileFormatsToLaunch` then any file.
 
 ## Mounting (Core `GameLauncher\MountFiles\`)
 
 | Service | Backend | Details |
 |---|---|---|
-| `MountChdFiles` / `MountChdDrive` | `tools\CHDMounter\CHDMounter.exe` (+`_arm64`) | Dokan check first (`DokanValidation.IsDokanInstalled()`); args `/a "<chd>" /s:<consoleAlias>`; CHDMounter auto-picks drive; mount poll 240×500 ms (120 s max, `:724-773`); console alias per system/emulator (`:567-718`); unmount = kill + 20 s wait (`:300-317`); `DisposeAsync` verifies release (`MountChdDrive:117-129`) |
+| `MountChdFiles` / `MountChdDrive` | `tools\CHDMounter\CHDMounter.exe` (+`_arm64`) | Platform check first (Linux/macOS → Information "not supported", no missing-tool Warning — LB-14); Dokan check (`DokanValidation.IsDokanInstalled()`); args `/a "<chd>" /s:<consoleAlias>`; CHDMounter auto-picks drive; mount poll 240×500 ms (120 s max, `:724-773`); console alias per system/emulator (`:567-718`); unmount = kill + 20 s wait (`:300-317`); `DisposeAsync` verifies release (`MountChdDrive:117-129`) |
 | `MountIsoFiles` | PowerShell `Mount-DiskImage` | drive letter from `Get-Volume` output (`:193-258`); 30 s PS timeout (`:225`); polls 10 s for mount (`:74`); finds `EBOOT.BIN` (`:95`); dismount in finally (`:317-342`); execution-policy detection (`:412+`) |
-| `MountXisoFiles` / `MountXisoDrive` | `tools\SimpleXisoDrive\SimpleXisoDrive.exe` (+`_arm64`) | Dokan validation (`:80-87`); **drive letter Z→D** selection (`:33-57`); args `"<iso>" "Z:"`; polls for `default.xbe` 240×500 ms (`:172-209`); kill + 20 s wait on dispose (`:67`, `:91`) |
+| `MountXisoFiles` / `MountXisoDrive` | `tools\SimpleXisoDrive\SimpleXisoDrive.exe` (+`_arm64`) | Platform check first (Linux/macOS → Information "not supported" — LB-14); Dokan validation (`:80-87`); **drive letter Z→D** selection (`:33-57`); args `"<iso>" "Z:"`; polls for `default.xbe` 240×500 ms (`:172-209`); kill + 20 s wait on dispose (`:67`, `:91`) |
 | `MountZipFiles` | `tools\SimpleZipDrive\SimpleZipDrive.exe` (+`_arm64`) on Windows; temp extraction on Linux/macOS | Path-traversal validation always runs (platform-neutral simulated root, backslash entries normalized); Windows mounts a drive and polls 1 min; Unix extracts to `%TEMP%/SimpleLauncher/ZipLaunch/<guid>` (separator-normalized, containment-checked), finds `EBOOT.BIN` / nested `000D0000` file / ScummVM folder, then deletes the temp directory when the emulator exits |
 | `DokanValidation` | P/Invoke `dokan2.dll` | `DokanVersion() > 0` (`:12-36`) |
 
@@ -114,6 +114,8 @@ Ordered by `Priority`; first `IsMatch` wins:
 ## Emulator config handlers (21) & Core configuration services
 
 **Interface:** `IEmulatorConfigHandler.IsMatch(name, path)` + `Task<bool> HandleConfigurationAsync(context)` (`IEmulatorConfigHandler.cs:16-23`); `false` vetoes launch (`GameLauncherService.cs:157`).
+
+**Windows-only in Avalonia:** the handlers write the Windows config locations of each emulator (Documents/`%APPDATA%` paths, Windows file layouts), so `EmulatorConfigHandlerRegistration` registers them only on Windows — matching the hidden "Inject emulator config" menu — and Linux/macOS launches run no config handlers (LB-08).
 
 **Pattern:** if `ShowSettingsBeforeLaunch` → modal `Inject*ConfigWindow` (user "Run" vs "Cancel"); else `XxxConfigurationService.InjectSettings(...)`.
 

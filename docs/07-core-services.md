@@ -21,7 +21,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 
 | Class | Purpose |
 |---|---|
-| `CheckPaths\PathHelper` | `ResolveRelativeToAppDirectory`, `TryGetExistingDirectory`, path normalization (used everywhere); `GetLongPath` applies the Windows `\\?\` prefix only on Windows (POSIX paths are returned untouched) and `%BASEFOLDER%\...` configs with backslashes resolve on Unix |
+| `CheckPaths\PathHelper` | `ResolveRelativeToAppDirectory`, `TryGetExistingDirectory`, path normalization (used everywhere); `GetLongPath` applies the Windows `\\?\` prefix only on Windows (POSIX paths are returned untouched); on Unix both `%BASEFOLDER%\...` configs and bare relative values like `tools\retroarch\retroarch` resolve with normalized separators (LB-13) |
 | `CheckPaths\CheckPath` | Path existence/validity checks incl. extended-length paths (Windows-only prefix); `IsValidEmulatorExecutablePath` accepts only `.exe`/`.bat`/`.lnk` on Windows and any existing file on Unix (extensionless binaries, AppImages, `.sh`/`.run` wrappers) |
 | `CheckPaths\ExecutableFileFilter` | Platform-aware file-dialog filters for emulator pickers: `*.exe;*.bat` on Windows, "All Files" on Linux/macOS where binaries are extensionless or `.AppImage`/`.sh` |
 | `CheckIfDirectoryIsWritable\DirectoryValidationService` / `CheckIfDirectoryIsWritableService` | Writability probe (temp write+delete) |
@@ -39,15 +39,15 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `GameLauncher\Strategies\DefaultLaunchStrategy` | Fallback strategy (priority 999): bat/lnk/exe/regular emulator launch |
 | `GameLauncher\Strategies\XisoMountStrategy` | Cxbx + `.iso` → mount → `default.xbe` |
 | `GameLauncher\Strategies\ZipMountStrategy` | RPCS3/ScummVM/XBLA archive mounting (Windows: SimpleZipDrive; Linux/macOS: temp extraction) |
-| `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (Dokan check, console alias, poll 120 s, kill+20 s unmount) |
+| `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (platform check first → Linux/macOS get "not supported" at Information level, then Dokan check, console alias, poll 120 s, kill+20 s unmount; unknown architectures fall back to the x64 tool name instead of throwing) |
 | `GameLauncher\MountFiles\MountIsoFiles` | PowerShell `Mount-DiskImage` / `Dismount-DiskImage`, EBOOT.BIN discovery |
-| `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll |
+| `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll; platform check first (Linux/macOS → Information "not supported") |
 | `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (Windows: zip to virtual drive; Linux/macOS: extract to a temp directory and launch from there) |
 | `GameLauncher\MountFiles\Iso9660ImageReader` | Lists the files of a cooked ISO9660 image (chdman/CHDSharp `extractcd` data track, DVD ISO) — primary 8.3 names, used by the DOSBox CHD fallback on Linux/macOS |
 | `GameLauncher\MountFiles\FindEbootBin`, `FindDefaultXbe`, `FindDefaultXex`, `FindImageIso`, `FindBinFile`, `FindCueFile`, `FileFinderService` | Launch-file discovery inside mounted volumes |
 | `GameLauncher\MountFiles\DokanValidation` | P/Invoke `dokan2.dll` version check |
 | `GameLauncher\ValidateBatchFile` | Pre-execution validation of batch files (missing paths) |
-| `ExtractFiles\ExtractionService` | Archive extraction: lock retry, disk-space check, path-traversal guard, 7-Zip fallback, `.extraction_in_progress` marker. See [06](06-systems-and-launch.md#extraction) |
+| `ExtractFiles\ExtractionService` | Archive extraction: lock retry, disk-space check, path-traversal guard (platform-aware prefix comparison, backslash entry names normalized — Windows-authored archives extract into real folders on Linux, LB-16), 7-Zip fallback (Unix execute bit ensured before launch, LB-15), `.extraction_in_progress` marker. See [06](06-systems-and-launch.md#extraction) |
 | `Converters\DiscConverter` | CHD→ISO/CUE-BIN, PBP→CUE-BIN, RVZ/WBFS/GCZ→ISO via bundled tools (5-min timeouts) |
 | `ExternalToolLauncher\ExternalToolLauncherService` | Launch bundled tools: arch-aware paths, PE validation, per-tool methods. See [11](11-bundled-tools.md) |
 
@@ -61,7 +61,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `MameData\MameDataService` | App-facing MAME data access (`Machines`, `Lookup`) |
 | `RomHistory\RomHistoryLoader` | Loads ROM history: `history.dat` (MessagePack) with `history.xml` fallback |
 | `SanitizeInputString\InputSanitizerService` / `SanitizeInputSystemName` | Input/name sanitization |
-| `CheckApplicationControlPolicyService` | Win32 error classification (elevation 740, AppLocker 5, canceled 1223) |
+| `CheckApplicationControlPolicyService` | Win32 error classification (elevation 740, AppLocker 5, canceled 1223) and Unix errno mapping for invalid executables (8 ENOEXEC / 13 EACCES — LB-18) |
 | `UsageStats\Stats` | Anonymous usage-statistics API calls (with timeout) |
 
 ## Download & Easy Mode
@@ -92,7 +92,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | Class | Purpose |
 |---|---|
 | `GamePad\GamePadController` | Windows: XInput + DirectInput (SharpDX) mouse/keyboard simulation, dead zones, reconnect. Linux/macOS: `SdlGamepadBackend` (Hexa.NET.SDL2, bundled native `libSDL2`) raises `InputChanged` snapshots that the Avalonia app's `GamepadNavigationService` turns into focus/activation/context-menu/scroll actions |
-| `PlaySound\PlaySoundEffects` | NAudio 3 sound effects — Media Foundation + WaveOut (Windows) / libsndfile + ALSA (Linux); respects settings |
+| `PlaySound\PlaySoundEffects` | NAudio 3 sound effects — Media Foundation + WaveOut (Windows) / managed MP3 (NLayer) + WAV decoders, libsndfile for other formats, ALSA output (Linux/macOS); missing dependency/device or corrupt file logs Information (never bug-reported); respects settings |
 | `AudioInputService` | Audio input abstraction |
 | `WpfServices\WpfImageLoader` | Image loading with `default.png` fallback |
 | `TakeScreenshot\WindowManager` | Enumerate top-level windows for screenshots |

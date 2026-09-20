@@ -109,15 +109,19 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/ | head -20
 ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 2>/dev/null | head
 ```
 
-- The `net10.0` TFM is **Linux-only** (audio uses libsndfile/`SoundFileReader`). Publishing it
+- The `net10.0` TFM is **Linux/macOS-only** (audio output uses ALSA + managed decoders). Publishing it
   with a Windows RID (`-f net10.0 -r win-x64`) is rejected by a build guard: the `WINDOWS`
-  symbol would not be defined, so `PlaySoundEffects` would take the Linux path and crash on
-  Windows (`DllNotFoundException: libsndfile`, no Windows native binary is shipped).
-- The Windows publish uses Media Foundation + WaveOut, so `libsndfile` is not needed there.
+  symbol would not be defined, so `PlaySoundEffects` would take the ALSA path and fail on
+  Windows (`DllNotFoundException: libasound`, no Windows native binary is shipped).
+- MP3 and WAV sound effects need **no native libraries** on Linux/macOS (NLayer +
+  `WaveFileReader`); FLAC/Ogg/Opus use the system `libsndfile` (`sudo apt install libsndfile1`
+  on Debian/Ubuntu). A missing `libsndfile`/`libasound`, a missing audio device or a corrupt
+  sound file is logged at **Information** level (never reported as a bug) and playback is skipped.
+- The Windows publish uses Media Foundation + WaveOut, so neither `libsndfile` nor ALSA is needed there.
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (534 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (637 tests via `Avalonia.Headless`).
 
 ## Versioning
 
@@ -137,7 +141,7 @@ packaging. Bump all of them together.
 
 ## Localization
 
-- **One shared pack set for both apps**: `SimpleLauncher.Core\Localization\strings.{code}.json` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-BR, ru, tr, ur, vi, zh-Hans) — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical key set (2669 keys, all files in full key parity).
+- **One shared pack set for both apps**: `SimpleLauncher.Core\Localization\strings.{code}.json` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-BR, ru, tr, ur, vi, zh-Hans) — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical key set (2671 keys, all files in full key parity).
 - Both apps **embed** the packs in their assemblies: Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService` via `Assembly.GetManifestResourceStream`; no loose `Resources` folder ships); the WPF app as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, via `<Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json" />` in `SimpleLauncher.csproj`) with `App.ApplyLanguage` building the WPF language `ResourceDictionary` from the JSON, resolving codes like `pt-br`/`zh-hans` case-insensitively.
 - `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) translates missing keys into the shared packs; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 - Unit tests guard against common translation issues: keys used in source but missing from English (auto-added with fallbacks), duplicate keys, mismatched fallbacks, empty values, key parity and key counts.

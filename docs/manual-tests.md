@@ -90,6 +90,7 @@ RetroAchievements → a download → a store-game scan covers most of this check
 - [ ] **ROM History window** (`RomHistoryWindow` + VM) — MAME game with a `history.dat`/`history.xml` entry shows text with clickable URLs; no entry → "No ROM history found…" + Yes/No prompt; Yes opens a Google search; both files deleted → friendly "no history file found" message.
 - [ ] **DOSBox file selection** (`DosBoxFileSelectionWindow` + VM) — a DOS game folder with several `.conf/.bat/.exe/.com` files shows the picker with relative subfolder labels; single-click + Launch and double-click both launch the chosen file; Cancel/X → launch aborted silently; files in the base folder show no subfolder text.
 - [ ] **System selection** (`SystemSelectionWindow`) — appears when a game's system can't be auto-matched; current guess pre-selected; confirm with no selection does nothing; Cancel returns false.
+- [ ] **File pickers** (`AvaloniaFilePickerService`) — on Linux the emulator picker shows all files (no `*.exe` restriction) while Windows still offers "Executable Files"; a picker filter with a specific entry plus "All files" (e.g. Sound Configuration MP3) still shows the specific entry (LB-10); opening a picker from a child window (RA settings, Edit System) makes the dialog modal to that window, not the MainWindow (LB-21, noticeable on Wayland/GNOME).
 
 ## 6. Emulator launch & config injection **[Integration]**
 
@@ -98,6 +99,7 @@ Common flow for **each** emulator:
 - [ ] Add a real ROM + point the launcher at a real emulator install; launch with "Show settings before launch" **off** → the emulator's own config file is rewritten with SimpleLauncher's settings and the game boots.
 - [ ] Launch with "Show settings before launch" **on** → the injection dialog appears; "Run" launches, "Cancel" does not launch.
 - [ ] Wrong/missing emulator path → the game still attempts launch without crashing; check the Debug log for injection errors.
+- [ ] **Linux/macOS (Avalonia)** — the handlers are not registered and the "Inject emulator config" menu is hidden: launching any game writes no Windows-style config and opens no injection dialog (LB-08); check that no files appear under `~/Documents` or next to the emulator binary.
 
 Per-emulator specifics:
 - [ ] **Ares** — config applied; dialog cancel aborts.
@@ -151,12 +153,14 @@ Shared flow per emulator (sample 3–4 in depth, then spot-check the rest):
 ## 7. Extraction, conversion & mounting **[Integration]**
 
 - [ ] **Extraction before launch** (`ExtractionService`) — 7z/ZIP/RAR ROM launches: multi-file archives, archives locked by antivirus (10×1 s retry), insufficient disk space, corrupted archive → 7-Zip fallback (`tools\SevenZip\`: `7za` on Windows, `7zz` on Linux) or failure box + partial cleanup, crafted zip-slip archive → "PotentialPathManipulation" box.
+- [ ] **Commander Genius launch** (`CommanderGeniusLaunchStrategy`) — archive extracted to `games/<zipname>` and CG opens the game; on Linux/macOS the data folder resolves to `~/.CommanderGenius` and no stray `~/Commander Genius` folder is created (LB-11); Windows keeps `Documents\Commander Genius`.
 - [ ] **CHD→CUE/BIN and PBP→CUE/BIN** (`DiscConverter`) — launch a CHD game on a CUE/BIN-only emulator → temp `.cue/.bin` in `%TEMP%\SimpleLauncher`, game boots, temp files cleaned after exit; same for PBP (PS1); corrupt file → error, no hang; huge files → 5-minute timeout path.
 - [ ] **RVZ/WBFS/GCZ→ISO** (via RetroAchievements hasher, `DiscConverter.ConvertToIsoAsync`) — GameCube/Wii game hashed → converted with `DolphinTool.exe`, temp ISO deleted afterwards.
 - [ ] **CHD mount** (`MountChdDrive`) — PSX game mounted via CHDMounter: exit game → mount process killed, drive letter disappears within ~20 s; kill CHDMounter externally while the game runs → unmount still cleans up; Dokan not installed → "Dokan driver not found" box.
 - [ ] **ISO mount** (`MountIsoFiles`) — PS3 ISO with `EBOOT.BIN` launches and the drive is dismounted after exit; ISO without EBOOT.BIN → error box + dismount; PowerShell execution-policy restricted → `UnabletomountIsOfile` box; 30 s timeout kill.
 - [ ] **XISO mount** (`MountXisoDrive`, `MountXisoFiles`) — original-Xbox XISO launches via Dokan; virtual drive letter (picked Z→D) is released after exit; missing `tools\SimpleXisoDrive\*.exe` → mount-error box; no free drive letter → error box; wrong XISO layout → timeout + error, no leaked process.
 - [ ] **External tools** (`ExternalToolLauncherService`) — run each tool from the UI: Create Batch Files (PS3/ScummVM/Windows/Xbox 360 XBLA), Batch Convert ISO→XISO, →CHD, →Compressed, →RVZ, Rom Validator, Find Rom Cover, Retro Game Cover Downloader — launches with correct folder/args; missing tool → "not found" box; UAC cancel (error 1223) → "canceled" box; corrupt exe → PE check rejects it.
+- [ ] **Linux/macOS launch pipeline (Avalonia)** — ZIP/7Z/RAR for ScummVM/RPCS3/XBLA extract to `%TEMP%/SimpleLauncher/ZipLaunch/<guid>` (upper-case ROM/EXE names found, Windows-authored `DIR\FILE.BIN` entries land in a real subfolder) and the temp folder is deleted after exit; a `.chd` for a non-DOSBox system is converted with CHDSharp and every temp file (including multi-track bins) is cleaned up (LB-19); a DOSBox `.iso`/`.chd` is `imgmount`ed directly or converted, with the temp conf deleted after exit; a mount service path on Linux logs a single Information-level "not supported on this platform" (no Warning, no bug report — LB-14); the `7zz` fallback extracts a broken 7z from a Debug build without a manual `chmod +x` (LB-15).
 
 ## 8. Game file watcher (5.6.0) — end-to-end flow
 
@@ -168,7 +172,7 @@ These checks cover the watcher's behavior through the running app (end to end):
 
 ## 9. Platform game scanners **[Integration]**
 
-Run "Scan for store games" after installing 1–2 real games per store. Verify per platform: shortcut created with correct name/protocol, cover image downloaded, DLC/tools (UE, redistributables) skipped, and re-running the scan is idempotent (no duplicate/corrupted shortcuts when two stores ship the same game name).
+Run "Scan for store games" after installing 1–2 real games per store. Verify per platform: shortcut created with correct name/protocol, cover image downloaded, DLC/tools (UE, redistributables) skipped, and re-running the scan is idempotent (no duplicate/corrupted shortcuts when two stores ship the same game name). On Linux/macOS the menu item is hidden and the click handler returns immediately, so no Windows ROM folders are created even if the handler is invoked programmatically (LB-22).
 
 - [ ] **Amazon** (`ScanAmazonGames`) — `amazon-games://play/{id}` URLs from the Amazon Games SQLite DB; DB locked → no crash.
 - [ ] **Battle.net** (`ScanBattleNetGames`) — WoW/Diablo IV etc. detected; classics (Diablo II, WC3) get working `.bat` launchers; titles not in the table skipped.
@@ -187,7 +191,7 @@ Run "Scan for store games" after installing 1–2 real games per store. Verify p
 
 - [ ] **Gamepad navigation — Windows** (`GamePadController`) — with Enable GamePad Navigation on: Xbox pad left stick moves the cursor, A = left click, B = right click, right stick scrolls; PS pad (DirectInput) behaves the same; unplug/replug → reconnects within ~5 s; dead-zone sliders filter stick drift; disabling the setting stops input; exiting the app with a pad connected → no crash.
 - [ ] **Gamepad navigation — Linux/macOS** (`SdlGamepadBackend` + `GamepadNavigationService`, Avalonia) — with Gamepad Support on: left stick/D-pad move the keyboard focus ring (held stick repeats after a delay), A activates the focused control, B opens the selected game's context menu or sends Escape, right stick scrolls the focused `ScrollViewer`; Xbox/PS/Switch pads and unknown joysticks work (SDL GameController mapping with a generic fallback); unplug/replug or a virtual `uinput` pad → reconnects within ~5 s and no Warning+ log is written; disabling the setting stops input. Verified on Ubuntu 24.04 GNOME Wayland with a `uinput` virtual Xbox 360 pad (no OS-level input permissions needed).
-- [ ] **Sounds** (`PlaySoundEffects`, `AudioInputService`) — click/notification/shutter/trash sounds play; disabling sounds in settings → silent; custom notification file plays; missing file → logged, no crash; rapid clicks → previous sound stops (no overlap, no leak).
+- [ ] **Sounds** (`PlaySoundEffects`, `AudioInputService`) — click/notification/shutter/trash sounds play; disabling sounds in settings → silent; custom notification file plays; missing file → logged, no crash; rapid clicks → previous sound stops (no overlap, no leak); on Linux/macOS MP3/WAV play with no extra packages, FLAC/Ogg/Opus need `libsndfile1`, and a missing library/device or corrupt file is logged at Information level (not Error).
 
 ## 11. RetroAchievements (app layer) **[Integration]**
 
@@ -195,7 +199,7 @@ Run "Scan for store games" after installing 1–2 real games per store. Verify p
 - [ ] **Credential protection** — saved RA/DuckStation credentials are stored encrypted (not plaintext); restart → credentials still load; moving settings to another user/machine → graceful null.
 - [ ] **Per-game window** (`RetroAchievementsForAGameWindow`, `RaAchievement`) — locked vs unlocked badges, 🏆 hardcore icon, "Hardcore/Casual/Not Earned" labels, rarity "X.X% hardcore", "Unknown" author fallback; remote badge URLs render (unreachable → blank, no hang).
 - [ ] **RA settings window** (`RetroAchievementsSettingsWindow` + VM) — save credentials → fields pre-filled on reopen; "Configure Emulator" writes login/token into the emulator config and reports success/failure; wrong password → clear error; restart → credentials retained.
-- [ ] **Emulator configurator** (`RetroAchievementsEmulatorConfiguratorService`) — for each supported emulator (RetroArch, PCSX2, DuckStation + encrypted token, PPSSPP + `.dat` session file, Dolphin, Flycast, BizHawk JSON): save credentials then verify the keys (username/token/hardcore) in the emulator's config; delete config → restored from `samples\`; read-only config → false + log, no crash.
+- [ ] **Emulator configurator** (`RetroAchievementsEmulatorConfiguratorService`, Windows only — the Emulator Integration section and the pre-launch config handlers are hidden/not registered on Linux/macOS) — for each supported emulator (RetroArch, PCSX2, DuckStation + encrypted token, PPSSPP + `.dat` session file, Dolphin, Flycast, BizHawk JSON): save credentials then verify the keys (username/token/hardcore) in the emulator's config; delete config → restored from `samples\`; read-only config → false + log, no crash.
 - [ ] **Hashing flow** (`RetroAchievementsHasherTool`) — RA icon on: (a) NES ROM → header-strip hash via the bundled RetroAchievementsSharp CLI tool, no dialog; (b) unknown-named system → system picker with pre-selected guess, cancel → "System selection cancelled"; (c) zipped PS1 game → hashed through the CLI (no extraction, no temp files left), temp cleaned; (d) GameCube `.rvz` → hashed directly (no ISO conversion, no temp ISO); (e) unsupported system (e.g. C64) → no RA icon shown.
 
 ## 12. Debug window & logging

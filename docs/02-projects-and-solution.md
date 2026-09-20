@@ -9,10 +9,10 @@
 |---|---|---|
 | `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
 | `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
-| `SimpleLauncher.Tests` | xUnit test project | ~152 test files; references `SimpleLauncher` (and transitively Core) |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | ~48 test files (534 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
+| `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (and transitively Core) |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (637 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
-| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux); phases 1–11 of [`References/AvaloniaPlan.md`](../References/AvaloniaPlan.md) done |
+| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux/macOS). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux/macOS get native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in the shared packs (`SimpleLauncher.Core\Localization\strings.*.json`) via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
 | `Tools\Mame.DatCreator` | WPF tool | Builds `mame.dat` (MessagePack) from MAME `-listxml` + software lists |
 | `Tools\RetroAchievements.DataFetcher` | CLI tool | Fetches the RA game database into `RetroAchievements.dat` |
@@ -59,7 +59,8 @@ Key properties:
 | Microsoft.Extensions.Http.Resilience | 10.10.0 | Polly retry policy on downloads |
 | Microsoft.Data.Sqlite / SourceGear.sqlite3 | 10.0.12 / 3.53.4 | SQLite (unified `settings.dat`, Amazon scan, Stella settings) |
 | SharpCompress | 0.50.4 | Archive extraction |
-| NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.1.0 | UI sound effects (Windows + Linux) |
+| NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.1.0 | UI sound effects (Windows + Linux/macOS) |
+| NLayer + NLayer.NAudioSupport | 3.0.0 | Managed MP3 decoding on Linux/macOS (`net10.0` TFM only; no libsndfile needed) |
 | SharpDX + XInput + DirectInput | 4.2.0 | Gamepad input (Windows) |
 | InputSimulatorCore | 1.0.5 | Mouse simulation from gamepad (Windows) |
 | Hexa.NET.SDL2 | 1.2.17 | Gamepad input on Linux/macOS (`net10.0` TFM only; bundles the native SDL2 binaries) |
@@ -81,12 +82,12 @@ Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangV
 
 ## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the cross-platform port)
 
-Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.1`, `UseWindowsForms=False`, version synced to the WPF app (5.8.0), `StartupObject = SimpleLauncher.Avalonia.Program`.
+Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.1`, `UseWindowsForms=False`, version synced to the WPF app (5.8.0), `StartupObject = SimpleLauncher.Avalonia.Program`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
 - **Windows-only services** (`#if WINDOWS`, `net10.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).
-- **Cross-platform services**: `AvaloniaTrayIconManager` (Avalonia `TrayIcon` + `NativeMenu`; `icon\icon.ico` copied to output), `AvaloniaFilePickerService`, `AvaloniaDispatcherService`, embedded JSON localization (manifest resources `SimpleLauncher.Avalonia.Resources.strings.*.json` sourced from `SimpleLauncher.Core\Localization`, 18 languages, 2669 keys each, all files in full key parity with `strings.en.json`).
-- Port status and remaining work: [`References/AvaloniaPlan.md`](../References/AvaloniaPlan.md) and [`References/TODO.md`](../References/TODO.md). All 44 windows and 21 `Inject*` dialogs are headless-smoke-tested via `AvaloniaViewSmokeTests` (45 window + 21 inject tests); `RetroAchievementsViewModel` and `RetroAchievementsSettingsViewModel` have full unit coverage in both WPF and Avalonia (30 + 19 tests).
+- **Cross-platform services**: `AvaloniaTrayIconManager` (Avalonia `TrayIcon` + `NativeMenu`; `icon\icon.ico` copied to output), `AvaloniaFilePickerService` (platform-aware filters, dialogs parented to the active window), `EmulatorConfigHandlerRegistration` (the 21 pre-launch config handlers are registered on Windows only), `AvaloniaDispatcherService`, embedded JSON localization (manifest resources `SimpleLauncher.Avalonia.Resources.strings.*.json` sourced from `SimpleLauncher.Core\Localization`, 18 languages, 2671 keys each, all files in full key parity with `strings.en.json`).
+- Remaining work is tracked in [`References/TODO.md`](../References/TODO.md). All 44 windows and 21 `Inject*` dialogs are headless-smoke-tested via `AvaloniaViewSmokeTests` (45 window + 21 inject tests); `RetroAchievementsViewModel` and `RetroAchievementsSettingsViewModel` have full unit coverage in both WPF and Avalonia (30 + 19 tests). The Linux regression suite pins every finding of the Linux review (LB-01 … LB-22) — see [14 — Testing](14-testing.md).
 
 ## Folder structure of the app project
 

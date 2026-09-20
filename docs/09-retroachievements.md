@@ -166,7 +166,7 @@ Missing/0-byte configs are restored from `samples\{emulatorFolderName}\{filename
 
 - `RetroAchievementsWindow` — browse profile, unlocks, completion progress.
 - `RetroAchievementsForAGameWindow` — per-game achievements/rankings/progress (badges, hardcore 🏆, rarity).
-- `RetroAchievementsSettingsWindow` — credentials + "Configure Emulator" for the 7 supported emulators.
+- `RetroAchievementsSettingsWindow` — credentials + "Configure Emulator" for the 7 supported emulators (the Emulator Integration section is hidden outside Windows: the configurator writes Windows config locations — LB-08).
 - `SystemSelectionWindow` — system picker when auto-matching is unsure.
 
 Credentials (username/API key/password/token) are stored **DPAPI-encrypted** in the unified `settings.dat` database (legacy: `settings.xml`) — see [05 — Configuration](05-configuration.md#credentials).

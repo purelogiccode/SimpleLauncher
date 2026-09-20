@@ -30,6 +30,16 @@ Serilog 4.4.0 (+ `Serilog.Sinks.Async` 2.1.0, `Serilog.Sinks.Debug` 3.0.0, `Seri
 
 The **Support Window** (`SupportWindow` + `SupportViewModel`) is the user-facing entry point: name/email/message validation, "Sending support request…" overlay, POST to the support API, and an emergency return button on the overlay.
 
+### Expected conditions (Information level)
+
+Project policy: expected environment/user conditions are logged at **Information**, never Warning/Error, so they are not forwarded to the bug-report API. Current examples:
+
+- **Audio** — missing `libsndfile`/`libasound`, no usable audio device, or a corrupt/unsupported sound file (`PlaySoundEffects.IsExpectedPlaybackFailure`; MP3/WAV use managed decoders, so the built-in sounds work without native packages).
+- **Mounting** — mounting Windows-only disc/archive images ("not supported on this platform") on Linux/macOS.
+- **Launching** — invalid/unlaunchable executables (Windows codes 193/216, Unix errno 8/13) and user-canceled elevation prompts.
+- **Updates** — GitHub 403/429, download timeouts after retry, updater "process not found".
+- **Files** — missing files on launch/delete.
+
 ## Log locations summary
 
 | Path | Content |

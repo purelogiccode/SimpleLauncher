@@ -5,7 +5,8 @@
 
 **Platform note:** storefront scanning reads the Windows registry and storefront install databases, so it only
 works on Windows. On Linux/macOS the Avalonia app returns an empty result, hides the **Scan for Microsoft Windows
-games** menu item, and skips the first-run scan (it goes straight to the Easy Mode prompt). A Linux-native game
+games** menu item, and skips the first-run scan (it goes straight to the Easy Mode prompt); the click handler and
+the scanners are guarded too, so even a programmatic invocation is a no-op (LB-22). A Linux-native game
 scanner would be a separate engine.
 
 ## Orchestration (`GameScannerService`)

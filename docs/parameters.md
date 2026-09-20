@@ -919,13 +919,13 @@ You can download this emulator on the [Official Website](https://clonekeenplus.s
 
 How to Set up Commander Genius<br>
 
-Commander Genius stores its data (config, saves, game files) in `Documents\Commander Genius\`. Games belong in the `games\` subfolder. Simple Launcher will automatically extract compressed game archives to this official location and launch them.<br>
+Commander Genius stores its data (config, saves, game files) in `Documents\Commander Genius\` on Windows and `~/.CommanderGenius/` on Linux/macOS. Games belong in the `games\` subfolder. Simple Launcher will automatically extract compressed game archives to this official location and launch them.<br>
 
 1. Install Commander Genius and extract it to a folder like `C:\Commander Genius`.<br>
 2. Compress each game folder (e.g., `keen4\`, `keen5\`) into a `.zip` file. The game folder must contain the original Commander Keen data files (`.CK1` to `.CK6` extensions).<br>
 3. Place the `.zip` files in your System Folder. The filename (without `.zip`) becomes the game folder name.<br>
 4. Use the settings above in Simple Launcher. When you select a game, Simple Launcher will automatically:
-   - Extract the `.zip` to `Documents\Commander Genius\games\<zipfilename>\`<br>
+   - Extract the `.zip` to `Documents\Commander Genius\games\<zipfilename>\` (`~/.CommanderGenius/games/<zipfilename>/` on Linux/macOS)<br>
    - Detect the game data folder inside the archive (even if nested)<br>
    - Launch CGenius with the correct `dir=` parameter and the official CG data path as working directory<br>
    - Clean up the extracted files after the game exits<br>

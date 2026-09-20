@@ -66,7 +66,9 @@ PID as the first argument and the target executable name (`SimpleLauncher.exe` o
 updater detects the target from the process name. It was built from the Avalonia codebase
 (cross-platform `net10.0` / `net10.0-windows`) and replaced the former WPF-specific updater.
 The updater excludes its own files (`Updater*`) during extraction so it can replace the
-applications while running.
+applications while running. Release-zip extraction is fail-closed against Zip-Slip: every entry
+must resolve under the destination root, with a case-sensitive (Ordinal) prefix comparison on
+Unix so a case-variant prefix (`/app/` vs `/APP/`) cannot pass.
 
 Behavior parity with the dropped WPF updater is intentional: same Serilog setup (rolling warning
 file + bug-report sink) and launch stats, same progress/log window with a Cancel button, the same

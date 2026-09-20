@@ -8,6 +8,7 @@
 - **Windows 10 or 11** (x64 or ARM64 — native ARM64 builds are provided).
 - **.NET 10 Desktop Runtime** (the app targets `net10.0-windows`, runtime `10.0.2`).
 - **Dokan** (optional but recommended) — required for on-the-fly mounting of `.iso`, `.xiso`, `.zip`, and universal CHD mounting. The app detects Dokan and shows a specific message when it is missing.
+- **Linux/macOS (Avalonia app):** the .NET 10 runtime; **`libasound2`** for audio output and the optional **`libsndfile1`** for FLAC/Ogg/Opus sound effects (MP3/WAV need no extra packages). Mounting tools are Windows-only — `.zip`/`.7z`/`.rar` launch extracts to a temp folder, CHD is converted on the fly, and `.iso` is mounted inside DOSBox.
 - A writable folder for the app (the launcher refuses to run from a temp folder and detects non-writable installs).
 - Your own **emulators and ROMs** (the launcher ships none).
 
