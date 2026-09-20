@@ -30,7 +30,7 @@ public class ScanAmazonGames : IGamePlatformScanner
         {
             var dbPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                @"Amazon Games\Data\Games\Sql\GameInstallInfo.sqlite");
+                "Amazon Games", "Data", "Games", "Sql", "GameInstallInfo.sqlite");
 
             if (!File.Exists(dbPath)) return;
 

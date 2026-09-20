@@ -29,6 +29,26 @@ public class MountXisoFiles : IMountXisoFiles
     {
         _logger.Debug($"[MountXisoFiles.MountAsync] Starting to mount ISO: {resolvedIsoFilePath}");
 
+        // SimpleXisoDrive and Dokan are Windows-only and the Linux/macOS release package prunes
+        // the Windows tools; check the platform before the tool path (LB-14).
+        if (!OperatingSystem.IsWindows())
+        {
+            const string errorMessage = "Mounting XISO is not supported on this platform.";
+            _logger.Debug($"[MountXisoFiles.MountAsync] {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return new MountXisoDrive(logErrors, _logger);
+        }
+
+        if (!DokanValidation.IsDokanInstalled())
+        {
+            const string errorMessage = "Dokan driver not found. Cannot mount ISO.";
+            _logger.Debug($"[MountXisoFiles.MountAsync] Error: {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return new MountXisoDrive(logErrors, _logger);
+        }
+
         var toolRelativePath = GetToolPath();
         var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(toolRelativePath);
 
@@ -40,15 +60,6 @@ public class MountXisoFiles : IMountXisoFiles
             _logger.Debug($"[MountXisoFiles.MountAsync] Error: {errorMessage}");
             logErrors.Warning(errorMessage);
             await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
-            return new MountXisoDrive(logErrors, _logger);
-        }
-
-        if (!OperatingSystem.IsWindows() || !DokanValidation.IsDokanInstalled())
-        {
-            const string errorMessage = "Dokan driver not found. Cannot mount ISO.";
-            _logger.Debug($"[MountXisoFiles.MountAsync] Error: {errorMessage}");
-            logErrors.Information(errorMessage);
-            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
             return new MountXisoDrive(logErrors, _logger);
         }
 

@@ -1,9 +1,9 @@
 #if WINDOWS
 using SimpleLauncher.Avalonia.Services.TakeScreenshot;
 using AvaloniaWindowScreenshot = SimpleLauncher.Avalonia.Services.TakeScreenshot.WindowScreenshot;
-#endif
-// ReSharper disable once RedundantUsingDirective
+// WindowManager is compiled out of the Linux/macOS assembly (LB-12), so the alias is too.
 using CoreWindowManager = SimpleLauncher.Core.Services.TakeScreenshot.WindowManager;
+#endif
 using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;

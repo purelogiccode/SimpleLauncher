@@ -242,16 +242,34 @@ public class ChdMountStrategy : ILaunchStrategy
     }
 
     /// <summary>
-    ///     Deletes the temporary files produced by a chdman conversion (the CUE and its BIN
-    ///     sibling, or the ISO).
+    ///     Deletes the temporary files produced by a chdman/CHDSharp conversion. Multi-track and
+    ///     GD-ROM conversions produce per-track <c>.bin</c> files in addition to the CUE/BIN pair,
+    ///     so everything sharing the conversion's unique base name is removed (LB-19).
     /// </summary>
-    private void CleanupConvertedFiles(string convertedPath)
-    {
-        try
+    internal void CleanupConvertedFiles(string convertedPath)
+    {        try
         {
-            var binPath = Path.ChangeExtension(convertedPath, ".bin");
-            if (File.Exists(convertedPath)) File.Delete(convertedPath);
-            if (File.Exists(binPath)) File.Delete(binPath);
+            var directory = Path.GetDirectoryName(convertedPath);
+            if (string.IsNullOrEmpty(directory))
+            {
+                if (File.Exists(convertedPath)) File.Delete(convertedPath);
+                _logger.Debug($"Cleaned up temporary CHD conversion files: {convertedPath}");
+                return;
+            }
+
+            var baseName = Path.GetFileNameWithoutExtension(convertedPath);
+            foreach (var file in Directory.EnumerateFiles(directory, baseName + "*"))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug($"Failed to delete temporary CHD file '{file}': {ex.Message}");
+                }
+            }
+
             _logger.Debug($"Cleaned up temporary CHD conversion files: {convertedPath}");
         }
         catch (Exception ex)

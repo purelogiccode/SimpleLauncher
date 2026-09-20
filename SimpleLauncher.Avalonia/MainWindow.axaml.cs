@@ -2498,6 +2498,10 @@ public partial class MainWindow : Window, IPaginationHost
 
     private async void ScanForMicrosoftWindowsGames_ClickAsync(object? sender, RoutedEventArgs e)
     {
+        // Storefront scanners read the Windows registry/store databases and the command is
+        // hidden elsewhere; stay safe if it is invoked programmatically on Linux/macOS (LB-22).
+        if (!OperatingSystem.IsWindows()) return;
+
         try
         {
             Log.Information("Scanning for Windows Store games");

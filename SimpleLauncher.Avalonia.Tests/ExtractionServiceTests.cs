@@ -72,5 +72,90 @@ public class ExtractionServiceTests
             Directory.Delete(folder.FullName, true);
         }
     }
+
+    [Fact]
+    public async Task ExtractToTempFolderAsync_NormalizesWindowsBackslashEntryNames()
+    {
+        var folder = Directory.CreateTempSubdirectory("sl-extract-backslash-");
+        string? tempDir = null;
+        try
+        {
+            var zipPath = Path.Combine(folder.FullName, "game.zip");
+            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                using (var stream = archive.CreateEntry(@"DATA\GAME.BIN").Open())
+                    stream.WriteByte(1);
+                using (var stream = archive.CreateEntry("README.TXT").Open())
+                    stream.WriteByte(2);
+            }
+
+            var service = new ExtractionService(
+                TestDependencies.MessageBox().Object, TestDependencies.Logger().Object);
+
+            // LB-16: Windows-authored archives store "DIR\FILE.BIN"; on Linux the entry used to
+            // extract as one flat file literally named "DATA\GAME.BIN".
+            var (launchFile, extractedTempDir) = await service.ExtractToTempAndGetLaunchFileAsync(zipPath, [".bin"]);
+            tempDir = extractedTempDir;
+
+            Assert.NotNull(launchFile);
+            Assert.Equal(Path.Combine("DATA", "GAME.BIN"), Path.GetRelativePath(tempDir!, launchFile));
+            Assert.True(File.Exists(Path.Combine(tempDir!, "DATA", "GAME.BIN")));
+
+            // On Unix the un-normalized entry would have produced a flat file whose name
+            // contains a literal backslash.
+            if (!OperatingSystem.IsWindows())
+                Assert.False(File.Exists(Path.Combine(tempDir!, @"DATA\GAME.BIN")));
+        }
+        finally
+        {
+            if (tempDir is not null)
+            {
+                try
+                {
+                    Directory.Delete(tempDir, true);
+                }
+                catch
+                {
+                    // best-effort cleanup
+                }
+            }
+
+            Directory.Delete(folder.FullName, true);
+        }
+    }
+
+    [Fact]
+    public void NormalizeArchiveEntryName_ReplacesBackslashesWithThePlatformSeparator()
+    {
+        Assert.Equal(Path.Combine("DIR", "FILE.BIN"), ExtractionService.NormalizeArchiveEntryName(@"DIR\FILE.BIN"));
+        Assert.Equal(Path.Combine("A", "B", "C.bin"), ExtractionService.NormalizeArchiveEntryName(@"A\B\C.bin"));
+        Assert.Equal("GAME.EXE", ExtractionService.NormalizeArchiveEntryName("GAME.EXE"));
+    }
+
+    [Fact]
+    public void EnsureExecuteBits_AddsTheExecuteBitsOnUnix()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        // LB-15: git stores tools/SevenZip/7zz as 100644; the extraction fallback must fix
+        // the mode before starting the process or it fails with EACCES.
+        var file = Path.Combine(Path.GetTempPath(), $"sl-execbit-{Guid.NewGuid():N}");
+        File.WriteAllText(file, "#!/bin/sh\n");
+        try
+        {
+            File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
+            ExtractionService.EnsureExecuteBits(file);
+
+            var mode = File.GetUnixFileMode(file);
+            Assert.True(mode.HasFlag(UnixFileMode.UserExecute));
+            Assert.True(mode.HasFlag(UnixFileMode.GroupExecute));
+            Assert.True(mode.HasFlag(UnixFileMode.OtherExecute));
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
 }
 

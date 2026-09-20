@@ -559,7 +559,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var emulatorPathNotConfiguredDetails2 =
             _resourceProvider.GetString("EmulatorPathNotConfiguredDetails2", "This typically happens when:");
         var emulatorPathNotConfiguredDetails3 = _resourceProvider.GetString("EmulatorPathNotConfiguredDetails3",
-            "- The system was configured to run directly executable files (.bat, .exe, .lnk)");
+            "- The system was configured to run executable files directly.");
         var emulatorPathNotConfiguredDetails4 = _resourceProvider.GetString("EmulatorPathNotConfiguredDetails4",
             "- But you are trying to launch a file that requires an emulator");
         var emulatorPathNotConfiguredDetails5 = _resourceProvider.GetString("EmulatorPathNotConfiguredDetails5",
@@ -758,13 +758,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     public Task MoveToWritableFolderMessageBoxAsync()
     {
         var itlookslikeSimpleLauncherisinstalled = _resourceProvider.GetString("ItlookslikeSimpleLauncherisinstalled",
-            "It looks like 'Simple Launcher' is installed in a restricted folder (e.g., Program Files), where it does not have write access.");
+            "It looks like 'Simple Launcher' is installed in a folder where it does not have write access.");
         var itneedswriteaccesstoitsfolder =
             _resourceProvider.GetString("Itneedswriteaccesstoitsfolder", "It needs write access to its folder.");
         var pleasemovetheapplicationfolder = _resourceProvider.GetString("Pleasemovetheapplicationfolder",
-            "Please move the application folder to a writable location like the 'Documents' folder.");
+            "Please move the application folder to a writable location (e.g., your home folder).");
         var ifpossiblerunitwithadministrative = _resourceProvider.GetString("Ifpossiblerunitwithadministrative",
-            "If possible, run it with administrative privileges.");
+            "If possible, run it with elevated privileges.");
         var warning = _resourceProvider.GetString("Warning", "Warning");
         return _messageDialog.ShowWarningAsync($"{itlookslikeSimpleLauncherisinstalled}\n\n" +
                                                $"{itneedswriteaccesstoitsfolder}\n\n" +

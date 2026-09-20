@@ -51,4 +51,22 @@ public class ExecutableFileFilterTests
         Assert.Equal("All Executables", types[1].Name);
         Assert.Contains("*.exe", types[1].Patterns!, StringComparer.Ordinal);
     }
+
+    [Fact]
+    public void ParseFilter_KeepsSpecificFiltersWhenAnAllFilesEntryIsPresent()
+    {
+        // "All files|*.*" in the middle of the list must not drop the whole filter list (LB-10):
+        // the MP3 entry has to survive so the dialog does not show every file.
+        var types = AvaloniaFilePickerService.ParseFilter("MP3 files (*.mp3)|*.mp3|All files (*.*)|*.*");
+
+        var type = Assert.Single(types!);
+        Assert.Equal("MP3 files (*.mp3)", type.Name);
+        Assert.Contains("*.mp3", type.Patterns!, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ParseFilter_AllFilesOnly_ReturnsNoFilter()
+    {
+        Assert.Null(AvaloniaFilePickerService.ParseFilter("All files (*.*)|*.*"));
+    }
 }

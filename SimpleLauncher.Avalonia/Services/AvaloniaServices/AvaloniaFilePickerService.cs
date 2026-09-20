@@ -55,14 +55,18 @@ public class AvaloniaFilePickerService : IFilePickerService
         return file?.TryGetLocalPath();
     }
 
+    /// <summary>
+    ///     Resolves the window a picker dialog should be modal to. The currently active window
+    ///     wins so dialogs opened from child windows (RA settings, Edit System, image pack) are
+    ///     parented to the caller instead of always the MainWindow — on Wayland/GNOME the
+    ///     portal can otherwise appear behind the active window (LB-21).
+    /// </summary>
     private static Window? GetOwnerWindow()
     {
-        return Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
-        {
-            MainWindow: { } window
-        }
-            ? window
-            : null;
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return null;
+
+        return desktop.Windows.FirstOrDefault(static window => window.IsActive) ?? desktop.MainWindow;
     }
 
     /// <summary>
@@ -86,8 +90,10 @@ public class AvaloniaFilePickerService : IFilePickerService
 
             if (patterns.Count == 0) continue;
 
-            // "All files|*.*" maps to the built-in all-files type (null filter on Windows).
-            if (patterns.All(p => string.Equals(p, "*.*", StringComparison.Ordinal))) return null;
+            // "All files|*.*" maps to the built-in all-files type (null filter); skip it and
+            // keep any specific filters around it — returning null here used to drop the whole
+            // list (e.g. "MP3 files|*.mp3|All files|*.*" lost its MP3 entry) (LB-10).
+            if (patterns.All(p => string.Equals(p, "*.*", StringComparison.Ordinal))) continue;
 
             types.Add(new FilePickerFileType(name) { Patterns = patterns });
         }

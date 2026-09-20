@@ -1,9 +1,12 @@
+#if WINDOWS
 using System.Runtime.InteropServices;
 
 namespace SimpleLauncher.Core.Services.TakeScreenshot;
 
 /// <summary>
 ///     Provides methods to enumerate visible open windows using Win32 API calls.
+///     Windows-only: the file is compiled out of the net10.0 (Linux/macOS) assembly so
+///     the unguarded user32.dll P/Invokes can never be reached there (LB-12).
 /// </summary>
 public static class WindowManager
 {
@@ -45,3 +48,4 @@ public static class WindowManager
 
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 }
+#endif

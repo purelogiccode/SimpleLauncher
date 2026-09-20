@@ -240,6 +240,15 @@ public static partial class PathHelper
         else
         {
             basePath = AppDomain.CurrentDomain.BaseDirectory;
+
+            // A migrated/hand-edited value like "tools\retroarch\retroarch" uses Windows
+            // separators; backslashes are ordinary characters on Unix, so the whole string
+            // would resolve to one file name and the emulator is reported missing (LB-13).
+            if (!OperatingSystem.IsWindows())
+            {
+                remainingPath = remainingPath.Replace('\\', Path.DirectorySeparatorChar);
+                remainingPath = remainingPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
         }
 
         try

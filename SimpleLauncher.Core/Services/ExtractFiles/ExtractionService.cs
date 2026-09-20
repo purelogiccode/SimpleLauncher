@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Text;
 using SharpCompress.Archives;
@@ -417,8 +418,9 @@ public class ExtractionService : IExtractionService
 
                     if (entry.Key != null)
                     {
-                        var fullDestPath = Path.GetFullPath(Path.Combine(fullTempDir, entry.Key));
-                        if (!fullDestPath.StartsWith(fullTempDir, StringComparison.OrdinalIgnoreCase))
+                        var fullDestPath = Path.GetFullPath(
+                            Path.Combine(fullTempDir, NormalizeArchiveEntryName(entry.Key)));
+                        if (!fullDestPath.StartsWith(fullTempDir, ArchivePathComparison))
                         {
                             throw new SecurityException(
                                 $"Potential path traversal detected in archive entry: {entry.Key}");
@@ -433,7 +435,7 @@ public class ExtractionService : IExtractionService
 
                     if (entry.Key != null)
                     {
-                        var destinationPath = Path.Combine(tempDirectory, entry.Key);
+                        var destinationPath = Path.Combine(tempDirectory, NormalizeArchiveEntryName(entry.Key));
                         var directory = Path.GetDirectoryName(destinationPath);
                         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                             Directory.CreateDirectory(directory);
@@ -496,6 +498,49 @@ public class ExtractionService : IExtractionService
         return architecture == Architecture.Arm64 ? "7zz_arm64" : "7zz";
     }
 
+    /// <summary>
+    ///     Archive entry names authored on Windows use backslashes ("DIR\FILE.BIN"); on Unix
+    ///     they are ordinary characters, so the entry would extract as a single flat file with
+    ///     a literal backslash in its name. Normalize to the platform separator before
+    ///     combining or validating destinations (LB-16).
+    /// </summary>
+    internal static string NormalizeArchiveEntryName(string entryKey)
+    {
+        return entryKey.Contains('\\') ? entryKey.Replace('\\', Path.DirectorySeparatorChar) : entryKey;
+    }
+
+    private static StringComparison ArchivePathComparison =>
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+    /// <summary>
+    ///     Adds the execute bits to a file on Unix (best effort): git stores the bundled 7zz
+    ///     as 100644 and only release packaging restores it, so Debug/dotnet-run builds would
+    ///     fail with EACCES — swallowed at Debug level, leaving only a generic extraction
+    ///     error (LB-15).
+    /// </summary>
+    [UnsupportedOSPlatform("windows")]
+    internal static void EnsureExecuteBits(string exePath)
+    {
+        const UnixFileMode executeBits =
+            UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+        var mode = File.GetUnixFileMode(exePath);
+        if ((mode & executeBits) != executeBits)
+            File.SetUnixFileMode(exePath, mode | executeBits);
+    }
+
+    [UnsupportedOSPlatform("windows")]
+    private void TryMakeExecutable(string exePath)
+    {
+        try
+        {
+            EnsureExecuteBits(exePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[ExtractionService] Could not set the execute bit on {exePath}: {ex.Message}");
+        }
+    }
+
     private async Task<bool> ExtractWith7ZipAsync(string archivePath, string destinationFolder)
     {
         var exeName = GetSevenZipExecutableName(RuntimeInformation.ProcessArchitecture, OperatingSystem.IsWindows());
@@ -505,6 +550,11 @@ public class ExtractionService : IExtractionService
         {
             _logger.Debug($"[ExtractionService] 7-Zip executable not found at: {exePath}");
             return false;
+        }
+
+        if (!OperatingSystem.IsWindows())
+        {
+            TryMakeExecutable(exePath);
         }
 
         try
@@ -594,7 +644,8 @@ public class ExtractionService : IExtractionService
         string entryDestinationPath;
         try
         {
-            entryDestinationPath = Path.GetFullPath(Path.Combine(resolvedDestinationFolder, entryKey));
+            entryDestinationPath = Path.GetFullPath(
+                Path.Combine(resolvedDestinationFolder, NormalizeArchiveEntryName(entryKey)));
         }
         catch
         {
@@ -605,7 +656,7 @@ public class ExtractionService : IExtractionService
         if (fullDestPath == null)
             return null;
 
-        if (!fullDestPath.StartsWith(fullResolvedDestFolder, StringComparison.OrdinalIgnoreCase))
+        if (!fullDestPath.StartsWith(fullResolvedDestFolder, ArchivePathComparison))
             return null;
 
         return entryDestinationPath;

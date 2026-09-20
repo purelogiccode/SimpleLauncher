@@ -13,7 +13,7 @@ namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 /// </summary>
 public class MountChdFiles : IMountChdFiles
 {
-    private const string ChdMounterRelativeDirectory = @"tools\CHDMounter";
+    private static readonly string ChdMounterRelativeDirectory = Path.Combine("tools", "CHDMounter");
 
     private readonly ILogger _logger;
 
@@ -36,6 +36,27 @@ public class MountChdFiles : IMountChdFiles
         _logger.Debug(
             $"[MountChdFiles.MountAsync] Starting to mount CHD: {resolvedChdFilePath} (ConsoleAlias: {consoleAlias ?? "default"})");
 
+        // CHDMounter and Dokan are Windows-only and the Linux/macOS release package prunes
+        // the Windows tools; check the platform before the tool path so Linux gets the
+        // graceful path instead of a "CHDMounter not found" Warning (LB-14).
+        if (!OperatingSystem.IsWindows())
+        {
+            const string errorMessage = "Mounting CHD is not supported on this platform.";
+            _logger.Debug($"[MountChdFiles.MountAsync] {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return new MountChdDrive(logErrors, _logger);
+        }
+
+        if (!DokanValidation.IsDokanInstalled())
+        {
+            const string errorMessage = "Dokan driver not found. Cannot mount CHD.";
+            _logger.Debug($"[MountChdFiles.MountAsync] Error: {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return new MountChdDrive(logErrors, _logger);
+        }
+
         var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(ChdMounterRelativePath);
 
         _logger.Debug($"[MountChdFiles.MountAsync] Path to CHDMounter: {resolvedToolPath}");
@@ -46,15 +67,6 @@ public class MountChdFiles : IMountChdFiles
             _logger.Debug($"[MountChdFiles.MountAsync] Error: {errorMessage}");
             logErrors.Warning(errorMessage);
             await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
-            return new MountChdDrive(logErrors, _logger);
-        }
-
-        if (!OperatingSystem.IsWindows() || !DokanValidation.IsDokanInstalled())
-        {
-            const string errorMessage = "Dokan driver not found. Cannot mount CHD.";
-            _logger.Debug($"[MountChdFiles.MountAsync] Error: {errorMessage}");
-            logErrors.Information(errorMessage);
-            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
             return new MountChdDrive(logErrors, _logger);
         }
 
@@ -167,6 +179,25 @@ public class MountChdFiles : IMountChdFiles
         _logger.Debug($"[MountChdFiles] Starting to mount CHD for game loading: {resolvedChdFilePath}");
         _logger.Debug($"[MountChdFiles] System: {selectedSystemName}, Emulator: {selectedEmulatorName}");
 
+        // Platform first: the Windows tools are pruned from the Linux/macOS package (LB-14).
+        if (!OperatingSystem.IsWindows())
+        {
+            const string errorMessage = "Mounting CHD is not supported on this platform.";
+            _logger.Debug($"[MountChdFiles] {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return;
+        }
+
+        if (!DokanValidation.IsDokanInstalled())
+        {
+            const string errorMessage = "Dokan driver not found. Cannot mount CHD.";
+            _logger.Debug($"[MountChdFiles] Error: {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return;
+        }
+
         var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(ChdMounterRelativePath);
 
         _logger.Debug($"[MountChdFiles] Path to CHDMounter: {resolvedToolPath}");
@@ -177,15 +208,6 @@ public class MountChdFiles : IMountChdFiles
             _logger.Debug($"[MountChdFiles] Error: {errorMessage}");
             logErrors.Warning(errorMessage);
             await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
-            return;
-        }
-
-        if (!OperatingSystem.IsWindows() || !DokanValidation.IsDokanInstalled())
-        {
-            const string errorMessage = "Dokan driver not found. Cannot mount CHD.";
-            _logger.Debug($"[MountChdFiles] Error: {errorMessage}");
-            logErrors.Information(errorMessage);
-            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
             return;
         }
 
@@ -377,6 +399,25 @@ public class MountChdFiles : IMountChdFiles
         _logger.Debug(
             $"[MountChdFiles] System: {selectedSystemName}, Emulator: {selectedEmulatorName}, ConsoleAlias: {consoleAlias ?? "auto"}");
 
+        // Platform first: the Windows tools are pruned from the Linux/macOS package (LB-14).
+        if (!OperatingSystem.IsWindows())
+        {
+            const string errorMessage = "Mounting CHD is not supported on this platform.";
+            _logger.Debug($"[MountChdFiles] {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return;
+        }
+
+        if (!DokanValidation.IsDokanInstalled())
+        {
+            const string errorMessage = "Dokan driver not found. Cannot mount CHD.";
+            _logger.Debug($"[MountChdFiles] Error: {errorMessage}");
+            logErrors.Information(errorMessage);
+            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
+            return;
+        }
+
         var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(ChdMounterRelativePath);
 
         _logger.Debug($"[MountChdFiles] Path to CHDMounter: {resolvedToolPath}");
@@ -387,15 +428,6 @@ public class MountChdFiles : IMountChdFiles
             _logger.Debug($"[MountChdFiles] Error: {errorMessage}");
             logErrors.Warning(errorMessage);
             await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
-            return;
-        }
-
-        if (!OperatingSystem.IsWindows() || !DokanValidation.IsDokanInstalled())
-        {
-            const string errorMessage = "Dokan driver not found. Cannot mount CHD.";
-            _logger.Debug($"[MountChdFiles] Error: {errorMessage}");
-            logErrors.Information(errorMessage);
-            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
             return;
         }
 
@@ -814,17 +846,14 @@ public class MountChdFiles : IMountChdFiles
 
     /// <summary>
     ///     Determines the CHDMounter executable relative path based on the current process architecture.
+    ///     Only x64/arm64 builds of the Windows tool exist; anything else falls back to the x64
+    ///     name so DI construction stays inert and the tool check reports the problem (LB-14).
     /// </summary>
     private static string GetArchitectureSpecificExecutableRelativePath()
     {
-        var arch = RuntimeInformation.ProcessArchitecture;
-
-        var executableName = arch switch
-        {
-            Architecture.X64 => "CHDMounter.exe",
-            Architecture.Arm64 => "CHDMounter_arm64.exe",
-            _ => throw new PlatformNotSupportedException($"Architecture {arch} is not supported by CHDMounter.")
-        };
+        var executableName = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? "CHDMounter_arm64.exe"
+            : "CHDMounter.exe";
 
         return Path.Combine(ChdMounterRelativeDirectory, executableName);
     }

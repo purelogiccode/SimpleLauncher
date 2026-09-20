@@ -47,12 +47,22 @@ public static class CheckApplicationControlPolicyService
     /// <returns>True if the executable is not a valid application for this OS platform, false otherwise.</returns>
     public static bool IsInvalidExecutableFormat(Exception ex)
     {
+        if (ex is not Win32Exception win32Ex) return false;
+
+        if (!OperatingSystem.IsWindows())
+        {
+            // .NET on Unix surfaces the raw errno through Win32Exception.NativeErrorCode:
+            // 8 = ENOEXEC (not a valid executable for this platform), 13 = EACCES (file is
+            // not marked executable / permission denied) (LB-18).
+            return win32Ex.NativeErrorCode is 8 or 13;
+        }
+
         // Win32 error code 193 (ERROR_BAD_EXE_FORMAT): "The specified executable is not a valid
         // application for this OS platform." Common when launching a non-Win32 or wrong-architecture binary.
         // 216 (ERROR_EXE_MACHINE_TYPE_MISMATCH) is what modern .NET reports for Process.Start on the
         // same condition (reproduced on Windows 10/11 with a non-PE file named .exe) — checking only
         // 193 let those launches through to the generic error path (bugs #65467 and #66951).
-        return ex is Win32Exception { NativeErrorCode: 193 or 216 };
+        return win32Ex.NativeErrorCode is 193 or 216;
     }
 
     /// <summary>

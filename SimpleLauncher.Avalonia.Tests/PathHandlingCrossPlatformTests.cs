@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.CleanAndDeleteFiles;
 
@@ -121,5 +123,33 @@ public class PathHandlingCrossPlatformTests
         {
             folder.Delete(true);
         }
+    }
+
+    [Fact]
+    public void ResolveRelativeToAppDirectory_BareRelativeWindowsSeparatorsResolveInsideAppDirectory()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        // LB-13: a migrated/hand-edited value like "tools\retroarch\retroarch" must not become
+        // one file name containing backslashes — it resolves inside the app directory.
+        var result = PathHelper.ResolveRelativeToAppDirectory(@"tools\retroarch\retroarch");
+
+        Assert.Equal(
+            Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "retroarch", "retroarch")),
+            result);
+    }
+
+    [Fact]
+    public void IsInvalidExecutableFormat_MapsUnixErrnoOnNonWindows()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        // LB-18: .NET on Unix surfaces the errno through Win32Exception.NativeErrorCode —
+        // 8 = ENOEXEC, 13 = EACCES. Windows error codes must not be mapped here (8 and 13
+        // mean different things on Windows).
+        Assert.True(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(new Win32Exception(8)));
+        Assert.True(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(new Win32Exception(13)));
+        Assert.False(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(new Win32Exception(2)));
+        Assert.False(CheckApplicationControlPolicyService.IsInvalidExecutableFormat(new InvalidOperationException()));
     }
 }

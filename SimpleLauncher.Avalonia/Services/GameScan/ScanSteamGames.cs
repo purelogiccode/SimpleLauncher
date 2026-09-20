@@ -72,7 +72,7 @@ public class ScanSteamGames : IGamePlatformScanner
             }
 
             // Fix separators
-            steamPath = steamPath.Replace('/', '\\');
+            steamPath = steamPath.Replace('/', Path.DirectorySeparatorChar);
 
             // 1. Add Default Library
             libraryPaths.Add(Path.Combine(steamPath, "steamapps"));

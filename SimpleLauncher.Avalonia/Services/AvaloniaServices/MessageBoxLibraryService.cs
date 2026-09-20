@@ -2693,13 +2693,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     {
         if (O == null) return Task.CompletedTask;
         var itlookslikeSimpleLauncherisinstalled = _localization.GetString("ItlookslikeSimpleLauncherisinstalled",
-            "It looks like 'Simple Launcher' is installed in a restricted folder (e.g., Program Files), where it does not have write access.");
+            "It looks like 'Simple Launcher' is installed in a folder where it does not have write access.");
         var itneedswriteaccesstoitsfolder =
             _localization.GetString("Itneedswriteaccesstoitsfolder", "It needs write access to its folder.");
         var pleasemovetheapplicationfolder = _localization.GetString("Pleasemovetheapplicationfolder",
-            "Please move the application folder to a writable location like the 'Documents' folder.");
+            "Please move the application folder to a writable location (e.g., your home folder).");
         var ifpossiblerunitwithadministrative = _localization.GetString("Ifpossiblerunitwithadministrative",
-            "If possible, run it with administrative privileges.");
+            "If possible, run it with elevated privileges.");
         var warning = _localization.GetString("Warning", "Warning");
         return ShowAsync(O, $"{itlookslikeSimpleLauncherisinstalled}\n\n{itneedswriteaccesstoitsfolder}\n\n" +
                             $"{pleasemovetheapplicationfolder}\n\n{ifpossiblerunitwithadministrative}", warning,
@@ -3857,7 +3857,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var emulatorPathNotConfiguredDetails2 =
             _localization.GetString("EmulatorPathNotConfiguredDetails2", "This typically happens when:");
         var emulatorPathNotConfiguredDetails3 = _localization.GetString("EmulatorPathNotConfiguredDetails3",
-            "- The system was configured to run directly executable files (.bat, .exe, .lnk)");
+            "- The system was configured to run executable files directly.");
         var emulatorPathNotConfiguredDetails4 = _localization.GetString("EmulatorPathNotConfiguredDetails4",
             "- But you are trying to launch a file that requires an emulator");
         var emulatorPathNotConfiguredDetails5 = _localization.GetString("EmulatorPathNotConfiguredDetails5",

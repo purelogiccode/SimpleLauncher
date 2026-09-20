@@ -987,17 +987,16 @@ public class MountZipFiles : IMountZipFiles
         }
     }
 
+    /// <summary>
+    ///     Determines the SimpleZipDrive executable name based on the current process architecture.
+    ///     Only x64/arm64 builds of the Windows tool exist; anything else falls back to the x64
+    ///     name so DI construction stays inert and the tool check reports the problem (LB-14).
+    /// </summary>
     private static string GetArchitectureSpecificExecutableName()
     {
-        var arch = RuntimeInformation.ProcessArchitecture;
-
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        return arch switch
-        {
-            Architecture.X64 => "SimpleZipDrive.exe",
-            Architecture.Arm64 => "SimpleZipDrive_arm64.exe",
-            _ => throw new PlatformNotSupportedException($"Architecture {arch} is not supported by SimpleZipDrive.")
-        };
+        return RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? "SimpleZipDrive_arm64.exe"
+            : "SimpleZipDrive.exe";
     }
 
     private static string GetExitCodeReason(int exitCode)

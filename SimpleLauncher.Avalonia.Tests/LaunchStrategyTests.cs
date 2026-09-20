@@ -180,6 +180,32 @@ public class LaunchStrategyTests
         Assert.False(strategy.IsMatch(Context(@"C:\games\keen4.exe", "Commander Genius")));
     }
 
+    [Fact]
+    public void CommanderGenius_UnixDataPath_UsesDotCommanderGeniusUnderHome()
+    {
+        // Construct the strategy first: the path probe logs through its static logger.
+        _ = new CommanderGeniusLaunchStrategy(
+            new Mock<IExtractionService>().Object, TestEnvironment.ConfigurationFromJson("{}"),
+            TestDependencies.MessageBox().Object, TestDependencies.Logger().Object);
+
+        var homePath = Directory.CreateTempSubdirectory("sl-cg-home-").FullName;
+        try
+        {
+            // LB-11: on Linux Environment.SpecialFolder.MyDocuments maps to $HOME, which used
+            // to create a stray ~/Commander Genius folder; CG stores its data in
+            // ~/.CommanderGenius there.
+            var dataPath = CommanderGeniusLaunchStrategy.GetUnixCommanderGeniusDataPath(homePath);
+
+            Assert.Equal(Path.Combine(homePath, ".CommanderGenius"), dataPath);
+            Assert.True(Directory.Exists(dataPath));
+            Assert.False(Directory.Exists(Path.Combine(homePath, "Commander Genius")));
+        }
+        finally
+        {
+            Directory.Delete(homePath, true);
+        }
+    }
+
     // ── Priority ordering (full 8-strategy pipeline, same as the WPF app) ──
 
     [Fact]

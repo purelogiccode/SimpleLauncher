@@ -257,6 +257,35 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ManualCheck_UpdaterZipCaseVariantTraversal_AbortsOnUnix()
+    {
+        if (OperatingSystem.IsWindows()) return; // case-insensitive filesystem: the variant is the same folder
+
+        // LB-17: on a case-sensitive filesystem a case-variant prefix ("/app/" vs "/APP/")
+        // must not pass the containment test — OrdinalIgnoreCase used to accept it.
+        var destinationName = Path.GetFileName(_updaterDir);
+        var caseVariantEntry = $"../{destinationName.ToUpperInvariant()}/evil.txt";
+
+        var (service, messageBox, lifetime) = CreateService(request =>
+        {
+            if (request.RequestUri!.Host.StartsWith("api.github.com", StringComparison.Ordinal))
+                return Json(LatestReleaseAssetsJson("v9.9.9"));
+
+            return Zip(CreateZip((caseVariantEntry, "pwned"u8.ToArray())));
+        });
+
+        messageBox.Setup(m => m.DoYouWantToUpdateMessageBoxAsync(It.IsAny<string>(), "9.9.9.0"))
+            .ReturnsAsync(CoreMessageBoxResult.Yes);
+
+        await service.ManualCheckForUpdatesAsync(null);
+
+        Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName(_updaterDir)!,
+            destinationName.ToUpperInvariant(), "evil.txt")));
+        messageBox.Verify(m => m.InstallUpdateManuallyMessageBoxAsync(), Times.Once);
+        lifetime.Verify(m => m.Shutdown(), Times.Never);
+    }
+
+    [Fact]
     public async Task ManualCheck_UpdaterAssetMissingFromRelease_ShowsManual()
     {
         var (service, messageBox, lifetime) = CreateService(_ =>

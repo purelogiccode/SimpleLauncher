@@ -234,12 +234,48 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
         }
     }
 
-    private static string? GetCommanderGeniusDataPath(string? emulatorLocation = null)
+    internal static string? GetCommanderGeniusDataPath(string? emulatorLocation = null)
+    {
+        // On Linux Environment.SpecialFolder.MyDocuments maps to $HOME, so the Windows
+        // layout would create a stray ~/Commander Genius folder. Commander Genius itself
+        // keeps its config and games in ~/.CommanderGenius there (LB-11).
+        return OperatingSystem.IsWindows()
+            ? GetWindowsCommanderGeniusDataPath(emulatorLocation)
+            : GetUnixCommanderGeniusDataPath(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), emulatorLocation);
+    }
+
+    private static string? GetWindowsCommanderGeniusDataPath(string? emulatorLocation)
     {
         var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         if (string.IsNullOrEmpty(documentsPath)) return null;
 
         var cgDataDir = Path.Combine(documentsPath, "Commander Genius");
+        var probed = ProbeCommanderGeniusDataDirectory(cgDataDir, emulatorLocation);
+        if (probed != null) return probed;
+
+        var altPath = Path.Combine(documentsPath, "My Documents", "Commander Genius");
+        if (Directory.Exists(altPath)) return altPath;
+
+        return TryCreateCommanderGeniusDataDirectory(cgDataDir);
+    }
+
+    /// <summary>
+    ///     Resolves the Commander Genius data directory on Linux/macOS
+    ///     (<c>~/.CommanderGenius</c>), honouring a configured <c>SearchPath1</c> and falling
+    ///     back to creating the folder. Internal so tests can pass a temporary home directory.
+    /// </summary>
+    internal static string? GetUnixCommanderGeniusDataPath(string homePath, string? emulatorLocation = null)
+    {
+        if (string.IsNullOrEmpty(homePath)) return null;
+
+        var cgDataDir = Path.Combine(homePath, ".CommanderGenius");
+        return ProbeCommanderGeniusDataDirectory(cgDataDir, emulatorLocation)
+               ?? TryCreateCommanderGeniusDataDirectory(cgDataDir);
+    }
+
+    private static string? ProbeCommanderGeniusDataDirectory(string cgDataDir, string? emulatorLocation)
+    {
         var configPath = Path.Combine(cgDataDir, "cgenius.cfg");
 
         if (File.Exists(configPath))
@@ -268,11 +304,11 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
                 $"[CommanderGenius] Config file not found at {configPath}. Commander Genius may not be properly installed.");
         }
 
-        if (Directory.Exists(cgDataDir)) return cgDataDir;
+        return Directory.Exists(cgDataDir) ? cgDataDir : null;
+    }
 
-        var altPath = Path.Combine(documentsPath, "My Documents", "Commander Genius");
-        if (Directory.Exists(altPath)) return altPath;
-
+    private static string? TryCreateCommanderGeniusDataDirectory(string cgDataDir)
+    {
         try
         {
             Directory.CreateDirectory(cgDataDir);
@@ -324,8 +360,12 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
 
         if (resolved.Contains("${HOME}", StringComparison.OrdinalIgnoreCase))
         {
-            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            resolved = resolved.Replace("${HOME}", documentsPath, StringComparison.OrdinalIgnoreCase);
+            var homePath = OperatingSystem.IsWindows()
+                ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+                : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            if (!string.IsNullOrEmpty(homePath))
+                resolved = resolved.Replace("${HOME}", homePath, StringComparison.OrdinalIgnoreCase);
         }
 
         if (resolved.Contains("${BIN}", StringComparison.OrdinalIgnoreCase))

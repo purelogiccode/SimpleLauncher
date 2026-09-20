@@ -435,7 +435,14 @@ public partial class AvaloniaCheckForUpdatesService
                 if (string.IsNullOrEmpty(entry.Name)) continue; // directory entry
 
                 var destinationFileFullPath = Path.GetFullPath(Path.Combine(fullDestinationPath, entry.FullName));
-                if (!destinationFileFullPath.StartsWith(fullDestinationPath, StringComparison.OrdinalIgnoreCase))
+
+                // Case-sensitive filesystems must use an ordinal prefix check, otherwise a
+                // case-variant prefix ("/app/" vs "/APP/") passes the containment test (LB-17).
+                var pathComparison = OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal;
+
+                if (!destinationFileFullPath.StartsWith(fullDestinationPath, pathComparison))
                 {
                     _logger.Information(
                         "Security warning: path traversal attempt in updater package entry '{Entry}'. Aborting",
