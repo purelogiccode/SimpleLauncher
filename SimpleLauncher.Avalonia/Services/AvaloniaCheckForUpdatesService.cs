@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Avalonia;
@@ -277,7 +278,9 @@ public partial class AvaloniaCheckForUpdatesService
                 {
                     Arguments =
                         $"{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)} {AppExecutableName}",
-                    UseShellExecute = true,
+                    // Shell-execute is only needed on Windows (UAC elevation for the updater);
+                    // on Unix the updater is executed directly.
+                    UseShellExecute = OperatingSystem.IsWindows(),
                     WorkingDirectory = _updaterDirectory
                 };
                 Process.Start(startInfo);
@@ -447,12 +450,38 @@ public partial class AvaloniaCheckForUpdatesService
                 entry.ExtractToFile(destinationFileFullPath, true);
             }
 
+            // ZIP distribution carries no Unix permissions, so the freshly extracted updater
+            // must be made executable again before it can be launched on Linux/macOS.
+            if (!OperatingSystem.IsWindows())
+                TryMakeExecutable(Path.Combine(destinationPath, UpdaterExecutableName));
+
             return true;
         }
         catch (Exception ex)
         {
             _logger.Information(ex, "Failed to download or extract the updater package");
             return false;
+        }
+    }
+
+    /// <summary>
+    ///     Adds the execute bits to a file on Unix (best effort): ZIP-based distribution does
+    ///     not preserve the executable bit and the updater cannot be launched without it.
+    /// </summary>
+    [UnsupportedOSPlatform("windows")]
+    private void TryMakeExecutable(string path)
+    {
+        try
+        {
+            const UnixFileMode executeBits =
+                UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+            var mode = File.GetUnixFileMode(path);
+            if ((mode & executeBits) != executeBits)
+                File.SetUnixFileMode(path, mode | executeBits);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug(ex, "Could not set the executable bit on {Path}", path);
         }
     }
 

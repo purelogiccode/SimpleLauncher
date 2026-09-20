@@ -60,8 +60,9 @@ Key properties:
 | Microsoft.Data.Sqlite / SourceGear.sqlite3 | 10.0.12 / 3.53.4 | SQLite (unified `settings.dat`, Amazon scan, Stella settings) |
 | SharpCompress | 0.50.4 | Archive extraction |
 | NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.1.0 | UI sound effects (Windows + Linux) |
-| SharpDX + XInput + DirectInput | 4.2.0 | Gamepad input |
-| InputSimulatorCore | 1.0.5 | Mouse simulation from gamepad |
+| SharpDX + XInput + DirectInput | 4.2.0 | Gamepad input (Windows) |
+| InputSimulatorCore | 1.0.5 | Mouse simulation from gamepad (Windows) |
+| Hexa.NET.SDL2 | 1.2.17 | Gamepad input on Linux/macOS (`net10.0` TFM only; bundles the native SDL2 binaries) |
 | Serilog (+ Sinks.Async/Debug/File) | 4.4.0 | Logging |
 | Tomlyn | 2.10.1 | TOML parsing (Xenia, Yumir configs) |
 | YamlDotNet | 18.1.0 | YAML parsing (RPCS3 config) |

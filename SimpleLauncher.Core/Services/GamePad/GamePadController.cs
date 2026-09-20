@@ -39,6 +39,12 @@ public class GamePadController : IDisposable
 
     private readonly Controller? _xinputController;
 
+    // Non-Windows platforms run the managed SDL2 backend, which raises InputChanged
+    // snapshots instead of simulating OS-level input (the WPF approach).
+#if !WINDOWS
+    private readonly SdlGamepadBackend? _sdlBackend;
+#endif
+
     // DirectInput object needs to be managed for its lifetime
     private DirectInput? _directInput;
     private Joystick? _directInputController;
@@ -109,6 +115,9 @@ public class GamePadController : IDisposable
             _directInput = null;
             _directInputController = null;
             _playStationControllerGuid = Guid.Empty;
+#if !WINDOWS
+            _sdlBackend = new SdlGamepadBackend(OnSdlState, OnSdlError, OnSdlDeviceChanged);
+#endif
         }
 
         _inputSimulator = new InputSimulator();
@@ -136,6 +145,15 @@ public class GamePadController : IDisposable
     /// </summary>
     internal bool IsRunning { get; private set; }
 
+#if !WINDOWS
+    /// <summary>
+    ///     Raised on the SDL polling thread whenever the non-Windows backend reports a new
+    ///     controller state (dead zone already applied). Windows uses direct input simulation
+    ///     and never raises this event.
+    /// </summary>
+    internal event Action<GamepadInputState>? InputChanged;
+#endif
+
     /// <summary>
     ///     Releases all resources used by the gamepad controller, including the polling timer and DirectInput devices.
     /// </summary>
@@ -151,10 +169,15 @@ public class GamePadController : IDisposable
     /// <returns>A task that completes when the controller has started, or a message box task if starting failed.</returns>
     internal Task StartAsync()
     {
-        // Gamepad input (XInput/DirectInput/WindowsInput) is Windows-only; no-op elsewhere.
+        // Windows drives XInput/DirectInput with OS-level input simulation; other platforms
+        // run the SDL2 backend, which reports states through InputChanged.
         if (!OperatingSystem.IsWindows())
         {
+#if !WINDOWS
+            return StartSdlBackendAsync();
+#else
             return Task.CompletedTask;
+#endif
         }
 
         Exception? startException = null;
@@ -199,6 +222,16 @@ public class GamePadController : IDisposable
     /// <returns>A task that completes when the controller has stopped, or a message box task if stopping failed.</returns>
     internal Task StopAsync()
     {
+        // Windows stops the input-simulation timer; other platforms stop the SDL backend.
+        if (!OperatingSystem.IsWindows())
+        {
+#if !WINDOWS
+            return StopSdlBackendAsync();
+#else
+            return Task.CompletedTask;
+#endif
+        }
+
         Exception? stopException = null;
         lock (_stateLock)
         {
@@ -228,6 +261,98 @@ public class GamePadController : IDisposable
         return Task.CompletedTask;
     }
 
+#if !WINDOWS
+    /// <summary>
+    ///     Starts the SDL2 backend used on non-Windows platforms.
+    /// </summary>
+    private Task StartSdlBackendAsync()
+    {
+        Exception? startException = null;
+        lock (_stateLock)
+        {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException(nameof(GamePadController),
+                    "Cannot start a disposed GamePadController. A new instance must be created.");
+            }
+
+            try
+            {
+                _sdlBackend?.Start();
+                IsRunning = true;
+                _logger.Debug("[GamePadController] SDL gamepad backend started");
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.Invoke(ex, $"Error in GamePadController Start method.\n\n" +
+                                        $"Exception type: {ex.GetType().Name}\n" +
+                                        $"Exception details: {ex.Message}");
+                startException = ex;
+            }
+        }
+
+        // Notify user (outside lock to allow async/await)
+        if (startException != null)
+        {
+            return _messageBoxLibrary.GamePadErrorMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     Stops the SDL2 backend used on non-Windows platforms.
+    /// </summary>
+    private Task StopSdlBackendAsync()
+    {
+        Exception? stopException = null;
+        lock (_stateLock)
+        {
+            try
+            {
+                IsRunning = false;
+                _sdlBackend?.Stop();
+                _logger.Debug("[GamePadController] SDL gamepad backend stopped");
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.Invoke(ex, $"Error in GamePadController Stop method.\n\n" +
+                                        $"Exception type: {ex.GetType().Name}\n" +
+                                        $"Exception details: {ex.Message}");
+                stopException = ex;
+            }
+        }
+
+        // Notify user (outside lock to allow async/await)
+        if (stopException != null)
+        {
+            return _messageBoxLibrary.GamePadErrorMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OnSdlState(GamepadInputState rawState)
+    {
+        InputChanged?.Invoke(rawState.WithDeadZone(DeadZoneX, DeadZoneY));
+    }
+
+    private void OnSdlError(string message)
+    {
+        ErrorLogger?.Invoke(null, message);
+    }
+
+    private void OnSdlDeviceChanged(string? deviceName)
+    {
+        if (deviceName is null)
+            _logger.Information("[GamePadController] Controller disconnected");
+        else
+            _logger.Information("[GamePadController] Controller connected: {DeviceName}", deviceName);
+    }
+#endif
+
     protected virtual void Dispose(bool disposing)
     {
         if (_isDisposed) return;
@@ -245,6 +370,11 @@ public class GamePadController : IDisposable
             // Step 2: Dispose timer OUTSIDE the lock to prevent deadlock
             // UpdateAsync needs _stateLock to check _isDisposed, so we must release it before waiting
             DisposeTimerSafely();
+
+#if !WINDOWS
+            // Stops the SDL polling thread and releases the SDL subsystems it initialized.
+            _sdlBackend?.Dispose();
+#endif
 
             // Step 3: Now safe to dispose other managed resources
             lock (_stateLock)

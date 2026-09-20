@@ -13,6 +13,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 public class ChdMountStrategy : ILaunchStrategy
 {
     private readonly IConfiguration _configuration;
+    private readonly IDiscConverter _discConverter;
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly IMountChdFiles _mountChdFiles;
@@ -44,13 +45,15 @@ public class ChdMountStrategy : ILaunchStrategy
     /// <param name="configuration">The application configuration.</param>
     /// <param name="messageBox">The message box service for user notifications.</param>
     /// <param name="mountChdFiles">The CHD mounting service.</param>
+    /// <param name="discConverter">The chdman-backed converter used on platforms without Dokan (Linux/macOS).</param>
     /// <param name="logger">The logger instance.</param>
     public ChdMountStrategy(IConfiguration configuration, IMessageBoxLibraryService messageBox,
-        IMountChdFiles mountChdFiles, ILogger logger)
+        IMountChdFiles mountChdFiles, IDiscConverter discConverter, ILogger logger)
     {
         _configuration = configuration;
         _messageBox = messageBox;
         _mountChdFiles = mountChdFiles;
+        _discConverter = discConverter;
         _logger = logger;
     }
 
@@ -103,6 +106,14 @@ public class ChdMountStrategy : ILaunchStrategy
     /// <inheritdoc />
     public async Task ExecuteAsync(LaunchContext context, ILauncherService launcher)
     {
+        // CHDMounter + Dokan are Windows-only. On Linux/macOS the image is converted with
+        // the bundled chdman instead and the emulator runs on the converted file.
+        if (!OperatingSystem.IsWindows())
+        {
+            await ExecuteWithChdmanConversionAsync(context, launcher);
+            return;
+        }
+
         string? gameFilePath;
         ResolveEmulatorFlags(context);
 
@@ -180,6 +191,73 @@ public class ChdMountStrategy : ILaunchStrategy
             context.WindowContext!,
             context.LoadingState,
             context.ResolvedFilePath);
+    }
+
+    /// <summary>
+    ///     Linux/macOS fallback for CHD images: converts the image with chdman (CUE/BIN for
+    ///     disc-based emulators, ISO for the emulators that expect a single image), launches
+    ///     the emulator on the converted file, and deletes the temporary files afterwards.
+    /// </summary>
+    private async Task ExecuteWithChdmanConversionAsync(LaunchContext context, ILauncherService launcher)
+    {
+        ResolveEmulatorFlags(context);
+
+        // RPCS3 and the Xbox emulators want the disc contents/image rather than a CUE sheet;
+        // chdman's extractdvd produces the ISO they can open directly.
+        var needsIso = _isRpcs3 || _isXenia || _isXemu || _isCxbxReloaded;
+        var convertingMsg = needsIso ? "Converting CHD to ISO..." : "Converting CHD...";
+
+        context.LoadingState?.SetLoadingState(true, convertingMsg);
+
+        string? convertedPath;
+        try
+        {
+            convertedPath = needsIso
+                ? await _discConverter.ConvertChdToIsoAsync(context.ResolvedFilePath)
+                : await _discConverter.ConvertChdToCueBinAsync(context.ResolvedFilePath);
+        }
+        finally
+        {
+            context.LoadingState?.SetLoadingState(false);
+        }
+
+        if (convertedPath == null)
+        {
+            await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+            return;
+        }
+
+        try
+        {
+            // Pass the original CHD path for display in notifications (WPF mount parity).
+            await launcher.LaunchRegularEmulatorAsync(convertedPath, context.EmulatorName,
+                context.SystemManagerService!, context.EmulatorManager!, context.Parameters,
+                context.WindowContext!, context.LoadingState, context.ResolvedFilePath);
+        }
+        finally
+        {
+            CleanupConvertedFiles(convertedPath);
+        }
+    }
+
+    /// <summary>
+    ///     Deletes the temporary files produced by a chdman conversion (the CUE and its BIN
+    ///     sibling, or the ISO).
+    /// </summary>
+    private void CleanupConvertedFiles(string convertedPath)
+    {
+        try
+        {
+            var binPath = Path.ChangeExtension(convertedPath, ".bin");
+            if (File.Exists(convertedPath)) File.Delete(convertedPath);
+            if (File.Exists(binPath)) File.Delete(binPath);
+            _logger.Debug($"Cleaned up temporary CHD conversion files: {convertedPath}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"Failed to cleanup CHD temp files: {ex.Message}");
+        }
     }
 
     private void ResolveEmulatorFlags(LaunchContext context)

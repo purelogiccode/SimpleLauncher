@@ -33,7 +33,7 @@ Three code projects implement it:
 - **Favorites**, **Play History** (play count, play time, last played), **Global Search** with `AND`/`OR`, **Global Statistics**.
 - **Fuzzy cover-image matching** with configurable threshold + annotation stripping (`Game (USA)` → `Game`).
 - **Themes** (Light, Dark, Adaptive, High Contrast, Midnight) + 27 accent colors; **18 languages** (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-br, ru, tr, ur, vi, zh-hans).
-- **Gamepad navigation** (Xbox XInput + PlayStation DirectInput), dead-zone configuration, UI sound effects (NAudio).
+- **Gamepad navigation** (Xbox XInput + PlayStation DirectInput on Windows, SDL2 GameController API on Linux/macOS), dead-zone configuration, UI sound effects (NAudio). On Windows the controller moves the real mouse cursor / clicks (WPF behavior); on Linux/macOS the Avalonia app's `GamepadNavigationService` maps the pad to in-app focus navigation, activation, context menu and scrolling instead (Wayland-safe, no input-injection permissions).
 - **Tray icon**, minimize-to-tray, **F8 global screenshot hotkey**, loading overlays, status bar, debug window (`-debug`).
 - **Built-in updater** (`Updater.exe`) with GitHub release assets, `--restarting` restart flow.
 - **Bundled power tools** — conversion (CHD, RVZ, XISO, 7z/zip), batch-file creators, cover tools, ROM validator (see [11 — Bundled Tools](11-bundled-tools.md)).

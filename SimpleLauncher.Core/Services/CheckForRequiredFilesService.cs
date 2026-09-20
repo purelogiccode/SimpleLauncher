@@ -28,22 +28,40 @@ public class CheckForRequiredFilesService
     /// <returns>A task representing the asynchronous check operation.</returns>
     public async Task CheckFilesAsync(IConfiguration configuration, ILogger logErrors)
     {
-        var baseDirectory = AppContext.BaseDirectory;
-        var requiredFiles = configuration.GetValue<string[]>("RequiredFiles") ??
-        [
-            "images\\default.png",
-            @"images\systems\default.png",
-            "audio\\click.mp3",
-            "audio\\notification.mp3",
-            "audio\\shutter.mp3",
-            "audio\\trash.mp3",
-            "appsettings.json",
-            "mame.dat"
-        ];
+        await CheckFilesAsync(configuration, logErrors, AppContext.BaseDirectory);
+    }
+
+    /// <summary>
+    ///     Test seam: verifies the configured required files against an explicit base directory.
+    /// </summary>
+    /// <param name="configuration">The application configuration containing the required files list.</param>
+    /// <param name="logErrors">The logger used to record failures.</param>
+    /// <param name="baseDirectory">The directory the required files are resolved against.</param>
+    /// <returns>A task representing the asynchronous check operation.</returns>
+    internal async Task CheckFilesAsync(IConfiguration configuration, ILogger logErrors, string baseDirectory)
+    {
+        var requiredFiles = configuration.GetSection("RequiredFiles").Get<string[]>();
+        if (requiredFiles is null || requiredFiles.Length == 0)
+        {
+            requiredFiles =
+            [
+                "images\\default.png",
+                @"images\systems\default.png",
+                "audio\\click.mp3",
+                "audio\\notification.mp3",
+                "audio\\shutter.mp3",
+                "audio\\trash.mp3",
+                "appsettings.json",
+                "mame.dat"
+            ];
+        }
         try
         {
+            // The configuration uses Windows separators; normalize them so the check works
+            // on Linux/macOS too (Path.Combine would otherwise treat "images\default.png"
+            // as a single file name containing a backslash).
             var missingFiles = requiredFiles
-                .Select(f => Path.Combine(baseDirectory, f))
+                .Select(f => Path.Combine(baseDirectory, NormalizeSeparators(f)))
                 .Where(static f => !File.Exists(f))
                 .ToList();
 
@@ -56,5 +74,14 @@ public class CheckForRequiredFilesService
         {
             logErrors.Error(ex, "Failed to check for required files");
         }
+    }
+
+    /// <summary>
+    ///     Converts the Windows-style separators used in the configuration to the current
+    ///     platform's directory separator.
+    /// </summary>
+    private static string NormalizeSeparators(string path)
+    {
+        return path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
     }
 }

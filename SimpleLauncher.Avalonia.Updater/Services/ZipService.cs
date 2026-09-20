@@ -271,8 +271,13 @@ internal class ZipService
                     Directory.CreateDirectory(finalDirectory);
 
                 string? backupPath = null;
+                UnixFileMode? previousMode = null;
                 if (File.Exists(finalPath))
                 {
+                    // UPD-04: archive mode bits are never applied, but on Unix the replaced
+                    // file's mode must survive the swap — losing it would strip the
+                    // executable bit from the app/updater and tools after an update.
+                    previousMode = TryGetUnixFileMode(finalPath);
                     ClearReadOnlyAttribute(finalPath);
                     backupPath = finalPath + ".updbak";
                     if (File.Exists(backupPath))
@@ -285,6 +290,7 @@ internal class ZipService
                 }
 
                 await MoveFileWithRetryAsync(stagedPath, finalPath, relativePath, cancellationToken);
+                TryApplyUnixFileMode(finalPath, previousMode);
                 if (backupPath == null)
                     installed.Add((finalPath, null));
 
@@ -380,6 +386,40 @@ internal class ZipService
                     "Check the install folder permissions and run the updater with sufficient rights.",
                     ex);
             }
+        }
+    }
+
+    /// <summary>
+    ///     Reads a file's Unix permission mode (null on Windows or when it cannot be read).
+    /// </summary>
+    private static UnixFileMode? TryGetUnixFileMode(string path)
+    {
+        if (OperatingSystem.IsWindows()) return null;
+
+        try
+        {
+            return File.GetUnixFileMode(path);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    ///     Re-applies a preserved Unix permission mode to a swapped file (best effort).
+    /// </summary>
+    private static void TryApplyUnixFileMode(string path, UnixFileMode? mode)
+    {
+        if (mode is null || OperatingSystem.IsWindows()) return;
+
+        try
+        {
+            File.SetUnixFileMode(path, mode.Value);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to preserve Unix file mode after update: {Path}", path);
         }
     }
 
@@ -547,7 +587,8 @@ internal class ZipService
     /// <summary>
     ///     Extracts a file from the ZIP reader with retry logic for locked files.
     ///     Files are created with default ACLs/mode — archive permission bits
-    ///     (including Unix setuid/setgid) are never applied (UPD-04).
+    ///     (including Unix setuid/setgid) are never applied (UPD-04). The swap
+    ///     later restores the replaced file's previous Unix mode.
     ///     UPD-05: the destination is inside the staging directory; the live
     ///     install is only touched later by <see cref="SwapStagedFilesAsync" />.
     ///     UPD-20: written with <see cref="FileShare.None" /> — a concurrent reader

@@ -184,7 +184,8 @@ Run "Scan for store games" after installing 1–2 real games per store. Verify p
 
 ## 10. Gamepad & audio
 
-- [ ] **Gamepad navigation** (`GamePadController`) — with Enable GamePad Navigation on: Xbox pad left stick moves the cursor, A = left click, B = right click, right stick scrolls; PS pad (DirectInput) behaves the same; unplug/replug → reconnects within ~5 s; dead-zone sliders filter stick drift; disabling the setting stops input; exiting the app with a pad connected → no crash.
+- [ ] **Gamepad navigation — Windows** (`GamePadController`) — with Enable GamePad Navigation on: Xbox pad left stick moves the cursor, A = left click, B = right click, right stick scrolls; PS pad (DirectInput) behaves the same; unplug/replug → reconnects within ~5 s; dead-zone sliders filter stick drift; disabling the setting stops input; exiting the app with a pad connected → no crash.
+- [ ] **Gamepad navigation — Linux/macOS** (`SdlGamepadBackend` + `GamepadNavigationService`, Avalonia) — with Gamepad Support on: left stick/D-pad move the keyboard focus ring (held stick repeats after a delay), A activates the focused control, B opens the selected game's context menu or sends Escape, right stick scrolls the focused `ScrollViewer`; Xbox/PS/Switch pads and unknown joysticks work (SDL GameController mapping with a generic fallback); unplug/replug or a virtual `uinput` pad → reconnects within ~5 s and no Warning+ log is written; disabling the setting stops input. Verified on Ubuntu 24.04 GNOME Wayland with a `uinput` virtual Xbox 360 pad (no OS-level input permissions needed).
 - [ ] **Sounds** (`PlaySoundEffects`, `AudioInputService`) — click/notification/shutter/trash sounds play; disabling sounds in settings → silent; custom notification file plays; missing file → logged, no crash; rapid clicks → previous sound stops (no overlap, no leak).
 
 ## 11. RetroAchievements (app layer) **[Integration]**

@@ -66,6 +66,32 @@ pwsh scripts/package-release.ps1 -Version 5.8.0
 - Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `RetroAchievementsSharp` binaries) and packages `Updater.exe` alone into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate).
 - Prunes debug symbol files (`*.pdb`) — never needed at runtime; the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
 
+### Linux release packaging script
+
+`scripts/package-release-linux.ps1` produces the Linux counterparts (same asset names the
+in-app updater looks up in the GitHub release):
+
+```powershell
+pwsh scripts/package-release-linux.ps1 -Version 5.8.0
+# -> artifacts\release\release_5.8.0_linux-x64.zip, release_5.8.0_linux-arm64.zip
+# -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
+```
+
+- The Avalonia app is published **self-contained** for `net10.0` (Linux users are not
+  expected to install the .NET runtime); the standalone `Updater` is a self-contained
+  single file so it can run without a runtime too.
+- Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`,
+  `tools/FindRomCover/**`, the other architecture's `RetroAchievementsSharp`).
+- ZIP files written on Windows cannot carry Unix permission bits through `unzip`, so the
+  script stamps the entries' external attributes (0755 for `SimpleLauncher.Avalonia`,
+  `Updater` and `RetroAchievementsSharp`, 0644 otherwise) and patches the entries'
+  "version made by" host system to Unix. Extracting with `unzip` restores the executable
+  bits; the in-app updater preserves installed modes during a swap and re-applies the
+  executable bit to a freshly downloaded updater.
+- Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
+  `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
+  verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
+
 ### Publish the Avalonia app (multi-targeted)
 
 The Avalonia app targets both `net10.0` (Linux) and `net10.0-windows` (Windows), so the

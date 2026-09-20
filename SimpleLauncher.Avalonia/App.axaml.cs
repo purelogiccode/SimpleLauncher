@@ -23,6 +23,7 @@ using SimpleLauncher.Avalonia.Services.Favorites;
 using SimpleLauncher.Avalonia.Services.GameFilter;
 using SimpleLauncher.Avalonia.Services.GameLauncher;
 using SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
+using SimpleLauncher.Avalonia.Services.GamePad;
 using SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 using SimpleLauncher.Avalonia.Services.GameScan;
 using SimpleLauncher.Avalonia.Services.InjectEmulatorConfig;
@@ -592,6 +593,7 @@ public class App : Application, IDisposable
         services.AddSingleton<PlaySoundEffects>();
         services.AddSingleton<IPlaySoundEffects>(sp => sp.GetRequiredService<PlaySoundEffects>());
         services.AddSingleton<GamePadController>();
+        services.AddSingleton<GamepadNavigationService>();
         services.AddSingleton<SystemConfigurationWriterService>(sp =>
             new SystemConfigurationWriterService(
                 sp.GetRequiredService<IConfiguration>(),

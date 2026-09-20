@@ -105,8 +105,8 @@ Ordered by `Priority`; first `IsMatch` wins:
 
 | Method | Tool | Args |
 |---|---|---|
-| `ConvertChdToIsoAsync` (`:31`) | `tools\BatchConvertToCHD\chdman.exe` (+arm64) | `extractdvd -i -o` |
-| `ConvertChdToCueBinAsync` (`:121`) | chdman | `extractcd -i -o` |
+| `ConvertChdToIsoAsync` | CHDSharp (NuGet) first, `tools\BatchConvertToCHD\chdman.exe` (+arm64) fallback on Windows | managed DVD extraction (`ExtractToDirectory`); chdman `extractdvd -i -o` |
+| `ConvertChdToCueBinAsync` | CHDSharp (NuGet) first, chdman fallback on Windows | managed CD extraction to CUE/BIN (`cooked: true`); chdman `extractcd -i -o` |
 | `ConvertPbpToCueBinAsync` (`:211`) | PBPSharp (NuGet package) | `PbpFile.Open` → disc 1 → `ExtractToBinCue` |
 | `ConvertToIsoAsync` (`:317`) | `tools\BatchConvertToRVZ\DolphinTool.exe` (+arm64) | `convert --format=iso --input --output` |
 

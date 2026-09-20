@@ -7,6 +7,8 @@
         <Product>Simple Launcher Core</Product>
         <LangVersion>14</LangVersion>
         <Nullable>enable</Nullable>
+        <!-- SDL2's generated bindings (Hexa.NET.SDL2) expose native pointers. -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NeutralLanguage>en</NeutralLanguage>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
@@ -25,6 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="CHDSharp" Version="1.4.3" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="Meziantou.Analyzer" Version="3.0.264">
@@ -95,6 +98,13 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
         <PackageReference Include="NAudio.WinMM" Version="3.1.0" />
+    </ItemGroup>
+
+    <!-- Linux/macOS gamepad input; the bindings bundle the native SDL2 binaries for the
+         linux/osx/win RIDs (Windows keeps the SharpDX/XInput path, so it is not referenced
+         there and no SDL2 payload ships in the Windows release). -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="Hexa.NET.SDL2" Version="1.2.17" />
     </ItemGroup>
 
     <!-- net10.0 is the Linux TFM; the WINDOWS symbol is defined only for

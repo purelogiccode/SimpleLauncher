@@ -280,7 +280,9 @@ internal class ProcessService
             {
                 FileName = exePath,
                 Arguments = arguments,
-                UseShellExecute = true,
+                // Shell-execute is Windows-only behavior (UAC/verb handling); on Unix the
+                // application is executed directly.
+                UseShellExecute = OperatingSystem.IsWindows(),
                 WorkingDirectory = appDirectory
             };
 

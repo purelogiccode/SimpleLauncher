@@ -19,6 +19,7 @@ using SimpleLauncher.Avalonia.Models;
 using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.Services.ContextMenus;
 using SimpleLauncher.Avalonia.Services.Favorites;
+using SimpleLauncher.Avalonia.Services.GamePad;
 using SimpleLauncher.Avalonia.Services.GameScan;
 using SimpleLauncher.Avalonia.Services.LoadingOverlay;
 using SimpleLauncher.Avalonia.Services.QuitOrReinstall;
@@ -53,6 +54,7 @@ public partial class MainWindow : Window, IPaginationHost
     private readonly AvaloniaGameFileWatcherService _fileWatcher;
     private readonly EventHandler<EventArgs<string>> _gameFilesChangedHandler;
     private readonly GamePadController _gamePadController;
+    private readonly GamepadNavigationService _gamepadNavigationService;
     private readonly GameScannerService _gameScannerService;
     private readonly AvaloniaLoadingOverlayService _loadingOverlay;
     private readonly LocalizationService _localization;
@@ -86,6 +88,7 @@ public partial class MainWindow : Window, IPaginationHost
         IPaginationService pagination,
         AvaloniaGameFileWatcherService fileWatcher,
         GamePadController gamePadController,
+        GamepadNavigationService gamepadNavigationService,
         UiResetService uiResetService,
         AvaloniaSystemSelectionOrchestratorService systemSelectionOrchestrator,
         AvaloniaContextMenuService contextMenuService,
@@ -103,6 +106,7 @@ public partial class MainWindow : Window, IPaginationHost
         _pagination = pagination;
         _fileWatcher = fileWatcher;
         _gamePadController = gamePadController;
+        _gamepadNavigationService = gamepadNavigationService;
         _uiResetService = uiResetService;
         _systemSelectionOrchestrator = systemSelectionOrchestrator;
         _contextMenuService = contextMenuService;
@@ -128,6 +132,10 @@ public partial class MainWindow : Window, IPaginationHost
         _uiResetService.Initialize(this);
         _systemSelectionOrchestrator.Initialize(this);
         _loadingOverlay.Initialize(this);
+
+        // In-app gamepad navigation (non-Windows; the controller stays silent on Windows,
+        // where the WPF-compatible OS-level mouse simulation runs instead).
+        _gamepadNavigationService.Attach(this, OpenGamepadContextMenuForSelection);
 
         // Localize the emergency return button (WPF DynamicResource ReturnButton parity)
         EmergencyReturnButton.Content = _localization.GetString("ReturnButton");
@@ -220,6 +228,7 @@ public partial class MainWindow : Window, IPaginationHost
                 _fileWatcher.GameFilesChanged -= _gameFilesChangedHandler;
                 RemoveHandler(PointerWheelChangedEvent, _pointerWheelChangedHandler);
 
+                _gamepadNavigationService.Detach(this);
                 if (_gamePadController.IsRunning) _ = _gamePadController.StopAsync();
 
                 _fileWatcher.StopWatching();
@@ -1430,6 +1439,34 @@ public partial class MainWindow : Window, IPaginationHost
     {
         var context = BuildRightClickContext(game.FilePath, game.SystemName, game);
         _contextMenuService.ShowContextMenu(context, placementTarget, BuildExtraCallbacks());
+    }
+
+    /// <summary>
+    ///     Opens the context menu for the currently selected game (gamepad B button).
+    ///     Returns false when there is no selection, so the navigation service can fall back
+    ///     to Escape (for example to close a dialog).
+    /// </summary>
+    private bool OpenGamepadContextMenuForSelection()
+    {
+        try
+        {
+            var gridView = _viewModel.IsGridView;
+            var game = gridView
+                ? GameGridView.SelectedItem as GameCardViewModel
+                : GameDataGrid.SelectedItem as GameCardViewModel;
+            if (game is null) return false;
+
+            Control target = gridView
+                ? GameGridView.ContainerFromItem(game) ?? GameGridView
+                : GameDataGrid;
+            ShowGameContextMenu(game, target);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in method OpenGamepadContextMenuForSelection");
+            return false;
+        }
     }
 
     /// <summary>Builds the WPF-parity right-click context for a game file.</summary>
