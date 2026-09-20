@@ -38,6 +38,7 @@ Project policy: expected environment/user conditions are logged at **Information
 - **Mounting** — mounting Windows-only disc/archive images ("not supported on this platform") on Linux/macOS.
 - **Launching** — invalid/unlaunchable executables (Windows codes 193/216, Unix errno 8/13) and user-canceled elevation prompts.
 - **Updates** — GitHub 403/429, download timeouts after retry, updater "process not found".
+- **Settings database** — a `settings.dat` written by a newer app build (downgrade): migration and saves fail safe at Information, leaving the database and the legacy files untouched (`NewerSchemaVersionException`).
 - **Files** — missing files on launch/delete.
 
 ## Log locations summary

@@ -87,8 +87,9 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
   script stamps the entries' external attributes (0755 for `SimpleLauncher.Avalonia`,
   `Updater`, `RetroAchievementsSharp` and `7zz`, 0644 otherwise) and patches the entries'
   "version made by" host system to Unix. Extracting with `unzip` restores the executable
-  bits; the in-app updater preserves installed modes during a swap and re-applies the
-  executable bit to a freshly downloaded updater.
+  bits; the in-app updater preserves installed modes during a swap, applies the archive's
+  mode to files an update adds for the first time, and re-applies the executable bit to a
+  freshly downloaded updater.
 - Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
   `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
   verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
@@ -121,7 +122,7 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (637 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (640 tests via `Avalonia.Headless`).
 
 ## Versioning
 

@@ -18,7 +18,7 @@
 - **Top-bar slider** — Resize game thumbnails with a slider next to the view controls (debounced when dragging), kept in sync with "Set Button Size" and Ctrl+Mouse wheel zoom.
 
 ## Shared Localization
-- **One JSON pack set for both apps** — The 18 language packs (2669 keys each) now live once in `SimpleLauncher.Core\Localization`; WPF embeds them as pack resources and Avalonia embeds them in its assembly.
+- **One JSON pack set for both apps** — The 18 language packs (2671 keys each) now live once in `SimpleLauncher.Core\Localization`; WPF embeds them as pack resources and Avalonia embeds them in its assembly.
 - **Legacy XAML resources removed** — The per-language `strings.*.xaml` files are gone.
 - **Avalonia message boxes fully localized**.
 
@@ -32,9 +32,29 @@
 - **Avalonia fixes** — Edit System help rendering, status bar visibility in the system selection screen, no-credentials panel in the RA window, loading the clicked system card after closing Edit System, in-app path guards, INI encoding, and a window title matching WPF.
 - **Filtering** — Accent-insensitive game filtering restored, and Commander Genius archive deletion fixed.
 
+## Linux Support (Avalonia)
+- **Native Linux builds** — The Avalonia app now ships self-contained bundles for `linux-x64` and `linux-arm64` (`release_{version}_linux-*.zip` plus `updater_linux-*.zip`); the release workflow publishes them next to the Windows bundles and the in-app updater resolves the Linux assets.
+- **No Dokan needed on Linux** — ZIP/7z/RAR games extract to a temp folder on launch, CHD images are converted on the fly with the managed CHDSharp library and mounted natively in DOSBox (`imgmount`), and DOSBox ISO games use the same native mount instead of the Windows PowerShell path.
+- **Native Linux behavior** — App data lives in the XDG folder (`~/.local/share/SimpleLauncher`), Commander Genius uses `~/.CommanderGenius`, paths are handled POSIX-style with case-sensitive matching, and the extension-less bundled 7-Zip fallback (`7zz`) runs correctly. SDL2 gamepad navigation is supported.
+- **Sound works out of the box** — MP3/WAV UI sounds decode through managed decoders (NLayer + NAudio), so no extra packages are required; FLAC/Ogg/Opus use the system `libsndfile`. Missing audio libraries/devices are logged as information instead of being reported as bugs.
+- **Platform-aware pickers and checks** — The emulator pickers no longer hide extension-less Linux binaries, `.AppImage`/`.sh`/`.run` files are accepted, and file dialogs attach to the active window (Wayland).
+- **Windows-only features are hidden on Linux/macOS** — Store scanning, Dokan mounting, Take Screenshot, the RetroAchievements emulator-configuration section and the Windows-only Tools menu entries.
+- **22 Linux port findings fixed (LB-01…LB-22)** — Case-insensitive ROM/EXE discovery after extraction, backslash archive entry names, execute bits for bundled tools, CHD temp-file cleanup, mount platform guards, updater Zip-Slip comparison, platform-neutral dialog wording and defensive scan-handler gating.
+
+## Avalonia Fixes
+- **Tray icon** — Embedded in the Avalonia app (and as a pack resource in WPF) with `icon.ico` shipped in the payload, so the tray icon always has an image.
+- **Wait overlay** — Shown for all long-running operations, matching the WPF app.
+- **System info panel** — The selected system's configuration summary now appears after selection and hides when games load; the game cache is invalidated after system edits instead of showing stale games.
+- **Aspect-ratio changes** — Card heights refresh through the binding instead of rescanning the library.
+
+## Migration & Scan Hardening
+- **Migration gate** — Database wins on merge (a reappearing stale file can never revert newer settings), a defaults-only `settings.xml` is ignored, newer-schema databases are left untouched, a timestamped pre-merge backup is taken, and the WPF and Avalonia migrations parse the legacy files identically.
+- **Store scan handler** — The async handler now catches and logs unexpected failures so they cannot escape as an unhandled exception.
+
 ## Tooling
 - **PBPSharp** — Replaced the vendored library with the NuGet package **1.1.1**.
-- **Dependencies** — Meziantou.Analyzer **3.0.259**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**.
+- **Bundled tools** — SimpleZipDrive updated to **3.0.1** (x64 and ARM64); refreshed the default game image.
+- **Dependencies** — Meziantou.Analyzer **3.0.264**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**, NLayer **3.0.0** + NLayer.NAudioSupport **3.0.0** (managed MP3 decoding on Linux/macOS).
 - **Zero analyzer warnings** across all projects; both test suites pass.
 
 ---

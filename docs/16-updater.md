@@ -73,7 +73,9 @@ updater detects the target from the process name. It was built from the Avalonia
 The updater excludes its own files (`Updater*`) during extraction so it can replace the
 applications while running. Release-zip extraction is fail-closed against Zip-Slip: every entry
 must resolve under the destination root, with a case-sensitive (Ordinal) prefix comparison on
-Unix so a case-variant prefix (`/app/` vs `/APP/`) cannot pass.
+Unix so a case-variant prefix (`/app/` vs `/APP/`) cannot pass. On Unix, a replaced file keeps
+its live mode and a file added by the update receives the mode carried by the release zip
+(0755 for executables), so newly bundled tools stay executable.
 
 Behavior parity with the dropped WPF updater is intentional: same Serilog setup (rolling warning
 file + bug-report sink) and launch stats, same progress/log window with a Cancel button, the same

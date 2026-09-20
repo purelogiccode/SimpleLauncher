@@ -10,7 +10,7 @@
 | `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
 | `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
 | `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (and transitively Core) |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (637 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (640 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
 | `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux/macOS). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux/macOS get native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in the shared packs (`SimpleLauncher.Core\Localization\strings.*.json`) via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
