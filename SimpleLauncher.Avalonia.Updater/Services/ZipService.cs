@@ -425,7 +425,7 @@ internal class ZipService
 
         // External attributes (32-bit): the high 16 bits are the Unix st_mode when packed
         // on Unix (0x81ED = 0100755); the permissions are the low 9 bits of that mode.
-        var mode = (uint)attrib >> 16 & 0xFFFF;
+        var mode = ((uint)attrib >> 16) & 0xFFFF;
         var permissions = mode & 0x1FF;
         return permissions == 0 ? null : (UnixFileMode)permissions;
     }

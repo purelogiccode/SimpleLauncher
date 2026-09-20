@@ -531,9 +531,9 @@ public sealed class LegacyMigrationTests : IDisposable
         // The downgrade is an expected environment condition: it is logged at Information
         // (never Error) so the bug-report API never sees it. The specific catch logs with
         // the database path as a property value, which binds to Serilog's generic overload.
-        logger.Verify(l => l.Information<string>(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>()),
+        logger.Verify(l => l.Information(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>()),
             Times.AtLeastOnce);
-        logger.Verify(l => l.Error<string>(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>()),
+        logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
     }
 

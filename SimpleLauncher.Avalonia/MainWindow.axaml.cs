@@ -310,7 +310,7 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Live library refresh: when a watched ROM folder changes on disk, reload the
         // current view on the UI thread (same debounced behavior as the WPF app).
-        _gameFilesChangedHandler = (_, e) =>
+        _gameFilesChangedHandler = (o, e) =>
         {
             try
             {
@@ -329,7 +329,7 @@ public partial class MainWindow : Window, IPaginationHost
                     // The affected system's cached file list is stale — drop it so the
                     // refresh below re-scans that system's folders from disk.
                     _viewModel.InvalidateGameFileCacheForSystem(e.Value);
-                    _ = RefreshCurrentViewSafelyAsync();
+                    o = RefreshCurrentViewSafelyAsync();
                     RefreshSidebarCounts();
                     ShowToast(_localization.GetString("GameLibrary", "Game Library"),
                         _localization.GetString("Toast.Refreshed", "Game list reloaded."));
