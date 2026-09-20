@@ -21,6 +21,14 @@ public class MountZipFiles : IMountZipFiles
     private readonly string _zipMountExecutableRelativePath;
 
     /// <summary>
+    ///     Platform-neutral root used by the path-traversal simulation. A Windows-only root
+    ///     (e.g. "D:\MOCKROOT") is a relative path on Unix, where Path.GetFullPath prefixes the
+    ///     current directory instead, making every archive entry look like an escape (LB-01).
+    /// </summary>
+    private static readonly string SimulatedExtractionRoot =
+        Path.Combine(Path.GetTempPath(), "SimpleLauncher", "SimulatedExtractionRoot");
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="MountZipFiles" /> class.
     /// </summary>
     /// <param name="configuration">The application configuration for mount settings.</param>
@@ -142,6 +150,16 @@ public class MountZipFiles : IMountZipFiles
             _logger.Debug($"[MountZipFiles] Error: {errorMessage}");
             logErrors.Error(ex, errorMessage);
             await messageBox.CouldNotLaunchGameMessageBoxAsync(logPath);
+            return;
+        }
+
+        // Dokan and SimpleZipDrive do not exist outside Windows (LB-01): extract the archive
+        // to a temporary directory instead of mounting it and reuse the EBOOT.BIN launch flow.
+        if (!OperatingSystem.IsWindows())
+        {
+            await LaunchEbootFromExtractedArchiveAsync(resolvedZipFilePath, selectedEmulatorName,
+                selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, windowContext, logPath,
+                gameLauncher, logErrors, messageBox);
             return;
         }
 
@@ -443,6 +461,16 @@ public class MountZipFiles : IMountZipFiles
             return;
         }
 
+        // Dokan and SimpleZipDrive do not exist outside Windows (LB-01): extract the archive
+        // to a temporary directory instead of mounting it and reuse the nested-file launch flow.
+        if (!OperatingSystem.IsWindows())
+        {
+            await LaunchNestedFileFromExtractedArchiveAsync(resolvedZipFilePath, selectedEmulatorName,
+                selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, windowContext, logPath,
+                gameLauncher, logErrors, messageBox);
+            return;
+        }
+
         var resolvedZipMountExePath = PathHelper.ResolveRelativeToAppDirectory(_zipMountExecutableRelativePath);
 
         _logger.Debug($"[MountZipFiles] Path to {_zipMountExecutableName}: {resolvedZipMountExePath}");
@@ -714,6 +742,16 @@ public class MountZipFiles : IMountZipFiles
             return;
         }
 
+        // Dokan and SimpleZipDrive do not exist outside Windows (LB-01): extract the archive
+        // to a temporary directory instead of mounting it and run ScummVM against that folder.
+        if (!OperatingSystem.IsWindows())
+        {
+            await LaunchScummVmFromExtractedArchiveAsync(resolvedZipFilePath, selectedEmulatorName,
+                selectedSystemManager, selectedEmulatorManager, selectedEmulatorParameters, logPath, logErrors,
+                messageBox);
+            return;
+        }
+
         var resolvedZipMountExePath = PathHelper.ResolveRelativeToAppDirectory(_zipMountExecutableRelativePath);
 
         _logger.Debug($"[MountZipFiles] Path to {_zipMountExecutableName}: {resolvedZipMountExePath}");
@@ -840,95 +878,15 @@ public class MountZipFiles : IMountZipFiles
             _logger.Debug(
                 $"[MountZipFiles] Drive {mountDriveRootForChecks} detected. Proceeding to launch with {selectedEmulatorName}.");
 
-            // --- Custom ScummVM Launch Logic ---
-
-            // 1. Resolve Emulator Path
-            if (string.IsNullOrWhiteSpace(selectedEmulatorManager.EmulatorLocation))
-            {
-                throw new FileNotFoundException(
-                    $"Emulator executable path is not configured for '{selectedEmulatorName}'. " +
-                    "Please edit the system configuration and provide a valid emulator path.");
-            }
-
-            var resolvedEmulatorExePath =
-                PathHelper.ResolveRelativeToAppDirectory(selectedEmulatorManager.EmulatorLocation);
-            if (string.IsNullOrEmpty(resolvedEmulatorExePath) || !File.Exists(resolvedEmulatorExePath))
-            {
-                throw new FileNotFoundException(
-                    $"Emulator executable not found: {selectedEmulatorManager.EmulatorLocation}");
-            }
-
-            var resolvedEmulatorFolderPath = Path.GetDirectoryName(resolvedEmulatorExePath);
-            if (string.IsNullOrEmpty(resolvedEmulatorFolderPath))
-                throw new FileNotFoundException("Emulator executable folder could not be determined");
-
-            // 2. Resolve Parameters
-            var romSystemFolder = selectedSystemManager != null
-                ? PathHelper.FindContainingSystemFolder(selectedSystemManager.SystemFolders,
-                    selectedSystemManager.PrimarySystemFolder, resolvedZipFilePath)
-                : null;
-            var resolvedParameters = PathHelper.ResolveParameterString(
-                selectedEmulatorParameters,
-                selectedSystemManager?.SystemFolders,
-                resolvedEmulatorFolderPath,
-                resolvedZipFilePath,
-                romSystemFolder,
-                Path.GetFileNameWithoutExtension(resolvedZipFilePath)
-            );
-
             // Navigate into nested single-folder directories to find the actual game files location
             var gamePath = FindScummVmGamePath(mountDriveRootForChecks, logErrors);
             // ScummVM -p expects just the drive letter (e.g. "Y:") for root paths, not "Y:\"
             var scummVmPath = string.Equals(gamePath, mountDriveRootForChecks, StringComparison.Ordinal)
                 ? mountDriveRootForChecks.TrimEnd('\\')
                 : gamePath;
-            var arguments = $"-p \"{scummVmPath}\" {resolvedParameters} ";
 
-            var psiEmulator = new ProcessStartInfo
-            {
-                FileName = resolvedEmulatorExePath,
-                Arguments = arguments,
-                WorkingDirectory = resolvedEmulatorFolderPath,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            _logger.Debug($"[MountZipFiles] Launching ScummVM with mounted ZIP:\n\n" +
-                          $"Program Location: {psiEmulator.FileName}\n" +
-                          $"Arguments: {psiEmulator.Arguments}\n" +
-                          $"Working Directory: {psiEmulator.WorkingDirectory}");
-
-            // 3. Launch Emulator
-            using (var emulatorProcess = new Process())
-            {
-                emulatorProcess.StartInfo = psiEmulator;
-
-                // Both pipes are redirected, so they must be drained: a full pipe would
-                // block the child and WaitForExitAsync would never complete.
-                var outputBuilder = new StringBuilder();
-                var errorBuilder = new StringBuilder();
-                emulatorProcess.OutputDataReceived += (_, args) =>
-                {
-                    if (!string.IsNullOrEmpty(args.Data)) outputBuilder.AppendLine(args.Data);
-                };
-                emulatorProcess.ErrorDataReceived += (_, args) =>
-                {
-                    if (!string.IsNullOrEmpty(args.Data)) errorBuilder.AppendLine(args.Data);
-                };
-
-                emulatorProcess.Start();
-                emulatorProcess.BeginOutputReadLine();
-                emulatorProcess.BeginErrorReadLine();
-                await emulatorProcess.WaitForExitAsync();
-                _logger.Debug($"[MountZipFiles] ScummVM process has exited with code: {emulatorProcess.ExitCode}.");
-                if (outputBuilder.Length > 0 || errorBuilder.Length > 0)
-                {
-                    _logger.Debug(
-                        $"[MountZipFiles] ScummVM output: {outputBuilder} {errorBuilder}");
-                }
-            }
+            await LaunchScummVmWithGameRootAsync(scummVmPath, resolvedZipFilePath, selectedEmulatorName,
+                selectedSystemManager, selectedEmulatorManager, selectedEmulatorParameters, logErrors);
 
             _logger.Debug($"[MountZipFiles] Emulator for {mountDriveRootForChecks} has exited.");
         }
@@ -1100,7 +1058,7 @@ public class MountZipFiles : IMountZipFiles
         }
     }
 
-    private void ValidateZipForPathTraversal(string archivePath)
+    internal void ValidateZipForPathTraversal(string archivePath)
     {
         if (!File.Exists(archivePath))
         {
@@ -1133,10 +1091,14 @@ public class MountZipFiles : IMountZipFiles
                     throw new InvalidOperationException($"Archive contains path traversal entry: '{entryName}'");
                 }
 
-                // Additional thorough check: simulate extraction path normalization
-                var normalizedEntryName = entryName.Replace('/', Path.DirectorySeparatorChar);
-                var simulatedFullPath = Path.GetFullPath(Path.Combine("D:\\MOCKROOT", normalizedEntryName));
-                if (!simulatedFullPath.StartsWith("D:\\MOCKROOT", StringComparison.Ordinal))
+                // Additional thorough check: simulate extraction path normalization under a
+                // platform-neutral root. Backslashes are normalized first so Windows-authored
+                // entries (DIR\FILE.BIN) get directory semantics on Unix as well.
+                var normalizedEntryName = entryName
+                    .Replace('\\', Path.DirectorySeparatorChar)
+                    .Replace('/', Path.DirectorySeparatorChar);
+                var simulatedFullPath = Path.GetFullPath(Path.Combine(SimulatedExtractionRoot, normalizedEntryName));
+                if (!IsPathContainedIn(simulatedFullPath, SimulatedExtractionRoot))
                 {
                     _logger.Debug(
                         $"[MountZipFiles] Archive entry escapes simulated root: '{entryName}' -> '{simulatedFullPath}'");
@@ -1257,10 +1219,342 @@ public class MountZipFiles : IMountZipFiles
     }
 
     /// <summary>
+    ///     Unix fallback for the RPCS3 flow: extracts the archive to a temporary directory
+    ///     (Dokan/SimpleZipDrive are Windows-only), finds EBOOT.BIN and launches it.
+    /// </summary>
+    private async Task LaunchEbootFromExtractedArchiveAsync(string resolvedZipFilePath, string selectedEmulatorName,
+        ISystemManager selectedSystemManager, Emulator selectedEmulatorManager, string rawEmulatorParameters,
+        IWindowContext windowContext, string? logPath, ILauncherService gameLauncher, ILogger logErrors,
+        IMessageBoxLibraryService messageBox)
+    {
+        string? extractedDirectory;
+        try
+        {
+            extractedDirectory = ExtractArchiveToTempDirectory(resolvedZipFilePath);
+        }
+        catch (Exception ex)
+        {
+            // Expected user-input condition (corrupt/unsupported archive or I/O) — not a bug.
+            _logger.Debug($"[MountZipFiles] Could not extract archive {resolvedZipFilePath}: {ex}");
+            logErrors.Information(ex, $"Could not extract archive: {resolvedZipFilePath}");
+            await messageBox.CouldNotLaunchGameMessageBoxAsync(logPath);
+            return;
+        }
+
+        try
+        {
+            _logger.Debug($"[MountZipFiles] Archive extracted to {extractedDirectory}. Searching for EBOOT.BIN...");
+            var ebootBinPath = FindEbootBin.FindEbootBinRecursive(extractedDirectory, logErrors, _logger);
+
+            if (string.IsNullOrEmpty(ebootBinPath))
+            {
+                _logger.Debug($"[MountZipFiles] EBOOT.BIN not found in {extractedDirectory}.");
+                logErrors.Information($"EBOOT.BIN not found inside archive: {resolvedZipFilePath}");
+                await messageBox.CouldNotFindAFileMessageBoxAsync();
+                return;
+            }
+
+            _logger.Debug(
+                $"[MountZipFiles] EBOOT.BIN found at: {ebootBinPath}. Proceeding to launch with {selectedEmulatorName}.");
+
+            // Pass the original ZIP file path for display in notifications
+            await gameLauncher.LaunchRegularEmulatorAsync(ebootBinPath, selectedEmulatorName, selectedSystemManager,
+                selectedEmulatorManager, rawEmulatorParameters, windowContext, null, resolvedZipFilePath);
+
+            _logger.Debug($"[MountZipFiles] Emulator for {ebootBinPath} has exited.");
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountZipFiles] Exception during archive launch: {ex}");
+            logErrors.Error(ex, $"Error launching archive {resolvedZipFilePath}");
+            await messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(logPath);
+        }
+        finally
+        {
+            TryDeleteDirectory(extractedDirectory);
+        }
+    }
+
+    /// <summary>
+    ///     Unix fallback for the XBLA flow: extracts the archive to a temporary directory
+    ///     (Dokan/SimpleZipDrive are Windows-only), finds the nested launchable file and launches it.
+    /// </summary>
+    private async Task LaunchNestedFileFromExtractedArchiveAsync(string resolvedZipFilePath,
+        string selectedEmulatorName, ISystemManager selectedSystemManager, Emulator selectedEmulatorManager,
+        string rawEmulatorParameters, IWindowContext windowContext, string? logPath, ILauncherService gameLauncher,
+        ILogger logErrors, IMessageBoxLibraryService messageBox)
+    {
+        string? extractedDirectory;
+        try
+        {
+            extractedDirectory = ExtractArchiveToTempDirectory(resolvedZipFilePath);
+        }
+        catch (Exception ex)
+        {
+            // Expected user-input condition (corrupt/unsupported archive or I/O) — not a bug.
+            _logger.Debug($"[MountZipFiles] Could not extract archive {resolvedZipFilePath}: {ex}");
+            logErrors.Information(ex, $"Could not extract archive: {resolvedZipFilePath}");
+            await messageBox.CouldNotLaunchGameMessageBoxAsync(logPath);
+            return;
+        }
+
+        try
+        {
+            _logger.Debug($"[MountZipFiles] Archive extracted to {extractedDirectory}. Searching for nested file...");
+            var fileToLoad = FindNestedFile(extractedDirectory, logErrors);
+
+            if (string.IsNullOrEmpty(fileToLoad))
+            {
+                _logger.Debug($"[MountZipFiles] No suitable file found in nested directory structure in {extractedDirectory}.");
+                logErrors.Information($"No launchable file found inside archive: {resolvedZipFilePath}");
+                await messageBox.CouldNotFindAFileMessageBoxAsync();
+                return;
+            }
+
+            _logger.Debug(
+                $"[MountZipFiles] Nested file found at: {fileToLoad}. Proceeding to launch with {selectedEmulatorName}.");
+
+            // Pass the original ZIP file path for display in notifications
+            await gameLauncher.LaunchRegularEmulatorAsync(fileToLoad, selectedEmulatorName, selectedSystemManager,
+                selectedEmulatorManager, rawEmulatorParameters, windowContext, null, resolvedZipFilePath);
+
+            _logger.Debug($"[MountZipFiles] Emulator for {fileToLoad} has exited.");
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountZipFiles] Exception during archive launch: {ex}");
+            logErrors.Error(ex, $"Error launching archive {resolvedZipFilePath}");
+            await messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(logPath);
+        }
+        finally
+        {
+            TryDeleteDirectory(extractedDirectory);
+        }
+    }
+
+    /// <summary>
+    ///     Unix fallback for the ScummVM flow: extracts the archive to a temporary directory
+    ///     (Dokan/SimpleZipDrive are Windows-only) and runs ScummVM against that folder.
+    /// </summary>
+    private async Task LaunchScummVmFromExtractedArchiveAsync(string resolvedZipFilePath,
+        string selectedEmulatorName, ISystemManager selectedSystemManager, Emulator selectedEmulatorManager,
+        string selectedEmulatorParameters, string? logPath, ILogger logErrors,
+        IMessageBoxLibraryService messageBox)
+    {
+        string? extractedDirectory;
+        try
+        {
+            extractedDirectory = ExtractArchiveToTempDirectory(resolvedZipFilePath);
+        }
+        catch (Exception ex)
+        {
+            // Expected user-input condition (corrupt/unsupported archive or I/O) — not a bug.
+            _logger.Debug($"[MountZipFiles] Could not extract archive {resolvedZipFilePath}: {ex}");
+            logErrors.Information(ex, $"Could not extract archive: {resolvedZipFilePath}");
+            await messageBox.CouldNotLaunchGameMessageBoxAsync(logPath);
+            return;
+        }
+
+        try
+        {
+            // Navigate into nested single-folder directories to find the actual game files location
+            var gamePath = FindScummVmGamePath(extractedDirectory, logErrors);
+            _logger.Debug($"[MountZipFiles] Launching ScummVM against extracted folder: {gamePath}");
+
+            await LaunchScummVmWithGameRootAsync(gamePath, resolvedZipFilePath, selectedEmulatorName,
+                selectedSystemManager, selectedEmulatorManager, selectedEmulatorParameters, logErrors);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountZipFiles] Exception during ScummVM archive launch: {ex}");
+            logErrors.Error(ex, $"Error launching archive with ScummVM: {resolvedZipFilePath}");
+            await messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(logPath);
+        }
+        finally
+        {
+            TryDeleteDirectory(extractedDirectory);
+        }
+    }
+
+    /// <summary>
+    ///     Resolves the ScummVM executable and parameters and runs it against the given game
+    ///     path (-p). Shared by the Windows mounted-drive flow and the Unix extracted-folder flow.
+    /// </summary>
+    private async Task LaunchScummVmWithGameRootAsync(string scummVmPath, string resolvedZipFilePath,
+        string selectedEmulatorName, ISystemManager selectedSystemManager, Emulator selectedEmulatorManager,
+        string selectedEmulatorParameters, ILogger logErrors)
+    {
+        // 1. Resolve Emulator Path
+        if (string.IsNullOrWhiteSpace(selectedEmulatorManager.EmulatorLocation))
+        {
+            throw new FileNotFoundException(
+                $"Emulator executable path is not configured for '{selectedEmulatorName}'. " +
+                "Please edit the system configuration and provide a valid emulator path.");
+        }
+
+        var resolvedEmulatorExePath =
+            PathHelper.ResolveRelativeToAppDirectory(selectedEmulatorManager.EmulatorLocation);
+        if (string.IsNullOrEmpty(resolvedEmulatorExePath) || !File.Exists(resolvedEmulatorExePath))
+        {
+            throw new FileNotFoundException(
+                $"Emulator executable not found: {selectedEmulatorManager.EmulatorLocation}");
+        }
+
+        var resolvedEmulatorFolderPath = Path.GetDirectoryName(resolvedEmulatorExePath);
+        if (string.IsNullOrEmpty(resolvedEmulatorFolderPath))
+            throw new FileNotFoundException("Emulator executable folder could not be determined");
+
+        // 2. Resolve Parameters
+        var romSystemFolder = selectedSystemManager != null
+            ? PathHelper.FindContainingSystemFolder(selectedSystemManager.SystemFolders,
+                selectedSystemManager.PrimarySystemFolder, resolvedZipFilePath)
+            : null;
+        var resolvedParameters = PathHelper.ResolveParameterString(
+            selectedEmulatorParameters,
+            selectedSystemManager?.SystemFolders,
+            resolvedEmulatorFolderPath,
+            resolvedZipFilePath,
+            romSystemFolder,
+            Path.GetFileNameWithoutExtension(resolvedZipFilePath)
+        );
+
+        var arguments = $"-p \"{scummVmPath}\" {resolvedParameters} ";
+
+        var psiEmulator = new ProcessStartInfo
+        {
+            FileName = resolvedEmulatorExePath,
+            Arguments = arguments,
+            WorkingDirectory = resolvedEmulatorFolderPath,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        _logger.Debug($"[MountZipFiles] Launching ScummVM:\n\n" +
+                      $"Program Location: {psiEmulator.FileName}\n" +
+                      $"Arguments: {psiEmulator.Arguments}\n" +
+                      $"Working Directory: {psiEmulator.WorkingDirectory}");
+
+        // 3. Launch Emulator
+        using var emulatorProcess = new Process();
+        emulatorProcess.StartInfo = psiEmulator;
+
+        // Both pipes are redirected, so they must be drained: a full pipe would
+        // block the child and WaitForExitAsync would never complete.
+        var outputBuilder = new StringBuilder();
+        var errorBuilder = new StringBuilder();
+        emulatorProcess.OutputDataReceived += (_, args) =>
+        {
+            if (!string.IsNullOrEmpty(args.Data)) outputBuilder.AppendLine(args.Data);
+        };
+        emulatorProcess.ErrorDataReceived += (_, args) =>
+        {
+            if (!string.IsNullOrEmpty(args.Data)) errorBuilder.AppendLine(args.Data);
+        };
+
+        emulatorProcess.Start();
+        emulatorProcess.BeginOutputReadLine();
+        emulatorProcess.BeginErrorReadLine();
+        await emulatorProcess.WaitForExitAsync();
+        _logger.Debug($"[MountZipFiles] ScummVM process has exited with code: {emulatorProcess.ExitCode}.");
+        if (outputBuilder.Length > 0 || errorBuilder.Length > 0)
+        {
+            _logger.Debug(
+                $"[MountZipFiles] ScummVM output: {outputBuilder} {errorBuilder}");
+        }
+    }
+
+    /// <summary>
+    ///     Extracts an archive into a fresh directory under the system temp folder. Entry
+    ///     separators are normalized so Windows-authored archives (DIR\FILE.BIN) keep their
+    ///     directory structure on Unix, and every destination is containment-checked.
+    /// </summary>
+    internal string ExtractArchiveToTempDirectory(string archivePath)
+    {
+        var tempDirectory = Path.Combine(Path.GetTempPath(), "SimpleLauncher", "ZipLaunch",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            using var archive = ArchiveFactory.OpenArchive(archivePath);
+
+            foreach (var entry in archive.Entries)
+            {
+                if (entry.IsDirectory) continue;
+
+                var entryName = entry.Key;
+                if (string.IsNullOrEmpty(entryName)) continue;
+
+                var normalizedEntryName = entryName
+                    .Replace('\\', Path.DirectorySeparatorChar)
+                    .Replace('/', Path.DirectorySeparatorChar);
+                var destinationPath = Path.GetFullPath(Path.Combine(tempDirectory, normalizedEntryName));
+
+                if (!IsPathContainedIn(destinationPath, tempDirectory))
+                    throw new InvalidOperationException(
+                        $"Archive entry '{entryName}' escapes the extraction root.");
+
+                var destinationDirectory = Path.GetDirectoryName(destinationPath);
+                if (!string.IsNullOrEmpty(destinationDirectory)) Directory.CreateDirectory(destinationDirectory);
+
+                using var entryStream = entry.OpenEntryStream();
+                using var outputStream = File.Create(destinationPath);
+                entryStream.CopyTo(outputStream);
+            }
+
+            return tempDirectory;
+        }
+        catch
+        {
+            TryDeleteDirectory(tempDirectory);
+            throw;
+        }
+    }
+
+    /// <summary>
+    ///     Deletes a temporary extraction directory (best effort); called after the emulator
+    ///     exits and when extraction fails.
+    /// </summary>
+    internal void TryDeleteDirectory(string? directoryPath)
+    {
+        if (string.IsNullOrEmpty(directoryPath)) return;
+
+        try
+        {
+            if (Directory.Exists(directoryPath)) Directory.Delete(directoryPath, true);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountZipFiles] Could not delete temp directory {directoryPath}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Containment test used by the traversal validation and the extraction fallback.
+    ///     Case sensitivity follows the platform: file systems are case-sensitive on Unix.
+    /// </summary>
+    private static bool IsPathContainedIn(string candidatePath, string rootPath)
+    {
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+        var normalizedRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath));
+        var normalizedCandidate = Path.TrimEndingDirectorySeparator(Path.GetFullPath(candidatePath));
+
+        if (string.Equals(normalizedCandidate, normalizedRoot, comparison)) return true;
+
+        if (!normalizedRoot.EndsWith(Path.DirectorySeparatorChar))
+            normalizedRoot += Path.DirectorySeparatorChar;
+
+        return normalizedCandidate.StartsWith(normalizedRoot, comparison);
+    }
+
+    /// <summary>
     ///     Returns the mount process exit code when the process actually started and has
     ///     exited; otherwise null. <see cref="Process.HasExited" /> throws
-    ///     InvalidOperationException when Start() itself failed (no process associated),
-    ///     which used to replace the original error and skip the user-facing dialog.
+    ///     InvalidOperationException when Start() itself failed (no process
+    ///     associated), which used to replace the original error and skip the user-facing dialog.
     /// </summary>
     private static int? GetMountProcessExitCodeOrNull(Process? mountProcess)
     {

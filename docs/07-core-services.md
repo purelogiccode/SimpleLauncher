@@ -37,11 +37,11 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 |---|---|
 | `GameLauncher\Strategies\DefaultLaunchStrategy` | Fallback strategy (priority 999): bat/lnk/exe/regular emulator launch |
 | `GameLauncher\Strategies\XisoMountStrategy` | Cxbx + `.iso` → mount → `default.xbe` |
-| `GameLauncher\Strategies\ZipMountStrategy` | RPCS3/ScummVM/XBLA archive mounting |
+| `GameLauncher\Strategies\ZipMountStrategy` | RPCS3/ScummVM/XBLA archive mounting (Windows: SimpleZipDrive; Linux/macOS: temp extraction) |
 | `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (Dokan check, console alias, poll 120 s, kill+20 s unmount) |
 | `GameLauncher\MountFiles\MountIsoFiles` | PowerShell `Mount-DiskImage` / `Dismount-DiskImage`, EBOOT.BIN discovery |
 | `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll |
-| `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (zip to virtual drive) |
+| `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (Windows: zip to virtual drive; Linux/macOS: extract to a temp directory and launch from there) |
 | `GameLauncher\MountFiles\FindEbootBin`, `FindDefaultXbe`, `FindDefaultXex`, `FindImageIso`, `FindBinFile`, `FindCueFile`, `FileFinderService` | Launch-file discovery inside mounted volumes |
 | `GameLauncher\MountFiles\DokanValidation` | P/Invoke `dokan2.dll` version check |
 | `GameLauncher\ValidateBatchFile` | Pre-execution validation of batch files (missing paths) |

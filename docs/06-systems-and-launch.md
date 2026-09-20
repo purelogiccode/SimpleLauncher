@@ -71,7 +71,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 | Strategy | Priority | Applies to | Behavior |
 |---|---|---|---|
 | `DefaultLaunchStrategy` | 999 | everything else | `.BAT` → batch, `.LNK/.URL` → shortcut, `.EXE` → executable, else regular emulator launch |
-| `ZipMountStrategy` | 30 | `.zip/.7z/.rar` + RPCS3 / ScummVM / XBLA | mount archive; load `EBOOT.BIN`, ScummVM auto-detect, or XBLA nested exe |
+| `ZipMountStrategy` | 30 | `.zip/.7z/.rar` + RPCS3 / ScummVM / XBLA | Windows: mount archive; load `EBOOT.BIN`, ScummVM auto-detect, or XBLA nested exe. Linux/macOS: extract to a temp directory and launch from there (same search logic) |
 | `DosBoxLaunchStrategy` | 25 | DOSBox-family emulator + directory/archive/ISO/CHD | ISO/CHD mount, archive extract, `.conf/.bat/.exe/.com` detection or `DosBoxFileSelectionWindow`, temp conf, `-conf` append |
 | `ChdToCueStrategy` | 25 | `.chd` + 4DO / Raine | `ConvertChdToCueBinAsync` → launch `.cue` → delete temp |
 | `XisoMountStrategy` | 20 | Cxbx + `.iso` | mount XISO → launch mounted `default.xbe` |
@@ -97,6 +97,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 | `MountChdFiles` / `MountChdDrive` | `tools\CHDMounter\CHDMounter.exe` (+`_arm64`) | Dokan check first (`DokanValidation.IsDokanInstalled()`); args `/a "<chd>" /s:<consoleAlias>`; CHDMounter auto-picks drive; mount poll 240×500 ms (120 s max, `:724-773`); console alias per system/emulator (`:567-718`); unmount = kill + 20 s wait (`:300-317`); `DisposeAsync` verifies release (`MountChdDrive:117-129`) |
 | `MountIsoFiles` | PowerShell `Mount-DiskImage` | drive letter from `Get-Volume` output (`:193-258`); 30 s PS timeout (`:225`); polls 10 s for mount (`:74`); finds `EBOOT.BIN` (`:95`); dismount in finally (`:317-342`); execution-policy detection (`:412+`) |
 | `MountXisoFiles` / `MountXisoDrive` | `tools\SimpleXisoDrive\SimpleXisoDrive.exe` (+`_arm64`) | Dokan validation (`:80-87`); **drive letter Z→D** selection (`:33-57`); args `"<iso>" "Z:"`; polls for `default.xbe` 240×500 ms (`:172-209`); kill + 20 s wait on dispose (`:67`, `:91`) |
+| `MountZipFiles` | `tools\SimpleZipDrive\SimpleZipDrive.exe` (+`_arm64`) on Windows; temp extraction on Linux/macOS | Path-traversal validation always runs (platform-neutral simulated root, backslash entries normalized); Windows mounts a drive and polls 1 min; Unix extracts to `%TEMP%/SimpleLauncher/ZipLaunch/<guid>` (separator-normalized, containment-checked), finds `EBOOT.BIN` / nested `000D0000` file / ScummVM folder, then deletes the temp directory when the emulator exits |
 | `DokanValidation` | P/Invoke `dokan2.dll` | `DokanVersion() > 0` (`:12-36`) |
 
 ## Conversions (`DiscConverter`)
