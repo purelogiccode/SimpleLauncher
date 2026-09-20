@@ -618,9 +618,19 @@ public class AvaloniaContextMenuFunctions(
     /// <summary>
     ///     Launches the specified game, waits for its window to appear, lets the user pick
     ///     the window, captures a screenshot, and saves it as the game's cover image.
+    ///     Windows-only: the Win32 capture code is compiled into the net10.0-windows target,
+    ///     so other platforms log an Information message and return (LB-04).
     /// </summary>
     public async Task TakeScreenshotOfSelectedWindowAsync(AvaloniaRightClickContext context)
     {
+#if !WINDOWS
+        // The context-menu entry is hidden outside Windows; this guard keeps any stray caller
+        // from creating an empty images folder and showing a misleading "error reported" dialog.
+        // Expected platform limitation, so Information (never Warning/Error).
+        _logErrors.Information(
+            "[TakeScreenshotOfSelectedWindow] Taking a screenshot is only supported on Windows");
+        await Task.CompletedTask;
+#else
         context.MainViewModel.StatusText = GetStatus("TakingScreenshot", "Taking screenshot...");
         try
         {
@@ -643,18 +653,14 @@ public class AvaloniaContextMenuFunctions(
                     $"[TakeScreenshotOfSelectedWindow] Could not create the system image folder: {systemImageFolder}");
             }
 
-#if WINDOWS
             await TakeScreenshotWindowsAsync(context, systemImageFolder);
-#else
-            await Task.CompletedTask;
-            await _messageBox.ErrorMessageBoxAsync();
-#endif
         }
         catch (Exception ex)
         {
             _logErrors.Error(ex, "[TakeScreenshotOfSelectedWindow] There was a problem saving the screenshot");
             await _messageBox.CouldNotSaveScreenshotMessageBoxAsync();
         }
+#endif
     }
 
 #if WINDOWS
