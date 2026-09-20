@@ -30,12 +30,12 @@ public class ExtractionServiceTests
         try
         {
             var zipPath = Path.Combine(folder.FullName, "disc.zip");
-            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            await using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {
                 foreach (var entryName in new[] { "DISC.CUE", "GAME.EXE", "README.TXT" })
                 {
-                    using var stream = archive.CreateEntry(entryName).Open();
-                    using var writer = new StreamWriter(stream);
+                    await using var stream = archive.CreateEntry(entryName).Open();
+                    await using var writer = new StreamWriter(stream);
                     writer.Write($"content of {entryName}");
                 }
             }
@@ -81,12 +81,17 @@ public class ExtractionServiceTests
         try
         {
             var zipPath = Path.Combine(folder.FullName, "game.zip");
-            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            await using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {
-                using (var stream = archive.CreateEntry(@"DATA\GAME.BIN").Open())
+                await using (var stream = archive.CreateEntry(@"DATA\GAME.BIN").Open())
+                {
                     stream.WriteByte(1);
-                using (var stream = archive.CreateEntry("README.TXT").Open())
+                }
+
+                await using (var stream = archive.CreateEntry("README.TXT").Open())
+                {
                     stream.WriteByte(2);
+                }
             }
 
             var service = new ExtractionService(

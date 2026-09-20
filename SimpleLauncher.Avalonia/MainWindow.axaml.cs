@@ -2498,92 +2498,99 @@ public partial class MainWindow : Window, IPaginationHost
 
     private async void ScanForMicrosoftWindowsGames_ClickAsync(object? sender, RoutedEventArgs e)
     {
-        // Storefront scanners read the Windows registry/store databases and the command is
-        // hidden elsewhere; stay safe if it is invoked programmatically on Linux/macOS (LB-22).
-        if (!OperatingSystem.IsWindows()) return;
-
         try
         {
-            Log.Information("Scanning for Windows Store games");
-            _playSound.PlayNotificationSound();
-            var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
-            _loadingOverlay.SetLoadingState(true, scanningText);
-            _viewModel.StatusText = scanningText;
-            await Task.Yield();
+            // Storefront scanners read the Windows registry/store databases and the command is
+            // hidden elsewhere; stay safe if it is invoked programmatically on Linux/macOS (LB-22).
+            if (!OperatingSystem.IsWindows()) return;
 
-            StorefrontScanResult result;
             try
             {
-                result = await _gameScannerService.ScanForStoreGamesAsync();
-                // WPF parity: small delay before reloading so the loading overlay is visible
-                await Task.Delay(2000);
+                Log.Information("Scanning for Windows Store games");
+                _playSound.PlayNotificationSound();
+                var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
+                _loadingOverlay.SetLoadingState(true, scanningText);
+                _viewModel.StatusText = scanningText;
+                await Task.Yield();
+
+                StorefrontScanResult result;
+                try
+                {
+                    result = await _gameScannerService.ScanForStoreGamesAsync();
+                    // WPF parity: small delay before reloading so the loading overlay is visible
+                    await Task.Delay(2000);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error in the method ScanForMicrosoftWindowsGames_ClickAsync");
+                    throw;
+                }
+
+                // WPF parity: always reload the system manager so a newly created
+                // "Microsoft Windows" system appears even when 0 games were found.
+                // Avalonia previously only reloaded when GamesFound>0, leaving an
+                // empty newly-created system invisible until restart.
+                if (result.SystemWasCreated || result.ShortcutsCreated > 0 || result.GamesFound > 0)
+                {
+                    await _viewModel.InitializeAsync();
+                    await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+                    RefreshSidebarCounts();
+                    await ShowSystemSelectionScreenAsync();
+                }
+                else
+                {
+                    // No new shortcuts but still ensure the manager is fresh (parity with
+                    // WPF HandleScanForWindowsGamesAsync which always reloads).
+                    await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
+                }
+
+                if (result.SystemWasCreated || result.GamesFound > 0)
+                {
+                    Log.Information(
+                        "Windows games scan complete: {GamesFound} game(s), {ShortcutsCreated} shortcut(s), system created: {SystemWasCreated}",
+                        result.GamesFound, result.ShortcutsCreated, result.SystemWasCreated);
+
+                    var foundText = _localization.GetString("FoundNewMicrosoftWindowsGames",
+                        "Found new Microsoft Windows games. Refreshing system list.");
+                    _viewModel.StatusText = foundText;
+                    ShowToast(_localization.GetString("MicrosoftWindows", "Microsoft Windows"), foundText,
+                        ToastType.Success);
+                }
+
+                var action = result.SystemWasCreated
+                    ? _localization.GetString("Created", "Created")
+                    : _localization.GetString("SystemUpdated", "Updated");
+                var scanCompleteTitle = _localization.GetString("ScanComplete", "Scan Complete");
+                if (result.GamesFound == 0 && !result.SystemWasCreated)
+                {
+                    var noGames = _localization.GetString("NoPcGamesFound", "No PC games were found on this system.");
+                    _viewModel.StatusText = noGames;
+                    ShowToast(scanCompleteTitle, noGames);
+                }
+                else
+                {
+                    var template = _localization.GetString("FoundPcGamesDetail",
+                        "Found {0} PC games. {1} the Microsoft Windows system with {2} new game shortcut(s).");
+                    var detail = string.Format(CultureInfo.InvariantCulture, template, result.GamesFound, action,
+                        result.ShortcutsCreated);
+                    _viewModel.StatusText = detail;
+                    ShowToast(scanCompleteTitle, detail);
+                }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error in the method ScanForMicrosoftWindowsGames_ClickAsync");
-                throw;
+                _viewModel.StatusText =
+                    _localization.GetString("ErrorScanningForWindowsGames", "Error scanning for Windows games");
             }
-
-            // WPF parity: always reload the system manager so a newly created
-            // "Microsoft Windows" system appears even when 0 games were found.
-            // Avalonia previously only reloaded when GamesFound>0, leaving an
-            // empty newly-created system invisible until restart.
-            if (result.SystemWasCreated || result.ShortcutsCreated > 0 || result.GamesFound > 0)
+            finally
             {
-                await _viewModel.InitializeAsync();
-                await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
-                RefreshSidebarCounts();
-                await ShowSystemSelectionScreenAsync();
-            }
-            else
-            {
-                // No new shortcuts but still ensure the manager is fresh (parity with
-                // WPF HandleScanForWindowsGamesAsync which always reloads).
-                await _systemSelectionOrchestrator.ReloadAfterConfigurationChangeAsync();
-            }
-
-            if (result.SystemWasCreated || result.GamesFound > 0)
-            {
-                Log.Information(
-                    "Windows games scan complete: {GamesFound} game(s), {ShortcutsCreated} shortcut(s), system created: {SystemWasCreated}",
-                    result.GamesFound, result.ShortcutsCreated, result.SystemWasCreated);
-
-                var foundText = _localization.GetString("FoundNewMicrosoftWindowsGames",
-                    "Found new Microsoft Windows games. Refreshing system list.");
-                _viewModel.StatusText = foundText;
-                ShowToast(_localization.GetString("MicrosoftWindows", "Microsoft Windows"), foundText,
-                    ToastType.Success);
-            }
-
-            var action = result.SystemWasCreated
-                ? _localization.GetString("Created", "Created")
-                : _localization.GetString("SystemUpdated", "Updated");
-            var scanCompleteTitle = _localization.GetString("ScanComplete", "Scan Complete");
-            if (result.GamesFound == 0 && !result.SystemWasCreated)
-            {
-                var noGames = _localization.GetString("NoPcGamesFound", "No PC games were found on this system.");
-                _viewModel.StatusText = noGames;
-                ShowToast(scanCompleteTitle, noGames);
-            }
-            else
-            {
-                var template = _localization.GetString("FoundPcGamesDetail",
-                    "Found {0} PC games. {1} the Microsoft Windows system with {2} new game shortcut(s).");
-                var detail = string.Format(CultureInfo.InvariantCulture, template, result.GamesFound, action,
-                    result.ShortcutsCreated);
-                _viewModel.StatusText = detail;
-                ShowToast(scanCompleteTitle, detail);
+                _loadingOverlay.SetLoadingState(false);
             }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error in the method ScanForMicrosoftWindowsGames_ClickAsync");
-            _viewModel.StatusText =
-                _localization.GetString("ErrorScanningForWindowsGames", "Error scanning for Windows games");
-        }
-        finally
-        {
-            _loadingOverlay.SetLoadingState(false);
+            Log.Error(ex, "Error in method ScanForMicrosoftWindowsGames_ClickAsync");
         }
     }
 
