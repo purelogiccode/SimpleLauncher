@@ -45,9 +45,16 @@
 - Both the WPF app and the Avalonia app store **all** user data — favorites, play
   history, application + emulator settings, per-system play times, and system
   configurations — in a single SQLite database named `settings.dat` (SQLite content,
-  legacy extension) inside the AppData folder (`%LocalAppData%\SimpleLauncher` on
-  Windows, `~/.local/share/SimpleLauncher` on Linux/macOS). Same file works on all
-  platforms (Microsoft.Data.Sqlite), so both apps share the same store.
+  legacy extension). Same file works on all platforms (Microsoft.Data.Sqlite), so both
+  apps share the same store.
+- **Location** (`UnifiedSettingsDatabase.ResolveDatabasePath`): an existing database always
+  wins — a portable `settings.dat` next to the exe is kept, and when both a portable and a
+  per-user copy exist the newest one is used. When no database exists yet, Windows keeps
+  portable mode for a writable exe folder (zip installs), while Linux/macOS default to the
+  per-user data folder (`%LocalAppData%\SimpleLauncher` on Windows,
+  `~/.local/share/SimpleLauncher` on Linux/macOS). The folder also holds the logs, window
+  bounds and the shelved legacy `.bak` files, and is what the **Open AppData Path** menu
+  action opens.
 - Schema (versioned via a `Meta` table): `AppSettings` (key/value),
   `EmulatorSettings` (one JSON blob per emulator), `Favorites`, `PlayHistory`,
   `Systems` (one JSON blob per system), `SystemPlayTimes`. Name/file keys are

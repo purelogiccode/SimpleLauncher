@@ -21,8 +21,8 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 
 | Class | Purpose |
 |---|---|
-| `CheckPaths\PathHelper` | `ResolveRelativeToAppDirectory`, `TryGetExistingDirectory`, path normalization (used everywhere) |
-| `CheckPaths\CheckPath` | Path existence/validity checks incl. extended-length paths |
+| `CheckPaths\PathHelper` | `ResolveRelativeToAppDirectory`, `TryGetExistingDirectory`, path normalization (used everywhere); `GetLongPath` applies the Windows `\\?\` prefix only on Windows (POSIX paths are returned untouched) and `%BASEFOLDER%\...` configs with backslashes resolve on Unix |
+| `CheckPaths\CheckPath` | Path existence/validity checks incl. extended-length paths (Windows-only prefix) |
 | `CheckIfDirectoryIsWritable\DirectoryValidationService` / `CheckIfDirectoryIsWritableService` | Writability probe (temp write+delete) |
 | `CheckForFileLock\FileLockService` / `CheckForFileLockService` | Detect/retry on locked files |
 | `CleanAndDeleteFiles\DeleteFilesService` (+ legacy `DeleteFiles`) | Best-effort file/dir deletion |

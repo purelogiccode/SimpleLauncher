@@ -218,8 +218,19 @@ public static partial class PathHelper
         if (path.StartsWith(BaseFolderPlaceholder, StringComparison.OrdinalIgnoreCase))
         {
             basePath = AppDomain.CurrentDomain.BaseDirectory;
-            remainingPath = path[BaseFolderPlaceholder.Length..]
-                .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            remainingPath = path[BaseFolderPlaceholder.Length..];
+
+            // Stored configurations use Windows separators after the placeholder
+            // ("%BASEFOLDER%\roms\x"). Backslashes are ordinary characters on Unix, so
+            // normalize them before trimming, otherwise the path resolves to a single
+            // folder literally named "\roms\x". Normalize first so a leading backslash
+            // does not survive TrimStart as a rooted path.
+            if (!OperatingSystem.IsWindows())
+            {
+                remainingPath = remainingPath.Replace('\\', Path.DirectorySeparatorChar);
+            }
+
+            remainingPath = remainingPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
         else if (Path.IsPathRooted(path))
         {
@@ -369,12 +380,17 @@ public static partial class PathHelper
 
     /// <summary>
     ///     Converts the given path to a long path format supported by Windows APIs, if it is not already.
+    ///     On non-Windows platforms the path is returned untouched: the extended-length prefix is a
+    ///     Windows-only concept, and prefixing a POSIX path would turn it into a literal filename that
+    ///     does not exist (breaking existence checks, file sizes, file locks and deletions).
     /// </summary>
     /// <param name="path">The path to convert.</param>
     /// <returns>The long path representation of the given path, or null if the path is null.</returns>
     public static string? GetLongPath(string? path)
     {
         if (path == null) return null;
+
+        if (!OperatingSystem.IsWindows()) return path;
 
         if (string.IsNullOrWhiteSpace(path) ||
             path.StartsWith(@"\\?\", StringComparison.OrdinalIgnoreCase) ||

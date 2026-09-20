@@ -39,15 +39,23 @@
 2. **LocalAppData**: `%LocalAppData%\SimpleLauncher\{fileName}` — fallback when the portable file is missing or older.
 3. `TryFallbackToLocalAppData` (`:122-141`) handles write failures by relocating.
 
-Affected files: `settings.dat`, `settings.xml`, `favorites.dat`, `playhistory.dat`, `RetroAchievements.dat`, `system.xml` (via `SystemXmlPath`).
+Affected files (legacy): `settings.xml`, `favorites.dat`, `playhistory.dat`, `RetroAchievements.dat`, `system.xml` (via `SystemXmlPath`). The unified `settings.dat` has its own resolver (next section).
 
 ## Unified database (`settings.dat`)
 
-Since 5.8.0 both apps persist **all** user data in one SQLite database (`settings.dat`) in the
-portable folder or `%LocalAppData%\SimpleLauncher\`; see
-[12 — Data Formats](12-data-formats.md#unified-database-settingsdat) for the schema, migration
-and merge behavior. The legacy files below are still read (first-launch migration) and can be
-exported, but the database is the live store.
+Since 5.8.0 both apps persist **all** user data in one SQLite database (`settings.dat`).
+`UnifiedSettingsDatabase.ResolveDatabasePath` (Core) decides where it lives:
+
+1. **An existing database always wins**: a portable `settings.dat` next to the exe is kept;
+   when both a portable and a per-user copy exist, the newest one is used.
+2. **No database yet**: Windows keeps portable mode for a writable exe folder (zip installs);
+   Linux/macOS always default to the per-user data folder (`~/.local/share/SimpleLauncher`,
+   XDG) because the extracted app folder is writable there and user data belongs in the
+   per-user location (the same folder as logs, window bounds and the legacy backups).
+
+See [12 — Data Formats](12-data-formats.md#unified-database-settingsdat) for the schema,
+migration and merge behavior. The legacy files below are still read (first-launch migration)
+and can be exported, but the database is the live store.
 
 ## settings.xml (`SettingsManagerService`) — legacy
 

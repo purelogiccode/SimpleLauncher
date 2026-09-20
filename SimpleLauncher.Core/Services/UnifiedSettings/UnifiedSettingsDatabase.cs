@@ -53,8 +53,10 @@ public static class UnifiedSettingsDatabase
     /// <summary>
     ///     Resolves the database path, mirroring the legacy <c>DataFileLocation</c>
     ///     precedence so portable installs keep working: an existing portable database
-    ///     wins over AppData (newest wins when both exist); otherwise a writable exe
-    ///     folder means portable mode, else AppData. Tests redirect via
+    ///     wins over AppData (newest wins when both exist). When no database exists yet,
+    ///     Windows keeps portable mode for a writable exe folder (zip installs), while
+    ///     Linux/macOS default to the per-user data folder (<c>~/.local/share/SimpleLauncher</c>)
+    ///     because the extracted app folder is always writable there. Tests redirect via
     ///     <see cref="DatabasePathOverride" />.
     /// </summary>
     public static string GetDatabasePath()
@@ -62,8 +64,23 @@ public static class UnifiedSettingsDatabase
         if (DatabasePathOverride is not null)
             return DatabasePathOverride;
 
-        var portablePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DatabaseFileName);
-        var appDataPath = Path.Combine(AppDataPaths.SimpleLauncherDataFolder, DatabaseFileName);
+        return ResolveDatabasePath(
+            AppDomain.CurrentDomain.BaseDirectory,
+            AppDataPaths.SimpleLauncherDataFolder,
+            OperatingSystem.IsWindows());
+    }
+
+    /// <summary>
+    ///     Pure database path resolution (separated for testability).
+    /// </summary>
+    /// <param name="baseDirectory">The application (exe) folder used for portable mode.</param>
+    /// <param name="appDataFolder">The per-user data folder (LocalAppData or XDG data dir) folder.</param>
+    /// <param name="isWindows">Whether the current platform is Windows.</param>
+    /// <returns>The absolute path of the database file to use.</returns>
+    internal static string ResolveDatabasePath(string baseDirectory, string appDataFolder, bool isWindows)
+    {
+        var portablePath = Path.Combine(baseDirectory, DatabaseFileName);
+        var appDataPath = Path.Combine(appDataFolder, DatabaseFileName);
         var portableExists = File.Exists(portablePath);
         var appDataExists = File.Exists(appDataPath);
 
@@ -79,7 +96,10 @@ public static class UnifiedSettingsDatabase
                 : appDataPath;
         }
 
-        return IsDirectoryWritable(AppDomain.CurrentDomain.BaseDirectory) ? portablePath : appDataPath;
+        if (!isWindows)
+            return appDataPath;
+
+        return IsDirectoryWritable(baseDirectory) ? portablePath : appDataPath;
     }
 
     private static bool IsDirectoryWritable(string directoryPath)

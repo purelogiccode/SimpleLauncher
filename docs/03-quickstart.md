@@ -20,7 +20,7 @@
 On first launch the app:
 
 1. checks required files and folder writability;
-2. scans installed storefront games (Steam, Epic, GOG, …) into a **"Microsoft Windows"** system — this is skipped if systems already exist;
+2. scans installed storefront games (Steam, Epic, GOG, …) into a **"Microsoft Windows"** system — this is skipped if systems already exist, and is a Windows-only step (other platforms go straight to step 3);
 3. if still no systems, shows the welcome message and opens **Easy Mode** (or you can close it and use Expert Mode).
 
 ## Folder structure
@@ -44,7 +44,7 @@ SimpleLauncher/
 └── samples/                   emulator config templates
 ```
 
-Data files: user data lives in the unified SQLite database `settings.dat` (next to the exe in portable mode or in `%LocalAppData%\SimpleLauncher\`); legacy `settings.xml`, `system.xml`, `favorites.dat`, and `playhistory.dat` are migrated automatically on first launch — see [05 — Configuration](05-configuration.md).
+Data files: user data lives in the unified SQLite database `settings.dat` — next to the exe in portable mode on Windows, otherwise in `%LocalAppData%\SimpleLauncher\` (Windows) or `~/.local/share/SimpleLauncher\` (Linux/macOS); legacy `settings.xml`, `system.xml`, `favorites.dat`, and `playhistory.dat` are migrated automatically on first launch — see [05 — Configuration](05-configuration.md).
 
 ## Easy Mode (guided setup)
 
