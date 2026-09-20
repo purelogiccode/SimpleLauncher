@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 
@@ -79,7 +80,7 @@ public partial class InjectRaineConfigWindow : Window
     {
         return await _filePicker.OpenFileAsync(
             "Select Raine Emulator Executable",
-            "Raine Executable|raine*.exe|All Executables|*.exe");
+            ExecutableFileFilter.ForNamedExecutable("Raine Executable", "raine*.exe"));
     }
 
     private async Task<string?> OnRequestFilePath()

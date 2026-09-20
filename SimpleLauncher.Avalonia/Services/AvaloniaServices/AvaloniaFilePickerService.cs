@@ -67,8 +67,10 @@ public class AvaloniaFilePickerService : IFilePickerService
 
     /// <summary>
     ///     Parses a WPF-style filter string ("Description|*.ext1;*.ext2") into storage file types.
+    ///     Internal so tests can assert that the platform-aware emulator filters do not hide
+    ///     Unix binaries.
     /// </summary>
-    private static IReadOnlyList<FilePickerFileType>? ParseFilter(string filter)
+    internal static IReadOnlyList<FilePickerFileType>? ParseFilter(string filter)
     {
         if (string.IsNullOrWhiteSpace(filter)) return null;
 

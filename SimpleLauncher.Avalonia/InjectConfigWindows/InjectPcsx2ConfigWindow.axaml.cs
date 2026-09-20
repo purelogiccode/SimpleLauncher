@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 
@@ -68,6 +69,6 @@ public partial class InjectPcsx2ConfigWindow : Window
     {
         return await _filePicker.OpenFileAsync(
             "Select PCSX2 Emulator",
-            "PCSX2 Executable|pcsx2*.exe|All Executables|*.exe");
+            ExecutableFileFilter.ForNamedExecutable("PCSX2 Executable", "pcsx2*.exe"));
     }
 }

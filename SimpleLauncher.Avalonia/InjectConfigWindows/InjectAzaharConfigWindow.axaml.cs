@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 
@@ -68,6 +69,6 @@ public partial class InjectAzaharConfigWindow : Window
     {
         return await _filePicker.OpenFileAsync(
             "Select Azahar Emulator",
-            "Azahar Executable|azahar.exe|All Executables|*.exe");
+            ExecutableFileFilter.ForNamedExecutable("Azahar Executable", "azahar.exe"));
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia;
 
@@ -57,7 +58,7 @@ public partial class RetroAchievementsSettingsWindow : Window
     private static async Task<string?> OnRequestExePath()
     {
         var filePicker = App.ServiceProvider.GetRequiredService<IFilePickerService>();
-        return await filePicker.OpenFileAsync("Select Emulator Executable", "Executable files (*.exe)|*.exe");
+        return await filePicker.OpenFileAsync("Select Emulator Executable", ExecutableFileFilter.ForEmulator());
     }
 
     private void OpenControlPanel_Click(object? sender, RoutedEventArgs e)

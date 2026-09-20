@@ -678,7 +678,7 @@ public partial class EditSystemWindow : Window
         {
             var path = await _filePicker.OpenFileAsync(
                 "Select Emulator",
-                "Executable Files (*.exe;*.bat)|*.exe;*.bat");
+                ExecutableFileFilter.ForEmulator());
             if (!string.IsNullOrEmpty(path))
             {
                 pathTextBox.Text = path;

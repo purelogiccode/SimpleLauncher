@@ -23,6 +23,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 |---|---|
 | `CheckPaths\PathHelper` | `ResolveRelativeToAppDirectory`, `TryGetExistingDirectory`, path normalization (used everywhere); `GetLongPath` applies the Windows `\\?\` prefix only on Windows (POSIX paths are returned untouched) and `%BASEFOLDER%\...` configs with backslashes resolve on Unix |
 | `CheckPaths\CheckPath` | Path existence/validity checks incl. extended-length paths (Windows-only prefix) |
+| `CheckPaths\ExecutableFileFilter` | Platform-aware file-dialog filters for emulator pickers: `*.exe;*.bat` on Windows, "All Files" on Linux/macOS where binaries are extensionless or `.AppImage`/`.sh` |
 | `CheckIfDirectoryIsWritable\DirectoryValidationService` / `CheckIfDirectoryIsWritableService` | Writability probe (temp write+delete) |
 | `CheckForFileLock\FileLockService` / `CheckForFileLockService` | Detect/retry on locked files |
 | `CleanAndDeleteFiles\DeleteFilesService` (+ legacy `DeleteFiles`) | Best-effort file/dir deletion |

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 
@@ -68,6 +69,6 @@ public partial class InjectDuckStationConfigWindow : Window
     {
         return await _filePicker.OpenFileAsync(
             "Select DuckStation Emulator",
-            "DuckStation Executable|duckstation*.exe|All Executables|*.exe");
+            ExecutableFileFilter.ForNamedExecutable("DuckStation Executable", "duckstation*.exe"));
     }
 }

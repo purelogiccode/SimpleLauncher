@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 
@@ -68,6 +69,6 @@ public partial class InjectSegaModel2ConfigWindow : Window
     {
         return await _filePicker.OpenFileAsync(
             "Select SEGA Model 2 Emulator",
-            "SEGA Model 2 Executable|emulator.exe|All Executables|*.exe");
+            ExecutableFileFilter.ForNamedExecutable("SEGA Model 2 Executable", "emulator.exe"));
     }
 }
