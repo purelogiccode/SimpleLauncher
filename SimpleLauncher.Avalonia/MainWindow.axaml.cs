@@ -310,7 +310,7 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Live library refresh: when a watched ROM folder changes on disk, reload the
         // current view on the UI thread (same debounced behavior as the WPF app).
-        _gameFilesChangedHandler = (o, e) =>
+        _gameFilesChangedHandler = (_, e) =>
         {
             try
             {
@@ -329,7 +329,7 @@ public partial class MainWindow : Window, IPaginationHost
                     // The affected system's cached file list is stale — drop it so the
                     // refresh below re-scans that system's folders from disk.
                     _viewModel.InvalidateGameFileCacheForSystem(e.Value);
-                    o = _viewModel.RefreshCurrentViewAsync();
+                    _ = RefreshCurrentViewSafelyAsync();
                     RefreshSidebarCounts();
                     ShowToast(_localization.GetString("GameLibrary", "Game Library"),
                         _localization.GetString("Toast.Refreshed", "Game list reloaded."));
@@ -344,6 +344,23 @@ public partial class MainWindow : Window, IPaginationHost
         _fileWatcher.GameFilesChanged += _gameFilesChangedHandler;
 
         Log.Information("Main window initialized");
+    }
+
+    /// <summary>
+    ///     Reloads the current view after a watched file change. Fire-and-forget on the UI
+    ///     thread, but the task is observed: a failure is logged here instead of surfacing
+    ///     later as an unobserved task exception.
+    /// </summary>
+    private async Task RefreshCurrentViewSafelyAsync()
+    {
+        try
+        {
+            await _viewModel.RefreshCurrentViewAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to refresh the current view after a file change");
+        }
     }
 
     /// <summary>Favorites page section ViewModel (WPF FavoritesPage equivalent).</summary>

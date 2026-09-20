@@ -57,8 +57,10 @@ public class AboutViewModelTests : IDisposable
     {
         var (vm, _) = CreateVm();
         Assert.StartsWith("Version: ", vm.AppVersion, StringComparison.OrdinalIgnoreCase);
-        Assert.False(string.IsNullOrEmpty(vm.LogoPath));
-        Assert.EndsWith(Path.Combine("images", "logo2.png"), vm.LogoPath, StringComparison.OrdinalIgnoreCase);
+
+        // Root UI icons ship embedded (AvaloniaResource), not as loose files next to the exe,
+        // so the logo must be an avares address resolved by PathToImageConverter.
+        Assert.Equal("avares://SimpleLauncher.Avalonia/images/logo2.png", vm.LogoPath);
     }
 
     [Fact]

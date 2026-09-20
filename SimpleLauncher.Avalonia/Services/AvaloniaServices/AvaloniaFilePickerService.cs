@@ -80,6 +80,7 @@ public class AvaloniaFilePickerService : IFilePickerService
 
         var parts = filter.Split('|');
         var types = new List<FilePickerFileType>();
+        var specificFilters = 0;
 
         for (var i = 0; i + 1 < parts.Length; i += 2)
         {
@@ -90,14 +91,23 @@ public class AvaloniaFilePickerService : IFilePickerService
 
             if (patterns.Count == 0) continue;
 
-            // "All files|*.*" maps to the built-in all-files type (null filter); skip it and
-            // keep any specific filters around it — returning null here used to drop the whole
-            // list (e.g. "MP3 files|*.mp3|All files|*.*" lost its MP3 entry) (LB-10).
-            if (patterns.All(p => string.Equals(p, "*.*", StringComparison.Ordinal))) continue;
+            // "All files|*.*" becomes an unrestricted entry using Avalonia's all-files pattern
+            // ("*"), so a list such as "MP3 files|*.mp3|All files|*.*" keeps both the specific
+            // filter and the option to pick any file (LB-10). Returning null here used to drop
+            // the whole list before this was parsed, and skipping the pair entirely removed the
+            // unrestricted option the WPF picker still offers.
+            if (patterns.All(p => string.Equals(p, "*.*", StringComparison.Ordinal)))
+            {
+                types.Add(new FilePickerFileType(name) { Patterns = ["*"] });
+                continue;
+            }
 
             types.Add(new FilePickerFileType(name) { Patterns = patterns });
+            specificFilters++;
         }
 
-        return types.Count > 0 ? types : null;
+        // Only an all-files entry (or nothing at all): return no filter so the platform shows
+        // its default complete file dialog.
+        return specificFilters > 0 ? types : null;
     }
 }

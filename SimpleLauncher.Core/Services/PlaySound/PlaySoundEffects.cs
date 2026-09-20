@@ -158,7 +158,9 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     ///     Whether a sound playback failure is an expected environment/user condition rather
     ///     than a defect: a missing native decoder/output library, no usable audio device, or
     ///     an unsupported/corrupt sound file. Inner exceptions are inspected too, because
-    ///     P/Invoke failures are often wrapped (e.g. <see cref="TypeInitializationException" />).
+    ///     P/Invoke failures are often wrapped (e.g. <see cref="TypeInitializationException" />):
+    ///     such a wrapper only counts when one of its inner exceptions does, so a genuine
+    ///     static-initializer defect is still reported as a bug.
     /// </summary>
     internal static bool IsExpectedPlaybackFailure(Exception exception)
     {
@@ -179,7 +181,6 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
 #endif
         return exception
             is DllNotFoundException // native libsndfile/libasound is not installed
-            or TypeInitializationException // a P/Invoke holder class failed to initialize
             or FileNotFoundException // a native library file could not be resolved
             or PlatformNotSupportedException // macOS has no audio output backend
             or SoundFileException // libsndfile rejected the file (unsupported/truncated)

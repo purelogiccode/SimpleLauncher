@@ -60,6 +60,11 @@ public class PlaySoundEffectsTests
 
         Assert.False(PlaySoundEffects.IsExpectedPlaybackFailure(new InvalidOperationException("real bug")));
         Assert.False(PlaySoundEffects.IsExpectedPlaybackFailure(new NullReferenceException()));
+
+        // A TypeInitializationException is only an environment issue when an inner exception
+        // says so; a defect inside a static initializer must stay at Error and be reported.
+        Assert.False(PlaySoundEffects.IsExpectedPlaybackFailure(
+            new TypeInitializationException("Audio", new NullReferenceException("static initializer defect"))));
     }
 
     [Fact]

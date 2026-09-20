@@ -31,6 +31,13 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     /// </summary>
     private static readonly string[] ImageGameFormats = [".bat", ".exe", ".com"];
 
+    // DOSBox .conf files are plain text and reference host paths. On Linux/macOS paths are
+    // UTF-8, so write UTF-8 without a BOM (ASCII turned "Café ISO" into "Caf? ISO" and
+    // imgmount could not find the file); Windows keeps the historical ASCII behavior for
+    // DOSBox 0.74 codepage compatibility.
+    private static readonly Encoding ConfFileEncoding =
+        OperatingSystem.IsWindows() ? Encoding.ASCII : new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
     private readonly IConfiguration _configuration;
     private readonly IDiscConverter _discConverter;
     private readonly IExtractionService _extractionService;
@@ -212,11 +219,14 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
             {
                 // MatchCasing.CaseInsensitive: scene archives routinely contain upper-case
                 // executables (GAME.EXE), which a case-sensitive glob would miss on Linux.
+                // AttributesToSkip.None keeps hidden/system entries discoverable like the old
+                // SearchOption.AllDirectories overload did.
                 var files = Directory.EnumerateFiles(directory, $"*{format}", new EnumerationOptions
                 {
                     MatchCasing = MatchCasing.CaseInsensitive,
                     RecurseSubdirectories = true,
-                    IgnoreInaccessible = true
+                    IgnoreInaccessible = true,
+                    AttributesToSkip = FileAttributes.None
                 });
                 foundFiles.AddRange(files);
             }
@@ -267,7 +277,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 "");
         }
 
-        File.WriteAllText(confPath, confContent, Encoding.ASCII);
+        File.WriteAllText(confPath, confContent, ConfFileEncoding);
         _logger.Debug($"[DosBoxLaunchStrategy] Generated conf file: {confPath}");
 
         return confPath;
@@ -433,7 +443,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 "");
         }
 
-        File.WriteAllText(confPath, confContent, Encoding.ASCII);
+        File.WriteAllText(confPath, confContent, ConfFileEncoding);
         _logger.Debug($"[DosBoxLaunchStrategy] Generated ISO conf file: {confPath}");
 
         return confPath;
@@ -779,7 +789,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
         lines.Add("exit");
         lines.Add("");
 
-        File.WriteAllText(confPath, string.Join("\r\n", lines), Encoding.ASCII);
+        File.WriteAllText(confPath, string.Join("\r\n", lines), ConfFileEncoding);
         _logger.Debug($"[DosBoxLaunchStrategy] Generated image conf file: {confPath}");
 
         return confPath;
@@ -858,7 +868,7 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 "");
         }
 
-        File.WriteAllText(confPath, confContent, Encoding.ASCII);
+        File.WriteAllText(confPath, confContent, ConfFileEncoding);
         _logger.Debug($"[DosBoxLaunchStrategy] Generated CHD conf file: {confPath}");
 
         return confPath;

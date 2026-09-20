@@ -92,11 +92,22 @@ public class PathToImageConverter : IValueConverter
     {
         try
         {
-            if (!File.Exists(path)) return null;
+            Stream stream;
+            if (path.StartsWith("avares://", StringComparison.Ordinal))
+            {
+                // Embedded UI icons (about logo, link icons) never touch the disk; the
+                // cache key stays the avares URI so it cannot collide with a file path.
+                stream = AssetLoader.Open(new Uri(path));
+            }
+            else
+            {
+                if (!File.Exists(path)) return null;
+                stream = File.OpenRead(path);
+            }
 
             // Avalonia Bitmap is immutable and safe for cross-thread use once created.
-            using var stream = File.OpenRead(path);
-            var image = Bitmap.DecodeToWidth(stream, 300);
+            using var sourceStream = stream;
+            var image = Bitmap.DecodeToWidth(sourceStream, 300);
 
             // Add to caches
             WeakCache[path] = new WeakReference<Bitmap>(image);

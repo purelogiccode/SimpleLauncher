@@ -32,7 +32,11 @@ public partial class AboutViewModel : ObservableObject
         _updateChecker = updateChecker;
 
         AppVersion = $"Version: {Assembly.GetExecutingAssembly().GetName().Version}";
-        LogoPath = Path.Combine(AppContext.BaseDirectory, "images", "logo2.png");
+
+        // Root UI icons are embedded in the assembly (AvaloniaResource), not copied next to
+        // the exe, so the logo is addressed through the asset loader (PathToImageConverter
+        // resolves avares:// URIs). images\default.png stays loose for file-path consumers.
+        LogoPath = "avares://SimpleLauncher.Avalonia/images/logo2.png";
     }
 
     /// <summary>

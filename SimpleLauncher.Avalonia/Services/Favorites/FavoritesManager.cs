@@ -137,7 +137,7 @@ public class FavoritesManager
     /// </summary>
     private void SaveFavoritesSync()
     {
-        if (UnifiedSettingsDatabase.IsValidDatabase())
+        if (UnifiedSettingsDatabase.DatabaseFileExists())
         {
             try
             {
@@ -262,7 +262,7 @@ public class FavoritesManager
     /// </summary>
     public async Task SaveFavoritesAsync()
     {
-        if (UnifiedSettingsDatabase.IsValidDatabase())
+        if (UnifiedSettingsDatabase.DatabaseFileExists())
         {
             try
             {

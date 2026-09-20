@@ -199,7 +199,7 @@ public class FavoritesManager
     /// </summary>
     public Task SaveFavoritesAsync()
     {
-        if (UnifiedSettingsDatabase.IsValidDatabase())
+        if (UnifiedSettingsDatabase.DatabaseFileExists())
         {
             try
             {

@@ -184,6 +184,22 @@ public static class AvaloniaLegacyMigrator
                 favorites.Count, history.Count, systemsByName.Count, dbPath, shelved);
             return new MigrationResult(MigrationStatus.Migrated, favorites.Count, history.Count, systemsByName.Count);
         }
+        catch (NewerSchemaVersionException ex)
+        {
+            // Running an older build against a settings.dat written by a newer one is an
+            // expected downgrade condition: leave the database and the legacy files untouched
+            // and retry after upgrading. Information keeps it out of the bug-report API.
+            logger.Information(ex,
+                "[Migration] Database '{Path}' was written by a newer app build; leaving it and the legacy files untouched",
+                dbPath);
+
+            lock (MigrationLock)
+            {
+                _migrationAttempted = false;
+            }
+
+            return new MigrationResult(MigrationStatus.Failed, 0, 0, 0);
+        }
         catch (Exception ex)
         {
             logger.Error(ex, "[Migration] Failed to migrate legacy files into '{Path}'. Legacy files left untouched",
@@ -376,6 +392,21 @@ public static class AvaloniaLegacyMigrator
                 "[Migration] Merged legacy files into the existing database '{Path}': added {Fav} favorites, {Hist} history entries, {Sys} systems; shelved {N} legacy files as timestamped .bak",
                 dbPath, favoritesAdded, historyAdded, systemsAdded, shelved);
             return new MigrationResult(MigrationStatus.Merged, favoritesAdded, historyAdded, systemsAdded);
+        }
+        catch (NewerSchemaVersionException ex)
+        {
+            // The database was replaced by a newer build between the validity check and the
+            // merge: expected downgrade condition, never a bug (Information).
+            logger.Information(ex,
+                "[Migration] Database '{Path}' was written by a newer app build; skipping the merge and leaving the legacy files untouched",
+                dbPath);
+
+            lock (MigrationLock)
+            {
+                _migrationAttempted = false;
+            }
+
+            return new MigrationResult(MigrationStatus.Failed, 0, 0, 0);
         }
         catch (Exception ex)
         {

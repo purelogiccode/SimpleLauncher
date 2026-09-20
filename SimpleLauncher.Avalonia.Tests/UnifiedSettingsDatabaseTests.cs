@@ -75,6 +75,10 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         var ex = Assert.Throws<NewerSchemaVersionException>(() => UnifiedSettingsDatabase.EnsureCreated(_dbPath));
         Assert.Equal(UnifiedSettingsDatabase.CurrentSchemaVersion + 99, ex.SchemaVersion);
         Assert.Equal(before, File.ReadAllBytes(_dbPath));
+
+        // Save paths must still treat the file as a database: without this, a downgrade
+        // would rewrite the legacy favorites.dat/playhistory.dat files.
+        Assert.True(UnifiedSettingsDatabase.DatabaseFileExists(_dbPath));
         Assert.Empty(Directory.GetFiles(
             Path.GetDirectoryName(_dbPath)!,
             Path.GetFileName(_dbPath) + ".corrupt.*.bak"));

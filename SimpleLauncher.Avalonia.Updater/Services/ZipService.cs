@@ -1,4 +1,5 @@
 using System.Security;
+using SharpCompress.Common;
 using SharpCompress.Readers;
 using SharpCompress.Readers.Zip;
 
@@ -76,7 +77,9 @@ internal class ZipService
         try
         {
             // Phase 1: validate every entry and extract into staging (live install untouched).
-            var stagedFiles = new List<(string RelativePath, string StagedPath)>();
+            // The archive's Unix mode (when present) is carried along so a brand-new
+            // executable installed by this update gets its execute bit applied too.
+            var stagedFiles = new List<(string RelativePath, string StagedPath, UnixFileMode? ArchiveMode)>();
 
             // Use ZipReader for streaming extraction - no upfront indexing needed
             using (var reader = ZipReader.OpenReader(zipStream, new ReaderOptions { LeaveStreamOpen = true }))
@@ -165,7 +168,7 @@ internal class ZipService
 
                         // Extract with retry logic for locked files
                         await ExtractFileWithRetryAsync(reader, stagedPath, entryKey, cancellationToken);
-                        stagedFiles.Add((trimmedEntry, stagedPath));
+                        stagedFiles.Add((trimmedEntry, stagedPath, TryGetUnixFileModeFromEntry(reader.Entry)));
 
                         // UPD-22: count and announce only AFTER the bytes hit the disk —
                         // a failed/aborted write must not inflate the progress count.
@@ -226,13 +229,14 @@ internal class ZipService
     ///     (same-volume move = atomic). If any swap fails, already-swapped files are rolled
     ///     back from their backups; on success the backups are deleted.
     /// </summary>
-    private async Task SwapStagedFilesAsync(List<(string RelativePath, string StagedPath)> stagedFiles,
+    private async Task SwapStagedFilesAsync(
+        List<(string RelativePath, string StagedPath, UnixFileMode? ArchiveMode)> stagedFiles,
         string appDirectoryFullPath, CancellationToken cancellationToken)
     {
         // UPD-06 (disk-full): verify the staged payload plus a safety reserve fits on the
         // install drive before touching a single live file.
         long stagedBytes = 0;
-        foreach (var (_, stagedPath) in stagedFiles) stagedBytes += new FileInfo(stagedPath).Length;
+        foreach (var (_, stagedPath, _) in stagedFiles) stagedBytes += new FileInfo(stagedPath).Length;
 
         var drive = new DriveInfo(Path.GetPathRoot(appDirectoryFullPath)!);
         const long reserveBytes = 64L * 1024 * 1024;
@@ -252,7 +256,7 @@ internal class ZipService
         var installed = new List<(string FinalPath, string? BackupPath)>();
         try
         {
-            foreach (var (relativePath, stagedPath) in stagedFiles)
+            foreach (var (relativePath, stagedPath, archiveMode) in stagedFiles)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -290,7 +294,11 @@ internal class ZipService
                 }
 
                 await MoveFileWithRetryAsync(stagedPath, finalPath, relativePath, cancellationToken);
-                TryApplyUnixFileMode(finalPath, previousMode);
+
+                // A replaced file keeps its live mode; a brand-new file gets the mode the
+                // release zip carries (0755 for executables), so updates that add an
+                // executable do not install it without the execute bit.
+                TryApplyUnixFileMode(finalPath, previousMode ?? archiveMode);
                 if (backupPath == null)
                     installed.Add((finalPath, null));
 
@@ -404,6 +412,22 @@ internal class ZipService
         {
             return null;
         }
+    }
+
+    /// <summary>
+    ///     Reads the Unix permission bits stored in a ZIP entry's external attributes (the
+    ///     release packaging script stamps 0755/0644 with a Unix "made by" host). Returns
+    ///     null for entries without Unix mode data, so the staged file mode is left alone.
+    /// </summary>
+    private static UnixFileMode? TryGetUnixFileModeFromEntry(IEntry? entry)
+    {
+        if (OperatingSystem.IsWindows() || entry?.Attrib is not { } attrib) return null;
+
+        // External attributes (32-bit): the high 16 bits are the Unix st_mode when packed
+        // on Unix (0x81ED = 0100755); the permissions are the low 9 bits of that mode.
+        var mode = (uint)attrib >> 16 & 0xFFFF;
+        var permissions = mode & 0x1FF;
+        return permissions == 0 ? null : (UnixFileMode)permissions;
     }
 
     /// <summary>

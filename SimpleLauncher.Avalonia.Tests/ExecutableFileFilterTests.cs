@@ -53,15 +53,32 @@ public class ExecutableFileFilterTests
     }
 
     [Fact]
-    public void ParseFilter_KeepsSpecificFiltersWhenAnAllFilesEntryIsPresent()
+    public void ParseFilter_KeepsSpecificFiltersAndTheAllFilesEntry()
     {
-        // "All files|*.*" in the middle of the list must not drop the whole filter list (LB-10):
-        // the MP3 entry has to survive so the dialog does not show every file.
+        // "All files|*.*" must not drop the whole filter list (LB-10) and must not itself be
+        // dropped either: the Sound Configuration picker passes MP3 + All files, and users must
+        // still be able to choose WAV/FLAC/Ogg files the playback layer supports.
         var types = AvaloniaFilePickerService.ParseFilter("MP3 files (*.mp3)|*.mp3|All files (*.*)|*.*");
 
-        var type = Assert.Single(types!);
-        Assert.Equal("MP3 files (*.mp3)", type.Name);
-        Assert.Contains("*.mp3", type.Patterns!, StringComparer.Ordinal);
+        Assert.NotNull(types);
+        Assert.Equal(2, types.Count);
+        Assert.Equal("MP3 files (*.mp3)", types[0].Name);
+        Assert.Contains("*.mp3", types[0].Patterns!, StringComparer.Ordinal);
+        Assert.Equal("All files (*.*)", types[1].Name);
+        Assert.Contains("*", types[1].Patterns!, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ParseFilter_AllFilesEntryFirst_KeepsOrderAndSpecificFilters()
+    {
+        var types = AvaloniaFilePickerService.ParseFilter("All Files (*.*)|*.*|NeoGeo CD BIOS (neocd.bin)|neocd.bin");
+
+        Assert.NotNull(types);
+        Assert.Equal(2, types.Count);
+        Assert.Equal("All Files (*.*)", types[0].Name);
+        Assert.Contains("*", types[0].Patterns!, StringComparer.Ordinal);
+        Assert.Equal("NeoGeo CD BIOS (neocd.bin)", types[1].Name);
+        Assert.Contains("neocd.bin", types[1].Patterns!, StringComparer.Ordinal);
     }
 
     [Fact]

@@ -50,7 +50,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private readonly Stats _stats;
     private readonly ISystemImageResolverService? _systemImageResolver;
     private readonly SystemManagerService _systemManager;
-    private bool _preservePaginationOnNextShow;
     private List<SystemManagerConfig> _allSystems;
 
     // Incremented by every view load (navigation / search / reload / random pick). An
@@ -374,8 +373,11 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// <summary>
     ///     Stores the full list for the current view and displays it through pagination
     ///     (every navigation/search/refresh path routes through this method).
+    ///     <paramref name="preservePagination" /> is passed explicitly by the reload paths
+    ///     (file-watcher refresh) so a concurrent user navigation can never consume a shared
+    ///     flag and keep the wrong page.
     /// </summary>
-    private void ShowGames(List<GameCardViewModel> fullList)
+    private void ShowGames(List<GameCardViewModel> fullList, bool preservePagination = false)
     {
         // Loading games replaces the system configuration summary (WPF parity: the
         // letter buttons clear the info panel and render the game buttons).
@@ -384,8 +386,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         // A freshly loaded list starts on its first page (WPF parity: loading a system
         // and clicking a letter — including "All" — restart pagination). The watcher
         // reload is the exception: it keeps the user on the current page.
-        var preservePagination = _preservePaginationOnNextShow;
-        _preservePaginationOnNextShow = false;
         if (!preservePagination) _pagination.Reset();
 
         _currentBaseGames = fullList;
@@ -659,39 +659,33 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         // WPF parity: a watcher reload preserves the current page (the WPF reload path
         // never resets pagination; ApplyPagination clamps the page when the list shrank).
-        _preservePaginationOnNextShow = true;
-        try
+        // The flag is threaded through the call explicitly: a concurrent user navigation
+        // starting while this refresh awaits must not consume it.
+        if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            if (!string.IsNullOrWhiteSpace(SearchText))
-            {
-                await ExecuteSearchAsync(SearchText);
-                return;
-            }
-
-            if (IsShowingRetroAchievements)
-            {
-                await RefreshRetroAchievementsViewAsync();
-                return;
-            }
-
-            if (IsShowingFavorites)
-            {
-                await NavigateToFavoritesAsync();
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(SelectedSystem))
-            {
-                await NavigateToSystemAsync(SelectedSystem);
-                return;
-            }
-
-            await LoadAllGamesAsync();
+            await ExecuteSearchAsync(SearchText, preservePagination: true);
+            return;
         }
-        finally
+
+        if (IsShowingRetroAchievements)
         {
-            _preservePaginationOnNextShow = false;
+            await RefreshRetroAchievementsViewAsync(preservePagination: true);
+            return;
         }
+
+        if (IsShowingFavorites)
+        {
+            await NavigateToFavoritesCoreAsync(preservePagination: true);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(SelectedSystem))
+        {
+            await NavigateToSystemCoreAsync(SelectedSystem, preservePagination: true);
+            return;
+        }
+
+        await LoadAllGamesAsync(preservePagination: true);
     }
 
     /// <summary>
@@ -788,7 +782,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     Re-applies the RetroAchievements filter to the current view without prompting
     ///     for a scan (called after the game file watcher detects changes on disk).
     /// </summary>
-    private async Task RefreshRetroAchievementsViewAsync()
+    private async Task RefreshRetroAchievementsViewAsync(bool preservePagination = false)
     {
         try
         {
@@ -797,7 +791,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 : _allSystems
                     .Where(s => string.Equals(s.SystemName, SelectedSystem, StringComparison.OrdinalIgnoreCase))
                     .ToList();
-            await ShowRetroAchievementsGamesAsync(systems);
+            await ShowRetroAchievementsGamesAsync(systems, preservePagination);
         }
         catch (Exception ex)
         {
@@ -810,7 +804,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     RetroAchievements hash scan AND resolves to a known RA game (the exact same
     ///     hash-based matching used by the WPF app).
     /// </summary>
-    private async Task ShowRetroAchievementsGamesAsync(List<SystemManagerConfig> systems)
+    private async Task ShowRetroAchievementsGamesAsync(List<SystemManagerConfig> systems,
+        bool preservePagination = false)
     {
         var generation = ++_viewGeneration;
         var (matched, total) = await Task.Run(() =>
@@ -845,7 +840,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         IsShowingRetroAchievements = true;
         LetterFilter = "";
-        ShowGames(matched);
+        ShowGames(matched, preservePagination);
         var raMatchTemplate =
             _localization.GetString("OfgameswithRetroAchievements", "{0} of {1} games with RetroAchievements");
         StatusText = string.Format(CultureInfo.InvariantCulture, raMatchTemplate, matched.Count, total);
@@ -1040,7 +1035,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         }
     }
 
-    private async Task ExecuteSearchAsync(string query)
+    private async Task ExecuteSearchAsync(string query, bool preservePagination = false)
     {
         Log.Debug("Executing search for query '{Query}'", query);
 
@@ -1090,14 +1085,19 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         if (results is null) return; // superseded by a newer view load
 
-        ShowGames(results);
+        ShowGames(results, preservePagination);
         var searchResultsTemplate = _localization.GetString("Status.SearchResults", "{0} result(s) for \"{1}\"");
         StatusText = string.Format(CultureInfo.InvariantCulture, searchResultsTemplate, results.Count,
             validation.ValidatedQuery);
     }
 
     [RelayCommand]
-    private async Task NavigateToSystemAsync(string systemName)
+    private Task NavigateToSystemAsync(string systemName)
+    {
+        return NavigateToSystemCoreAsync(systemName, preservePagination: false);
+    }
+
+    private async Task NavigateToSystemCoreAsync(string systemName, bool preservePagination)
     {
         try
         {
@@ -1134,7 +1134,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             if (games is null) return; // superseded by a newer view load
 
-            ShowGames(games);
+            ShowGames(games, preservePagination);
             StatusText = string.IsNullOrEmpty(systemName)
                 ? _localization.GetString("Status.AllGames", "All Games")
                 : systemName;
@@ -1162,7 +1162,12 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     [RelayCommand]
-    private async Task NavigateToFavoritesAsync()
+    private Task NavigateToFavoritesAsync()
+    {
+        return NavigateToFavoritesCoreAsync(preservePagination: false);
+    }
+
+    private async Task NavigateToFavoritesCoreAsync(bool preservePagination)
     {
         try
         {
@@ -1191,7 +1196,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             if (favorites is null) return; // superseded by a newer view load
 
-            ShowGames(favorites);
+            ShowGames(favorites, preservePagination);
             StatusText = _localization.GetString("Status.Favorites", "Favorites");
         }
         catch (Exception ex)
@@ -1569,7 +1574,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _loadingOrchestrator.InvalidateAll();
     }
 
-    private async Task LoadAllGamesAsync()
+    private async Task LoadAllGamesAsync(bool preservePagination = false)
     {
         try
         {
@@ -1593,7 +1598,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             if (games is null) return; // superseded by a newer view load
 
-            ShowGames(games);
+            ShowGames(games, preservePagination);
             StatusText = _localization.GetString("Status.AllGames", "All Games");
         }
         catch (Exception ex)

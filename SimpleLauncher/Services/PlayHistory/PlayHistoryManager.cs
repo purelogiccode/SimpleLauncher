@@ -305,7 +305,7 @@ public class PlayHistoryManager
     /// </summary>
     internal Task SavePlayHistoryAsync()
     {
-        if (UnifiedSettingsDatabase.IsValidDatabase())
+        if (UnifiedSettingsDatabase.DatabaseFileExists())
         {
             try
             {

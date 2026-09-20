@@ -200,11 +200,14 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
             {
                 // MatchCasing.CaseInsensitive: scene archives routinely contain upper-case
                 // executables (GAME.EXE), which a case-sensitive glob would miss on Linux.
+                // AttributesToSkip.None keeps hidden/system entries discoverable like the old
+                // SearchOption.AllDirectories overload did.
                 var files = Directory.EnumerateFiles(directory, $"*{format}", new EnumerationOptions
                 {
                     MatchCasing = MatchCasing.CaseInsensitive,
                     RecurseSubdirectories = true,
-                    IgnoreInaccessible = true
+                    IgnoreInaccessible = true,
+                    AttributesToSkip = FileAttributes.None
                 });
                 foundFiles.AddRange(files);
             }

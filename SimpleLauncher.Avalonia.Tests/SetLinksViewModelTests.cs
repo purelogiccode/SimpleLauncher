@@ -40,8 +40,10 @@ public class SetLinksViewModelTests
 
         Assert.Equal("https://custom.example/videos", vm.VideoUrl);
         Assert.Equal("https://custom.example/info", vm.InfoUrl);
-        Assert.False(string.IsNullOrEmpty(vm.VideoIconPath));
-        Assert.False(string.IsNullOrEmpty(vm.InfoIconPath));
+
+        // Embedded UI icons: avares addresses resolved by PathToImageConverter.
+        Assert.Equal("avares://SimpleLauncher.Avalonia/images/video.png", vm.VideoIconPath);
+        Assert.Equal("avares://SimpleLauncher.Avalonia/images/info.png", vm.InfoIconPath);
     }
 
     [Fact]

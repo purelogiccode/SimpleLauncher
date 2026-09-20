@@ -140,6 +140,17 @@ public static class UnifiedSettingsDatabase
     }
 
     /// <summary>
+    ///     True when a settings.dat file exists, whatever its schema version (older, current
+    ///     or newer). Save paths use this instead of <see cref="IsValidDatabase" /> so a
+    ///     newer-schema (or corrupt) database is never mistaken for "no database" and does
+    ///     not cause the legacy favorites/play-history files to be rewritten.
+    /// </summary>
+    public static bool DatabaseFileExists(string? dbPath = null)
+    {
+        return File.Exists(dbPath ?? GetDatabasePath());
+    }
+
+    /// <summary>
     ///     Reads the stored schema version without side effects (read-only open: no file
     ///     creation, no read-only-attribute clearing). Returns null when the file is
     ///     missing or unreadable.
@@ -194,7 +205,10 @@ public static class UnifiedSettingsDatabase
             }
             else if (storedVersion > CurrentSchemaVersion)
             {
-                Log.Warning(
+                // Running an older build against a newer database (a downgrade) is an expected
+                // environment condition, not a bug — Information keeps it out of the bug-report
+                // API while the exception tells callers to fail safe.
+                Log.Information(
                     "[UnifiedSettings] Database '{Path}' uses schema version {Version}, newer than this build (version {Current}). Leaving it untouched; upgrade the app to use it.",
                     path, storedVersion, CurrentSchemaVersion);
                 throw new NewerSchemaVersionException(path, storedVersion.Value, CurrentSchemaVersion);

@@ -33,8 +33,10 @@ public partial class SetLinksViewModel : ObservableObject
         VideoUrl = _settingsManager.VideoUrl;
         InfoUrl = _settingsManager.InfoUrl;
 
-        VideoIconPath = Path.Combine(AppContext.BaseDirectory, "images", "video.png");
-        InfoIconPath = Path.Combine(AppContext.BaseDirectory, "images", "info.png");
+        // Root UI icons are embedded in the assembly (AvaloniaResource) and resolved through
+        // the asset loader by PathToImageConverter (avares://), like the context menu icons.
+        VideoIconPath = "avares://SimpleLauncher.Avalonia/images/video.png";
+        InfoIconPath = "avares://SimpleLauncher.Avalonia/images/info.png";
     }
 
     /// <summary>Gets the path to the video link button icon.</summary>

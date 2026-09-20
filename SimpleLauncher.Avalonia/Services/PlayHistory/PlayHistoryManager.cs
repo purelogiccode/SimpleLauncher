@@ -152,7 +152,7 @@ public class PlayHistoryManager
     /// </summary>
     private void SavePlayHistorySync()
     {
-        if (UnifiedSettingsDatabase.IsValidDatabase())
+        if (UnifiedSettingsDatabase.DatabaseFileExists())
         {
             try
             {
@@ -274,7 +274,7 @@ public class PlayHistoryManager
     /// </summary>
     public async Task SavePlayHistoryAsync()
     {
-        if (UnifiedSettingsDatabase.IsValidDatabase())
+        if (UnifiedSettingsDatabase.DatabaseFileExists())
         {
             try
             {

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using MessagePack;
 using Microsoft.Data.Sqlite;
+using Moq;
 using SimpleLauncher.Avalonia.Services.Favorites;
 using SimpleLauncher.Avalonia.Services.PlayHistory;
 using SimpleLauncher.Avalonia.Services.SettingsDatabase;
@@ -526,6 +527,14 @@ public sealed class LegacyMigrationTests : IDisposable
         Assert.Equal(MigrationStatus.Failed, retry.Status);
         Assert.True(File.Exists(Path.Combine(_legacyFolder, "favorites.dat")));
         Assert.Equal(UnifiedSettingsDatabase.CurrentSchemaVersion + 99, ReadSchemaVersion(_dbPath));
+
+        // The downgrade is an expected environment condition: it is logged at Information
+        // (never Error) so the bug-report API never sees it. The specific catch logs with
+        // the database path as a property value, which binds to Serilog's generic overload.
+        logger.Verify(l => l.Information<string>(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.AtLeastOnce);
+        logger.Verify(l => l.Error<string>(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
     }
 
     private static SystemManagerConfig BuildSystemConfig(string systemName, string imageFolder)

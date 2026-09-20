@@ -151,6 +151,18 @@ public class AvaloniaSystemSelectionOrchestratorService
             // folders; the info panel below must only appear once the scan is done.
             await _host.NavigateToSystemAsync(systemName);
 
+            // A newer selection can land while this navigation is still scanning (the
+            // ComboBox already shows it): do not overwrite the newer system's info panel
+            // and emulator list with this superseded selection's data.
+            var currentSelection = _host.GetSelectedSystem();
+            if (!string.Equals(currentSelection, systemName, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.Debug(
+                    "[AvaloniaSystemSelectionOrchestrator] System '{System}' navigation was superseded by '{Current}'; skipping the info panel update",
+                    systemName, currentSelection);
+                return;
+            }
+
             // WPF parity: display the selected system's configuration summary. It stays
             // visible until the user loads games with the letter buttons (ShowGames
             // hides it again — in WPF the info panel is replaced by the game buttons).

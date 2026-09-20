@@ -714,12 +714,14 @@ public class ExtractionService : IExtractionService
 
                     // MatchCasing.CaseInsensitive: Windows-authored scene archives routinely use
                     // upper-case names (GAME.EXE, DISC.CUE), which a case-sensitive "*.cue" glob
-                    // would miss on Linux.
+                    // would miss on Linux. AttributesToSkip.None keeps hidden/system entries
+                    // discoverable like the old SearchOption.AllDirectories overload did.
                     var files = Directory.EnumerateFiles(tempExtractLocation, searchPattern, new EnumerationOptions
                     {
                         MatchCasing = MatchCasing.CaseInsensitive,
                         RecurseSubdirectories = true,
-                        IgnoreInaccessible = true
+                        IgnoreInaccessible = true,
+                        AttributesToSkip = FileAttributes.None
                     }).ToList();
                     if (files.Count > 0)
                     {

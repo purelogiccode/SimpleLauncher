@@ -100,8 +100,19 @@ internal sealed unsafe class SdlGamepadBackend : IDisposable
         if (_disposed) return;
 
         Stop();
+
+        // Only release the stop event once the polling thread is known to have exited: its
+        // finally block signals _stopped, and Stop() deliberately keeps the thread reference
+        // when the 2-second join times out. Disposing the event under a still-live thread
+        // would make that Set() an unhandled ObjectDisposedException on a background thread.
+        bool threadAlive;
+        lock (_gate)
+        {
+            threadAlive = _thread is not null;
+        }
+
         _disposed = true;
-        _stopped.Dispose();
+        if (!threadAlive) _stopped.Dispose();
     }
 
     private void RunLoop()

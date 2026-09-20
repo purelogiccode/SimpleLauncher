@@ -55,6 +55,67 @@ public class DosBoxCaseSensitivityTests : IDisposable
         messageBox.Verify(m => m.CouldNotLaunchThisGameMessageBoxAsync(It.IsAny<string>()), Times.Never);
     }
 
+    [Fact]
+    public async Task DosBoxDirectory_HiddenExecutable_IsDiscovered()
+    {
+        var exePath = Path.Combine(_root, "GAME.EXE");
+        File.WriteAllText(exePath, "MZ");
+        try
+        {
+            // The old SearchOption.AllDirectories overload enumerated hidden/system entries;
+            // the LB-07 EnumerationOptions must keep doing so (seen on Windows only, Unix
+            // attribute writes are ignored).
+            File.SetAttributes(exePath, File.GetAttributes(exePath) | FileAttributes.Hidden);
+        }
+        catch (Exception ex) when (ex is PlatformNotSupportedException or IOException or UnauthorizedAccessException)
+        {
+            // Hidden attributes are a Windows concept; discovery is exercised either way.
+        }
+
+        var (strategy, launcher, messageBox) = CreateStrategy();
+        string? confContent = null;
+        launcher
+            .Setup(l => l.LaunchRegularEmulatorAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>(
+                (path, _, _, _, _, _, _, _) => confContent = File.Exists(path) ? File.ReadAllText(path) : null)
+            .Returns(Task.CompletedTask);
+
+        await strategy.ExecuteAsync(CreateContext(_root), launcher.Object);
+
+        Assert.NotNull(confContent);
+        Assert.Contains("GAME.EXE", confContent);
+        messageBox.Verify(m => m.CouldNotFindAFileMessageBoxAsync(), Times.Never);
+        messageBox.Verify(m => m.CouldNotLaunchThisGameMessageBoxAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DosBoxDirectory_NonAsciiPath_WritesUtf8Conf()
+    {
+        if (OperatingSystem.IsWindows()) return; // Windows keeps the historical ASCII conf
+
+        var gameDir = Path.Combine(_root, "Café ROM");
+        Directory.CreateDirectory(gameDir);
+        File.WriteAllText(Path.Combine(gameDir, "GAME.EXE"), "MZ");
+
+        var (strategy, launcher, _) = CreateStrategy();
+        string? confContent = null;
+        launcher
+            .Setup(l => l.LaunchRegularEmulatorAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>(
+                (path, _, _, _, _, _, _, _) => confContent = File.Exists(path) ? File.ReadAllText(path) : null)
+            .Returns(Task.CompletedTask);
+
+        await strategy.ExecuteAsync(CreateContext(gameDir), launcher.Object);
+
+        Assert.NotNull(confContent);
+        // ASCII would have written "Caf? ROM" and DOSBox could not mount the folder.
+        Assert.Contains("Café ROM", confContent, StringComparison.Ordinal);
+    }
+
     private static (DosBoxLaunchStrategy Strategy, Mock<ILauncherService> Launcher,
         Mock<IMessageBoxLibraryService> MessageBox) CreateStrategy()
     {
