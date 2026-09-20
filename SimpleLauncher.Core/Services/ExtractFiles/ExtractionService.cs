@@ -230,7 +230,8 @@ public class ExtractionService : IExtractionService
                     if (entry.Key != null)
                     {
                         // Fail closed: any unresolvable path is treated as dangerous (CORE-02).
-                        var entryDestinationPath = GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
+                        var entryDestinationPath =
+                            GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
                         if (entryDestinationPath == null)
                         {
                             // Notify user
@@ -248,7 +249,8 @@ public class ExtractionService : IExtractionService
                     if (entry.Key != null)
                     {
                         // Re-validate per entry: never trust the first pass alone (CORE-02).
-                        var destinationPath = GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
+                        var destinationPath =
+                            GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
                         if (destinationPath == null)
                         {
                             await _messageBoxLibrary.PotentialPathManipulationDetectedMessageBoxAsync(archivePath);
@@ -576,7 +578,8 @@ public class ExtractionService : IExtractionService
     ///     Resolves an archive entry to a destination path contained in the destination folder.
     ///     Returns null when the entry is missing, unresolvable, or escapes the folder (fail closed).
     /// </summary>
-    private static string? GetSafeEntryPath(string resolvedDestinationFolder, string? fullResolvedDestFolder, string entryKey)
+    private static string? GetSafeEntryPath(string resolvedDestinationFolder, string? fullResolvedDestFolder,
+        string entryKey)
     {
         if (string.IsNullOrEmpty(entryKey) || fullResolvedDestFolder == null)
             return null;

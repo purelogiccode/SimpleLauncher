@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     so the service can drive any menu generically — the same 8-category contract the
 ///     WPF <c>MenuCheckMarkService</c> provides through its named host properties.
 /// </summary>
-public class AvaloniaMenuCheckMarkService
+public static class AvaloniaMenuCheckMarkService
 {
     /// <summary>
     ///     Checks exactly the menu item whose <c>Tag</c> parses to <paramref name="selectedValue" />
@@ -18,7 +18,7 @@ public class AvaloniaMenuCheckMarkService
     /// </summary>
     /// <param name="menuItems">The menu items of the submenu.</param>
     /// <param name="selectedValue">The selected numeric value.</param>
-    public void UpdateCheckedByTag(IEnumerable<MenuItem> menuItems, int selectedValue)
+    public static void UpdateCheckedByTag(IEnumerable<MenuItem> menuItems, int selectedValue)
     {
         foreach (var item in menuItems)
         {
@@ -34,7 +34,7 @@ public class AvaloniaMenuCheckMarkService
     /// </summary>
     /// <param name="menuItems">The menu items of the submenu.</param>
     /// <param name="selectedName">The selected item name.</param>
-    public void UpdateCheckedByName(IEnumerable<MenuItem> menuItems, string? selectedName)
+    public static void UpdateCheckedByName(IEnumerable<MenuItem> menuItems, string? selectedName)
     {
         foreach (var item in menuItems)
             item.IsChecked = string.Equals(item.Name, selectedName, StringComparison.Ordinal);
@@ -43,7 +43,7 @@ public class AvaloniaMenuCheckMarkService
     /// <summary>
     ///     Updates the show-games filter check marks (ShowAll / ShowWithCover / ShowWithoutCover).
     /// </summary>
-    public void UpdateShowGamesCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
+    public static void UpdateShowGamesCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
     {
         UpdateCheckedByName(menuItems, selectedValue);
     }
@@ -54,7 +54,7 @@ public class AvaloniaMenuCheckMarkService
     ///     "FilenameDisplayOriginal" etc., so the check must map the value to the prefixed name
     ///     (mirrors WPF MenuCheckMarkService.UpdateFilenameDisplayModeCheckMarks).
     /// </summary>
-    public void UpdateFilenameDisplayModeCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
+    public static void UpdateFilenameDisplayModeCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
     {
         var targetName = selectedValue is null ? null : "FilenameDisplay" + selectedValue;
         foreach (var item in menuItems) item.IsChecked = string.Equals(item.Name, targetName, StringComparison.Ordinal);
@@ -65,7 +65,7 @@ public class AvaloniaMenuCheckMarkService
     ///     WPF value is "Small"/"Normal"/"Big" while the Avalonia items are named
     ///     "FilenameFontSizeSmall" etc., so map to the prefixed name.
     /// </summary>
-    public void UpdateFilenameFontSizeCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
+    public static void UpdateFilenameFontSizeCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
     {
         var targetName = selectedValue is null ? null : "FilenameFontSize" + selectedValue;
         foreach (var item in menuItems) item.IsChecked = string.Equals(item.Name, targetName, StringComparison.Ordinal);
@@ -74,7 +74,7 @@ public class AvaloniaMenuCheckMarkService
     /// <summary>
     ///     Updates the machine-name font size check marks (Small / Normal / Big).
     /// </summary>
-    public void UpdateMachineNameFontSizeCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
+    public static void UpdateMachineNameFontSizeCheckMarks(IEnumerable<MenuItem> menuItems, string? selectedValue)
     {
         var targetName = selectedValue is null ? null : "MachineNameFontSize" + selectedValue;
         foreach (var item in menuItems) item.IsChecked = string.Equals(item.Name, targetName, StringComparison.Ordinal);
@@ -83,7 +83,7 @@ public class AvaloniaMenuCheckMarkService
     /// <summary>
     ///     Sets the view-mode check marks (GridView / ListView) to reflect the active view.
     /// </summary>
-    public void SetViewModeCheckMarks(MenuItem gridViewItem, MenuItem listViewItem, bool isGridView)
+    public static void SetViewModeCheckMarks(MenuItem gridViewItem, MenuItem listViewItem, bool isGridView)
     {
         gridViewItem.IsChecked = isGridView;
         listViewItem.IsChecked = !isGridView;

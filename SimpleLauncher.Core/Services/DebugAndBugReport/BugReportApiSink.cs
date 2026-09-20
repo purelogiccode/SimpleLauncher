@@ -154,6 +154,7 @@ public class BugReportApiSink : ILogEventSink, IDisposable
             while (await _channel.Reader.WaitToReadAsync(cancellationToken))
             {
                 while (_channel.Reader.TryRead(out var logEvent))
+                {
                     try
                     {
                         await SendReportAsync(logEvent);
@@ -162,6 +163,7 @@ public class BugReportApiSink : ILogEventSink, IDisposable
                     {
                         WriteCriticalError(logEvent);
                     }
+                }
             }
         }
         catch (OperationCanceledException)

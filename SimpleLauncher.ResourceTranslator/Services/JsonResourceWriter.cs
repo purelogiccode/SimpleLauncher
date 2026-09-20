@@ -44,8 +44,10 @@ public static class JsonResourceWriter
         // Merge new translations. Blank fills are ignored so an empty value written by an
         // older run can be retried instead of permanently overwriting a good translation.
         foreach (var kvp in newTranslations)
+        {
             if (!string.IsNullOrEmpty(kvp.Value))
                 existingEntries[kvp.Key] = kvp.Value;
+        }
 
         // Write back as UTF-8 without BOM, matching the committed resource files.
         var output = JsonSerializer.Serialize(existingEntries, JsonOptions) + Environment.NewLine;

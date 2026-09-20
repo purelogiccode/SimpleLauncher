@@ -20,7 +20,6 @@ using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.RetroAchievements;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Core.Services.UsageStats;
-using SearchValidationResult = SimpleLauncher.Avalonia.Services.SearchOrchestrator.SearchValidationResult;
 
 namespace SimpleLauncher.Avalonia.ViewModels;
 
@@ -47,11 +46,11 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private readonly IRetroAchievementsHashScanner _raHashScanner;
     private readonly IRetroAchievementsHashStore _raHashStore;
     private readonly RetroAchievementsManager _raManager;
-    private readonly AvaloniaSearchOrchestratorService? _searchOrchestrator;
     private readonly SettingsManagerService _settings;
     private readonly Stats _stats;
     private readonly ISystemImageResolverService? _systemImageResolver;
     private readonly SystemManagerService _systemManager;
+    private bool _preservePaginationOnNextShow;
     private List<SystemManagerConfig> _allSystems;
 
     // Incremented by every view load (navigation / search / reload / random pick). An
@@ -184,8 +183,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         AvaloniaGameFilterService gameFilter,
         AvaloniaLoadingOverlayService loadingOverlay,
         LocalizationService localization,
-        ISystemImageResolverService? systemImageResolver = null,
-        AvaloniaSearchOrchestratorService? searchOrchestrator = null)
+        ISystemImageResolverService? systemImageResolver = null)
     {
         _favoritesManager = favoritesManager;
         _playHistoryManager = playHistoryManager;
@@ -203,7 +201,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _mameData = mameData;
         _gameFilter = gameFilter;
         _loadingOverlay = loadingOverlay;
-        _searchOrchestrator = searchOrchestrator;
         _systemImageResolver = systemImageResolver;
         _localization = localization;
         Sidebar = new SidebarViewModel();
@@ -383,6 +380,14 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         // Loading games replaces the system configuration summary (WPF parity: the
         // letter buttons clear the info panel and render the game buttons).
         IsSystemInfoVisible = false;
+
+        // A freshly loaded list starts on its first page (WPF parity: loading a system
+        // and clicking a letter — including "All" — restart pagination). The watcher
+        // reload is the exception: it keeps the user on the current page.
+        var preservePagination = _preservePaginationOnNextShow;
+        _preservePaginationOnNextShow = false;
+        if (!preservePagination) _pagination.Reset();
+
         _currentBaseGames = fullList;
         ReapplyLetterFilterAndPagination();
     }
@@ -450,6 +455,11 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         // game browser and drop the selected system's configuration summary.
         IsSystemInfoVisible = false;
         LetterFilter = letter ?? "";
+
+        // WPF parity (HandleTopLetterNumberMenuClickAsync): every letter button —
+        // including "All" — restarts pagination on page 1.
+        _pagination.Reset();
+
         ReapplyLetterFilterAndPagination();
         StatusText = string.IsNullOrEmpty(LetterFilter)
             ? _localization.GetString("Status.AllGames", "All Games")
@@ -646,31 +656,42 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     public async Task RefreshCurrentViewAsync()
     {
         Log.Debug("Refreshing the current view");
-        if (!string.IsNullOrWhiteSpace(SearchText))
-        {
-            await ExecuteSearchAsync(SearchText);
-            return;
-        }
 
-        if (IsShowingRetroAchievements)
+        // WPF parity: a watcher reload preserves the current page (the WPF reload path
+        // never resets pagination; ApplyPagination clamps the page when the list shrank).
+        _preservePaginationOnNextShow = true;
+        try
         {
-            await RefreshRetroAchievementsViewAsync();
-            return;
-        }
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                await ExecuteSearchAsync(SearchText);
+                return;
+            }
 
-        if (IsShowingFavorites)
+            if (IsShowingRetroAchievements)
+            {
+                await RefreshRetroAchievementsViewAsync();
+                return;
+            }
+
+            if (IsShowingFavorites)
+            {
+                await NavigateToFavoritesAsync();
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(SelectedSystem))
+            {
+                await NavigateToSystemAsync(SelectedSystem);
+                return;
+            }
+
+            await LoadAllGamesAsync();
+        }
+        finally
         {
-            await NavigateToFavoritesAsync();
-            return;
+            _preservePaginationOnNextShow = false;
         }
-
-        if (!string.IsNullOrEmpty(SelectedSystem))
-        {
-            await NavigateToSystemAsync(SelectedSystem);
-            return;
-        }
-
-        await LoadAllGamesAsync();
     }
 
     /// <summary>
@@ -1025,11 +1046,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
         // WPF SearchOrchestrator parity: require a selected system AND a non-blank
         // query, and clear prior search results so stale results never persist.
-        var validation = _searchOrchestrator?.ValidateAndPrepare(query, SelectedSystem)
-                         ?? (string.IsNullOrWhiteSpace(query)
-                             ? SearchValidationResult.Failure()
-                             : SearchValidationResult.Success(
-                                 query.Trim()));
+        var validation = AvaloniaSearchOrchestratorService.ValidateAndPrepare(query, SelectedSystem);
         if (!validation.IsValid)
         {
             Log.Debug("Search validation failed for query '{Query}' (system selected: {HasSystem})", query,

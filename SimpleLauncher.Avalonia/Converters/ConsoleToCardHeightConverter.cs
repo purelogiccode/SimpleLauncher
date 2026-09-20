@@ -124,9 +124,7 @@ public class ConsoleToCardHeightConverter : IMultiValueConverter
             }
         }
 
-        if (double.IsNaN(cardWidth) || double.IsInfinity(cardWidth) || cardWidth <= 0) return false;
-
-        return true;
+        return !double.IsNaN(cardWidth) && !double.IsInfinity(cardWidth) && cardWidth > 0;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

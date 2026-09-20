@@ -96,9 +96,11 @@ public static class AvaloniaLegacyMigrator
         var foldersOverridden = (portableFolderOverride ?? legacyFolderOverride) is not null;
 
         if (UnifiedSettingsDatabase.IsValidDatabase(dbPath))
+        {
             return MergeLegacyFilesIntoExistingDatabase(
                 dbPath, configuration, logger, credentialProtector,
                 portableFolder, appDataFolder, foldersOverridden);
+        }
 
         var dbExistedBefore = File.Exists(dbPath);
         var legacyFiles = ResolveLegacyFiles(configuration, portableFolder, appDataFolder, foldersOverridden);
@@ -116,7 +118,8 @@ public static class AvaloniaLegacyMigrator
                 ReadLegacyHistory(legacyFiles.HistoryPaths, logger, out var historyOk), [],
                 static h => h.FileName + "\u0000" + h.SystemName);
             var (settings, _) =
-                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths, out var settingsOk);
+                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths,
+                    out var settingsOk);
             var systems = ReadLegacySystems(configuration, logger, legacyFiles.SystemXmlPaths,
                 out var systemsOk, out var systemsPartial);
 
@@ -168,9 +171,12 @@ public static class AvaloniaLegacyMigrator
             if (systemsOk)
                 shelved += ShelveLegacyFiles(legacyFiles.SystemXmlPaths, logger, systemsPartial ? "partial" : null);
             if (systemsPartial)
+            {
                 logger.Warning(
                     "[Migration] system.xml needed partial recovery; shelved as .partial.*.bak — verify all systems were imported ({Count})",
                     systemsByName.Count);
+            }
+
             CleanupTempLeftovers(logger, portableFolder, appDataFolder, foldersOverridden);
 
             logger.Information(
@@ -254,7 +260,8 @@ public static class AvaloniaLegacyMigrator
             var legacyFavorites = ReadLegacyFavorites(legacyFiles.FavoritesPaths, logger, out var favoritesOk);
             var legacyHistory = ReadLegacyHistory(legacyFiles.HistoryPaths, logger, out var historyOk);
             var (legacySettings, legacySettingsLoaded) =
-                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths, out var settingsOk);
+                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths,
+                    out var settingsOk);
             var legacySystems = ReadLegacySystems(configuration, logger, legacyFiles.SystemXmlPaths,
                 out var systemsOk, out var systemsPartial);
 
@@ -262,10 +269,13 @@ public static class AvaloniaLegacyMigrator
             // recreated by an older version after the migration (downgrade): merging
             // it would revert the user's settings to defaults, so ignore it.
             var settingsEffectiveLoaded = legacySettingsLoaded &&
-                !IsDefaultsOnlySettings(legacySettings, configuration, logger, credentialProtector);
+                                          !IsDefaultsOnlySettings(legacySettings, configuration, logger,
+                                              credentialProtector);
             if (legacySettingsLoaded && !settingsEffectiveLoaded)
+            {
                 logger.Information(
                     "[Migration] Legacy settings.xml holds only default values; keeping the database values");
+            }
 
             // Make sure the existing database has every table and structural upgrade before
             // the first write touches a possibly older schema. A newer-schema database
@@ -354,9 +364,12 @@ public static class AvaloniaLegacyMigrator
             if (systemsOk)
                 shelved += ShelveLegacyFiles(legacyFiles.SystemXmlPaths, logger, systemsPartial ? "partial" : null);
             if (systemsPartial)
+            {
                 logger.Warning(
                     "[Migration] system.xml needed partial recovery; shelved as .partial.*.bak — verify all systems were imported ({Count})",
                     mergedSystems.Count);
+            }
+
             CleanupTempLeftovers(logger, portableFolder, appDataFolder, foldersOverridden);
 
             logger.Information(
@@ -611,7 +624,9 @@ public static class AvaloniaLegacyMigrator
         {
             if (!right.TryGetValue(key, out var other) ||
                 !string.Equals(value, other, StringComparison.Ordinal))
+            {
                 return false;
+            }
         }
 
         return true;
@@ -664,14 +679,22 @@ public static class AvaloniaLegacyMigrator
         var backSystems = UnifiedSettingsDatabase.LoadSystems(dbPath);
 
         if (backFavorites.Count != favorites)
+        {
             throw new InvalidOperationException(
                 $"Favorites count mismatch after migration (expected {favorites}, got {backFavorites.Count}).");
+        }
+
         if (backHistory.Count != history)
+        {
             throw new InvalidOperationException(
                 $"Play-history count mismatch after migration (expected {history}, got {backHistory.Count}).");
+        }
+
         if (backSystems.Count != systems)
+        {
             throw new InvalidOperationException(
                 $"Systems count mismatch after migration (expected {systems}, got {backSystems.Count}).");
+        }
 
         // Application/emulator settings are only verified when the migration actually
         // wrote them (a merge without a legacy settings file must keep the database rows

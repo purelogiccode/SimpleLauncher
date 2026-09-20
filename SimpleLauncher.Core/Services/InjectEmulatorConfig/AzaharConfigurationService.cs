@@ -48,7 +48,8 @@ public static class AzaharConfigurationService
                 {
                     // Expected user-environment condition (read-only or ACL-protected emulator directory).
                     // The UI shows guidance and the game still launches, so keep it out of the bug report.
-                    logger.Information(ex, "[AzaharConfig] Access denied creating qt-config.ini from sample: {ConfigPath}",
+                    logger.Information(ex,
+                        "[AzaharConfig] Access denied creating qt-config.ini from sample: {ConfigPath}",
                         configPath);
                     throw new AzaharPermissionException($"Cannot write to emulator directory: {emuDir}", ex);
                 }

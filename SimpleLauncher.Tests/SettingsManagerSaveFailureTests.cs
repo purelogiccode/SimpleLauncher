@@ -15,6 +15,7 @@ namespace SimpleLauncher.Tests;
 public sealed class SettingsManagerSaveFailureTests : IDisposable
 {
     private readonly IConfiguration _configuration = new ConfigurationBuilder().Build();
+
     private readonly string _testDirectory =
         Path.Combine(Path.GetTempPath(), $"SL_SaveFailure_{Guid.NewGuid():N}");
 

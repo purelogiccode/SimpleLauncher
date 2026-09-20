@@ -296,115 +296,115 @@ public class DownloadManager : IDisposable
                 return null;
             }
 
-        // Determine a safe file name confined to TempFolder (CORE-05).
-        // Both the caller-supplied fileName and the URL-derived name are untrusted:
-        // strip directories, query strings, and invalid chars, then verify containment.
-        fileName = GetSafeDownloadFileName(fileName, downloadUrl);
+            // Determine a safe file name confined to TempFolder (CORE-05).
+            // Both the caller-supplied fileName and the URL-derived name are untrusted:
+            // strip directories, query strings, and invalid chars, then verify containment.
+            fileName = GetSafeDownloadFileName(fileName, downloadUrl);
 
-        // Create temp file path (guaranteed inside TempFolder by GetSafeDownloadFileName)
-        var downloadFilePath = Path.Combine(TempFolder, fileName);
+            // Create temp file path (guaranteed inside TempFolder by GetSafeDownloadFileName)
+            var downloadFilePath = Path.Combine(TempFolder, fileName);
 
-        // Attempt to delete any existing file to avoid file-lock issues
-        // from a previous failed or cancelled download
-        if (File.Exists(downloadFilePath))
-        {
-            try
+            // Attempt to delete any existing file to avoid file-lock issues
+            // from a previous failed or cancelled download
+            if (File.Exists(downloadFilePath))
             {
-                File.Delete(downloadFilePath);
-            }
-            catch
-            {
-                // File may be locked by another process; proceed and let FileStream report the error
-            }
-        }
-
-        // Check disk space
-        var diskSpaceCheckResult = CheckAvailableDiskSpace(TempFolder);
-        switch (diskSpaceCheckResult)
-        {
-            case false:
-                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
-                {
-                    ProgressPercentage = 0,
-                    StatusMessage = GetResourceString("InsufficientdiskspaceinSimpleLauncherHDD",
-                        "Insufficient disk space.")
-                });
-                throw new IOException("Insufficient disk space in 'Simple Launcher' HDD.");
-            case null:
-                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
-                {
-                    ProgressPercentage = 0,
-                    StatusMessage = GetResourceString("CannotCheckDiskSpace",
-                        "Cannot check available disk space. The path may be inaccessible or you may lack permissions.")
-                });
-                throw new IOException(
-                    "Cannot check disk space for 'Simple Launcher' HDD. The path may be inaccessible or you may lack permissions.");
-        }
-
-        CancellationToken token;
-        lock (_lock)
-        {
-            ObjectDisposedException.ThrowIf(_disposed || _cancellationTokenSource == null, nameof(DownloadManager));
-
-            token = _cancellationTokenSource.Token;
-        }
-
-        var currentRetry = 0;
-
-        while (currentRetry <= RetryMaxAttempts && !IsUserCancellation)
-        {
-            try
-            {
-                await DownloadWithProgressAsync(downloadUrl, downloadFilePath, token);
-
-                if (IsDownloadCompleted) return downloadFilePath;
-
-                currentRetry++;
-            }
-            catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException
-                                           or Polly.Timeout.TimeoutRejectedException)
-            {
-                if (IsUserCancellation) return null;
-
-                // Check for file lock specifically
-                if (ex.Message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase))
-                {
-                    IsFileLockedDuringDownload = true;
-                    await DeleteFiles.TryDeleteFileAsync(downloadFilePath);
-                    return null;
-                }
-
-                currentRetry++;
-
-                // Cleanup partial file before retry
-                await DeleteFiles.TryDeleteFileAsync(downloadFilePath);
-
-                if (currentRetry > RetryMaxAttempts)
-                {
-                    // Expected condition (download failed after all retries — slow/unreachable
-                    // network, resilience timeouts): not a bug, keep it out of the bug report
-                    // service (see bug 65965).
-                    _logger.Information(ex, $"Download failed after all retries for {downloadUrl}");
-                    break;
-                }
-
-                var delay = RetryBaseDelayMs * (int)Math.Pow(2, currentRetry - 1);
-                await RaiseProgressChangedAsync(new DownloadProgressEventArgs
-                {
-                    ProgressPercentage = 0,
-                    StatusMessage = $"Download error. Retrying ({currentRetry}/{RetryMaxAttempts})..."
-                });
-
                 try
                 {
-                    await Task.Delay(delay, token);
+                    File.Delete(downloadFilePath);
                 }
-                catch (OperationCanceledException)
+                catch
                 {
-                    return null;
+                    // File may be locked by another process; proceed and let FileStream report the error
                 }
             }
-        }
+
+            // Check disk space
+            var diskSpaceCheckResult = CheckAvailableDiskSpace(TempFolder);
+            switch (diskSpaceCheckResult)
+            {
+                case false:
+                    await RaiseProgressChangedAsync(new DownloadProgressEventArgs
+                    {
+                        ProgressPercentage = 0,
+                        StatusMessage = GetResourceString("InsufficientdiskspaceinSimpleLauncherHDD",
+                            "Insufficient disk space.")
+                    });
+                    throw new IOException("Insufficient disk space in 'Simple Launcher' HDD.");
+                case null:
+                    await RaiseProgressChangedAsync(new DownloadProgressEventArgs
+                    {
+                        ProgressPercentage = 0,
+                        StatusMessage = GetResourceString("CannotCheckDiskSpace",
+                            "Cannot check available disk space. The path may be inaccessible or you may lack permissions.")
+                    });
+                    throw new IOException(
+                        "Cannot check disk space for 'Simple Launcher' HDD. The path may be inaccessible or you may lack permissions.");
+            }
+
+            CancellationToken token;
+            lock (_lock)
+            {
+                ObjectDisposedException.ThrowIf(_disposed || _cancellationTokenSource == null, nameof(DownloadManager));
+
+                token = _cancellationTokenSource.Token;
+            }
+
+            var currentRetry = 0;
+
+            while (currentRetry <= RetryMaxAttempts && !IsUserCancellation)
+            {
+                try
+                {
+                    await DownloadWithProgressAsync(downloadUrl, downloadFilePath, token);
+
+                    if (IsDownloadCompleted) return downloadFilePath;
+
+                    currentRetry++;
+                }
+                catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException
+                                               or Polly.Timeout.TimeoutRejectedException)
+                {
+                    if (IsUserCancellation) return null;
+
+                    // Check for file lock specifically
+                    if (ex.Message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase))
+                    {
+                        IsFileLockedDuringDownload = true;
+                        await DeleteFiles.TryDeleteFileAsync(downloadFilePath);
+                        return null;
+                    }
+
+                    currentRetry++;
+
+                    // Cleanup partial file before retry
+                    await DeleteFiles.TryDeleteFileAsync(downloadFilePath);
+
+                    if (currentRetry > RetryMaxAttempts)
+                    {
+                        // Expected condition (download failed after all retries — slow/unreachable
+                        // network, resilience timeouts): not a bug, keep it out of the bug report
+                        // service (see bug 65965).
+                        _logger.Information(ex, $"Download failed after all retries for {downloadUrl}");
+                        break;
+                    }
+
+                    var delay = RetryBaseDelayMs * (int)Math.Pow(2, currentRetry - 1);
+                    await RaiseProgressChangedAsync(new DownloadProgressEventArgs
+                    {
+                        ProgressPercentage = 0,
+                        StatusMessage = $"Download error. Retrying ({currentRetry}/{RetryMaxAttempts})..."
+                    });
+
+                    try
+                    {
+                        await Task.Delay(delay, token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return null;
+                    }
+                }
+            }
 
             return null;
         }

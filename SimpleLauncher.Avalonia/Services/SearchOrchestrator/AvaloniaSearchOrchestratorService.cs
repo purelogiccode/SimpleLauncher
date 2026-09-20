@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.SearchOrchestrator;
 ///     empty/null OR the query is blank, and (via the caller) clears prior search
 ///     results so stale results never persist.
 /// </summary>
-public class AvaloniaSearchOrchestratorService
+public static class AvaloniaSearchOrchestratorService
 {
     /// <summary>
     ///     Validates a search query before execution.
@@ -15,7 +15,7 @@ public class AvaloniaSearchOrchestratorService
     /// <param name="searchQuery">The raw search query from the UI.</param>
     /// <param name="selectedSystem">The currently selected system (null or empty = invalid, WPF parity).</param>
     /// <returns>A validation result indicating whether the search should proceed.</returns>
-    public SearchValidationResult ValidateAndPrepare(string searchQuery, string? selectedSystem)
+    public static SearchValidationResult ValidateAndPrepare(string searchQuery, string? selectedSystem)
     {
         if (string.IsNullOrEmpty(selectedSystem) || string.IsNullOrWhiteSpace(searchQuery))
             return SearchValidationResult.Failure();

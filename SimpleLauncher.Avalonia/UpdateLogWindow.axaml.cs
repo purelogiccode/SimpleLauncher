@@ -29,11 +29,11 @@ public partial class UpdateLogWindow : Window
     ///     failures; messages for a closed window are dropped silently.
     /// </summary>
     /// <param name="message">The message to append.</param>
-    public Task LogAsync(string message)
+    public async Task LogAsync(string message)
     {
         try
         {
-            return Dispatcher.UIThread.InvokeAsync(() =>
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 try
                 {
@@ -44,11 +44,13 @@ public partial class UpdateLogWindow : Window
                     // Window closed mid-log — drop the message.
                 }
             }).GetTask();
+            return;
         }
         catch
         {
             // Dispatcher shut down — drop the message.
-            return Task.CompletedTask;
+            await Task.CompletedTask;
+            return;
         }
     }
 }

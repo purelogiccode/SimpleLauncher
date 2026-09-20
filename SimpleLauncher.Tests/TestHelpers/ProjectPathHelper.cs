@@ -40,8 +40,10 @@ public static class ProjectPathHelper
         var repoRoot = Path.GetDirectoryName(GetSimpleLauncherPath());
         var candidate = repoRoot == null ? null : Path.Combine(repoRoot, "SimpleLauncher.Core", "Localization");
         if (candidate == null || !Directory.Exists(candidate))
+        {
             throw new DirectoryNotFoundException(
                 $"Could not locate the shared localization folder from the test output folder: {candidate}");
+        }
 
         return candidate;
     }

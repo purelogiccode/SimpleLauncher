@@ -29,7 +29,8 @@ public class SystemManagerService
             TimeSpan.FromSeconds(1));
 
     private static readonly Regex SystemNameRegexInstance =
-        new(@"<SystemName>\s*(?<name>.*?)\s*</SystemName>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture,
+        new(@"<SystemName>\s*(?<name>.*?)\s*</SystemName>",
+            RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture,
             TimeSpan.FromSeconds(1));
 
     private readonly IConfiguration _configuration;
@@ -63,7 +64,7 @@ public class SystemManagerService
     ///     Loads systems from the unified database without touching the cache.
     ///     Test seam: accepts an explicit database path so tests never touch real user data.
     /// </summary>
-    internal List<SystemManagerConfig> LoadSystemsFromDatabase(string? dbPathOverride)
+    internal static List<SystemManagerConfig> LoadSystemsFromDatabase(string? dbPathOverride)
     {
         var result = new List<SystemManagerConfig>();
 
@@ -231,8 +232,10 @@ public class SystemManagerService
         try
         {
             if (_messageBox is not null)
+            {
                 await _messageBox.SystemXmlIsCorruptedMessageBoxAsync(
                     PathHelper.ResolveLogFilePath(_configuration));
+            }
 
             var backup = FindLatestBackup(path);
             if (backup is null) return;

@@ -33,34 +33,29 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
     [Fact]
     public void GetLanguageCodeFromMenuItemName_ReturnsCode()
     {
-        var service = new AvaloniaLanguageMenuService();
-
-        Assert.Equal("pt-BR", service.GetLanguageCodeFromMenuItemName("LanguagePortugueseBr"));
-        Assert.Equal("zh-Hans", service.GetLanguageCodeFromMenuItemName("LanguageChineseSimplified"));
-        Assert.Null(service.GetLanguageCodeFromMenuItemName("NotALanguageItem"));
-        Assert.Null(service.GetLanguageCodeFromMenuItemName(null));
+        Assert.Equal("pt-BR", AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("LanguagePortugueseBr"));
+        Assert.Equal("zh-Hans", AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("LanguageChineseSimplified"));
+        Assert.Null(AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("NotALanguageItem"));
+        Assert.Null(AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName(null));
     }
 
     [Fact]
     public void GetMenuItemNameForLanguageCode_IsCaseInsensitive()
     {
-        var service = new AvaloniaLanguageMenuService();
-
-        Assert.Equal("LanguagePortugueseBr", service.GetMenuItemNameForLanguageCode("pt-BR"));
-        Assert.Equal("LanguagePortugueseBr", service.GetMenuItemNameForLanguageCode("pt-br")); // WPF-style code
-        Assert.Equal("LanguageChineseSimplified", service.GetMenuItemNameForLanguageCode("zh-hans"));
-        Assert.Null(service.GetMenuItemNameForLanguageCode("xx"));
+        Assert.Equal("LanguagePortugueseBr", AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("pt-BR"));
+        Assert.Equal("LanguagePortugueseBr",
+            AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("pt-br")); // WPF-style code
+        Assert.Equal("LanguageChineseSimplified", AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("zh-hans"));
+        Assert.Null(AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("xx"));
     }
 
     [Fact]
     public void IsLanguageMenuItem_DetectsLanguageItemsOnly()
     {
-        var service = new AvaloniaLanguageMenuService();
-
-        Assert.True(service.IsLanguageMenuItem("LanguageEnglish"));
-        Assert.True(service.IsLanguageMenuItem("LanguageUrdu"));
-        Assert.False(service.IsLanguageMenuItem("LanguageGroup")); // group name, not an item
-        Assert.False(service.IsLanguageMenuItem(null));
+        Assert.True(AvaloniaLanguageMenuService.IsLanguageMenuItem("LanguageEnglish"));
+        Assert.True(AvaloniaLanguageMenuService.IsLanguageMenuItem("LanguageUrdu"));
+        Assert.False(AvaloniaLanguageMenuService.IsLanguageMenuItem("LanguageGroup")); // group name, not an item
+        Assert.False(AvaloniaLanguageMenuService.IsLanguageMenuItem(null));
     }
 
     // ── AvaloniaMenuCheckMarkService ──
@@ -75,9 +70,7 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
             new MenuItem { Tag = "200" },
             new MenuItem { Tag = "300" }
         };
-        var service = new AvaloniaMenuCheckMarkService();
-
-        service.UpdateCheckedByTag(items, 200);
+        AvaloniaMenuCheckMarkService.UpdateCheckedByTag(items, 200);
 
         Assert.False(items[0].IsChecked);
         Assert.True(items[1].IsChecked);
@@ -89,9 +82,7 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
     {
         HeadlessAvalonia.EnsureInitialized();
         var items = new[] { new MenuItem { Tag = "abc" }, new MenuItem { Tag = null } };
-        var service = new AvaloniaMenuCheckMarkService();
-
-        service.UpdateCheckedByTag(items, 100);
+        AvaloniaMenuCheckMarkService.UpdateCheckedByTag(items, 100);
 
         Assert.All(items, i => Assert.False(i.IsChecked));
     }
@@ -106,9 +97,7 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
             new MenuItem { Name = "Wider" },
             new MenuItem { Name = "Taller" }
         };
-        var service = new AvaloniaMenuCheckMarkService();
-
-        service.UpdateCheckedByName(items, "Taller");
+        AvaloniaMenuCheckMarkService.UpdateCheckedByName(items, "Taller");
 
         Assert.False(items[0].IsChecked);
         Assert.False(items[1].IsChecked);

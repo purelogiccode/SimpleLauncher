@@ -185,53 +185,53 @@ public static class UnifiedSettingsDatabase
         using var transaction = connection.BeginTransaction();
 
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS Meta (
-                Key TEXT PRIMARY KEY,
-                Value TEXT NOT NULL
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS Meta (
+                                                     Key TEXT PRIMARY KEY,
+                                                     Value TEXT NOT NULL
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS AppSettings (
-                Key TEXT PRIMARY KEY COLLATE NOCASE,
-                Value TEXT NOT NULL DEFAULT ''
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS AppSettings (
+                                                     Key TEXT PRIMARY KEY COLLATE NOCASE,
+                                                     Value TEXT NOT NULL DEFAULT ''
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS EmulatorSettings (
-                EmulatorName TEXT PRIMARY KEY COLLATE NOCASE,
-                ConfigJson TEXT NOT NULL DEFAULT '{}'
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS EmulatorSettings (
+                                                     EmulatorName TEXT PRIMARY KEY COLLATE NOCASE,
+                                                     ConfigJson TEXT NOT NULL DEFAULT '{}'
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS Favorites (
-                FileName TEXT NOT NULL COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
-                PRIMARY KEY (FileName, SystemName)
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS Favorites (
+                                                     FileName TEXT NOT NULL COLLATE NOCASE,
+                                                     SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
+                                                     PRIMARY KEY (FileName, SystemName)
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS PlayHistory (
-                FileName TEXT NOT NULL COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
-                TimesPlayed INTEGER NOT NULL DEFAULT 0,
-                TotalPlayTime INTEGER NOT NULL DEFAULT 0,
-                LastPlayDate TEXT NOT NULL DEFAULT '',
-                LastPlayTime TEXT NOT NULL DEFAULT '',
-                PRIMARY KEY (FileName, SystemName)
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS PlayHistory (
+                                                     FileName TEXT NOT NULL COLLATE NOCASE,
+                                                     SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
+                                                     TimesPlayed INTEGER NOT NULL DEFAULT 0,
+                                                     TotalPlayTime INTEGER NOT NULL DEFAULT 0,
+                                                     LastPlayDate TEXT NOT NULL DEFAULT '',
+                                                     LastPlayTime TEXT NOT NULL DEFAULT '',
+                                                     PRIMARY KEY (FileName, SystemName)
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS Systems (
-                SystemName TEXT PRIMARY KEY COLLATE NOCASE,
-                ConfigJson TEXT NOT NULL
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS Systems (
+                                                     SystemName TEXT PRIMARY KEY COLLATE NOCASE,
+                                                     ConfigJson TEXT NOT NULL
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS SystemPlayTimes (
-                SystemName TEXT PRIMARY KEY COLLATE NOCASE,
-                PlayTimeSeconds INTEGER NOT NULL DEFAULT 0
-            );
-            """);
+                                                 CREATE TABLE IF NOT EXISTS SystemPlayTimes (
+                                                     SystemName TEXT PRIMARY KEY COLLATE NOCASE,
+                                                     PlayTimeSeconds INTEGER NOT NULL DEFAULT 0
+                                                 );
+                                                 """);
 
         // Databases created before the composite key carry a single-column Favorites PK
         // (CREATE TABLE IF NOT EXISTS left them untouched above): rebuild them in place.
@@ -393,16 +393,16 @@ public static class UnifiedSettingsDatabase
 
         ExecuteNonQuery(connection, transaction, "ALTER TABLE Favorites RENAME TO Favorites_legacy_single_key;");
         ExecuteNonQuery(connection, transaction, """
-            CREATE TABLE Favorites (
-                FileName TEXT NOT NULL COLLATE NOCASE,
-                SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
-                PRIMARY KEY (FileName, SystemName)
-            );
-            """);
+                                                 CREATE TABLE Favorites (
+                                                     FileName TEXT NOT NULL COLLATE NOCASE,
+                                                     SystemName TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
+                                                     PRIMARY KEY (FileName, SystemName)
+                                                 );
+                                                 """);
         ExecuteNonQuery(connection, transaction, """
-            INSERT OR IGNORE INTO Favorites (FileName, SystemName)
-            SELECT FileName, SystemName FROM Favorites_legacy_single_key;
-            """);
+                                                 INSERT OR IGNORE INTO Favorites (FileName, SystemName)
+                                                 SELECT FileName, SystemName FROM Favorites_legacy_single_key;
+                                                 """);
         ExecuteNonQuery(connection, transaction, "DROP TABLE Favorites_legacy_single_key;");
     }
 
@@ -552,8 +552,10 @@ public static class UnifiedSettingsDatabase
             DeleteJournalSiblings(path);
 
             if (File.Exists(path))
+            {
                 throw new InvalidOperationException(
                     $"The corrupt database '{path}' could not be moved or deleted.", ex);
+            }
         }
     }
 
@@ -764,7 +766,10 @@ public static class UnifiedSettingsDatabase
             {
                 if (string.IsNullOrWhiteSpace(fav.FileName) ||
                     !seen.Add(fav.FileName + "\u0000" + fav.SystemName))
+                {
                     continue;
+                }
+
                 using var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
                 cmd.CommandText = "INSERT INTO Favorites (FileName, SystemName) VALUES ($f, $s);";
@@ -785,7 +790,8 @@ public static class UnifiedSettingsDatabase
         var result = new List<PlayHistoryRecord>();
         using var connection = OpenReadConnection(dbPath ?? GetDatabasePath());
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime FROM PlayHistory;";
+        cmd.CommandText =
+            "SELECT FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime FROM PlayHistory;";
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -823,13 +829,16 @@ public static class UnifiedSettingsDatabase
             {
                 if (string.IsNullOrWhiteSpace(item.FileName) ||
                     !seen.Add(item.FileName + "\u0000" + item.SystemName))
+                {
                     continue;
+                }
+
                 using var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
                 cmd.CommandText = """
-                    INSERT INTO PlayHistory (FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime)
-                    VALUES ($f, $s, $t, $p, $d, $ti);
-                    """;
+                                  INSERT INTO PlayHistory (FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime)
+                                  VALUES ($f, $s, $t, $p, $d, $ti);
+                                  """;
                 cmd.Parameters.AddWithValue("$f", item.FileName);
                 cmd.Parameters.AddWithValue("$s", item.SystemName ?? "");
                 cmd.Parameters.AddWithValue("$t", item.TimesPlayed);
@@ -950,9 +959,12 @@ public static class UnifiedSettingsDatabase
         cmd.CommandText = "SELECT SystemName, PlayTimeSeconds FROM SystemPlayTimes;";
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
+        {
             result.Add(new SystemPlayTimeRecord(
                 reader.GetString(0),
                 reader.IsDBNull(1) ? 0L : reader.GetInt64(1)));
+        }
+
         return result;
     }
 
@@ -1023,7 +1035,10 @@ public static class UnifiedSettingsDatabase
             {
                 if (string.IsNullOrWhiteSpace(fav.FileName) ||
                     !seenFavorites.Add(fav.FileName + "\u0000" + fav.SystemName))
+                {
                     continue;
+                }
+
                 using var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
                 cmd.CommandText = "INSERT INTO Favorites (FileName, SystemName) VALUES ($f, $s);";
@@ -1038,13 +1053,16 @@ public static class UnifiedSettingsDatabase
             {
                 if (string.IsNullOrWhiteSpace(item.FileName) ||
                     !seenHistory.Add(item.FileName + "\u0000" + item.SystemName))
+                {
                     continue;
+                }
+
                 using var cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
                 cmd.CommandText = """
-                    INSERT INTO PlayHistory (FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime)
-                    VALUES ($f, $s, $t, $p, $d, $ti);
-                    """;
+                                  INSERT INTO PlayHistory (FileName, SystemName, TimesPlayed, TotalPlayTime, LastPlayDate, LastPlayTime)
+                                  VALUES ($f, $s, $t, $p, $d, $ti);
+                                  """;
                 cmd.Parameters.AddWithValue("$f", item.FileName);
                 cmd.Parameters.AddWithValue("$s", item.SystemName ?? "");
                 cmd.Parameters.AddWithValue("$t", item.TimesPlayed);

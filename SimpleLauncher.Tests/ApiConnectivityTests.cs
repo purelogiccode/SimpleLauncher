@@ -65,7 +65,7 @@ public class ApiConnectivityTests
     {
         using var settings = await LoadAppSettingsAsync();
         var apiKey = AppConstants.GetApiKey();
-        var apiUrl = "https://bugreport.invalid/api/send-bug-report";
+        const string apiUrl = "https://bugreport.invalid/api/send-bug-report";
 
         var payload = new
         {

@@ -75,7 +75,10 @@ public class RemoteImage : Image
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (!token.IsCancellationRequested &&
-                    string.Equals(Url, url, StringComparison.OrdinalIgnoreCase)) Source = bitmap;
+                    string.Equals(Url, url, StringComparison.OrdinalIgnoreCase))
+                {
+                    Source = bitmap;
+                }
             });
         }
         catch (OperationCanceledException)

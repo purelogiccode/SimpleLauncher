@@ -187,11 +187,11 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         using (var cmd = connection.CreateCommand())
         {
             cmd.CommandText = """
-                CREATE TABLE Meta (Key TEXT PRIMARY KEY, Value TEXT NOT NULL);
-                INSERT INTO Meta (Key, Value) VALUES ('schema_version', '1');
-                CREATE TABLE Favorites (FileName TEXT PRIMARY KEY COLLATE NOCASE, SystemName TEXT NOT NULL DEFAULT '');
-                INSERT INTO Favorites (FileName, SystemName) VALUES ('game.zip', 'NES');
-                """;
+                              CREATE TABLE Meta (Key TEXT PRIMARY KEY, Value TEXT NOT NULL);
+                              INSERT INTO Meta (Key, Value) VALUES ('schema_version', '1');
+                              CREATE TABLE Favorites (FileName TEXT PRIMARY KEY COLLATE NOCASE, SystemName TEXT NOT NULL DEFAULT '');
+                              INSERT INTO Favorites (FileName, SystemName) VALUES ('game.zip', 'NES');
+                              """;
             cmd.ExecuteNonQuery();
         }
 

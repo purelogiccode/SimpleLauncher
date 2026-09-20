@@ -62,7 +62,9 @@ public static class RomHistoryLoader
                  entry.Systems.SystemItems.Any(s => string.Equals(s.Name, romName, StringComparison.Ordinal))) ||
                 (entry.Software?.Items != null &&
                  entry.Software.Items.Any(i => string.Equals(i.Name, romName, StringComparison.Ordinal))))
+            {
                 return BuildEntryXElement(entry);
+            }
         }
 
         return null;

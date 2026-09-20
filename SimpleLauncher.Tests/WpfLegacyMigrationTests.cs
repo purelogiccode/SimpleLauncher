@@ -418,12 +418,12 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         // A settings.xml holding only default values (recreated by an older version
         // after a downgrade) must not revert the database to defaults.
         File.WriteAllText(Path.Combine(_legacyFolder, "settings.xml"), """
-            <Settings>
-              <Application>
-                <Language>en</Language>
-              </Application>
-            </Settings>
-            """);
+                                                                       <Settings>
+                                                                         <Application>
+                                                                           <Language>en</Language>
+                                                                         </Application>
+                                                                       </Settings>
+                                                                       """);
         WriteLegacyFavorites(("game1.zip", "NES"));
 
         WpfLegacyMigrator.ResetForTests();
@@ -471,35 +471,35 @@ public sealed class WpfLegacyMigrationTests : IDisposable
         // Compat shapes the Avalonia reader accepts (simplified SystemFolder,
         // comma-separated formats, missing Emulators block) must import identically.
         File.WriteAllText(Path.Combine(_legacyFolder, "system.xml"), """
-            <SystemConfigs>
-              <SystemConfig>
-                <SystemName>NES</SystemName>
-                <SystemFolders>
-                  <SystemFolder>C:\roms\nes</SystemFolder>
-                </SystemFolders>
-                <SystemImageFolder>C:\images\nes</SystemImageFolder>
-                <FileFormatsToSearch>
-                  <FormatToSearch>zip</FormatToSearch>
-                </FileFormatsToSearch>
-                <FileFormatsToLaunch>
-                  <FormatToLaunch>zip</FormatToLaunch>
-                </FileFormatsToLaunch>
-                <Emulators>
-                  <Emulator>
-                    <EmulatorName>Mesen</EmulatorName>
-                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
-                  </Emulator>
-                </Emulators>
-              </SystemConfig>
-              <SystemConfig>
-                <SystemName>SNES</SystemName>
-                <SystemFolder>D:\roms\snes</SystemFolder>
-                <SystemImageFolder>D:\images\snes</SystemImageFolder>
-                <FileFormatsToSearch>zip,sfc</FileFormatsToSearch>
-                <FileFormatsToLaunch>zip</FileFormatsToLaunch>
-              </SystemConfig>
-            </SystemConfigs>
-            """);
+                                                                     <SystemConfigs>
+                                                                       <SystemConfig>
+                                                                         <SystemName>NES</SystemName>
+                                                                         <SystemFolders>
+                                                                           <SystemFolder>C:\roms\nes</SystemFolder>
+                                                                         </SystemFolders>
+                                                                         <SystemImageFolder>C:\images\nes</SystemImageFolder>
+                                                                         <FileFormatsToSearch>
+                                                                           <FormatToSearch>zip</FormatToSearch>
+                                                                         </FileFormatsToSearch>
+                                                                         <FileFormatsToLaunch>
+                                                                           <FormatToLaunch>zip</FormatToLaunch>
+                                                                         </FileFormatsToLaunch>
+                                                                         <Emulators>
+                                                                           <Emulator>
+                                                                             <EmulatorName>Mesen</EmulatorName>
+                                                                             <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                                                                           </Emulator>
+                                                                         </Emulators>
+                                                                       </SystemConfig>
+                                                                       <SystemConfig>
+                                                                         <SystemName>SNES</SystemName>
+                                                                         <SystemFolder>D:\roms\snes</SystemFolder>
+                                                                         <SystemImageFolder>D:\images\snes</SystemImageFolder>
+                                                                         <FileFormatsToSearch>zip,sfc</FileFormatsToSearch>
+                                                                         <FileFormatsToLaunch>zip</FileFormatsToLaunch>
+                                                                       </SystemConfig>
+                                                                     </SystemConfigs>
+                                                                     """);
 
         var logger = new NoOpLogger();
         var result = WpfLegacyMigrator.EnsureMigrated(
@@ -598,73 +598,73 @@ public sealed class WpfLegacyMigrationTests : IDisposable
     private void WriteLegacySettingsXml()
     {
         File.WriteAllText(Path.Combine(_legacyFolder, "settings.xml"), """
-            <Settings>
-              <Application>
-                <ThumbnailSize>300</ThumbnailSize>
-                <Language>fr</Language>
-                <BaseTheme>Light</BaseTheme>
-              </Application>
-              <Mame>
-                <Video>vulkan</Video>
-              </Mame>
-              <SystemPlayTimes>
-                <SystemPlayTime>
-                  <SystemName>NES</SystemName>
-                  <PlayTime>3600</PlayTime>
-                </SystemPlayTime>
-              </SystemPlayTimes>
-            </Settings>
-            """);
+                                                                       <Settings>
+                                                                         <Application>
+                                                                           <ThumbnailSize>300</ThumbnailSize>
+                                                                           <Language>fr</Language>
+                                                                           <BaseTheme>Light</BaseTheme>
+                                                                         </Application>
+                                                                         <Mame>
+                                                                           <Video>vulkan</Video>
+                                                                         </Mame>
+                                                                         <SystemPlayTimes>
+                                                                           <SystemPlayTime>
+                                                                             <SystemName>NES</SystemName>
+                                                                             <PlayTime>3600</PlayTime>
+                                                                           </SystemPlayTime>
+                                                                         </SystemPlayTimes>
+                                                                       </Settings>
+                                                                       """);
     }
 
     private void WriteLegacySystemXml()
     {
         File.WriteAllText(Path.Combine(_legacyFolder, "system.xml"), """
-            <SystemConfigs>
-              <SystemConfig>
-                <SystemName>NES</SystemName>
-                <SystemFolders>
-                  <SystemFolder>C:\roms\nes</SystemFolder>
-                </SystemFolders>
-                <SystemImageFolder>C:\images\nes</SystemImageFolder>
-                <FileFormatsToSearch>
-                  <FormatToSearch>zip</FormatToSearch>
-                </FileFormatsToSearch>
-                <FileFormatsToLaunch>
-                  <FormatToLaunch>zip</FormatToLaunch>
-                </FileFormatsToLaunch>
-                <Emulators>
-                  <Emulator>
-                    <EmulatorName>Mesen</EmulatorName>
-                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
-                    <EmulatorParameters></EmulatorParameters>
-                    <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
-                  </Emulator>
-                </Emulators>
-              </SystemConfig>
-              <SystemConfig>
-                <SystemName>SNES</SystemName>
-                <SystemFolders>
-                  <SystemFolder>D:\roms\snes</SystemFolder>
-                </SystemFolders>
-                <SystemImageFolder>D:\images\snes</SystemImageFolder>
-                <FileFormatsToSearch>
-                  <FormatToSearch>zip</FormatToSearch>
-                  <FormatToSearch>sfc</FormatToSearch>
-                </FileFormatsToSearch>
-                <FileFormatsToLaunch>
-                  <FormatToLaunch>zip</FormatToLaunch>
-                </FileFormatsToLaunch>
-                <Emulators>
-                  <Emulator>
-                    <EmulatorName>SNES9x</EmulatorName>
-                    <EmulatorLocation>D:\emu\snes9x.exe</EmulatorLocation>
-                    <EmulatorParameters>%ROM%</EmulatorParameters>
-                  </Emulator>
-                </Emulators>
-              </SystemConfig>
-            </SystemConfigs>
-            """);
+                                                                     <SystemConfigs>
+                                                                       <SystemConfig>
+                                                                         <SystemName>NES</SystemName>
+                                                                         <SystemFolders>
+                                                                           <SystemFolder>C:\roms\nes</SystemFolder>
+                                                                         </SystemFolders>
+                                                                         <SystemImageFolder>C:\images\nes</SystemImageFolder>
+                                                                         <FileFormatsToSearch>
+                                                                           <FormatToSearch>zip</FormatToSearch>
+                                                                         </FileFormatsToSearch>
+                                                                         <FileFormatsToLaunch>
+                                                                           <FormatToLaunch>zip</FormatToLaunch>
+                                                                         </FileFormatsToLaunch>
+                                                                         <Emulators>
+                                                                           <Emulator>
+                                                                             <EmulatorName>Mesen</EmulatorName>
+                                                                             <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                                                                             <EmulatorParameters></EmulatorParameters>
+                                                                             <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
+                                                                           </Emulator>
+                                                                         </Emulators>
+                                                                       </SystemConfig>
+                                                                       <SystemConfig>
+                                                                         <SystemName>SNES</SystemName>
+                                                                         <SystemFolders>
+                                                                           <SystemFolder>D:\roms\snes</SystemFolder>
+                                                                         </SystemFolders>
+                                                                         <SystemImageFolder>D:\images\snes</SystemImageFolder>
+                                                                         <FileFormatsToSearch>
+                                                                           <FormatToSearch>zip</FormatToSearch>
+                                                                           <FormatToSearch>sfc</FormatToSearch>
+                                                                         </FileFormatsToSearch>
+                                                                         <FileFormatsToLaunch>
+                                                                           <FormatToLaunch>zip</FormatToLaunch>
+                                                                         </FileFormatsToLaunch>
+                                                                         <Emulators>
+                                                                           <Emulator>
+                                                                             <EmulatorName>SNES9x</EmulatorName>
+                                                                             <EmulatorLocation>D:\emu\snes9x.exe</EmulatorLocation>
+                                                                             <EmulatorParameters>%ROM%</EmulatorParameters>
+                                                                           </Emulator>
+                                                                         </Emulators>
+                                                                       </SystemConfig>
+                                                                     </SystemConfigs>
+                                                                     """);
     }
 
     private void WriteLegacyHistoryDuplicates()
@@ -701,51 +701,51 @@ public sealed class WpfLegacyMigrationTests : IDisposable
     private void WriteLegacySystemXmlWithCaseDuplicateNames()
     {
         File.WriteAllText(Path.Combine(_legacyFolder, "system.xml"), """
-            <SystemConfigs>
-              <SystemConfig>
-                <SystemName>NES</SystemName>
-                <SystemFolders>
-                  <SystemFolder>C:\roms\nes</SystemFolder>
-                </SystemFolders>
-                <SystemImageFolder>C:\images\nes</SystemImageFolder>
-                <FileFormatsToSearch>
-                  <FormatToSearch>zip</FormatToSearch>
-                </FileFormatsToSearch>
-                <FileFormatsToLaunch>
-                  <FormatToLaunch>zip</FormatToLaunch>
-                </FileFormatsToLaunch>
-                <Emulators>
-                  <Emulator>
-                    <EmulatorName>Mesen</EmulatorName>
-                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
-                    <EmulatorParameters></EmulatorParameters>
-                    <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
-                  </Emulator>
-                </Emulators>
-              </SystemConfig>
-              <SystemConfig>
-                <SystemName>nes</SystemName>
-                <SystemFolders>
-                  <SystemFolder>D:\roms\nes</SystemFolder>
-                </SystemFolders>
-                <SystemImageFolder>D:\images\nes</SystemImageFolder>
-                <FileFormatsToSearch>
-                  <FormatToSearch>nes</FormatToSearch>
-                </FileFormatsToSearch>
-                <FileFormatsToLaunch>
-                  <FormatToLaunch>nes</FormatToLaunch>
-                </FileFormatsToLaunch>
-                <Emulators>
-                  <Emulator>
-                    <EmulatorName>Mesen</EmulatorName>
-                    <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
-                    <EmulatorParameters></EmulatorParameters>
-                    <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
-                  </Emulator>
-                </Emulators>
-              </SystemConfig>
-            </SystemConfigs>
-            """);
+                                                                     <SystemConfigs>
+                                                                       <SystemConfig>
+                                                                         <SystemName>NES</SystemName>
+                                                                         <SystemFolders>
+                                                                           <SystemFolder>C:\roms\nes</SystemFolder>
+                                                                         </SystemFolders>
+                                                                         <SystemImageFolder>C:\images\nes</SystemImageFolder>
+                                                                         <FileFormatsToSearch>
+                                                                           <FormatToSearch>zip</FormatToSearch>
+                                                                         </FileFormatsToSearch>
+                                                                         <FileFormatsToLaunch>
+                                                                           <FormatToLaunch>zip</FormatToLaunch>
+                                                                         </FileFormatsToLaunch>
+                                                                         <Emulators>
+                                                                           <Emulator>
+                                                                             <EmulatorName>Mesen</EmulatorName>
+                                                                             <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                                                                             <EmulatorParameters></EmulatorParameters>
+                                                                             <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
+                                                                           </Emulator>
+                                                                         </Emulators>
+                                                                       </SystemConfig>
+                                                                       <SystemConfig>
+                                                                         <SystemName>nes</SystemName>
+                                                                         <SystemFolders>
+                                                                           <SystemFolder>D:\roms\nes</SystemFolder>
+                                                                         </SystemFolders>
+                                                                         <SystemImageFolder>D:\images\nes</SystemImageFolder>
+                                                                         <FileFormatsToSearch>
+                                                                           <FormatToSearch>nes</FormatToSearch>
+                                                                         </FileFormatsToSearch>
+                                                                         <FileFormatsToLaunch>
+                                                                           <FormatToLaunch>nes</FormatToLaunch>
+                                                                         </FileFormatsToLaunch>
+                                                                         <Emulators>
+                                                                           <Emulator>
+                                                                             <EmulatorName>Mesen</EmulatorName>
+                                                                             <EmulatorLocation>C:\emu\mesen.exe</EmulatorLocation>
+                                                                             <EmulatorParameters></EmulatorParameters>
+                                                                             <ReceiveANotificationOnEmulatorError>true</ReceiveANotificationOnEmulatorError>
+                                                                           </Emulator>
+                                                                         </Emulators>
+                                                                       </SystemConfig>
+                                                                     </SystemConfigs>
+                                                                     """);
     }
 
     public void Dispose()

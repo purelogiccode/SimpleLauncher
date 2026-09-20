@@ -54,10 +54,8 @@ public partial class MainWindow : Window, IPaginationHost
     private readonly EventHandler<EventArgs<string>> _gameFilesChangedHandler;
     private readonly GamePadController _gamePadController;
     private readonly GameScannerService _gameScannerService;
-    private readonly AvaloniaLanguageMenuService _languageMenu;
     private readonly AvaloniaLoadingOverlayService _loadingOverlay;
     private readonly LocalizationService _localization;
-    private readonly AvaloniaMenuCheckMarkService _menuCheckMarks;
     private readonly IPaginationService _pagination;
     private readonly PlaySoundEffects _playSound;
     private readonly EventHandler<PointerWheelEventArgs> _pointerWheelChangedHandler;
@@ -87,8 +85,6 @@ public partial class MainWindow : Window, IPaginationHost
         GlobalSearchSectionViewModel globalSearchSection,
         IPaginationService pagination,
         AvaloniaGameFileWatcherService fileWatcher,
-        AvaloniaLanguageMenuService languageMenu,
-        AvaloniaMenuCheckMarkService menuCheckMarks,
         GamePadController gamePadController,
         UiResetService uiResetService,
         AvaloniaSystemSelectionOrchestratorService systemSelectionOrchestrator,
@@ -106,8 +102,6 @@ public partial class MainWindow : Window, IPaginationHost
         _gameScannerService = gameScannerService;
         _pagination = pagination;
         _fileWatcher = fileWatcher;
-        _languageMenu = languageMenu;
-        _menuCheckMarks = menuCheckMarks;
         _gamePadController = gamePadController;
         _uiResetService = uiResetService;
         _systemSelectionOrchestrator = systemSelectionOrchestrator;
@@ -1875,50 +1869,50 @@ public partial class MainWindow : Window, IPaginationHost
     private void UpdateLanguageCheckMarks(string lang)
     {
         // Check exactly the language menu item whose code matches the active language
-        var checkedName = _languageMenu.GetMenuItemNameForLanguageCode(lang);
+        var checkedName = AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode(lang);
         foreach (var item in LanguageMenu.Items.OfType<MenuItem>())
         {
-            item.IsChecked = _languageMenu.IsLanguageMenuItem(item.Name) &&
+            item.IsChecked = AvaloniaLanguageMenuService.IsLanguageMenuItem(item.Name) &&
                              string.Equals(item.Name, checkedName, StringComparison.Ordinal);
         }
     }
 
     private void UpdateThumbnailSizeCheckMarks(int size)
     {
-        _menuCheckMarks.UpdateCheckedByTag(SizeMenu.Items.OfType<MenuItem>(), size);
+        AvaloniaMenuCheckMarkService.UpdateCheckedByTag(SizeMenu.Items.OfType<MenuItem>(), size);
     }
 
     private void UpdateButtonAspectRatioCheckMarks(string? ratio)
     {
-        _menuCheckMarks.UpdateCheckedByName(AspectRatioMenu.Items.OfType<MenuItem>(), ratio);
+        AvaloniaMenuCheckMarkService.UpdateCheckedByName(AspectRatioMenu.Items.OfType<MenuItem>(), ratio);
     }
 
     private void UpdateGamesPerPageCheckMarks(int page)
     {
-        _menuCheckMarks.UpdateCheckedByTag(GamesPerPageMenu.Items.OfType<MenuItem>(), page);
+        AvaloniaMenuCheckMarkService.UpdateCheckedByTag(GamesPerPageMenu.Items.OfType<MenuItem>(), page);
     }
 
     private void UpdateViewModeCheckMarks()
     {
-        _menuCheckMarks.SetViewModeCheckMarks(GridView, ListView, _viewModel.IsGridView);
+        AvaloniaMenuCheckMarkService.SetViewModeCheckMarks(GridView, ListView, _viewModel.IsGridView);
     }
 
     private void UpdateShowGamesCheckMarks(string? mode)
     {
-        _menuCheckMarks.UpdateShowGamesCheckMarks(
+        AvaloniaMenuCheckMarkService.UpdateShowGamesCheckMarks(
             [ShowAll, ShowWithCover, ShowWithoutCover], mode);
     }
 
     private void UpdateFilenameCheckMarks()
     {
         var mode = _settings.FilenameDisplayMode;
-        _menuCheckMarks.UpdateFilenameDisplayModeCheckMarks(
+        AvaloniaMenuCheckMarkService.UpdateFilenameDisplayModeCheckMarks(
             [FilenameDisplayOriginal, FilenameDisplayCleanUp, FilenameDisplayNoFilename], mode);
         DisplayMachineNameToggle.IsChecked = _settings.DisplayMachineName;
 
-        _menuCheckMarks.UpdateFilenameFontSizeCheckMarks(
+        AvaloniaMenuCheckMarkService.UpdateFilenameFontSizeCheckMarks(
             [FilenameFontSizeSmall, FilenameFontSizeNormal, FilenameFontSizeBig], _settings.FilenameFontSize);
-        _menuCheckMarks.UpdateMachineNameFontSizeCheckMarks(
+        AvaloniaMenuCheckMarkService.UpdateMachineNameFontSizeCheckMarks(
             [MachineNameFontSizeSmall, MachineNameFontSizeNormal, MachineNameFontSizeBig],
             _settings.MachineNameFontSize);
     }
@@ -1931,7 +1925,7 @@ public partial class MainWindow : Window, IPaginationHost
         {
             if (sender is not MenuItem item) return;
 
-            var lang = _languageMenu.GetLanguageCodeFromMenuItemName(item.Name) ?? "en";
+            var lang = AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName(item.Name) ?? "en";
 
             _settings.Language = lang;
             await _settings.SaveAsync();

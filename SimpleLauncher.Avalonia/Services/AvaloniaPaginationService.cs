@@ -89,6 +89,12 @@ public class AvaloniaPaginationService : IPaginationService
             return allFiles;
         }
 
+        // The result set can shrink below the current page (filter change, delete,
+        // watcher reload). Clamp before computing the slice so Skip() cannot return an
+        // empty page and the status label cannot read e.g. "801 to 200 out of 200".
+        var totalPages = FilesPerPage > 0 ? (int)Math.Ceiling(TotalFiles / (double)FilesPerPage) : 1;
+        CurrentPage = Math.Clamp(CurrentPage, 1, Math.Max(totalPages, 1));
+
         var startIndex = ((CurrentPage - 1) * FilesPerPage) + 1;
         var endIndex = Math.Min(startIndex + FilesPerPage - 1, TotalFiles);
 

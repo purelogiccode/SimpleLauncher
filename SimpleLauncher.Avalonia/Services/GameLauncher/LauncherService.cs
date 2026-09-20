@@ -317,7 +317,8 @@ public class LauncherService : ILauncherService
                             {
                                 // Expected condition (unsupported input; user already gets UI feedback):
                                 // not a bug, keep it out of the bug report service.
-                                Log.Information("No game file found in mounted CHD for emulator '{Emulator}'", emulatorName);
+                                Log.Information("No game file found in mounted CHD for emulator '{Emulator}'",
+                                    emulatorName);
                                 await _messageBox.CustomErrorMessageBoxAsync(
                                     "No suitable game file was found inside the mounted CHD image.",
                                     "No Game File Found");
@@ -1064,7 +1065,8 @@ public class LauncherService : ILauncherService
                         // Kill the whole tree (WPF parity): children would otherwise keep
                         // running and lock the files the batch file started.
                         process.Kill(true);
-                        Log.Information("Batch file timed out after 5 minutes and was killed: {Path}", resolvedFilePath);
+                        Log.Information("Batch file timed out after 5 minutes and was killed: {Path}",
+                            resolvedFilePath);
                     }
                     catch (Exception killEx)
                     {
@@ -1182,12 +1184,16 @@ public class LauncherService : ILauncherService
         }
 
         if (targetUrl is not null)
+        {
             Log.Debug("LaunchShortcutFileAsync (.URL): Shortcut File: {ShortcutFile}, Target URL: {TargetUrl}",
                 resolvedFilePath, targetUrl);
+        }
         else
+        {
             Log.Debug(
                 "LaunchShortcutFileAsync (.LNK): Shortcut File: {ShortcutFile}, Working Directory: {WorkingDirectory}",
                 resolvedFilePath, Path.GetDirectoryName(resolvedFilePath) ?? AppDomain.CurrentDomain.BaseDirectory);
+        }
 
         Exception? error = null;
         await Task.Run(() =>
@@ -1816,7 +1822,9 @@ public class LauncherService : ILauncherService
             return true;
         }
 
-        var parentPath = Path.GetDirectoryName(emulatorLocation.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        var parentPath =
+            Path.GetDirectoryName(emulatorLocation.TrimEnd(Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar));
         var parentName = Path.GetFileName(parentPath ?? string.Empty);
         return parentName.Equals("Ymir", StringComparison.OrdinalIgnoreCase) ||
                parentName.Equals("Yumir", StringComparison.OrdinalIgnoreCase);

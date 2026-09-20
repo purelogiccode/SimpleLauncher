@@ -29,7 +29,7 @@ public class DetectAlphabeticalOrderingTests
         foreach (var file in resourceFiles)
         {
             var entries = LocalizationResourceFile.ReadEntries(file);
-            var keys = entries.Select(static e => e.Key).ToList();
+            var keys = entries.ConvertAll(static e => e.Key);
 
             var isSorted = keys.SequenceEqual(
                 keys.OrderBy(static k => k, StringComparer.OrdinalIgnoreCase),

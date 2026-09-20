@@ -305,10 +305,12 @@ public class AvaloniaHelpUserService
         { "Zeebo", "Zeebo" }
     };
 
-    private static readonly Regex HeadingRegex = new(@"^##\s*(?<text>.*?)$", RegexOptions.Multiline | RegexOptions.Compiled | RegexOptions.ExplicitCapture,
+    private static readonly Regex HeadingRegex = new(@"^##\s*(?<text>.*?)$",
+        RegexOptions.Multiline | RegexOptions.Compiled | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 
-    private static readonly Regex BoldRegex = new(@"\*\*(?<text>.*?)\*\*", RegexOptions.Compiled | RegexOptions.ExplicitCapture,
+    private static readonly Regex BoldRegex = new(@"\*\*(?<text>.*?)\*\*",
+        RegexOptions.Compiled | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 
     private static readonly Regex MarkdownLinkRegex = new(@"\[(?<text>[^\]]+?)\]\((?<url>https?://\S+?)\)",

@@ -96,14 +96,18 @@ internal class ZipService
                         // surfaces the link target; materializing links would let a later entry
                         // (or a FileMode.Create write) escape AppDirectory through the link.
                         if (!string.IsNullOrEmpty(reader.Entry.LinkTarget))
+                        {
                             throw new SecurityException(
                                 $"Zip entry is a symbolic link, refusing to extract: {entryKey}");
+                        }
 
                         // UPD-04: reject Windows alternate data streams. Entry keys are relative,
                         // so any ':' can only be an ADS (e.g. "file.exe:hidden").
                         if (entryKey.Contains(':'))
+                        {
                             throw new SecurityException(
                                 $"Zip entry contains an alternate data stream, refusing to extract: {entryKey}");
+                        }
 
                         // Validate and sanitize entry path to prevent path traversal attacks.
                         // The same relative path is resolved under BOTH roots — a ".." that
@@ -138,8 +142,10 @@ internal class ZipService
                         // This is the actual guard — it catches all traversal attempts including encoded or multi-level ".."
                         if (!stagedPath.StartsWith(stagingRootFullPath, StringComparison.OrdinalIgnoreCase) ||
                             !destinationPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                        {
                             throw new SecurityException(
                                 $"Zip entry attempts to escape target directory: {entryKey}");
+                        }
 
                         // UPD-04: refuse to write through (or overwrite) a reparse point / symlink
                         // planted by an earlier entry of this same archive or a previous run —
@@ -231,9 +237,11 @@ internal class ZipService
         var drive = new DriveInfo(Path.GetPathRoot(appDirectoryFullPath)!);
         const long reserveBytes = 64L * 1024 * 1024;
         if (drive.AvailableFreeSpace < stagedBytes + reserveBytes)
+        {
             throw new IOException(
                 $"Insufficient disk space for update: need {DownloadService.FormatBytes(stagedBytes + reserveBytes)}, " +
                 $"only {DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
+        }
 
         LogMessage?.Invoke(this,
             new EventArgs<string>($"Staged {stagedFiles.Count} files — installing onto live application..."));
@@ -251,8 +259,10 @@ internal class ZipService
                 var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
 
                 if (!finalPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                {
                     throw new SecurityException(
                         $"Zip entry attempts to escape target directory: {relativePath}");
+                }
 
                 ThrowIfPathContainsLink(finalPath, relativePath);
 
@@ -347,12 +357,14 @@ internal class ZipService
             catch (IOException ex)
             {
                 if (!IsFileLockError(ex) || attempt >= FileWriteRetryAttempts)
+                {
                     throw new IOException(
                         IsFileLockError(ex)
                             ? $"Failed to move file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
                               "The file is locked by another process."
                             : $"Failed to move file '{entryKey}': {ex.Message}",
                         ex);
+                }
 
                 // File is locked by another process, retry after delay
                 LogMessage?.Invoke(this,
@@ -503,8 +515,10 @@ internal class ZipService
         while (!string.IsNullOrEmpty(directory))
         {
             if (IsLink(directory))
+            {
                 throw new SecurityException(
                     $"Zip entry path traverses a symbolic link, refusing to extract: {entryKey}");
+            }
 
             directory = Path.GetDirectoryName(directory);
         }
@@ -577,12 +591,14 @@ internal class ZipService
             catch (IOException ex)
             {
                 if (!IsFileLockError(ex) || attempt >= FileWriteRetryAttempts)
+                {
                     throw new IOException(
                         IsFileLockError(ex)
                             ? $"Failed to extract file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
                               "The file is locked by another process."
                             : $"Failed to write file '{entryKey}': {ex.Message}",
                         ex);
+                }
 
                 // File is locked by another process, retry after delay
                 LogMessage?.Invoke(this,
@@ -628,9 +644,11 @@ internal class ZipService
         var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(directory))!);
         const long reserveBytes = 64L * 1024 * 1024;
         if (drive.AvailableFreeSpace < bytesNeeded + reserveBytes)
+        {
             throw new IOException(
                 $"Insufficient disk space to extract '{entryKey}': need " +
                 $"{DownloadService.FormatBytes(bytesNeeded + reserveBytes)}, only " +
                 $"{DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
+        }
     }
 }

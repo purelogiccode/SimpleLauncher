@@ -207,7 +207,7 @@ public class FavoritesManager
                 return Task.CompletedTask;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
-                or NewerSchemaVersionException)
+                                           or NewerSchemaVersionException)
             {
                 // Environment issue (locked/read-only/newer database): never resurrect a
                 // legacy favorites.dat once the unified database exists — the migration

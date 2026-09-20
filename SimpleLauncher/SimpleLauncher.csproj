@@ -658,43 +658,43 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\Tiger Game.Com.png">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\CHDSharp.exe">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\CHDSharp_arm64.exe">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\LICENSE.txt">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCHD\ReadMe.md">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\arm64\LICENSE.txt">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\arm64\README.md">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\x64\LICENSE.txt">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\x64\README.md">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleZipDrive\7z.dll">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleZipDrive\7z_arm64.dll">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleZipDrive\LICENSE.txt">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleZipDrive\WhatsNew.md">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
     <ItemGroup>
@@ -930,7 +930,7 @@
         </Page>
         <None Remove="images\logo.png" />
         <Resource Include="images\logo.png">
-          <CopyToOutputDirectory></CopyToOutputDirectory>
+            <CopyToOutputDirectory></CopyToOutputDirectory>
         </Resource>
         <None Remove="images\add.png" />
         <Resource Include="images\add.png" />
@@ -962,7 +962,7 @@
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="MahApps.Metro" Version="2.4.11" />
         <PackageReference Include="MdXaml" Version="1.27.0" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.262">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.264">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

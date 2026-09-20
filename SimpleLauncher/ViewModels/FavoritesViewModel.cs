@@ -116,7 +116,8 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
             {
                 var removedCount = await _favoritesManager.RemoveFavoritesForMissingSystemsAsync(validSystemNames);
                 if (removedCount > 0)
-                    _logger.Information($"Removed {removedCount} favorite(s) referencing systems that no longer exist.");
+                    _logger.Information(
+                        $"Removed {removedCount} favorite(s) referencing systems that no longer exist.");
             }
 
             var favoritesSnapshot = _favoritesManager.FavoriteList.ToList();

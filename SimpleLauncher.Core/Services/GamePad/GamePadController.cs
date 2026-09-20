@@ -28,7 +28,9 @@ public class GamePadController : IDisposable
     private readonly InputSimulator _inputSimulator;
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBoxLibrary;
+
     private readonly IMouseSimulator _mouseSimulator;
+
     // System.Threading.Lock is non-reentrant: CheckAndReconnectControllers assumes
     // the caller already holds this lock and must NOT acquire it again (CORE-03).
     private readonly Lock _stateLock = new();
@@ -514,151 +516,151 @@ public class GamePadController : IDisposable
         {
             if (!IsRunning || _isDisposed) return;
 
-                // If XInput is already connected, no need to reconnect DirectInput
-                if (_xinputController?.IsConnected == true)
-                {
-                    // Ensure DirectInput controller is released if XInput is active
-                    if (_directInputController == null) return;
-
-                    // Safely dispose DirectInput controller
-                    _directInputController?.Unacquire();
-                    _directInputController?.Dispose();
-                    _directInputController = null;
-                    _playStationControllerGuid = Guid.Empty;
-
-                    return; // XInput is active, nothing more to do
-                }
-
-                // If DirectInput object is null or disposed, try to recreate it
-                if (_directInput == null || _directInput.IsDisposed)
-                {
-                    // Recreate DirectInput object
-                    try
-                    {
-                        // Dispose the old instance if it exists before creating a new one.
-                        _directInput?.Dispose();
-
-                        _directInput = new DirectInput();
-
-                        // Notify developer
-                        ErrorLogger?.Invoke(null,
-                            "Recreated DirectInput object during reconnection."); // Log successful recreation
-                    }
-                    catch (Exception diEx)
-                    {
-                        // Notify developer
-                        ErrorLogger?.Invoke(diEx,
-                            $"Failed to recreate DirectInput object during reconnection attempt.\n\n" +
-                            $"Exception type: {diEx.GetType().Name}\n" +
-                            $"Exception details: {diEx.Message}");
-
-                        _directInput = null; // Ensure it's null if creation failed
-                        return; // Cannot proceed without a valid DirectInput object
-                    }
-                }
-
-                // Find and reconnect DirectInput devices
-                // Check if the previously connected PlayStation controller is attached
-                var devices = _directInput.GetDevices(DeviceType.Gamepad, DeviceEnumerationFlags.AttachedOnly);
-
-                var found = false;
-                DeviceInstance? foundDevice = null;
-
-                // First, try to find the specific controller by GUID if we had one
-                if (_playStationControllerGuid != Guid.Empty)
-                {
-                    foreach (var deviceInstance in devices)
-                    {
-                        if (deviceInstance.InstanceGuid != _playStationControllerGuid) continue;
-
-                        foundDevice = deviceInstance;
-                        found = true;
-                        break;
-                    }
-                }
-
-                // If the specific GUID wasn't found or we didn't have one, just take the first available gamepad
-                if (!found && devices.Count > 0)
-                {
-                    foundDevice = devices[0];
-                    found = true;
-                }
-
-                if (found && foundDevice != null)
-                {
-                    // Attempt to connect to the found device
-                    // Found a device, try to connect
-                    try
-                    {
-                        // Dispose the old controller if it exists and is different or invalid
-                        // Access InstanceGuid via the Information property of the Joystick
-                        if (_directInputController != null
-                            && (_directInputController.Information.InstanceGuid != foundDevice.InstanceGuid ||
-                                _directInputController.IsDisposed))
-                        {
-                            _directInputController?.Unacquire();
-                            _directInputController?.Dispose();
-                            _directInputController = null;
-                            _playStationControllerGuid = Guid.Empty;
-                        }
-
-                        // If _directInputController is null (either was null, different, or disposed), create a new one
-                        if (_directInputController == null)
-                        {
-                            _directInputController = new Joystick(_directInput, foundDevice.InstanceGuid);
-                            _directInputController.Acquire();
-                            _playStationControllerGuid = foundDevice.InstanceGuid; // Update the GUID
-                        }
-                        else
-                        {
-                            // If it wasn't null and was the same GUID, try re-acquiring just in case
-                            _directInputController.Acquire();
-                        }
-                    }
-                    catch (Exception acquireEx)
-                    {
-                        // Failed to acquire the found device
-                        // Notify developer
-                        ErrorLogger?.Invoke(acquireEx,
-                            $"Failed to acquire DirectInput device during reconnection attempt: {foundDevice.InstanceName}.\n\n" +
-                            $"Exception type: {acquireEx.GetType().Name}\n" +
-                            $"Exception details: {acquireEx.Message}");
-
-                        _directInputController?.Unacquire();
-                        _directInputController?.Dispose();
-                        _directInputController = null; // Ensure it's null on failure
-                        _playStationControllerGuid = Guid.Empty; // Reset GUID on failure
-                    }
-                }
-                else
-                {
-                    // No gamepad device found
-                    // Clean up if no device is found
-                    if (_directInputController == null) return;
-
-                    _directInputController?.Unacquire();
-                    _directInputController?.Dispose();
-                    _directInputController = null;
-                    _playStationControllerGuid = Guid.Empty;
-
-                    // Notify developer
-                    ErrorLogger?.Invoke(null, "DirectInput controller disconnected."); // Log disconnection
-                }
-            }
-            catch (Exception ex)
+            // If XInput is already connected, no need to reconnect DirectInput
+            if (_xinputController?.IsConnected == true)
             {
-                ErrorLogger?.Invoke(ex,
-                    $"Error during controller reconnection. The service will continue to retry.\n\n" +
-                    $"Exception type: {ex.GetType().Name}\n" +
-                    $"Exception details: {ex.Message}");
+                // Ensure DirectInput controller is released if XInput is active
+                if (_directInputController == null) return;
 
-                // Clean up potentially invalid state to ensure a clean slate for the next attempt.
+                // Safely dispose DirectInput controller
                 _directInputController?.Unacquire();
                 _directInputController?.Dispose();
                 _directInputController = null;
                 _playStationControllerGuid = Guid.Empty;
 
-                // DO NOT call Stop(). Let the timer continue to run so we can try reconnecting again.
+                return; // XInput is active, nothing more to do
+            }
+
+            // If DirectInput object is null or disposed, try to recreate it
+            if (_directInput == null || _directInput.IsDisposed)
+            {
+                // Recreate DirectInput object
+                try
+                {
+                    // Dispose the old instance if it exists before creating a new one.
+                    _directInput?.Dispose();
+
+                    _directInput = new DirectInput();
+
+                    // Notify developer
+                    ErrorLogger?.Invoke(null,
+                        "Recreated DirectInput object during reconnection."); // Log successful recreation
+                }
+                catch (Exception diEx)
+                {
+                    // Notify developer
+                    ErrorLogger?.Invoke(diEx,
+                        $"Failed to recreate DirectInput object during reconnection attempt.\n\n" +
+                        $"Exception type: {diEx.GetType().Name}\n" +
+                        $"Exception details: {diEx.Message}");
+
+                    _directInput = null; // Ensure it's null if creation failed
+                    return; // Cannot proceed without a valid DirectInput object
+                }
+            }
+
+            // Find and reconnect DirectInput devices
+            // Check if the previously connected PlayStation controller is attached
+            var devices = _directInput.GetDevices(DeviceType.Gamepad, DeviceEnumerationFlags.AttachedOnly);
+
+            var found = false;
+            DeviceInstance? foundDevice = null;
+
+            // First, try to find the specific controller by GUID if we had one
+            if (_playStationControllerGuid != Guid.Empty)
+            {
+                foreach (var deviceInstance in devices)
+                {
+                    if (deviceInstance.InstanceGuid != _playStationControllerGuid) continue;
+
+                    foundDevice = deviceInstance;
+                    found = true;
+                    break;
+                }
+            }
+
+            // If the specific GUID wasn't found or we didn't have one, just take the first available gamepad
+            if (!found && devices.Count > 0)
+            {
+                foundDevice = devices[0];
+                found = true;
+            }
+
+            if (found && foundDevice != null)
+            {
+                // Attempt to connect to the found device
+                // Found a device, try to connect
+                try
+                {
+                    // Dispose the old controller if it exists and is different or invalid
+                    // Access InstanceGuid via the Information property of the Joystick
+                    if (_directInputController != null
+                        && (_directInputController.Information.InstanceGuid != foundDevice.InstanceGuid ||
+                            _directInputController.IsDisposed))
+                    {
+                        _directInputController?.Unacquire();
+                        _directInputController?.Dispose();
+                        _directInputController = null;
+                        _playStationControllerGuid = Guid.Empty;
+                    }
+
+                    // If _directInputController is null (either was null, different, or disposed), create a new one
+                    if (_directInputController == null)
+                    {
+                        _directInputController = new Joystick(_directInput, foundDevice.InstanceGuid);
+                        _directInputController.Acquire();
+                        _playStationControllerGuid = foundDevice.InstanceGuid; // Update the GUID
+                    }
+                    else
+                    {
+                        // If it wasn't null and was the same GUID, try re-acquiring just in case
+                        _directInputController.Acquire();
+                    }
+                }
+                catch (Exception acquireEx)
+                {
+                    // Failed to acquire the found device
+                    // Notify developer
+                    ErrorLogger?.Invoke(acquireEx,
+                        $"Failed to acquire DirectInput device during reconnection attempt: {foundDevice.InstanceName}.\n\n" +
+                        $"Exception type: {acquireEx.GetType().Name}\n" +
+                        $"Exception details: {acquireEx.Message}");
+
+                    _directInputController?.Unacquire();
+                    _directInputController?.Dispose();
+                    _directInputController = null; // Ensure it's null on failure
+                    _playStationControllerGuid = Guid.Empty; // Reset GUID on failure
+                }
+            }
+            else
+            {
+                // No gamepad device found
+                // Clean up if no device is found
+                if (_directInputController == null) return;
+
+                _directInputController?.Unacquire();
+                _directInputController?.Dispose();
+                _directInputController = null;
+                _playStationControllerGuid = Guid.Empty;
+
+                // Notify developer
+                ErrorLogger?.Invoke(null, "DirectInput controller disconnected."); // Log disconnection
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.Invoke(ex,
+                $"Error during controller reconnection. The service will continue to retry.\n\n" +
+                $"Exception type: {ex.GetType().Name}\n" +
+                $"Exception details: {ex.Message}");
+
+            // Clean up potentially invalid state to ensure a clean slate for the next attempt.
+            _directInputController?.Unacquire();
+            _directInputController?.Dispose();
+            _directInputController = null;
+            _playStationControllerGuid = Guid.Empty;
+
+            // DO NOT call Stop(). Let the timer continue to run so we can try reconnecting again.
         }
     }
 

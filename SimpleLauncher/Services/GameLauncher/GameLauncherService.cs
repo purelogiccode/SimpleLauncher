@@ -1850,7 +1850,9 @@ public partial class GameLauncherService : ILauncherService
             return true;
         }
 
-        var parentPath = Path.GetDirectoryName(emulatorLocation.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        var parentPath =
+            Path.GetDirectoryName(emulatorLocation.TrimEnd(Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar));
         var parentName = Path.GetFileName(parentPath ?? string.Empty);
         return parentName.Equals("Ymir", StringComparison.OrdinalIgnoreCase) ||
                parentName.Equals("Yumir", StringComparison.OrdinalIgnoreCase);

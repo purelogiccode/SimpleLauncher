@@ -53,8 +53,10 @@ internal static class UnifiedTestDatabase
         foreach (var system in systems)
         {
             if (!dict.ContainsKey(system.SystemName))
+            {
                 dict[system.SystemName] =
                     SystemConfigStore.Serialize(SystemManagerService.ToSystemManagerConfig(system));
+            }
         }
 
         UnifiedSettingsDatabase.SaveAllSystems(dict, UnifiedSettingsDatabase.GetDatabasePath());

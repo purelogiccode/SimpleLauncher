@@ -357,7 +357,9 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
                     alias.Equals(normalizedInput, StringComparison.OrdinalIgnoreCase) ||
                     alias.Contains(normalizedInput, StringComparison.OrdinalIgnoreCase) ||
                     normalizedInput.Contains(alias, StringComparison.OrdinalIgnoreCase)))
+            {
                 return true;
+            }
         }
 
         // Try fuzzy matching as a last resort

@@ -143,7 +143,8 @@ public class AvaloniaSystemSelectionOrchestratorService
             // selection so a toggled sort never persists across system switches.
             _host.MameSortOrder = AppConstants.MameSortOrderFileName;
 
-            _logger.Debug("[AvaloniaSystemSelectionOrchestrator] System '{System}' selected; navigating the game browser",
+            _logger.Debug(
+                "[AvaloniaSystemSelectionOrchestrator] System '{System}' selected; navigating the game browser",
                 systemName);
 
             // Awaited: the navigation shows the loading overlay and scans the system's

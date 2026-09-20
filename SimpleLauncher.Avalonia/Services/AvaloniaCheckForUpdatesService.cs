@@ -328,8 +328,10 @@ public partial class AvaloniaCheckForUpdatesService
             }
 
             if (logWindow is not null)
+            {
                 await logWindow.LogAsync(
                     $"Launching {UpdaterExecutableName} (auto-downloads from the release assets if needed)...");
+            }
 
             // Give the log window a moment to paint before the process exits (WPF parity).
             if (logWindow is not null) await Task.Delay(500);

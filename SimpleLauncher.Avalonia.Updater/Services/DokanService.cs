@@ -116,16 +116,18 @@ internal class DokanService
             // Temp-drive free-space guard (UPD-06): the MSI must fit where we stage it.
             var tempDrive = new DriveInfo(Path.GetPathRoot(Path.GetTempPath())!);
             if (tempDrive.AvailableFreeSpace < memoryStream.Length + (64L * 1024 * 1024))
+            {
                 throw new IOException(
                     $"Insufficient disk space to stage the Dokan installer on {tempDrive.Name}.");
+            }
 
             // Save to disk
             LogMessage?.Invoke(this, new EventArgs<string>($"Saving installer to: {msiPath}"));
             await using (var fileStream = File.Create(msiPath))
             {
                 memoryStream.Position = 0;
-                await memoryStream.CopyToAsync(fileStream);
-                await fileStream.FlushAsync();
+                await memoryStream.CopyToAsync(fileStream, cancellationToken);
+                await fileStream.FlushAsync(cancellationToken);
             }
 
             LogMessage?.Invoke(this, new EventArgs<string>("Download complete. Launching Dokan installer..."));
@@ -181,7 +183,7 @@ internal class DokanService
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
                 }
             }
 

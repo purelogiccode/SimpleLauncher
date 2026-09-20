@@ -773,7 +773,8 @@ public partial class EditSystemWindow : Window
                 var destFilePath = TryResolveSystemImagePath(imagesSystemsDir, safeSystemName, extension);
                 if (destFilePath is null)
                 {
-                    _logger.Error("Refusing to copy system image outside the images directory for system name: {SystemName}",
+                    _logger.Error(
+                        "Refusing to copy system image outside the images directory for system name: {SystemName}",
                         systemName);
                     await _messageBox.FailedToCopySystemImageMessageBoxAsync(systemName);
                     return;

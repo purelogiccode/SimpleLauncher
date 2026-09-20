@@ -56,8 +56,10 @@ public class DetectDuplicateResourceKeysTests
                 var deduplicated = new List<KeyValuePair<string, string>>();
                 var seenKeys = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var entry in entries)
+                {
                     if (seenKeys.Add(entry.Key))
                         deduplicated.Add(entry);
+                }
 
                 LocalizationResourceFile.WriteEntries(file, deduplicated);
             }

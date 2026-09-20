@@ -12,7 +12,7 @@ namespace XmlToBinaryConverter.Services;
 /// <summary>
 ///     Provides XML to binary and binary to XML conversion functionality.
 /// </summary>
-public class ConverterService
+public static class ConverterService
 {
     /// <summary>
     ///     Converts an XML file to binary MessagePack format asynchronously.
@@ -20,7 +20,7 @@ public class ConverterService
     /// <param name="inputPath">The path to the input XML file.</param>
     /// <param name="outputPath">The path to save the output binary file.</param>
     /// <param name="progress">Progress reporter for status updates.</param>
-    public async Task ConvertXmlToBinaryAsync(string inputPath, string outputPath, IProgress<string> progress)
+    public static async Task ConvertXmlToBinaryAsync(string inputPath, string outputPath, IProgress<string> progress)
     {
         try
         {
@@ -83,7 +83,7 @@ public class ConverterService
     /// <param name="inputPath">The path to the input binary file.</param>
     /// <param name="outputPath">The path to save the output XML file.</param>
     /// <param name="progress">Progress reporter for status updates.</param>
-    public async Task ConvertBinaryToXmlAsync(string inputPath, string outputPath, IProgress<string> progress)
+    public static async Task ConvertBinaryToXmlAsync(string inputPath, string outputPath, IProgress<string> progress)
     {
         try
         {

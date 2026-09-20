@@ -18,12 +18,12 @@ public class ResourceTranslatorMaintenanceTests
         {
             var filePath = Path.Combine(directory.FullName, "strings.xx.json");
             File.WriteAllText(filePath, """
-                {
-                  "A": "first",
-                  "B": "bee",
-                  "A": "second"
-                }
-                """);
+                                        {
+                                          "A": "first",
+                                          "B": "bee",
+                                          "A": "second"
+                                        }
+                                        """);
 
             JsonResourceWriter.UpdateResourceFile(filePath, new Dictionary<string, string>(StringComparer.Ordinal)
             {

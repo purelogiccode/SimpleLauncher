@@ -607,7 +607,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                     else if (_downloadManager.IsFileLockedDuringDownload)
                     {
                         _logger.Information(
-                            "Download of {Component} failed because a file is locked in the temp folder", componentName);
+                            "Download of {Component} failed because a file is locked in the temp folder",
+                            componentName);
                         await _messageBox.ShowDownloadFileLockedMessageBoxAsync(_downloadManager.TempFolder);
                         EndOperation();
                     }

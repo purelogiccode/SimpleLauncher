@@ -190,7 +190,8 @@ public static class Pcsx2ConfigurationService
             {
                 // Expected user-environment condition (locked, cloud-only, or otherwise unavailable config
                 // file). The UI shows guidance and the game still launches, so keep it out of the bug report.
-                logger.Information(ex, "[PCSX2Config] Failed to inject configuration changes: {ConfigPath}", configPath);
+                logger.Information(ex, "[PCSX2Config] Failed to inject configuration changes: {ConfigPath}",
+                    configPath);
                 throw new Pcsx2PermissionException($"Cannot write to configuration file: {configPath}", ex);
             }
             catch (Exception ex)

@@ -767,7 +767,8 @@ public partial class SystemManagerService : ISystemManager
                     {
                         var nameMatch = MyRegex1().Match(match.Value);
                         var sysName = nameMatch.Success ? nameMatch.Groups[1].Value : "Unknown";
-                        logErrors?.Information(innerEx, "Failed to validate system configuration for '{SystemName}'", sysName);
+                        logErrors?.Information(innerEx, "Failed to validate system configuration for '{SystemName}'",
+                            sysName);
                     }
                 }
             }
@@ -892,7 +893,8 @@ public partial class SystemManagerService : ISystemManager
                             UnifiedSettingsDatabase.DeleteSystem(identifier);
 
                         var config = ToSystemManagerConfig(systemConfig);
-                        UnifiedSettingsDatabase.SaveSystem(systemConfig.SystemName, SystemConfigStore.Serialize(config));
+                        UnifiedSettingsDatabase.SaveSystem(systemConfig.SystemName,
+                            SystemConfigStore.Serialize(config));
                     }
                 });
             }

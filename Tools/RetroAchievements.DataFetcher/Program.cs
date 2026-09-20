@@ -16,8 +16,13 @@ file static class Program
     // read/wrote the wrong files.
     private static readonly string SettingsFilePath = Path.Combine(AppContext.BaseDirectory, "settings.xml");
     private static readonly string ConsoleListFilePath = Path.Combine(AppContext.BaseDirectory, "consoles.txt");
-    private static readonly string OutputFileNameJson = Path.Combine(AppContext.BaseDirectory, "RetroAchievements.json");
-    private static readonly string OutputFileNameMsgPack = Path.Combine(AppContext.BaseDirectory, "RetroAchievements.dat");
+
+    private static readonly string
+        OutputFileNameJson = Path.Combine(AppContext.BaseDirectory, "RetroAchievements.json");
+
+    private static readonly string OutputFileNameMsgPack =
+        Path.Combine(AppContext.BaseDirectory, "RetroAchievements.dat");
+
     private const string BaseApiUrl = "https://retroachievements.org/API";
 
     private static async Task Main(string[] args)

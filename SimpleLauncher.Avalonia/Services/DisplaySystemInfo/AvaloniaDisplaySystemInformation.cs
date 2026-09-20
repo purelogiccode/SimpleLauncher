@@ -110,7 +110,8 @@ public class AvaloniaDisplaySystemInformation
             },
             new()
             {
-                Text = $"{Localized("ExtractFileBeforeLaunch", "Extract File Before Launch?")}: {info.ExtractFileBeforeLaunch}"
+                Text =
+                    $"{Localized("ExtractFileBeforeLaunch", "Extract File Before Launch?")}: {info.ExtractFileBeforeLaunch}"
             },
             new()
             {
@@ -123,7 +124,8 @@ public class AvaloniaDisplaySystemInformation
             },
             new()
             {
-                Text = $"{Localized("DisableRecursiveSearch", "Disable recursive search")}: {info.DisableRecursiveSearch}"
+                Text =
+                    $"{Localized("DisableRecursiveSearch", "Disable recursive search")}: {info.DisableRecursiveSearch}"
             }
         };
 

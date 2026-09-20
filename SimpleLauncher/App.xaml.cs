@@ -1066,9 +1066,9 @@ public partial class App : IDisposable
         var assembly = typeof(App).Assembly;
 
         using var bundleStream = assembly.GetManifestResourceStream("SimpleLauncher.g.resources")
-            ?? throw new FileNotFoundException(
-                "SimpleLauncher.g.resources not found. Check SimpleLauncher.csproj: the shared localization " +
-                "packs need a <Resource Include=\"..\\SimpleLauncher.Core\\Localization\\strings.*.json\" /> entry.");
+                                 ?? throw new FileNotFoundException(
+                                     "SimpleLauncher.g.resources not found. Check SimpleLauncher.csproj: the shared localization " +
+                                     "packs need a <Resource Include=\"..\\SimpleLauncher.Core\\Localization\\strings.*.json\" /> entry.");
 
         using var reader = new ResourceReader(bundleStream);
 

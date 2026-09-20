@@ -160,7 +160,7 @@ public class PlayHistoryManager
                 return;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
-                or NewerSchemaVersionException)
+                                           or NewerSchemaVersionException)
             {
                 // Environment issue (locked/read-only/newer database): never resurrect a
                 // legacy playhistory.dat once the unified database exists. Keep the
@@ -282,7 +282,7 @@ public class PlayHistoryManager
                 return;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
-                or NewerSchemaVersionException)
+                                           or NewerSchemaVersionException)
             {
                 // Environment issue (locked/read-only/newer database): never resurrect a
                 // legacy playhistory.dat once the unified database exists. Keep the

@@ -28,7 +28,7 @@ public class XmlToBinaryConverterEncodingTests
             var outputPath = Path.Combine(directory.FullName, "history.xml");
             await File.WriteAllBytesAsync(inputPath, MessagePackSerializer.Serialize(history));
 
-            await new ConverterService().ConvertBinaryToXmlAsync(inputPath, outputPath,
+            await ConverterService.ConvertBinaryToXmlAsync(inputPath, outputPath,
                 new Progress<string>(static _ => { }));
 
             var xml = await File.ReadAllTextAsync(outputPath);

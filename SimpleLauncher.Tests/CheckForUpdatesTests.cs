@@ -712,7 +712,8 @@ public class CheckForUpdatesTests : IDisposable
     /// <summary>
     ///     A scripted <see cref="HttpMessageHandler" /> that delegates every request to a responder delegate.
     /// </summary>
-    private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+    private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, HttpResponseMessage> _responder = responder;
 

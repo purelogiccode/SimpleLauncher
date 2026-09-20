@@ -35,6 +35,7 @@ public class MainViewModelQuickActionsTests : IDisposable
     private readonly Mock<IMameDataService> _mameData = new();
     private readonly Mock<IMessageBoxLibraryService> _messageBox = new();
     private readonly FakeLoadingOverlayHost _loadingHost = new();
+    private readonly AvaloniaPaginationService _pagination;
     private readonly string _romsFolder;
     private readonly string _systemXmlPath;
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"SL_QuickActionsTest_{Guid.NewGuid():N}");
@@ -80,7 +81,7 @@ public class MainViewModelQuickActionsTests : IDisposable
         UnifiedTestDatabase.SeedSystemsFromXml(systemManager, _systemXmlPath);
         var loadingOrchestrator = new AvaloniaGameFileLoadingOrchestrator(
             new AvaloniaGameCacheService(), _logger.Object);
-        var pagination = new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object);
+        _pagination = new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object);
 
         // Wire the reference-counted loading overlay to a recording host so tests can
         // assert the WPF-parity wait overlay is shown/hidden around long operations.
@@ -101,7 +102,7 @@ public class MainViewModelQuickActionsTests : IDisposable
             new Mock<IFindCoverImageService>().Object,
             new Stats(TestDependencies.HttpFactory(new HttpClient()).Object, _config, _logger.Object),
             settings,
-            pagination,
+            _pagination,
             loadingOrchestrator,
             new Mock<IRetroAchievementsHashScanner>().Object,
             new Mock<IRetroAchievementsHashStore>().Object,
@@ -235,6 +236,55 @@ public class MainViewModelQuickActionsTests : IDisposable
             descending.Select(static g => g.FileName),
             _viewModel.Games.Select(static g => g.FileName),
             StringComparer.OrdinalIgnoreCase);
+    }
+
+    // ── Pagination restart (WPF parity: loading a system / clicking "All") ──
+
+    [Fact]
+    public async Task NavigateToSystem_RestartsPaginationOnFirstPage()
+    {
+        _viewModel.ConfigurePagination(2);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+        _viewModel.GoToNextPage();
+        Assert.Equal(2, _pagination.CurrentPage);
+
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        Assert.Equal(1, _pagination.CurrentPage);
+        Assert.Equal(
+            _viewModel.CurrentBaseGames.Take(2).Select(static g => g.FilePath),
+            _viewModel.Games.Select(static g => g.FilePath),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AllLetterButton_RestartsPaginationOnFirstPage()
+    {
+        _viewModel.ConfigurePagination(2);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+        _viewModel.GoToNextPage();
+        Assert.Equal(2, _pagination.CurrentPage);
+
+        _viewModel.SetLetterFilter(""); // "All" letter button
+
+        Assert.Equal(1, _pagination.CurrentPage);
+        Assert.Equal(
+            _viewModel.CurrentBaseGames.Take(2).Select(static g => g.FilePath),
+            _viewModel.Games.Select(static g => g.FilePath),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task RefreshCurrentView_KeepsCurrentPage()
+    {
+        _viewModel.ConfigurePagination(2);
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+        _viewModel.GoToNextPage();
+        Assert.Equal(2, _pagination.CurrentPage);
+
+        await _viewModel.RefreshCurrentViewAsync();
+
+        Assert.Equal(2, _pagination.CurrentPage);
     }
 
     // ── System information panel (WPF DisplaySystemInformation parity) ──

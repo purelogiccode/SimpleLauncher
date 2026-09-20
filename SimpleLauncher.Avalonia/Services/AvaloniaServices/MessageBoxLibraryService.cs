@@ -110,7 +110,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             "Do you want to automatic reinstall 'Simple Launcher' to fix it.");
         var error = _localization.GetString("Error", "Error");
         return await ShowAsync(O, $"{simpleLaunchercouldnotloadhelpuserxml}\n\n" +
-                                   $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
+                                  $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
     }
 
@@ -610,7 +610,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{unabletoloadparametersmd}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -828,7 +829,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{novalidsystemsfoundinthefilehelpuserxml}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -2117,7 +2119,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{thefileparametersmdisempty}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -2256,7 +2259,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{unabletoloadhelpuserxml}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -2668,9 +2672,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             "Do you want to download and install the latest version automatically?");
         var updateAvailable = _localization.GetString("UpdateAvailable", "Update Available");
         return await ShowAsync(O, $"{thereIsAsoftwareUpdateAvailable}\n" +
-                                   $"{theCurrentVersionIs} {currentVersion}\n" +
-                                   $"{theUpdateVersionIs} {latestVersion}\n\n" +
-                                   $"{doYouWantToDownloadAndInstall}", updateAvailable, MessageButtons.YesNo,
+                                  $"{theCurrentVersionIs} {currentVersion}\n" +
+                                  $"{theUpdateVersionIs} {latestVersion}\n\n" +
+                                  $"{doYouWantToDownloadAndInstall}", updateAvailable, MessageButtons.YesNo,
             MessageIcon.Information);
     }
 
@@ -2724,7 +2728,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{novalidsystemsfoundinthefileparametersmd}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -3014,7 +3019,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{unexpectederrorwhileloadingparametersmd}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -3061,7 +3067,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{thefilehelpuserxmlismissing}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -3291,7 +3298,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{thefileparametersmdismissing}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -3342,7 +3350,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             _localization.GetString("Wouldyouliketorestore", "Would you like to restore the last backup?");
         var restoreBackup = _localization.GetString("RestoreBackup", "Restore Backup?");
         return await ShowAsync(O, $"{icouldnotfindthefilesystemxml}\n\n{butIfoundabackupfile}\n\n" +
-                                   $"{wouldyouliketorestore}", restoreBackup, MessageButtons.YesNo,
+                                  $"{wouldyouliketorestore}", restoreBackup, MessageButtons.YesNo,
             MessageIcon.Question);
     }
 
@@ -3357,7 +3365,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             "Would you like to be redirected to the download page to install or update it manually?");
         var error = _localization.GetString("Error", "Error");
         var messageBoxResult = await ShowAsync(O, $"{therewasanerrorinstallingorupdating}\n\n" +
-                                                   $"{wouldyouliketoberedirectedtothedownloadpage}", error,
+                                                  $"{wouldyouliketoberedirectedtothedownloadpage}", error,
             MessageButtons.YesNo, MessageIcon.Question);
 
         if (messageBoxResult != MessageBoxResult.Yes) return;
@@ -3419,7 +3427,8 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, $"{unexpectederrorwhileloadinghelpuserxml}\n\n" +
                                         $"{doyouwanttoautomaticreinstallSimpleLauncher}", error,
             MessageButtons.YesNo, MessageIcon.Question);
-        if (result == MessageBoxResult.Yes) _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        if (result == MessageBoxResult.Yes)
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
     }
 
 
@@ -3731,7 +3740,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             "Would you like to be redirected to the download page to install or update it manually?");
         var error = _localization.GetString("Error", "Error");
         var messageBoxResult = await ShowAsync(O, $"{updaterLaunchFailed}\n\n{accessDeniedExplanation}\n\n" +
-                                                   $"{wouldyouliketoberedirectedtothedownloadpage}", error,
+                                                  $"{wouldyouliketoberedirectedtothedownloadpage}", error,
             MessageButtons.YesNo, MessageIcon.Question);
 
         if (messageBoxResult != MessageBoxResult.Yes) return;

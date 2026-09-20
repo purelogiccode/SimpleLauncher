@@ -390,7 +390,9 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                 var fullLogoPath = Path.Combine(installPath, logoRelativePath);
                 if (File.Exists(fullLogoPath) &&
                     await TryCopyStoreLogoAsync(fullLogoPath, destPath, sanitizedGameName, logErrors))
+                {
                     return;
+                }
             }
 
             // 3. Heuristic Search: Look for common logo names
@@ -416,7 +418,9 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                     var p = Path.Combine(dir, fileName);
                     if (File.Exists(p) &&
                         await TryCopyStoreLogoAsync(p, destPath, sanitizedGameName, logErrors))
+                    {
                         return;
+                    }
                 }
 
                 // Check for high-res targetsize images
@@ -454,7 +458,9 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
 
                 if (bestIcon != null &&
                     await TryCopyStoreLogoAsync(bestIcon, destPath, sanitizedGameName, logErrors))
+                {
                     return;
+                }
 
                 // Fallback: Just take the largest PNG in the Assets folder
                 if (dir.EndsWith("Assets", StringComparison.Ordinal) ||
@@ -473,7 +479,9 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                     }).FirstOrDefault();
                     if (largestPng != null &&
                         await TryCopyStoreLogoAsync(largestPng, destPath, sanitizedGameName, logErrors))
+                    {
                         return;
+                    }
                 }
             }
 

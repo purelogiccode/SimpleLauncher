@@ -90,8 +90,7 @@ public sealed class EasyModeAddSystemReproTests : IDisposable
 
         Assert.True(Core.Services.UnifiedSettings.UnifiedSettingsDatabase.IsValidDatabase(dbPath));
 
-        var manager = new SystemManagerService(config);
-        var systems = manager.LoadSystemsFromDatabase(dbPath);
+        var systems = SystemManagerService.LoadSystemsFromDatabase(dbPath);
         var xbox = Assert.Single(systems);
         Assert.Equal("Microsoft Xbox", xbox.SystemName);
         Assert.Contains(_gamesFolder, xbox.SystemFolders, StringComparer.Ordinal);

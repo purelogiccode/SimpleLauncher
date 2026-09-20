@@ -30,7 +30,6 @@ using SimpleLauncher.Avalonia.Services.LoadingOverlay;
 using SimpleLauncher.Avalonia.Services.PlayHistory;
 using SimpleLauncher.Avalonia.Services.QuitOrReinstall;
 using SimpleLauncher.Avalonia.Services.RetroAchievements;
-using SimpleLauncher.Avalonia.Services.SearchOrchestrator;
 using SimpleLauncher.Avalonia.Services.SettingsDatabase;
 using SimpleLauncher.Avalonia.Services.SystemImageResolver;
 using SimpleLauncher.Avalonia.Services.SystemManager;
@@ -648,8 +647,6 @@ public class App : Application, IDisposable
         services.AddSingleton<AvaloniaGameFilterService>();
         // Status bar: status text updates with auto-clear timeout.
         services.AddSingleton<AvaloniaUpdateStatusBarService>();
-        // Search orchestrator: validates search queries before execution.
-        services.AddSingleton<AvaloniaSearchOrchestratorService>();
         // Context menu: builds game right-click context menus.
         services.AddSingleton<AvaloniaContextMenuFunctions>();
         services.AddSingleton<AvaloniaContextMenuService>();
@@ -724,10 +721,6 @@ public class App : Application, IDisposable
         services.AddSingleton<AvaloniaApplicationLifecycleService>();
         // Parameters help (parameters.md) for the Edit System window
         services.AddSingleton<AvaloniaHelpUserService>();
-        // Language menu + option menu check marks (used by the main window menu bar)
-        services.AddSingleton<AvaloniaLanguageMenuService>();
-        services.AddSingleton<AvaloniaMenuCheckMarkService>();
-
         // ── Emulator config injection (21 emulators) ──
         // ViewModels (transient — one per window instance)
         services.AddTransient<InjectAresConfigViewModel>();

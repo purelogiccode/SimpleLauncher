@@ -115,8 +115,10 @@ public static class WpfLegacyMigrator
             var history = DedupeByKey(
                 ReadLegacyHistory(legacyFiles.HistoryPaths, logger, out var historyOk), [],
                 static h => h.FileName + "\u0000" + h.SystemName);
-            var (settings, _) = ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths, out var settingsOk);
-            var systems = ReadLegacySystems(logger, legacyFiles.SystemXmlPaths, out var systemsOk, out var systemsPartial);
+            var (settings, _) = ReadLegacySettings(configuration, logger, credentialProtector,
+                legacyFiles.SettingsPaths, out var settingsOk);
+            var systems = ReadLegacySystems(logger, legacyFiles.SystemXmlPaths, out var systemsOk,
+                out var systemsPartial);
 
             var anyLegacy = legacyFiles.FavoritesPaths.Count > 0
                             || legacyFiles.HistoryPaths.Count > 0
@@ -252,14 +254,17 @@ public static class WpfLegacyMigrator
             var legacyFavorites = ReadLegacyFavorites(legacyFiles.FavoritesPaths, logger, out var favoritesOk);
             var legacyHistory = ReadLegacyHistory(legacyFiles.HistoryPaths, logger, out var historyOk);
             var (legacySettings, legacySettingsLoaded) =
-                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths, out var settingsOk);
-            var legacySystems = ReadLegacySystems(logger, legacyFiles.SystemXmlPaths, out var systemsOk, out var systemsPartial);
+                ReadLegacySettings(configuration, logger, credentialProtector, legacyFiles.SettingsPaths,
+                    out var settingsOk);
+            var legacySystems = ReadLegacySystems(logger, legacyFiles.SystemXmlPaths, out var systemsOk,
+                out var systemsPartial);
 
             // A settings.xml that holds only default values was almost certainly
             // recreated by an older app version after the migration (downgrade): merging
             // it would revert the user's settings to defaults, so ignore it.
             var settingsEffectiveLoaded = legacySettingsLoaded &&
-                !IsDefaultsOnlySettings(legacySettings, configuration, logger, credentialProtector);
+                                          !IsDefaultsOnlySettings(legacySettings, configuration, logger,
+                                              credentialProtector);
             if (legacySettingsLoaded && !settingsEffectiveLoaded)
                 logger.Information(
                     "[Migration] Legacy settings.xml holds only default values; keeping the database values");

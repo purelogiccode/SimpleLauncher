@@ -54,7 +54,8 @@ public class AvaloniaContextMenuService
         // Launch Game Context Menu
         AddItem(contextMenu, "LaunchGame", "Launch Game", "launch.png", () =>
         {
-            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'", "LaunchGame",
+            _logger.Debug("[AvaloniaContextMenuService] Context menu action '{Action}' invoked for '{File}'",
+                "LaunchGame",
                 context.FileNameWithExtension);
             _ = SafeAsync(() => _functions.LaunchGameAsync(context));
         });

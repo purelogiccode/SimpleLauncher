@@ -27,7 +27,7 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.262">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.264">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -94,7 +94,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-      <PackageReference Include="NAudio.WinMM" Version="3.1.0" />
+        <PackageReference Include="NAudio.WinMM" Version="3.1.0" />
     </ItemGroup>
 
     <!-- net10.0 is the Linux TFM; the WINDOWS symbol is defined only for

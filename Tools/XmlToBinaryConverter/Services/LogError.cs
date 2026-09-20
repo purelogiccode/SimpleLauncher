@@ -7,7 +7,7 @@ namespace XmlToBinaryConverter.Services;
 /// <summary>
 ///     Provides error logging functionality to a file.
 /// </summary>
-public class LogError
+public static class LogError
 {
     private const string LogFileName = "error_log.txt";
 
@@ -17,7 +17,7 @@ public class LogError
     ///     Logs an exception to the error log file asynchronously.
     /// </summary>
     /// <param name="ex">The exception to log.</param>
-    public async Task LogAsync(Exception ex)
+    public static async Task LogAsync(Exception ex)
     {
         Log.Error(ex, "An error occurred");
 
@@ -50,7 +50,7 @@ public class LogError
     ///     Reads the error log file content asynchronously.
     /// </summary>
     /// <returns>The log file content, or a message indicating no log was found.</returns>
-    public async Task<string> ReadLogAsync()
+    public static async Task<string> ReadLogAsync()
     {
         if (File.Exists(LogFilePath))
         {
@@ -71,7 +71,7 @@ public class LogError
     /// <summary>
     ///     Clears the error log file.
     /// </summary>
-    public void ClearLog()
+    public static void ClearLog()
     {
         if (File.Exists(LogFilePath))
         {

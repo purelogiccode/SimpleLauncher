@@ -13,8 +13,6 @@ namespace XmlToBinaryConverter;
 /// </summary>
 public partial class MainWindow
 {
-    private readonly ConverterService _converterService = new();
-    private readonly LogError _logError = new();
     private bool _isConverting;
 
     /// <summary>
@@ -138,12 +136,12 @@ public partial class MainWindow
                 // Start the conversion based on the type
                 if (string.Equals(conversionType, "XML to Binary", StringComparison.Ordinal))
                 {
-                    await _converterService.ConvertXmlToBinaryAsync(InputFilePathTextBox.Text,
+                    await ConverterService.ConvertXmlToBinaryAsync(InputFilePathTextBox.Text,
                         OutputFilePathTextBox.Text, progress);
                 }
                 else
                 {
-                    await _converterService.ConvertBinaryToXmlAsync(InputFilePathTextBox.Text,
+                    await ConverterService.ConvertBinaryToXmlAsync(InputFilePathTextBox.Text,
                         OutputFilePathTextBox.Text, progress);
                 }
 
@@ -156,7 +154,7 @@ public partial class MainWindow
                 StatusMessageTextBlock.Text = "Error occurred during conversion";
 
                 // Log the error
-                await _logError.LogAsync(ex);
+                await LogError.LogAsync(ex);
 
                 // Ask user if they want to see the error details
                 var result = MessageBox.Show(
@@ -165,7 +163,7 @@ public partial class MainWindow
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    var errorLog = await _logError.ReadLogAsync();
+                    var errorLog = await LogError.ReadLogAsync();
                     // Show error log in a simple dialog
                     MessageBox.Show(errorLog, "Error Log", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -180,7 +178,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            _ = _logError.LogAsync(ex);
+            _ = LogError.LogAsync(ex);
         }
     }
 }

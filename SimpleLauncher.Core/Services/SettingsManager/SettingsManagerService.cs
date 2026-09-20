@@ -39,6 +39,7 @@ public class SettingsManagerService : IDisposable
     ///     <c>false</c> keeps the legacy XML backend (used by tests and the migrator).
     /// </summary>
     public bool UseUnifiedDatabase { get; }
+
     private readonly ReaderWriterLockSlim _settingsLock = new(LockRecursionPolicy.SupportsRecursion);
 
     // AV-24: serializes concurrent SaveAsync calls. Every save snapshots under
@@ -792,7 +793,7 @@ public class SettingsManagerService : IDisposable
                 await WriteSnapshotAsync(snapshot);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
-                or NewerSchemaVersionException)
+                                           or NewerSchemaVersionException)
             {
                 // Settings persistence is best-effort and usually fire-and-forget:
                 // never let a failed background save fault the returned task (it would
@@ -828,100 +829,100 @@ public class SettingsManagerService : IDisposable
             return;
         }
 
-            var tempPath = _fileLocation.TempFilePath;
-            const int maxRetries = 3;
-            var retryDelayMs = 500;
-            Exception? lastException = null;
+        var tempPath = _fileLocation.TempFilePath;
+        const int maxRetries = 3;
+        var retryDelayMs = 500;
+        Exception? lastException = null;
 
-            var settingsDirectory = Path.GetDirectoryName(_fileLocation.FilePath);
-            if (!string.IsNullOrEmpty(settingsDirectory) && !Directory.Exists(settingsDirectory))
-            {
-                try
-                {
-                    Directory.CreateDirectory(settingsDirectory);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Error creating settings directory");
-                }
-            }
-
-            var attempt = 0;
-            while (attempt < maxRetries)
-            {
-                try
-                {
-                    var root = BuildXElement(snapshot);
-
-                    byte[] xmlBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        root.Save(ms);
-                        xmlBytes = ms.ToArray();
-                    }
-
-                    if (xmlBytes.Length == 0) throw new InvalidOperationException("Generated settings XML is empty.");
-
-                    await File.WriteAllBytesAsync(tempPath, xmlBytes);
-                    File.Move(tempPath, _fileLocation.FilePath, true);
-                    return;
-                }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
-                {
-                    lastException = ex;
-                    attempt++;
-
-                    if (IsPortableMode && attempt >= maxRetries)
-                    {
-                        try
-                        {
-                            if (_fileLocation.TryFallbackToLocalAppData())
-                            {
-                                tempPath = _fileLocation.TempFilePath;
-                                attempt = 0;
-                                continue;
-                            }
-                        }
-                        catch
-                        {
-                            // Fallback failed
-                        }
-                    }
-
-                    if (attempt < maxRetries)
-                    {
-                        try
-                        {
-                            if (File.Exists(tempPath)) File.Delete(tempPath);
-                        }
-                        catch
-                        {
-                            // Ignore cleanup errors
-                        }
-
-                        Thread.Sleep(retryDelayMs);
-                        retryDelayMs *= 2;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                    break;
-                }
-            }
-
-            _logger.Error(lastException, "Error saving settings.xml");
-
+        var settingsDirectory = Path.GetDirectoryName(_fileLocation.FilePath);
+        if (!string.IsNullOrEmpty(settingsDirectory) && !Directory.Exists(settingsDirectory))
+        {
             try
             {
-                if (File.Exists(tempPath)) File.Delete(tempPath);
+                Directory.CreateDirectory(settingsDirectory);
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore cleanup errors
+                _logger.Error(ex, "Error creating settings directory");
             }
+        }
 
-            if (_messageBox != null) await _messageBox.FailedToSaveSettingsMessageBoxAsync();
+        var attempt = 0;
+        while (attempt < maxRetries)
+        {
+            try
+            {
+                var root = BuildXElement(snapshot);
+
+                byte[] xmlBytes;
+                using (var ms = new MemoryStream())
+                {
+                    root.Save(ms);
+                    xmlBytes = ms.ToArray();
+                }
+
+                if (xmlBytes.Length == 0) throw new InvalidOperationException("Generated settings XML is empty.");
+
+                await File.WriteAllBytesAsync(tempPath, xmlBytes);
+                File.Move(tempPath, _fileLocation.FilePath, true);
+                return;
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+            {
+                lastException = ex;
+                attempt++;
+
+                if (IsPortableMode && attempt >= maxRetries)
+                {
+                    try
+                    {
+                        if (_fileLocation.TryFallbackToLocalAppData())
+                        {
+                            tempPath = _fileLocation.TempFilePath;
+                            attempt = 0;
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback failed
+                    }
+                }
+
+                if (attempt < maxRetries)
+                {
+                    try
+                    {
+                        if (File.Exists(tempPath)) File.Delete(tempPath);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+
+                    Thread.Sleep(retryDelayMs);
+                    retryDelayMs *= 2;
+                }
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                break;
+            }
+        }
+
+        _logger.Error(lastException, "Error saving settings.xml");
+
+        try
+        {
+            if (File.Exists(tempPath)) File.Delete(tempPath);
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+
+        if (_messageBox != null) await _messageBox.FailedToSaveSettingsMessageBoxAsync();
     }
 
     private static XElement BuildXElement(SettingsManagerService s)
@@ -1212,51 +1213,130 @@ public class SettingsManagerService : IDisposable
         try
         {
             if (configs.TryGetValue("Ares", out var ares) &&
-                EmulatorSettingsJson.Deserialize<AresSettings>(ares) is { } aresV) Ares.CopyFrom(aresV);
+                EmulatorSettingsJson.Deserialize<AresSettings>(ares) is { } aresV)
+            {
+                Ares.CopyFrom(aresV);
+            }
+
             if (configs.TryGetValue("Azahar", out var azahar) &&
-                EmulatorSettingsJson.Deserialize<AzaharSettings>(azahar) is { } azaharV) Azahar.CopyFrom(azaharV);
+                EmulatorSettingsJson.Deserialize<AzaharSettings>(azahar) is { } azaharV)
+            {
+                Azahar.CopyFrom(azaharV);
+            }
+
             if (configs.TryGetValue("Blastem", out var blastem) &&
-                EmulatorSettingsJson.Deserialize<BlastemSettings>(blastem) is { } blastemV) Blastem.CopyFrom(blastemV);
+                EmulatorSettingsJson.Deserialize<BlastemSettings>(blastem) is { } blastemV)
+            {
+                Blastem.CopyFrom(blastemV);
+            }
+
             if (configs.TryGetValue("Cemu", out var cemu) &&
-                EmulatorSettingsJson.Deserialize<CemuSettings>(cemu) is { } cemuV) Cemu.CopyFrom(cemuV);
+                EmulatorSettingsJson.Deserialize<CemuSettings>(cemu) is { } cemuV)
+            {
+                Cemu.CopyFrom(cemuV);
+            }
+
             if (configs.TryGetValue("Daphne", out var daphne) &&
-                EmulatorSettingsJson.Deserialize<DaphneSettings>(daphne) is { } daphneV) Daphne.CopyFrom(daphneV);
+                EmulatorSettingsJson.Deserialize<DaphneSettings>(daphne) is { } daphneV)
+            {
+                Daphne.CopyFrom(daphneV);
+            }
+
             if (configs.TryGetValue("Dolphin", out var dolphin) &&
-                EmulatorSettingsJson.Deserialize<DolphinSettings>(dolphin) is { } dolphinV) Dolphin.CopyFrom(dolphinV);
+                EmulatorSettingsJson.Deserialize<DolphinSettings>(dolphin) is { } dolphinV)
+            {
+                Dolphin.CopyFrom(dolphinV);
+            }
+
             if (configs.TryGetValue("DuckStation", out var duckStation) &&
                 EmulatorSettingsJson.Deserialize<DuckStationSettings>(duckStation) is { } duckStationV)
+            {
                 DuckStation.CopyFrom(duckStationV);
+            }
+
             if (configs.TryGetValue("Flycast", out var flycast) &&
-                EmulatorSettingsJson.Deserialize<FlycastSettings>(flycast) is { } flycastV) Flycast.CopyFrom(flycastV);
+                EmulatorSettingsJson.Deserialize<FlycastSettings>(flycast) is { } flycastV)
+            {
+                Flycast.CopyFrom(flycastV);
+            }
+
             if (configs.TryGetValue("Mame", out var mame) &&
-                EmulatorSettingsJson.Deserialize<MameSettings>(mame) is { } mameV) Mame.CopyFrom(mameV);
+                EmulatorSettingsJson.Deserialize<MameSettings>(mame) is { } mameV)
+            {
+                Mame.CopyFrom(mameV);
+            }
+
             if (configs.TryGetValue("Mednafen", out var mednafen) &&
-                EmulatorSettingsJson.Deserialize<MednafenSettings>(mednafen) is { } mednafenV) Mednafen.CopyFrom(mednafenV);
+                EmulatorSettingsJson.Deserialize<MednafenSettings>(mednafen) is { } mednafenV)
+            {
+                Mednafen.CopyFrom(mednafenV);
+            }
+
             if (configs.TryGetValue("Mesen", out var mesen) &&
-                EmulatorSettingsJson.Deserialize<MesenSettings>(mesen) is { } mesenV) Mesen.CopyFrom(mesenV);
+                EmulatorSettingsJson.Deserialize<MesenSettings>(mesen) is { } mesenV)
+            {
+                Mesen.CopyFrom(mesenV);
+            }
+
             if (configs.TryGetValue("Pcsx2", out var pcsx2) &&
-                EmulatorSettingsJson.Deserialize<Pcsx2Settings>(pcsx2) is { } pcsx2V) Pcsx2.CopyFrom(pcsx2V);
+                EmulatorSettingsJson.Deserialize<Pcsx2Settings>(pcsx2) is { } pcsx2V)
+            {
+                Pcsx2.CopyFrom(pcsx2V);
+            }
+
             if (configs.TryGetValue("Raine", out var raine) &&
-                EmulatorSettingsJson.Deserialize<RaineSettings>(raine) is { } raineV) Raine.CopyFrom(raineV);
+                EmulatorSettingsJson.Deserialize<RaineSettings>(raine) is { } raineV)
+            {
+                Raine.CopyFrom(raineV);
+            }
+
             if (configs.TryGetValue("Redream", out var redream) &&
-                EmulatorSettingsJson.Deserialize<RedreamSettings>(redream) is { } redreamV) Redream.CopyFrom(redreamV);
+                EmulatorSettingsJson.Deserialize<RedreamSettings>(redream) is { } redreamV)
+            {
+                Redream.CopyFrom(redreamV);
+            }
+
             if (configs.TryGetValue("RetroArch", out var retroArch) &&
                 EmulatorSettingsJson.Deserialize<RetroArchSettings>(retroArch) is { } retroArchV)
+            {
                 RetroArch.CopyFrom(retroArchV);
+            }
+
             if (configs.TryGetValue("Rpcs3", out var rpcs3) &&
-                EmulatorSettingsJson.Deserialize<Rpcs3Settings>(rpcs3) is { } rpcs3V) Rpcs3.CopyFrom(rpcs3V);
+                EmulatorSettingsJson.Deserialize<Rpcs3Settings>(rpcs3) is { } rpcs3V)
+            {
+                Rpcs3.CopyFrom(rpcs3V);
+            }
+
             if (configs.TryGetValue("SegaModel2", out var segaModel2) &&
                 EmulatorSettingsJson.Deserialize<SegaModel2Settings>(segaModel2) is { } segaModel2V)
+            {
                 SegaModel2.CopyFrom(segaModel2V);
+            }
+
             if (configs.TryGetValue("Stella", out var stella) &&
-                EmulatorSettingsJson.Deserialize<StellaSettings>(stella) is { } stellaV) Stella.CopyFrom(stellaV);
+                EmulatorSettingsJson.Deserialize<StellaSettings>(stella) is { } stellaV)
+            {
+                Stella.CopyFrom(stellaV);
+            }
+
             if (configs.TryGetValue("Supermodel", out var supermodel) &&
                 EmulatorSettingsJson.Deserialize<SupermodelSettings>(supermodel) is { } supermodelV)
+            {
                 Supermodel.CopyFrom(supermodelV);
+            }
+
             if (configs.TryGetValue("Xenia", out var xenia) &&
-                EmulatorSettingsJson.Deserialize<XeniaSettings>(xenia) is { } xeniaV) Xenia.CopyFrom(xeniaV);
+                EmulatorSettingsJson.Deserialize<XeniaSettings>(xenia) is { } xeniaV)
+            {
+                Xenia.CopyFrom(xeniaV);
+            }
+
             if (configs.TryGetValue("Yumir", out var yumir) &&
-                EmulatorSettingsJson.Deserialize<YumirSettings>(yumir) is { } yumirV) Yumir.CopyFrom(yumirV);
+                EmulatorSettingsJson.Deserialize<YumirSettings>(yumir) is { } yumirV)
+            {
+                Yumir.CopyFrom(yumirV);
+            }
         }
         finally
         {

@@ -197,7 +197,7 @@ public class ConverterTests
 
         var result = converter.Convert(isError, typeof(IBrush), null, CultureInfo.InvariantCulture);
 
-        Assert.IsAssignableFrom<IBrush>(result);
+        Assert.IsType<IBrush>(result, exactMatch: false);
     }
 
     [Fact]

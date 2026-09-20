@@ -81,8 +81,10 @@ internal class DownloadService
             // Thrown as IOException so callers treat it as an expected download failure
             // (fallback source / manual update) rather than a bug report.
             if (totalBytes > MaxDownloadBytes)
+            {
                 throw new IOException(
                     $"Update file too large: {FormatBytes(totalBytes)} exceeds the {FormatBytes(MaxDownloadBytes)} limit.");
+            }
 
             var memoryStream = new MemoryStream();
             var buffer = new byte[FileBufferSize];
@@ -106,8 +108,10 @@ internal class DownloadService
                         // UPD-06: enforce the cap while streaming — a missing or lying
                         // Content-Length must not allow unbounded memory growth.
                         if (totalBytesRead > MaxDownloadBytes)
+                        {
                             throw new IOException(
                                 $"Download exceeded the {FormatBytes(MaxDownloadBytes)} limit — aborting.");
+                        }
 
                         // Calculate and report progress
                         if (totalBytes > 0)

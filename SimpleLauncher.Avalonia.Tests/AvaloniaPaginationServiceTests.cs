@@ -77,6 +77,24 @@ public class AvaloniaPaginationServiceTests
     }
 
     [Fact]
+    public void ApplyPagination_ListShrinksBelowCurrentPage_ClampsToLastPage()
+    {
+        var (service, host) = Create(10, 10);
+        service.ApplyPagination(Files(25));
+        service.GoToNextPage();
+        service.GoToNextPage();
+        service.ApplyPagination(Files(25));
+        Assert.Equal(3, service.CurrentPage);
+
+        var result = service.ApplyPagination(Files(12));
+
+        Assert.Equal(2, service.CurrentPage);
+        Assert.Equal("game11.zip", result[0]);
+        Assert.Equal("game12.zip", result[^1]);
+        Assert.Equal("Displaying files 11 to 12 out of 12 total", host.Label);
+    }
+
+    [Fact]
     public void GoToNextPage_OnLastPage_DoesNotMove()
     {
         var (service, _) = Create(10, 10);

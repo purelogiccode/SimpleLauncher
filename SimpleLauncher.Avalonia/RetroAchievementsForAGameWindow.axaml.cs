@@ -826,6 +826,7 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             await Task.Yield();
         }
     }
+
     private async Task LoadUserProfileAsync()
     {
         var generation = ++_loadGeneration;

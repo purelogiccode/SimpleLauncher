@@ -337,7 +337,8 @@ internal partial class EditSystemWindow
                 // Use the name captured before the UI refresh: LoadSystemsAsync plus the
                 // subsequent SelectedItem assignment overwrite _originalSystemName with the
                 // new name, so it can no longer identify the old one here.
-                if (isUpdate && !string.Equals(originalSystemNameToUse, systemNameText, StringComparison.OrdinalIgnoreCase))
+                if (isUpdate && !string.Equals(originalSystemNameToUse, systemNameText,
+                        StringComparison.OrdinalIgnoreCase))
                 {
                     var oldSystemName = originalSystemNameToUse!;
                     await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);

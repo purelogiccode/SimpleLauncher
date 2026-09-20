@@ -40,9 +40,11 @@ public static class AppDataPaths
         if (string.IsNullOrWhiteSpace(localAppData) || !Path.IsPathRooted(localAppData))
         {
             if (!string.IsNullOrWhiteSpace(userProfile))
+            {
                 localAppData = isWindows
                     ? Path.Combine(userProfile, "AppData", "Local")
                     : Path.Combine(userProfile, ".local", "share");
+            }
         }
 
         if (string.IsNullOrWhiteSpace(localAppData) || !Path.IsPathRooted(localAppData))

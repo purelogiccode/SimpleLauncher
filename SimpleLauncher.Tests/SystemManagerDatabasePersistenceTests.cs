@@ -103,7 +103,8 @@ public class SystemManagerDatabasePersistenceTests : IDisposable
     public async Task SaveSystemConfigurationAsync_UpsertsIntoDatabase()
     {
         await SystemManagerService.SaveSystemConfigurationAsync(
-            BuildSystem("Genesis", @"C:\roms\genesis", "Blastem"), logErrors: _logErrors, configuration: _configuration);
+            BuildSystem("Genesis", @"C:\roms\genesis", "Blastem"), logErrors: _logErrors,
+            configuration: _configuration);
 
         var loaded = SystemManagerService.LoadSystemManagers(_configuration, _logErrors);
         var genesis = Assert.Single(loaded);

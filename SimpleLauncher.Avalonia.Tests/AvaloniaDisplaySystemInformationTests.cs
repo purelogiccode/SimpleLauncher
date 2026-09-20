@@ -42,8 +42,8 @@ public class AvaloniaDisplaySystemInformationTests
             var config = CreateConfig(temp.FullName, Path.Combine(temp.FullName, "mesen.exe"));
 
             var lines = new AvaloniaDisplaySystemInformation().BuildSystemInfoLines(config)
-                .Select(static l => l.Text)
-                .ToList();
+                    .ConvertAll(static l => l.Text)
+                ;
 
             Assert.StartsWith("Click on the letter buttons above", lines[0], StringComparison.Ordinal);
             Assert.Contains(lines, l => l.StartsWith("System Folder:", StringComparison.Ordinal));

@@ -174,6 +174,8 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
     {
         if (!string.Equals(_settings.RaUsername, Username.Trim(), StringComparison.OrdinalIgnoreCase) ||
             !string.Equals(_settings.RaApiKey, ApiKey, StringComparison.Ordinal))
+        {
             _settings.RaToken = "";
+        }
     }
 }
