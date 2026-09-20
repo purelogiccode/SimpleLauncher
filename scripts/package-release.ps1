@@ -29,7 +29,7 @@ The other architecture's bundled tools are pruned from the payload:
   win-x64   : drops *_arm64 files and tools/FindRomCover/arm64
   win-arm64 : drops *_x64 files, tools/FindRomCover/x64, and the unsuffixed
               executables that have an _arm64 sibling (7z.dll is kept)
-Both RIDs drop the Linux-only extension-less RetroAchievementsSharp binaries.
+Both RIDs drop the Linux-only extension-less RetroAchievementsSharp and 7-Zip (7zz) binaries.
 
 Debug symbol files (*.pdb) are pruned from the payload: they are never needed at runtime
 and the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
@@ -276,6 +276,13 @@ function Remove-OtherArchitectureFiles {
         if (-not $remove -and $relative -like 'tools/RetroAchievementsSharp/*') {
             $leaf = [System.IO.Path]::GetFileName($relative)
             if ($leaf -eq 'RetroAchievementsSharp' -or $leaf -eq 'RetroAchievementsSharp_arm64') {
+                $remove = $true
+            }
+        }
+
+        if (-not $remove -and $relative -like 'tools/SevenZip/*') {
+            $leaf = [System.IO.Path]::GetFileName($relative)
+            if ($leaf -eq '7zz' -or $leaf -eq '7zz_arm64') {
                 $remove = $true
             }
         }

@@ -17,9 +17,9 @@ The application payload is published self-contained (Linux users are not expecte
 install the .NET runtime) and Windows-only bundled tools are pruned:
   * tools/**/*.exe and tools/**/*.dll (Windows binaries)
   * tools/FindRomCover/** (WebView2-based Windows tool)
-  * the other architecture's RetroAchievementsSharp binary
-RetroAchievementsSharp ships per-architecture extension-less binaries on Linux; the
-matching one is kept and marked executable.
+  * the other architecture's RetroAchievementsSharp and 7-Zip binaries
+RetroAchievementsSharp and 7-Zip ship per-architecture extension-less binaries on Linux;
+the matching ones are kept and marked executable.
 
 ZIP files cannot store Unix permissions reliably when written from Windows, so the
 script writes the permission bits into the ZIP entries' external attributes
@@ -168,10 +168,16 @@ function Remove-WindowsOnlyFiles {
             if ($file.Extension -in @('.exe', '.dll')) {
                 $remove = $true
             }
-            elseif ($Rid -eq 'linux-x64' -and $relative -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp_arm64') {
+            elseif ($Rid -eq 'linux-x64' -and $relative -in @(
+                'tools/RetroAchievementsSharp/RetroAchievementsSharp_arm64',
+                'tools/SevenZip/7zz_arm64'
+            )) {
                 $remove = $true
             }
-            elseif ($Rid -eq 'linux-arm64' -and $relative -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp') {
+            elseif ($Rid -eq 'linux-arm64' -and $relative -in @(
+                'tools/RetroAchievementsSharp/RetroAchievementsSharp',
+                'tools/SevenZip/7zz'
+            )) {
                 $remove = $true
             }
         }
@@ -205,14 +211,13 @@ function Test-ExecutableEntry {
         return $true
     }
 
-    $retroArchBinary = if ($Rid -eq 'linux-arm64') {
-        'tools/RetroAchievementsSharp/RetroAchievementsSharp_arm64'
-    }
-    else {
-        'tools/RetroAchievementsSharp/RetroAchievementsSharp'
+    if ($Rid -eq 'linux-arm64') {
+        return $RelativePath -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp_arm64' -or
+            $RelativePath -eq 'tools/SevenZip/7zz_arm64'
     }
 
-    return $RelativePath -eq $retroArchBinary
+    return $RelativePath -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp' -or
+        $RelativePath -eq 'tools/SevenZip/7zz'
 }
 
 # unzip only honours the Unix permission bits in a ZIP entry's external attributes when the

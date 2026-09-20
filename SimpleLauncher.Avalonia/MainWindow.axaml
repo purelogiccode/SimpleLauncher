@@ -563,7 +563,7 @@
             </MenuItem>
 
             <!-- ── TOOLS ── -->
-            <MenuItem Header="{ext:Translate Tools}" ToolTip.Tip="{ext:Translate TooltipToolsMenu}">
+            <MenuItem x:Name="ToolsMenuItem" Header="{ext:Translate Tools}" ToolTip.Tip="{ext:Translate TooltipToolsMenu}">
                 <MenuItem Header="{ext:Translate BatchConvertIsoToXiso}" Tag="BatchConvertIsoToXiso" Click="LaunchTool_Click"
                           ToolTip.Tip="{ext:Translate TooltipToolsMenu}">
                     <MenuItem.Icon>

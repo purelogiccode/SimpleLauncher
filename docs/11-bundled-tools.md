@@ -5,11 +5,11 @@
 
 ## Shipped payloads (`SimpleLauncher\tools\`)
 
-Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. All are launched through `ExternalToolLauncherService` (below). In `BatchConvertIsoToXiso`, the `bchunk.exe`, `extract-xiso.exe` and `xdvdfs.exe` helpers are x64-only and are invoked by the wrapper (on Windows 11 ARM64 they run under x64 emulation).
+Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. All are launched through `ExternalToolLauncherService` (below). The whole Tools menu is Windows-only: the Avalonia app hides it on Linux/macOS (`MainWindow` sets `ToolsMenuItem.IsVisible = OperatingSystem.IsWindows()`), and the Linux packaging script prunes every `tools/**/*.exe` and `tools/**/*.dll`. In `BatchConvertIsoToXiso`, the `bchunk.exe`, `extract-xiso.exe` and `xdvdfs.exe` helpers are x64-only and are invoked by the wrapper (on Windows 11 ARM64 they run under x64 emulation).
 
 | Folder | Executables | Purpose |
 |---|---|---|
-| `SevenZip` | `7za.exe`, `7za_arm64.exe` | Fallback 7z extraction (SharpCompress failure path) |
+| `SevenZip` | `7za.exe`, `7za_arm64.exe` (Windows) / `7zz`, `7zz_arm64` (Linux, static 7-Zip 26.03 builds) + `License.txt` | Fallback 7z extraction (SharpCompress failure path) — `ExtractionService` picks the binary for the running OS/architecture |
 | `CHDMounter` | `CHDMounter.exe`, `_arm64.exe` (+ README) | Mounts CHD files as virtual drives for emulators without native CHD support |
 | `SimpleXisoDrive` | `SimpleXisoDrive.exe`, `_arm64.exe` | Mounts XISO images (Dokan) |
 | `SimpleZipDrive` | `SimpleZipDrive.exe`, `_arm64.exe` (+ ReadMe) | Mounts ZIP archives (Dokan) |

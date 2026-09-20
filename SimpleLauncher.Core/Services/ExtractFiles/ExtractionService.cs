@@ -13,7 +13,7 @@ namespace SimpleLauncher.Core.Services.ExtractFiles;
 
 /// <summary>
 ///     Extracts compressed game archives (7z, ZIP, RAR) to temporary or permanent locations,
-///     with support for path traversal protection, disk space checks, and 7za fallback.
+///     with support for path traversal protection, disk space checks, and a 7-Zip fallback.
 /// </summary>
 public class ExtractionService : IExtractionService
 {
@@ -488,10 +488,17 @@ public class ExtractionService : IExtractionService
         }
     }
 
+    internal static string GetSevenZipExecutableName(Architecture architecture, bool isWindows)
+    {
+        if (isWindows)
+            return architecture == Architecture.Arm64 ? "7za_arm64.exe" : "7za.exe";
+
+        return architecture == Architecture.Arm64 ? "7zz_arm64" : "7zz";
+    }
+
     private async Task<bool> ExtractWith7ZipAsync(string archivePath, string destinationFolder)
     {
-        var arch = RuntimeInformation.ProcessArchitecture;
-        var exeName = arch == Architecture.Arm64 ? "7za_arm64.exe" : "7za.exe";
+        var exeName = GetSevenZipExecutableName(RuntimeInformation.ProcessArchitecture, OperatingSystem.IsWindows());
         var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "SevenZip", exeName);
 
         if (!File.Exists(exePath))

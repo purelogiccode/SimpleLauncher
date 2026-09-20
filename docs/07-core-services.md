@@ -45,7 +45,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `GameLauncher\MountFiles\FindEbootBin`, `FindDefaultXbe`, `FindDefaultXex`, `FindImageIso`, `FindBinFile`, `FindCueFile`, `FileFinderService` | Launch-file discovery inside mounted volumes |
 | `GameLauncher\MountFiles\DokanValidation` | P/Invoke `dokan2.dll` version check |
 | `GameLauncher\ValidateBatchFile` | Pre-execution validation of batch files (missing paths) |
-| `ExtractFiles\ExtractionService` | Archive extraction: lock retry, disk-space check, path-traversal guard, 7za fallback, `.extraction_in_progress` marker. See [06](06-systems-and-launch.md#extraction) |
+| `ExtractFiles\ExtractionService` | Archive extraction: lock retry, disk-space check, path-traversal guard, 7-Zip fallback, `.extraction_in_progress` marker. See [06](06-systems-and-launch.md#extraction) |
 | `Converters\DiscConverter` | CHD→ISO/CUE-BIN, PBP→CUE-BIN, RVZ/WBFS/GCZ→ISO via bundled tools (5-min timeouts) |
 | `ExternalToolLauncher\ExternalToolLauncherService` | Launch bundled tools: arch-aware paths, PE validation, per-tool methods. See [11](11-bundled-tools.md) |
 

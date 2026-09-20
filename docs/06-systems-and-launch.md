@@ -87,7 +87,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 - **`.extraction_in_progress` marker** written before extract, removed on success. On failure only the marker plus the files written by that run are deleted — destination folders are never wiped (CORE-01), and tracked files are removed before the marker.
 - **Disk-space check:** estimated size × 1.2 vs `DriveInfo.AvailableFreeSpace` → `DiskSpaceErrorMessageBoxAsync` + IOException (`:165-196`).
 - **Path-traversal guard:** every entry must resolve under the destination root (`:199-219`, `:364-382`); random temp names (`:351-354`).
-- **7za fallback:** SharpCompress failure on `.7z` → `tools\SevenZip\7za.exe`/`_arm64.exe` (`:446-448`), args `x -o"dest" -y "archive"` (`:460`), **30-minute timeout** with kill (`:485-503`).
+- **7-Zip fallback:** SharpCompress failure on `.7z` → `tools\SevenZip\7za.exe`/`_arm64.exe` on Windows, `tools/SevenZip/7zz`/`7zz_arm64` on Linux/macOS (`GetSevenZipExecutableName`, `:490-497`), args `x -o"dest" -y "archive"`, **30-minute timeout** with kill.
 - Temp root: `%TEMP%\SimpleLauncher` (`:20`); `ValidateAndFindGameFileAsync` (`:540`) searches `FileFormatsToLaunch` then any file.
 
 ## Mounting (Core `GameLauncher\MountFiles\`)

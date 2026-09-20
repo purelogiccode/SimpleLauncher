@@ -128,6 +128,9 @@ public partial class MainWindow : Window, IPaginationHost
 
         InitializeComponent();
 
+        // The bundled external tools are Windows executables only.
+        ToolsMenuItem.IsVisible = OperatingSystem.IsWindows();
+
         // Wire the extracted services to this host (WPF parity)
         _uiResetService.Initialize(this);
         _systemSelectionOrchestrator.Initialize(this);
@@ -2948,6 +2951,8 @@ public partial class MainWindow : Window, IPaginationHost
         try
         {
             if (sender is not MenuItem { Tag: string toolTag }) return;
+
+            if (!OperatingSystem.IsWindows()) return;
 
             tool = toolTag;
 
