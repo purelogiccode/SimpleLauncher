@@ -42,6 +42,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `GameLauncher\MountFiles\MountIsoFiles` | PowerShell `Mount-DiskImage` / `Dismount-DiskImage`, EBOOT.BIN discovery |
 | `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll |
 | `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (Windows: zip to virtual drive; Linux/macOS: extract to a temp directory and launch from there) |
+| `GameLauncher\MountFiles\Iso9660ImageReader` | Lists the files of a cooked ISO9660 image (chdman/CHDSharp `extractcd` data track, DVD ISO) — primary 8.3 names, used by the DOSBox CHD fallback on Linux/macOS |
 | `GameLauncher\MountFiles\FindEbootBin`, `FindDefaultXbe`, `FindDefaultXex`, `FindImageIso`, `FindBinFile`, `FindCueFile`, `FileFinderService` | Launch-file discovery inside mounted volumes |
 | `GameLauncher\MountFiles\DokanValidation` | P/Invoke `dokan2.dll` version check |
 | `GameLauncher\ValidateBatchFile` | Pre-execution validation of batch files (missing paths) |

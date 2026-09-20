@@ -8,7 +8,7 @@
 - `SimpleLauncher.Tests` — xUnit (`net10.0-windows`), references `SimpleLauncher` (and transitively `SimpleLauncher.Core`); `InternalsVisibleTo` gives access to internal members.
 - `SimpleLauncher.Avalonia.Tests` — xUnit (`net10.0`, runs on Windows **and** Linux/WSL2), references `SimpleLauncher.Avalonia`; uses `Avalonia.Headless 12.1.1` for window construction tests.
 - Frameworks: **xUnit 2.9.3**, **Moq 4.20.72**, **Avalonia.Headless 12.1.1**, Serilog `ILogger` mocks; Meziantou analyzer enabled.
-- **~152 WPF test files + 48 Avalonia test files (~200 total)** — **534 Avalonia tests** + **2105 WPF tests** (21 WPF live mount/integration tests require the local `G:`/`X:`/`J:` test drives and are skipped when absent). WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
+- **~154 WPF test files + 65 Avalonia test files (~220 total)** — **610 Avalonia tests** + **2109 WPF tests** (21 WPF live mount/integration tests require the local `G:`/`X:`/`J:` test drives and self-skip when absent). WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
 
 ## Test helpers
 

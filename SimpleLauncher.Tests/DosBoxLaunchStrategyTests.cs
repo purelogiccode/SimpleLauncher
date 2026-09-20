@@ -19,6 +19,7 @@ public class DosBoxLaunchStrategyTests
         var messageBoxMock = new Mock<IMessageBoxLibraryService>();
         var mountChdFilesMock = new Mock<IMountChdFiles>();
         var mountIsoFilesMock = new Mock<IMountIsoFiles>();
+        var discConverterMock = new Mock<IDiscConverter>();
         var debugLoggerMock = new Mock<ILogger>();
 
         return new DosBoxLaunchStrategy(
@@ -27,6 +28,7 @@ public class DosBoxLaunchStrategyTests
             messageBoxMock.Object,
             mountChdFilesMock.Object,
             mountIsoFilesMock.Object,
+            discConverterMock.Object,
             debugLoggerMock.Object);
     }
 

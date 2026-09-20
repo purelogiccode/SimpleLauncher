@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.CleanAndDeleteFiles;
+using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Services.GameLauncher.Strategies;
@@ -18,7 +19,15 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
     private static readonly string[] PriorityGameFormats = [".conf", ".bat", ".exe", ".com"];
     private static readonly List<string> ExtractionFormats = ["conf", "bat", "exe", "com"];
+
+    /// <summary>
+    ///     Executable formats looked for inside a disc image. '.conf' is excluded because DOSBox
+    ///     cannot open an image-internal conf file with '-conf'; only real mounted files can.
+    /// </summary>
+    private static readonly string[] ImageGameFormats = [".bat", ".exe", ".com"];
+
     private readonly IConfiguration _configuration;
+    private readonly IDiscConverter _discConverter;
     private readonly IExtractionService _extractionService;
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly IMountChdFiles _mountChdFiles;
@@ -29,13 +38,14 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     /// </summary>
     public DosBoxLaunchStrategy(IExtractionService extractionService, IConfiguration configuration,
         IMessageBoxLibraryService messageBox, IMountChdFiles mountChdFiles, IMountIsoFiles mountIsoFiles,
-        ILogger logger)
+        IDiscConverter discConverter, ILogger logger)
     {
         _extractionService = extractionService;
         _configuration = configuration;
         _messageBox = messageBox;
         _mountChdFiles = mountChdFiles;
         _mountIsoFiles = mountIsoFiles;
+        _discConverter = discConverter;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -409,6 +419,14 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
     private async Task ExecuteChdAsync(LaunchContext context, ILauncherService launcher)
     {
+        // CHDMounter + Dokan are Windows-only. On Linux/macOS the image is converted with the
+        // managed CHDSharp decoder and mounted inside DOSBox with 'imgmount' instead.
+        if (!OperatingSystem.IsWindows())
+        {
+            await ExecuteChdWithConversionAsync(context, launcher);
+            return;
+        }
+
         try
         {
             await using var mountedDrive =
@@ -483,6 +501,202 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
             _logger.Error(ex, $"[DosBoxLaunchStrategy] Error launching CHD: {context.ResolvedFilePath}");
             await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
                 PathHelper.ResolveLogFilePath(_configuration));
+        }
+    }
+
+    /// <summary>
+    ///     Non-Windows fallback for CHD images: CHDMounter/Dokan do not exist on Linux/macOS, so
+    ///     the image is converted with the managed CHDSharp decoder (CUE/BIN for CDs, ISO for
+    ///     DVDs), its files are listed from the cooked ISO9660 data track, and DOSBox mounts the
+    ///     converted image itself through 'imgmount' (Windows mounts the same contents through a
+    ///     Dokan drive). The converted files are deleted once DOSBox exits.
+    /// </summary>
+    private async Task ExecuteChdWithConversionAsync(LaunchContext context, ILauncherService launcher)
+    {
+        var chdPath = context.ResolvedFilePath;
+        string? convertedPath = null;
+        var imageType = "cdrom"; // imgmount type: a CUE/BIN pair is a CD-ROM, an ISO a plain image
+
+        try
+        {
+            context.LoadingState?.SetLoadingState(true, "Converting CHD...");
+            try
+            {
+                convertedPath = await _discConverter.ConvertChdToCueBinAsync(chdPath);
+                if (convertedPath == null)
+                {
+                    // DVDs are not CD images; CHDSharp extracts them straight to an ISO.
+                    convertedPath = await _discConverter.ConvertChdToIsoAsync(chdPath);
+                    imageType = "iso";
+                }
+            }
+            finally
+            {
+                context.LoadingState?.SetLoadingState(false);
+            }
+
+            if (convertedPath == null)
+            {
+                // Conversion details are logged by the converter (expected user-data condition).
+                _logger.Debug($"[DosBoxLaunchStrategy] Could not convert CHD image: {chdPath}");
+                await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+                return;
+            }
+
+            // The cooked CUE/BIN data track and an extracted ISO are both ISO9660 images.
+            var listingPath = Path.ChangeExtension(convertedPath, ".bin");
+            if (!File.Exists(listingPath)) listingPath = convertedPath;
+
+            var gameFiles = FindGameFilesInImage(listingPath);
+            if (gameFiles.Count == 0)
+            {
+                _logger.Debug($"[DosBoxLaunchStrategy] No game file (bat/exe/com) found in CHD image at {listingPath}");
+                // Expected user-input condition (image contains no DOS executable): not a bug.
+                _logger.Information($"No DOS game executable found in CHD: {chdPath}");
+                await _messageBox.CouldNotFindAFileMessageBoxAsync();
+                return;
+            }
+
+            var selectedFile = await SelectGameFileFromImageAsync(context, gameFiles);
+            if (selectedFile == null) return; // user cancelled
+
+            var confPath = GenerateImageConf(convertedPath, imageType, selectedFile);
+            var launchParameters = BuildLaunchParameters(context.Parameters);
+
+            try
+            {
+                await launcher.LaunchRegularEmulatorAsync(
+                    confPath,
+                    context.EmulatorName,
+                    context.SystemManagerService!,
+                    context.EmulatorManager!,
+                    launchParameters,
+                    context.WindowContext!,
+                    context.LoadingState,
+                    chdPath);
+            }
+            finally
+            {
+                // The conf references the user's ROM paths and is single-use: delete it once
+                // DOSBox has exited (or the launch failed) instead of leaking it in %TEMP%.
+                TryDeleteConfFile(confPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, $"[DosBoxLaunchStrategy] Error launching CHD: {chdPath}");
+            await _messageBox.CouldNotLaunchThisGameMessageBoxAsync(
+                PathHelper.ResolveLogFilePath(_configuration));
+        }
+        finally
+        {
+            CleanupConvertedImageFiles(convertedPath);
+        }
+    }
+
+    /// <summary>
+    ///     Returns the DOS executables inside a disc image (ordered by format priority), listed
+    ///     from the cooked ISO9660 data track with the primary 8.3 names DOSBox itself shows.
+    /// </summary>
+    private static List<string> FindGameFilesInImage(string imagePath)
+    {
+        var listedFiles = Iso9660ImageReader.ListFiles(imagePath, _logger);
+        var gameFiles = new List<string>();
+
+        foreach (var format in ImageGameFormats)
+            gameFiles.AddRange(listedFiles
+                .Where(file => file.EndsWith(format, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(file => file, StringComparer.OrdinalIgnoreCase));
+
+        _logger.Debug($"[DosBoxLaunchStrategy] Found {gameFiles.Count} game file(s) in image at {imagePath}");
+        return gameFiles;
+    }
+
+    /// <summary>
+    ///     Asks the user to choose between multiple DOS executables found inside a CHD image
+    ///     when there is no single candidate. Returns the image-relative path ('/'-separated)
+    ///     of the selected file, or null on cancel.
+    /// </summary>
+    private static Task<string?> SelectGameFileFromImageAsync(LaunchContext context, List<string> gameFiles)
+    {
+        if (gameFiles.Count == 1)
+        {
+            _logger.Debug($"[DosBoxLaunchStrategy] Single game file found in CHD, auto-selecting: {gameFiles[0]}");
+            return Task.FromResult<string?>(gameFiles[0]);
+        }
+
+        // The listing is image-relative; give the dialog a DOS-style root so it can display
+        // relative folder names and return the selected image-relative path.
+        const string imageRoot = "d:/";
+        var dialog = App.ServiceProvider.GetRequiredService<DosBoxFileSelectionWindow>();
+        dialog.Initialize(gameFiles.Select(file => imageRoot + file).ToList(), imageRoot);
+        var result = dialog.ShowDialog();
+
+        if (result != true || string.IsNullOrEmpty(dialog.SelectedFilePath))
+        {
+            _logger.Debug("[DosBoxLaunchStrategy] User cancelled file selection for CHD");
+            return Task.FromResult<string?>(null);
+        }
+
+        _logger.Debug($"[DosBoxLaunchStrategy] User selected file from CHD: {dialog.SelectedFilePath}");
+        return Task.FromResult<string?>(dialog.SelectedFilePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase)
+            ? dialog.SelectedFilePath[imageRoot.Length..]
+            : dialog.SelectedFilePath);
+    }
+
+    /// <summary>
+    ///     Generates a DOSBox conf that mounts the converted disc image with 'imgmount' and runs
+    ///     the selected executable from it.
+    /// </summary>
+    private static string GenerateImageConf(string imagePath, string imageType, string relativeFilePath)
+    {
+        var executableName = Path.GetFileName(relativeFilePath);
+        var relativeDir = Path.GetDirectoryName(relativeFilePath)?.Replace('/', '\\') ?? "";
+        var tempDir = Path.Combine(Path.GetTempPath(), "SimpleLauncher");
+        Directory.CreateDirectory(tempDir);
+        var confPath = Path.Combine(tempDir, $"{Guid.NewGuid():N}_dosbox_{imageType}.conf");
+
+        var lines = new List<string>
+        {
+            "[dosbox]",
+            "",
+            "[autoexec]",
+            "@echo off",
+            $"imgmount d \"{imagePath}\" -t {imageType}",
+            "d:"
+        };
+        if (!string.IsNullOrEmpty(relativeDir)) lines.Add($"cd {relativeDir}");
+        lines.Add(executableName);
+        lines.Add("exit");
+        lines.Add("");
+
+        File.WriteAllText(confPath, string.Join("\r\n", lines), Encoding.ASCII);
+        _logger.Debug($"[DosBoxLaunchStrategy] Generated image conf file: {confPath}");
+
+        return confPath;
+    }
+
+    /// <summary>
+    ///     Deletes the temporary image files produced by a CHD conversion (the CUE and its BIN
+    ///     sibling, or the ISO). Cleanup failures are logged at Debug: the next startup cleanup
+    ///     of %TEMP%\SimpleLauncher removes any file left behind.
+    /// </summary>
+    private static void CleanupConvertedImageFiles(string? convertedPath)
+    {
+        if (string.IsNullOrEmpty(convertedPath)) return;
+
+        try
+        {
+            var binPath = Path.ChangeExtension(convertedPath, ".bin");
+            if (File.Exists(convertedPath)) File.Delete(convertedPath);
+            if (File.Exists(binPath)) File.Delete(binPath);
+            _logger.Debug($"[DosBoxLaunchStrategy] Deleted converted CHD image files: {convertedPath}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug(
+                $"[DosBoxLaunchStrategy] Failed to delete converted CHD image files {convertedPath}: {ex.Message}");
         }
     }
 

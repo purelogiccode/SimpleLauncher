@@ -119,7 +119,7 @@ public class LaunchStrategyTests
         var strategy = new DosBoxLaunchStrategy(
             new Mock<IExtractionService>().Object, TestEnvironment.ConfigurationFromJson("{}"),
             TestDependencies.MessageBox().Object, new Mock<IMountChdFiles>().Object,
-            new Mock<IMountIsoFiles>().Object, TestDependencies.Logger().Object);
+            new Mock<IMountIsoFiles>().Object, new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
 
         Assert.True(strategy.IsMatch(Context(@"C:\games\game.zip", "DOSBox")));
         Assert.True(strategy.IsMatch(Context(@"C:\games\game.7z", "DOSBox-X")));
@@ -135,7 +135,7 @@ public class LaunchStrategyTests
         var strategy = new DosBoxLaunchStrategy(
             new Mock<IExtractionService>().Object, TestEnvironment.ConfigurationFromJson("{}"),
             TestDependencies.MessageBox().Object, new Mock<IMountChdFiles>().Object,
-            new Mock<IMountIsoFiles>().Object, TestDependencies.Logger().Object);
+            new Mock<IMountIsoFiles>().Object, new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
 
         Assert.False(strategy.IsMatch(Context(@"C:\games\game.zip", "RetroArch")));
         Assert.False(strategy.IsMatch(Context(@"C:\games\game.cue", "DOSBox")));
@@ -148,7 +148,7 @@ public class LaunchStrategyTests
         var strategy = new DosBoxLaunchStrategy(
             new Mock<IExtractionService>().Object, TestEnvironment.ConfigurationFromJson("{}"),
             TestDependencies.MessageBox().Object, new Mock<IMountChdFiles>().Object,
-            new Mock<IMountIsoFiles>().Object, TestDependencies.Logger().Object);
+            new Mock<IMountIsoFiles>().Object, new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
 
         using var tempDir = new TempDirectory();
         Assert.True(strategy.IsMatch(Context(tempDir.Path, "DOSBox")));
@@ -202,7 +202,7 @@ public class LaunchStrategyTests
             new PbpToCueStrategy(messageBox, logger, converter, config), // 15
             new CommanderGeniusLaunchStrategy(extraction, config, messageBox, logger), // 20
             new ChdToCueStrategy(messageBox, logger, converter, config), // 25
-            new DosBoxLaunchStrategy(extraction, config, messageBox, chd, iso, logger) // 25
+            new DosBoxLaunchStrategy(extraction, config, messageBox, chd, iso, converter, logger) // 25
         };
 
         var ordered = strategies.OrderBy(s => s.Priority).ToList();
@@ -239,7 +239,7 @@ public class LaunchStrategyTests
             new PbpToCueStrategy(messageBox, logger, converter, config),
             new CommanderGeniusLaunchStrategy(extraction, config, messageBox, logger),
             new ChdToCueStrategy(messageBox, logger, converter, config),
-            new DosBoxLaunchStrategy(extraction, config, messageBox, chd, iso, logger)
+            new DosBoxLaunchStrategy(extraction, config, messageBox, chd, iso, converter, logger)
         }.OrderBy(s => s.Priority).ToList();
 
         // .pbp + Mednafen → PbpToCue (before Default/others)
