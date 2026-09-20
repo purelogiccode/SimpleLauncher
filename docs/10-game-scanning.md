@@ -3,6 +3,11 @@
 > Automatic detection of games from modern PC storefronts.
 > Related: [07 — Core Services](07-core-services.md) · [11 — Bundled Tools](11-bundled-tools.md)
 
+**Platform note:** storefront scanning reads the Windows registry and storefront install databases, so it only
+works on Windows. On Linux/macOS the Avalonia app returns an empty result, hides the **Scan for Microsoft Windows
+games** menu item, and skips the first-run scan (it goes straight to the Easy Mode prompt). A Linux-native game
+scanner would be a separate engine.
+
 ## Orchestration (`GameScannerService`)
 
 `SimpleLauncher\Services\GameScan\GameScannerService.cs`

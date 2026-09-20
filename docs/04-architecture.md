@@ -129,7 +129,7 @@ guard the close with a load generation so a stale load cannot clear a newer load
 1. `DisplaySystemSelectionScreenAsync` — `:354`
 2. **Silent update check** (GitHub `releases/latest`, `CheckForUpdatesService.cs:89-143`) — `:368`
 3. Usage stats call — `:370`
-4. **First-run flow** (`:381-424`): if `system.xml` has no systems → loading overlay "Scanning for Windows games..." → all 11 store scanners run in parallel (`GameScannerService.cs:77-97`) → if still empty → `FirstRunWelcomeMessageBoxAsync` → **EasyModeWindow** wizard → reload system list.
+4. **First-run flow** (`:381-424`): if `system.xml` has no systems → loading overlay "Scanning for Windows games..." → all 11 store scanners run in parallel (`GameScannerService.cs:77-97`) → if still empty → `FirstRunWelcomeMessageBoxAsync` → **EasyModeWindow** wizard → reload system list. The scan is Windows-only; the **Avalonia** app skips it entirely on Linux/macOS and hides the menu action.
 
 ## Shutdown & close lifecycle
 

@@ -131,6 +131,14 @@ public partial class MainWindow : Window, IPaginationHost
         // The bundled external tools are Windows executables only.
         ToolsMenuItem.IsVisible = OperatingSystem.IsWindows();
 
+        // Storefront scanning reads the Windows registry and store databases; it is a
+        // no-op on other platforms, so hide the "Scan for Microsoft Windows games" action.
+        ScanForMicrosoftWindowsGamesMenuItem.IsVisible = OperatingSystem.IsWindows();
+
+        // Emulator config injection targets the Windows config locations of each emulator;
+        // a Linux-native implementation is a future feature.
+        InjectEmulatorConfigMenuItem.IsVisible = OperatingSystem.IsWindows();
+
         // Wire the extracted services to this host (WPF parity)
         _uiResetService.Initialize(this);
         _systemSelectionOrchestrator.Initialize(this);
@@ -386,35 +394,40 @@ public partial class MainWindow : Window, IPaginationHost
     /// <summary>
     ///     Mirrors WPF MainWindow.HandleLoadedAsync first-run flow: scans for Windows
     ///     Store games when no systems exist, then offers Easy Mode if still empty.
+    ///     Storefront scanning reads the Windows registry and store databases, so other
+    ///     platforms skip it entirely and go straight to the Easy Mode prompt.
     /// </summary>
     private async Task RunFirstRunExperienceAsync()
     {
-        try
-        {
-            Log.Debug("Running first-run experience: no systems configured");
+        Log.Debug("Running first-run experience: no systems configured");
 
-            var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
-            _loadingOverlay.SetLoadingState(true, scanningText);
-            _viewModel.StatusText = scanningText;
-            var result = await _gameScannerService.ScanForStoreGamesAsync();
-            if (result.SystemWasCreated)
+        if (OperatingSystem.IsWindows())
+        {
+            try
             {
-                var foundText = _localization.GetString("FoundNewMicrosoftWindowsGames",
-                    "Found new Microsoft Windows games. Refreshing system list.");
-                _viewModel.StatusText = foundText;
-                ShowToast(_localization.GetString("MicrosoftWindows", "Microsoft Windows"), foundText,
-                    ToastType.Success);
-                _systemSelectionOrchestrator.LoadOrReloadSystemManager();
-                RefreshSidebarCounts();
+                var scanningText = _localization.GetString("ScanningForWindowsGames", "Scanning for Windows games...");
+                _loadingOverlay.SetLoadingState(true, scanningText);
+                _viewModel.StatusText = scanningText;
+                var result = await _gameScannerService.ScanForStoreGamesAsync();
+                if (result.SystemWasCreated)
+                {
+                    var foundText = _localization.GetString("FoundNewMicrosoftWindowsGames",
+                        "Found new Microsoft Windows games. Refreshing system list.");
+                    _viewModel.StatusText = foundText;
+                    ShowToast(_localization.GetString("MicrosoftWindows", "Microsoft Windows"), foundText,
+                        ToastType.Success);
+                    _systemSelectionOrchestrator.LoadOrReloadSystemManager();
+                    RefreshSidebarCounts();
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error during initial Windows games scan");
-        }
-        finally
-        {
-            _loadingOverlay.SetLoadingState(false);
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error during initial Windows games scan");
+            }
+            finally
+            {
+                _loadingOverlay.SetLoadingState(false);
+            }
         }
 
         var systems = _systemManagerService.LoadSystems();
@@ -2862,6 +2875,9 @@ public partial class MainWindow : Window, IPaginationHost
     private void ShowEmulatorConfig_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is not MenuItem { Tag: string emulatorName }) return;
+
+        // Emulator config injection is a Windows-only feature (the menu is hidden elsewhere).
+        if (!OperatingSystem.IsWindows()) return;
 
         try
         {

@@ -22,16 +22,16 @@ public sealed class MountChdFilesIntegrationTests
     public static TheoryData<string, string, string> ChdFiles => new()
     {
         // Microsoft Xbox (CHDMounter console alias "xbox")
-        { @"J:\Microsoft Xbox\007 - Everything or Nothing (USA).chd", "007 - Everything or Nothing (USA)", "xbox" },
-        { @"J:\Microsoft Xbox\4x4 Evo 2 (USA).chd", "4x4 Evo 2 (USA)", "xbox" },
-        { @"J:\Microsoft Xbox\007 - Agent Under Fire (USA).chd", "007 - Agent Under Fire (USA)", "xbox" },
+        { @"E:\Microsoft Xbox\007 - Everything or Nothing (USA).chd", "007 - Everything or Nothing (USA)", "xbox" },
+        { @"E:\Microsoft Xbox\4x4 Evo 2 (USA).chd", "4x4 Evo 2 (USA)", "xbox" },
+        { @"E:\Microsoft Xbox\007 - Agent Under Fire (USA).chd", "007 - Agent Under Fire (USA)", "xbox" },
         // Sony PlayStation 3 (CHDMounter console alias "ps3")
-        { @"X:\Sony PlayStation 3\007 - Blood Stone (USA) (En,Fr).chd", "007 - Blood Stone (USA) (En,Fr)", "ps3" },
+        { @"F:\Sony PlayStation 3\007 - Blood Stone (USA) (En,Fr).chd", "007 - Blood Stone (USA) (En,Fr)", "ps3" },
         {
-            @"X:\Sony PlayStation 3\007 - Quantum of Solace (USA) (En,Fr) (Collector's Edition).chd",
+            @"F:\Sony PlayStation 3\007 - Quantum of Solace (USA) (En,Fr) (Collector's Edition).chd",
             "007 - Quantum of Solace (USA) (En,Fr) (Collector's Edition)", "ps3"
         },
-        { @"X:\Sony PlayStation 3\3D Dot Game Heroes (USA).chd", "3D Dot Game Heroes (USA)", "ps3" },
+        { @"F:\Sony PlayStation 3\3D Dot Game Heroes (USA).chd", "3D Dot Game Heroes (USA)", "ps3" },
         // SNK Neo Geo CD (CHDMounter console alias "neogeocd")
         { @"J:\SNK Neo Geo CD\ADK World (Japan).chd", "ADK World (Japan)", "neogeocd" },
         { @"J:\SNK Neo Geo CD\Andro Dunos (France) (Unl).chd", "Andro Dunos (France) (Unl)", "neogeocd" },

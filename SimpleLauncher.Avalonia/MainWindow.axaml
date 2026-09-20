@@ -339,7 +339,8 @@
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
-                <MenuItem Header="{ext:Translate InjectEmulatorConfig}"
+                <MenuItem x:Name="InjectEmulatorConfigMenuItem"
+                          Header="{ext:Translate InjectEmulatorConfig}"
                           ToolTip.Tip="{ext:Translate TooltipInjectConfigMenu}">
                     <MenuItem.Icon>
                         <Image Source="avares://SimpleLauncher.Avalonia/images/inject.png" Width="16" Height="16" />
@@ -530,7 +531,8 @@
                         <Image Source="avares://SimpleLauncher.Avalonia/images/image.png" Width="16" Height="16" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="{ext:Translate ScanForMicrosoftWindowsGames}"
+                <MenuItem x:Name="ScanForMicrosoftWindowsGamesMenuItem"
+                          Header="{ext:Translate ScanForMicrosoftWindowsGames}"
                           Click="ScanForMicrosoftWindowsGames_ClickAsync"
                           ToolTip.Tip="{ext:Translate TooltipEditSystem}">
                     <MenuItem.Icon>
