@@ -80,6 +80,16 @@ public class RetroAchievementsSettingsViewModelTests
     }
 
     [Fact]
+    public void Ctor_EmulatorIntegrationSectionMatchesPlatform()
+    {
+        var (vm, _, _, _, _) = CreateVm(_ => LoginSuccess());
+
+        // The configurator writes the Windows config locations of each emulator, so the
+        // section must stay hidden on Linux/macOS (LB-08).
+        Assert.Equal(OperatingSystem.IsWindows(), vm.IsEmulatorIntegrationVisible);
+    }
+
+    [Fact]
     public async Task SaveCommand_TrimsUsernameAndRaisesSaveCompleted()
     {
         var (vm, settings, _, _, _) = CreateVm(_ => LoginSuccess());

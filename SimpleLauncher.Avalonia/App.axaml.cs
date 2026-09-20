@@ -772,28 +772,9 @@ public class App : Application, IDisposable
 
         // Handlers (singletons, same as the WPF app) — MinimalLauncherService runs
         // every matching handler before a game launches (silent injection, or the
-        // config window when "Show settings before launch" is enabled).
-        services.AddSingleton<IEmulatorConfigHandler, AresConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, AzaharConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, BlastemConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, CemuConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, DaphneConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, DolphinConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, DuckStationConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, FlycastConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, MameConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, MednafenConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, MesenConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, Pcsx2ConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, RaineConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, RedreamConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, RetroArchConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, Rpcs3ConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, SegaModel2ConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, StellaConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, SupermodelConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, XeniaConfigHandler>();
-        services.AddSingleton<IEmulatorConfigHandler, YumirConfigHandler>();
+        // config window when "Show settings before launch" is enabled). Windows only:
+        // they write the Windows config locations of each emulator (LB-08).
+        services.AddEmulatorConfigHandlers();
 
         // ── RetroAchievements UI ──
         services.AddTransient<SystemSelectionViewModel>();

@@ -48,6 +48,12 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
     /// <summary>Event raised to request the emulator executable path from the view.</summary>
     public Func<Task<string?>>? RequestExePath { get; set; }
 
+    /// <summary>
+    ///     Whether the Emulator Integration section is shown. The configurator writes the
+    ///     Windows config locations of each emulator, so the section is Windows-only (LB-08).
+    /// </summary>
+    public bool IsEmulatorIntegrationVisible { get; } = OperatingSystem.IsWindows();
+
     /// <summary>Delegate that opens a URL in the browser; wired by the view so unit tests never launch a browser.</summary>
     public Action<string>? OpenInBrowser { get; set; }
 

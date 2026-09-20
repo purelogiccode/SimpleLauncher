@@ -37,8 +37,10 @@
                     Click="OpenControlPanel_Click" />
         </StackPanel>
 
-        <!-- Emulator Integration Section -->
+        <!-- Emulator Integration Section (Windows-only: the configurator writes Windows config
+             locations; hidden elsewhere — LB-08) -->
         <GroupBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Header="{ext:Translate EmulatorIntegration}"
+                  IsVisible="{Binding IsEmulatorIntegrationVisible}"
                   Margin="0,20,0,10">
             <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="BizHawk" Command="{Binding ConfigureEmulatorCommand}" CommandParameter="BizHawk"
