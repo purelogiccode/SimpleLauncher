@@ -661,8 +661,16 @@ public class ExtractionService : IExtractionService
                     var searchPattern = $"*{formatToLaunch}";
                     if (!formatToLaunch.StartsWith('.')) searchPattern = $"*.{formatToLaunch}";
 
-                    var files = Directory.GetFiles(tempExtractLocation, searchPattern, SearchOption.AllDirectories);
-                    if (files.Length > 0)
+                    // MatchCasing.CaseInsensitive: Windows-authored scene archives routinely use
+                    // upper-case names (GAME.EXE, DISC.CUE), which a case-sensitive "*.cue" glob
+                    // would miss on Linux.
+                    var files = Directory.EnumerateFiles(tempExtractLocation, searchPattern, new EnumerationOptions
+                    {
+                        MatchCasing = MatchCasing.CaseInsensitive,
+                        RecurseSubdirectories = true,
+                        IgnoreInaccessible = true
+                    }).ToList();
+                    if (files.Count > 0)
                     {
                         foundFile = files[0]; // Take the first match
                         _logger.Debug(
