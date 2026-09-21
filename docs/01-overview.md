@@ -25,7 +25,7 @@ Three code projects implement it:
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
 - **Performance** — MessagePack binary storage (`favorites.dat`, `playhistory.dat`, `history.dat`, `mame.dat`, `RetroAchievements.dat`), async scanning/loading, pagination.
-- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 10 runtime. **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64, the `linux-arm64` bundle is structurally verified only.
+- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 10 runtime. **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE, the `linux-arm64` bundle is structurally verified only.
 
 ## Feature surface (summary)
 

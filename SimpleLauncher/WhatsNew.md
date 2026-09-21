@@ -33,14 +33,14 @@
 - **Filtering** — Accent-insensitive game filtering restored, and Commander Genius archive deletion fixed.
 
 ## Linux Support (Avalonia) — Beta
-- **Beta** — Linux support is in beta: it was tested end-to-end on Ubuntu 24.04 x64; the ARM64 bundle is structurally verified only. Please report issues on GitHub.
+- **Beta** — Linux support is in beta: it was tested end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE (GUI smoke-tested on Wayland); the ARM64 bundle is structurally verified only. Please report issues on GitHub.
 - **Native Linux builds** — The Avalonia app now ships self-contained bundles for `linux-x64` and `linux-arm64` (`release_{version}_linux-*.zip` plus `updater_linux-*.zip`); the release workflow publishes them next to the Windows bundles and the in-app updater resolves the Linux assets.
 - **No Dokan needed on Linux** — ZIP/7z/RAR games extract to a temp folder on launch, CHD images are converted on the fly with the managed CHDSharp library and mounted natively in DOSBox (`imgmount`), and DOSBox ISO games use the same native mount instead of the Windows PowerShell path.
 - **Native Linux behavior** — App data lives in the XDG folder (`~/.local/share/SimpleLauncher`), Commander Genius uses `~/.CommanderGenius`, paths are handled POSIX-style with case-sensitive matching, and the extension-less bundled 7-Zip fallback (`7zz`) runs correctly. SDL2 gamepad navigation is supported.
 - **Sound works out of the box** — MP3/WAV UI sounds decode through managed decoders (NLayer + NAudio), so no extra packages are required; FLAC/Ogg/Opus use the system `libsndfile`. Missing audio libraries/devices are logged as information instead of being reported as bugs.
 - **Platform-aware pickers and checks** — The emulator pickers no longer hide extension-less Linux binaries, `.AppImage`/`.sh`/`.run` files are accepted, and file dialogs attach to the active window (Wayland).
 - **Windows-only features are hidden on Linux/macOS** — Store scanning, Dokan mounting, Take Screenshot, the RetroAchievements emulator-configuration section and the Windows-only Tools menu entries.
-- **22 Linux port findings fixed (LB-01…LB-22)** — Case-insensitive ROM/EXE discovery after extraction, backslash archive entry names, execute bits for bundled tools, CHD temp-file cleanup, mount platform guards, updater Zip-Slip comparison, platform-neutral dialog wording and defensive scan-handler gating.
+- **23 Linux port findings fixed (LB-01…LB-23)** — Case-insensitive ROM/EXE discovery after extraction, backslash archive entry names, execute bits for bundled tools, CHD temp-file cleanup, mount platform guards, updater Zip-Slip comparison, platform-neutral dialog wording, defensive scan-handler gating, and Information-level logging when a release ships no update assets for the current platform.
 
 ## Avalonia Fixes
 - **Tray icon** — Embedded in the Avalonia app (and as a pack resource in WPF) with `icon.ico` shipped in the payload, so the tray icon always has an image.

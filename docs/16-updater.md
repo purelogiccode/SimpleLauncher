@@ -14,6 +14,7 @@
 - **Silent check** at startup. If every GitHub source is unreachable (offline, rate-limited, blocked), the check falls back to the secondary server.
 - **Manual check**: About window "Check for Updates".
 - Version comparison against the current `5.8.0`; new version → prompts to download.
+- **Missing platform assets**: a release is not required to ship every RID — when the latest release has no `release_{version}_{rid}.zip` / `updater_{rid}.zip` for the current platform, the check logs at Information and reports no update (LB-23) instead of an Error (which would also file a bug report).
 
 ## Update assets
 

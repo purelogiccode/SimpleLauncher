@@ -93,6 +93,11 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
 - Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
   `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
   verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
+- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 640 Avalonia
+  tests pass with `dotnet test -c Debug -f net10.0 -r linux-x64` (Fedora's SDK defaults to the
+  `fedora.44-x64` RID, whose apphost pack is not on nuget.org, so the `-r linux-x64` override is
+  required to restore/build), and the published app launches and renders through XWayland
+  (`DISPLAY=:0` plus the login session's `XAUTHORITY`, e.g. from `systemctl --user show-environment`).
 
 ### Publish the Avalonia app (multi-targeted)
 
