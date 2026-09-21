@@ -601,20 +601,18 @@ public partial class CheckForUpdatesService
 
                 if (foundUpdaterZipUrl == null)
                 {
-                    // Notify developer
-                    _logger.Error(
-                        new FileNotFoundException(
-                            $"'{expectedUpdaterFileName}' asset not found in release '{versionTag}'.",
-                            expectedUpdaterFileName), "GitHub API Asset Info");
+                    // A release is not required to ship every platform: a missing asset means
+                    // "no update for this platform", not an error (Error+ is reported as a bug).
+                    _logger.Information(
+                        $"GitHub API Asset Info: '{expectedUpdaterFileName}' asset not found in release '{versionTag}'; no updater for this platform in that release.");
                 }
 
                 if (foundReleasePackageUrl == null)
                 {
-                    // Notify developer
-                    _logger.Error(
-                        new FileNotFoundException(
-                            $"Expected release package '{expectedReleaseFileName}' not found in release '{versionTag}'.",
-                            expectedReleaseFileName), "GitHub API Asset Info");
+                    // A release is not required to ship every platform: a missing asset means
+                    // "no update for this platform", not an error (Error+ is reported as a bug).
+                    _logger.Information(
+                        $"GitHub API Asset Info: expected release package '{expectedReleaseFileName}' not found in release '{versionTag}'; no update package for this platform in that release.");
                 }
 
                 return (extractedNormalizedVersion, foundReleasePackageUrl, foundUpdaterZipUrl);
