@@ -47,6 +47,7 @@
 - **Wait overlay** — Shown for all long-running operations, matching the WPF app.
 - **System info panel** — The selected system's configuration summary now appears after selection and hides when games load; the game cache is invalidated after system edits instead of showing stale games.
 - **Aspect-ratio changes** — Card heights refresh through the binding instead of rescanning the library.
+- **Filename preferences stay instant** — Switching the filename display mode (Original / Clean Up / No Filename) or the machine-name toggle no longer rescans the entire library under the loading overlay; captions refresh in place, keeping the open system, filters, pagination and scroll position.
 
 ## Migration & Scan Hardening
 - **Migration gate** — Database wins on merge (a reappearing stale file can never revert newer settings), a defaults-only `settings.xml` is ignored, newer-schema databases are left untouched, a timestamped pre-merge backup is taken, and the WPF and Avalonia migrations parse the legacy files identically.

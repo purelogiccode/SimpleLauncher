@@ -2166,7 +2166,10 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.FilenameDisplayMode = mode;
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
-            await _viewModel.ReloadGamesAsync();
+            // In-place caption refresh: the mode only changes the title text, so no
+            // library rescan is needed (a full reload rescans every system and resets
+            // the view to All Games, hanging large libraries on this click).
+            _viewModel.RefreshFilenameDisplayTitles();
             Log.Information("Filename display mode changed to {FilenameDisplayMode}", mode);
             _playSound.PlayNotificationSound();
         }
@@ -2185,7 +2188,9 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.DisplayMachineName = item.IsChecked;
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
-            await _viewModel.ReloadGamesAsync();
+            // No view refresh needed: no Avalonia games view binds this setting (only the
+            // WPF button factory embeds the machine name). A full reload here would rescan
+            // every system and reset the view for zero visible change.
             Log.Information("Display machine name changed to {DisplayMachineName}", _settings.DisplayMachineName);
             _playSound.PlayNotificationSound();
         }

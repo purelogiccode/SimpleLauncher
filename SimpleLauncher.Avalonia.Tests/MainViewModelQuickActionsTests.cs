@@ -37,6 +37,7 @@ public class MainViewModelQuickActionsTests : IDisposable
     private readonly FakeLoadingOverlayHost _loadingHost = new();
     private readonly AvaloniaPaginationService _pagination;
     private readonly string _romsFolder;
+    private readonly SettingsManagerService _settings;
     private readonly string _systemXmlPath;
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"SL_QuickActionsTest_{Guid.NewGuid():N}");
     private readonly MainViewModel _viewModel;
@@ -77,6 +78,7 @@ public class MainViewModelQuickActionsTests : IDisposable
         UnifiedTestDatabase.RedirectToTempDb(_tempRoot);
 
         var settings = TestDependencies.Settings(_config, _messageBox);
+        _settings = settings;
         var systemManager = new SystemManagerService(_config);
         UnifiedTestDatabase.SeedSystemsFromXml(systemManager, _systemXmlPath);
         var loadingOrchestrator = new AvaloniaGameFileLoadingOrchestrator(
@@ -439,5 +441,58 @@ public class MainViewModelQuickActionsTests : IDisposable
         _viewModel.CardWidth = 50;
         _viewModel.ZoomOut();
         Assert.Equal(50, (int)_viewModel.CardWidth);
+    }
+
+    // ── Filename preferences (no full-library reload on toggle) ──
+
+    [Fact]
+    public async Task RefreshFilenameDisplayTitles_NoFilename_ClearsTitlesInPlaceAndKeepsView()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+        var countBefore = _viewModel.Games.Count;
+        Assert.True(countBefore > 0);
+        Assert.All(_viewModel.Games, static g => Assert.False(string.IsNullOrEmpty(g.DisplayTitle)));
+
+        var overlayStatesBefore = _loadingHost.States.Count;
+
+        _settings.FilenameDisplayMode = "NoFilename";
+        _viewModel.RefreshFilenameDisplayTitles();
+
+        // Same cards, titles cleared, system view untouched, no loading overlay churn.
+        Assert.Equal(countBefore, _viewModel.Games.Count);
+        Assert.All(_viewModel.Games, static g => Assert.Equal("", g.DisplayTitle));
+        Assert.Equal("Test System", _viewModel.SelectedSystem);
+        Assert.Equal(overlayStatesBefore, _loadingHost.States.Count);
+    }
+
+    [Fact]
+    public async Task RefreshFilenameDisplayTitles_Original_RestoresFileNames()
+    {
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+
+        _settings.FilenameDisplayMode = "NoFilename";
+        _viewModel.RefreshFilenameDisplayTitles();
+        Assert.All(_viewModel.Games, static g => Assert.Equal("", g.DisplayTitle));
+
+        _settings.FilenameDisplayMode = "Original";
+        _viewModel.RefreshFilenameDisplayTitles();
+
+        Assert.All(_viewModel.Games,
+            static g => Assert.Equal(Path.GetFileNameWithoutExtension(g.FilePath), g.DisplayTitle));
+    }
+
+    [Fact]
+    public async Task RefreshFilenameDisplayTitles_CleanUp_StripsAnnotations()
+    {
+        File.WriteAllText(Path.Combine(_romsFolder, "galaga.[USA].(Rev 1).zip"), "fake rom");
+        _viewModel.InvalidateGameFileCacheForSystem("Test System");
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        _settings.FilenameDisplayMode = "CleanUp";
+        _viewModel.RefreshFilenameDisplayTitles();
+
+        var galaga = Assert.Single(_viewModel.Games,
+            g => g.FilePath.EndsWith("galaga.[USA].(Rev 1).zip", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("galaga", galaga.DisplayTitle);
     }
 }

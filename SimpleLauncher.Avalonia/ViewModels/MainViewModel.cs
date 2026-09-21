@@ -299,6 +299,25 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     /// <summary>
+    ///     Re-applies the Filename Preferences display mode (Original / CleanUp / NoFilename)
+    ///     to the already-loaded cards in place. Called after the menu-driven setting change
+    ///     instead of a full library reload: the mode only affects the caption text, so there
+    ///     is no disk work to redo. A full <see cref="ReloadGamesAsync" /> here rescans every
+    ///     system under the loading overlay and resets the view to All Games — on large
+    ///     libraries the toggle looks stuck "loading forever" and kicks the user out of the
+    ///     open system (WPF only rebuilds the current view's buttons). The in-place refresh
+    ///     keeps the system, letter filter, pagination and scroll position untouched.
+    /// </summary>
+    public void RefreshFilenameDisplayTitles()
+    {
+        if (_currentBaseGames.Count == 0) return;
+
+        Log.Debug("Refreshing filename display titles ({FilenameDisplayMode})", _settings.FilenameDisplayMode);
+        foreach (var game in _currentBaseGames)
+            game.DisplayTitle = GetDisplayTitle(game.FilePath);
+    }
+
+    /// <summary>
     ///     Reloads the system snapshot and game counts after the system configuration
     ///     changes (system added/edited/deleted in Easy Mode or Edit System).
     ///     Without this, navigation keeps filtering the stale snapshot: a newly added
