@@ -77,8 +77,10 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 ```
 
-- The Avalonia app is published **self-contained** for `net10.0` (Linux users are not
-  expected to install the .NET runtime); the standalone `Updater` is a self-contained
+- The Avalonia app is published **self-contained single-file** for `net10.0` (Linux users are not
+  expected to install the .NET runtime; the managed assemblies are bundled into the
+  `SimpleLauncher.Avalonia` binary with only the native libraries beside it, mirroring the
+  Windows exes); the standalone `Updater` is a self-contained
   single file so it can run without a runtime too.
 - Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`,
   `tools/FindRomCover/**`, the other architecture's `RetroAchievementsSharp` and `7zz`);
@@ -171,7 +173,7 @@ suites (they include live endpoints and real app launches; run them locally).
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the self-contained Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
+| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the self-contained single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and

@@ -6,15 +6,19 @@ Packages the Linux release artifacts (linux-x64 / linux-arm64) for SimpleLaunche
 .DESCRIPTION
 For every runtime identifier this produces, in the output folder:
 
-  release_{version}_{rid}.zip   the self-contained SimpleLauncher.Avalonia payload
+  release_{version}_{rid}.zip   the self-contained single-file SimpleLauncher.Avalonia payload
   updater_{rid}.zip             the standalone Updater binary (self-contained single file)
 
 The asset names match the ones the app and the updater look up in the release
 (AvaloniaCheckForUpdatesService.ReleaseAssetName / UpdaterAssetName), so the same
 GitHub release serves Windows and Linux without collisions.
 
-The application payload is published self-contained (Linux users are not expected to
-install the .NET runtime) and Windows-only bundled tools are pruned:
+The application payload is published self-contained single-file, mirroring the Windows
+binaries (Linux users are not expected to install the .NET runtime, so the payload carries
+it): the managed assemblies are bundled into the SimpleLauncher.Avalonia executable and
+only the native libraries it needs (Skia/HarfBuzz/SQLite) ship beside it. Content files
+(appsettings.json, images, tools, samples) still ship next to the exe, exactly as on
+Windows. Windows-only bundled tools are pruned:
   * tools/**/*.exe and tools/**/*.dll (Windows binaries)
   * tools/FindRomCover/** (WebView2-based Windows tool)
   * the other architecture's RetroAchievementsSharp and 7-Zip binaries
@@ -333,7 +337,9 @@ foreach ($rid in $RuntimeIdentifiers) {
     Write-Host ""
     Write-Host "=== SimpleLauncher.Avalonia $Version ($rid) ==="
 
-    # Application: self-contained (the Linux payload carries its runtime).
+    # Application: self-contained single file (managed assemblies bundled into the exe;
+    # the native libraries ship beside it — same shape as the Windows binaries). Native
+    # self-extraction stays off so every launch does not pay an extraction penalty.
     Invoke-DotnetPublish @(
         'publish',
         $avaloniaProject,
@@ -341,6 +347,7 @@ foreach ($rid in $RuntimeIdentifiers) {
         '-f', 'net10.0',
         '-r', $rid,
         '--self-contained', 'true',
+        '-p:PublishSingleFile=true',
         '--nologo',
         '-o', $appPublishDir
     )

@@ -16,7 +16,7 @@
 
 1. Download the latest release zip (`release_{version}_{rid}.zip`) for your platform from the [GitHub releases page](https://github.com/purelogiccode/SimpleLauncher/releases): `win-x64` / `win-arm64` (WPF + Avalonia) or `linux-x64` / `linux-arm64` (self-contained Avalonia).
 2. Extract to a folder (e.g. `C:\SimpleLauncher`). Do **not** run from a temporary/Downloads extraction folder.
-3. Run either `SimpleLauncher.exe` (WPF) or `SimpleLauncher.Avalonia.exe` (Avalonia) — both ship in the same zip, next to each other, and share the same content and settings files. Pick whichever you prefer; there is no need to install both. On Linux, extract the `linux-*` zip and run `./SimpleLauncher.Avalonia` — the payload is self-contained and ships `Updater` plus the Linux `tools/` binaries alongside.
+3. Run either `SimpleLauncher.exe` (WPF) or `SimpleLauncher.Avalonia.exe` (Avalonia) — both ship in the same zip, next to each other, and share the same content and settings files. Pick whichever you prefer; there is no need to install both. On Linux, extract the `linux-*` zip and run `./SimpleLauncher.Avalonia` — a self-contained single-file binary; the native libraries, `Updater` and the Linux `tools/` binaries ship alongside.
 
 On first launch the app:
 

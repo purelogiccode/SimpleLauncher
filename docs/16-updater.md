@@ -33,7 +33,9 @@ standalone updater per RID:
   WPF-only installs that never had those natives (which is how the old WPF updater asset name is
   reused for the unified release).
 - On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the self-contained
-  `SimpleLauncher.Avalonia` payload and the self-contained single-file `Updater`; the ZIP entries
+  single-file `SimpleLauncher.Avalonia` payload (managed assemblies bundled into the binary;
+  native libraries such as Skia/HarfBuzz/SQLite ship beside it, same shape as the Windows exes)
+  and the self-contained single-file `Updater`; the ZIP entries
   carry Unix permission bits (0755 for the executables) — see
   [15 — Development](15-development.md#linux-release-packaging-script).
 
