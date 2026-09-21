@@ -171,10 +171,33 @@ public class EasyModeManager : IDisposable
 
         try
         {
-            var serializer = new XmlSerializer(typeof(EasyModeManager));
+            var xmlContent = File.ReadAllText(xmlFilePath);
+            return ParseXmlContent(xmlContent, xmlFile, logErrors);
+        }
+        catch (Exception ex)
+        {
+            // If the file exists but cannot be read, we log it but still return null to allow API fallback.
+            var contextMessage = $"The file '{xmlFile}' could not be loaded. It might be corrupted.";
+            logErrors.Error(ex, contextMessage);
+            return null;
+        }
+    }
 
-            // Open the file
-            using var fileStream = new FileStream(xmlFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+    /// <summary>
+    ///     Deserializes EasyMode XML content with hardening against XML bombs/DTDs.
+    ///     Returns null when the content is empty or malformed.
+    /// </summary>
+    private static EasyModeManager? ParseXmlContent(string xmlContent, string sourceName, ILogger logErrors)
+    {
+        if (string.IsNullOrWhiteSpace(xmlContent))
+        {
+            logErrors.Debug($"EasyMode XML content from '{sourceName}' is empty");
+            return null;
+        }
+
+        try
+        {
+            var serializer = new XmlSerializer(typeof(EasyModeManager));
 
             // Create XmlReaderSettings to disable DTD processing and set XmlResolver to null
             var settings = new XmlReaderSettings
@@ -183,8 +206,8 @@ public class EasyModeManager : IDisposable
                 XmlResolver = null
             };
 
-            // Create XmlReader with the settings
-            using var xmlReader = XmlReader.Create(fileStream, settings);
+            using var stringReader = new StringReader(xmlContent);
+            using var xmlReader = XmlReader.Create(stringReader, settings);
 
             // Validate configuration if not null.
             if (serializer.Deserialize(xmlReader) is EasyModeManager config)
@@ -197,9 +220,7 @@ public class EasyModeManager : IDisposable
         }
         catch (Exception ex)
         {
-            // If the file exists but is corrupt, we log it but still return null to allow API fallback.
-            var contextMessage = $"The file '{xmlFile}' could not be loaded. It might be corrupted.";
-            logErrors.Error(ex, contextMessage);
+            logErrors.Error(ex, $"The EasyMode XML content from '{sourceName}' could not be parsed. It might be corrupted.");
             return null;
         }
     }
@@ -272,7 +293,11 @@ public class EasyModeManager : IDisposable
 
             if (systems == null || systems.Count == 0)
             {
-                _logger.Warning("EasyMode API returned no systems");
+                // Expected data condition (the architecture may simply not be configured
+                // server-side yet). Per repo policy it must not be reported as a bug,
+                // so log at Information (below the Warning+ bug-report sink).
+                _logger.Information("EasyMode API returned no systems for {PlatformConfigurationId}",
+                    platformConfigurationId);
                 return null;
             }
 
@@ -357,19 +382,29 @@ public class EasyModeManager : IDisposable
             // Read the XML content
             var xmlContent = await response.Content.ReadAsStringAsync(cts.Token);
 
-            if (string.IsNullOrWhiteSpace(xmlContent))
+            // Parse the content in memory FIRST. The app directory may not be writable
+            // (e.g. a Linux single-file install under /opt or /usr/local/bin), and a
+            // failed save must not throw away an otherwise usable configuration.
+            var manager = ParseXmlContent(xmlContent, "fallback URL", _logger);
+            if (manager is not { Systems.Count: > 0 }) return null;
+
+            // Persist the downloaded XML to the application directory for future runs.
+            // Best-effort: a read-only install directory only costs us the local cache.
+            try
             {
-                _logger.Debug("Fallback URL returned empty XML content");
-                return null;
+                var xmlFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xmlFile);
+                await File.WriteAllTextAsync(xmlFilePath, xmlContent, cts.Token);
+                _logger.Debug($"Downloaded EasyMode XML saved to: {xmlFilePath}");
+            }
+            catch (Exception ex)
+            {
+                // Expected environment condition (read-only install dir, full disk) with a
+                // working in-memory result. Per repo policy it must not be reported as a bug.
+                _logger.Information(ex,
+                    "EasyMode XML downloaded but could not be cached next to the application; continuing with the in-memory configuration");
             }
 
-            // Save the downloaded XML to the application directory for future use
-            var xmlFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xmlFile);
-            await File.WriteAllTextAsync(xmlFilePath, xmlContent, cts.Token);
-            _logger.Debug($"Downloaded EasyMode XML saved to: {xmlFilePath}");
-
-            // Load the saved XML file
-            return LoadFromXml(_logger);
+            return manager;
         }
         catch (OperationCanceledException)
         {

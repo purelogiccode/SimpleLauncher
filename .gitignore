@@ -428,3 +428,7 @@ LinuxBugs.md
 /ChatGPT Image Sep 18, 2026, 02_04_18 PM.png
 /ChatGPT Image Sep 18, 2026, 02_07_01 PM2.png
 ChatGPT Image*.png
+
+# EasyMode XML files downloaded to the repo root by EasyMode fallback tests (local only)
+/easymode_linux_x64.xml
+/easymode_linux_arm64.xml
