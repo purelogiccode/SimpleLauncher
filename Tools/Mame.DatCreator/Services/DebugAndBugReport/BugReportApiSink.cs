@@ -24,6 +24,16 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     private const string ApiKeyEncoded =
         "YUdwb04zbDFOblExTm5SNWNqVTBNRzg1ZFRnM05qYzJOelp5TlRZM05EVXpORFExTXpJek5USTJOR00zTldJMmREZG5aMmRvWjJjM05uUnlaalUyTkdVPQ==";
 
+    /// <summary>
+    ///     Environment variable that disables bug report submission when set to "1". Automated tests set it so test
+    ///     runs — including application processes they launch — never contact the live bug report API.
+    /// </summary>
+    public const string DisableBugReportsEnvironmentVariable = "SIMPLELAUNCHER_BUGREPORT_DISABLE";
+
+    private static readonly bool BugReportsDisabled =
+        string.Equals(Environment.GetEnvironmentVariable(DisableBugReportsEnvironmentVariable), "1",
+            StringComparison.Ordinal);
+
     private static readonly string ApiKey = DecodeApiKey();
 
     private readonly Channel<LogEvent> _channel = Channel.CreateBounded<LogEvent>(new BoundedChannelOptions(100)
@@ -100,6 +110,8 @@ public class BugReportApiSink : ILogEventSink, IDisposable
 
     private async Task SendReportAsync(LogEvent logEvent)
     {
+        if (BugReportsDisabled) return;
+
         var report = BuildReport(logEvent);
 
         var errorLogPath = Path.Combine(_logFolder, "error.log");

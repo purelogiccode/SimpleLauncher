@@ -45,7 +45,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["famicom disk system"] = new RaSystemInfo(81,
         [
             "famicom disk system", "fds", "nintendo famicom disk system", "nintendo fds", "Nintendo Family Computer",
-            "Nintendo Family Computer Disk System", "Nintendo - Family Computer", "Nintendo Famicom Disc System"
+            "Nintendo Family Computer Disk System", "Nintendo - Family Computer", "Nintendo Famicom Disc System", "Nintendo FC"
         ]),
         ["wii"] = new RaSystemInfo(19, ["wii", "nintendo wii", "Nintendo Wiiware", "Wiiware"]),
         ["wii u"] = new RaSystemInfo(20,
@@ -213,7 +213,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "Videoton TVC",
             "Tiger GameCom", "Tiger Game.com", "Game.com", "Systema1", "Tomy Pyuta",
             "C64 - Cartridge [EasyFlash Collection]",
-            "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000"
+            "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000", "TestDOS"
         ]),
         ["Xbox"] = new RaSystemInfo(22, ["xbox", "x-box", "Microsoft Xbox"]),
         ["DOS"] = new RaSystemInfo(26, ["dos", "microsoft dos", "MS DOS", "MSDOS", "MS-DOS"]),

@@ -803,9 +803,16 @@ public partial class App : IDisposable
             {
                 contextMessage =
                     $"[RenderingEngineFailure] {contextMessage} | HResult=0x88980406 (UCEERR_RENDERTHREADFAILURE). Commonly triggered by GPU driver issues or WPF per-pixel transparency.";
-            }
 
-            Log.Error(ex, contextMessage);
+                // Expected external condition (GPU driver crash, remote-desktop session,
+                // VM without a working renderer): the app cannot recover from or fix it,
+                // so it is not an application bug — keep it out of the bug report service.
+                Log.Information(ex, contextMessage);
+            }
+            else
+            {
+                Log.Error(ex, contextMessage);
+            }
         }
         catch
         {

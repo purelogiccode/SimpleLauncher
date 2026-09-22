@@ -208,7 +208,7 @@ public class PlayHistoryManager
                     }
                     catch (Exception fallbackEx)
                     {
-                        _logger?.Debug("FallbackToLocalAppData failed: {Message}", fallbackEx.Message);
+                        _logger?.Debug(fallbackEx, "FallbackToLocalAppData failed:");
                     }
                 }
 
@@ -330,7 +330,7 @@ public class PlayHistoryManager
                     }
                     catch (Exception fallbackEx)
                     {
-                        _logger?.Debug("FallbackToLocalAppData failed: {Message}", fallbackEx.Message);
+                        _logger?.Debug(fallbackEx, "FallbackToLocalAppData failed:");
                     }
                 }
 

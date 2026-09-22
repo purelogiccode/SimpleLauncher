@@ -1617,20 +1617,17 @@ public partial class GameLauncherService : ILauncherService
              emulatorManager.EmulatorLocation.Contains("retroarch", StringComparison.OrdinalIgnoreCase)) &&
             (output.ToString().Contains("Not Found", StringComparison.OrdinalIgnoreCase) ||
              output.ToString().Contains("WRONG LENGTH", StringComparison.OrdinalIgnoreCase) ||
+             output.ToString().Contains("couldn't find ECD", StringComparison.OrdinalIgnoreCase) ||
              output.ToString().Contains("Required files are missing", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME ROM set error");
-            _logger.Warning(contextMessage);
+            _logger.Information(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameRomSetErrorMessageBoxAsync();
-                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(
-                    PathHelper.ResolveLogFilePath(_configuration));
-
-                // Offer AI parameter fix
-                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
-                    _parameterResolverService, _configuration, _serviceProvider, _logger);
+                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary, _parameterResolverService, _configuration, _serviceProvider, _logger);
             }
 
             return;
@@ -1645,17 +1642,13 @@ public partial class GameLauncherService : ILauncherService
              output.ToString().Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unknown system error");
-            _logger.Warning(contextMessage);
+            _logger.Information(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameUnknownSystemErrorMessageBoxAsync();
-                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(
-                    PathHelper.ResolveLogFilePath(_configuration));
-
-                // Offer AI parameter fix
-                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
-                    _parameterResolverService, _configuration, _serviceProvider, _logger);
+                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary, _parameterResolverService, _configuration, _serviceProvider, _logger);
             }
 
             return;
@@ -1729,7 +1722,7 @@ public partial class GameLauncherService : ILauncherService
                              $"Calling parameters: {psi.Arguments}\n" +
                              $"Emulator output: {output}\n" +
                              $"Emulator error: {error}\n";
-        _logger.Warning(contextMessage);
+        _logger.Information(contextMessage);
 
         return Task.CompletedTask;
     }
@@ -1748,7 +1741,7 @@ public partial class GameLauncherService : ILauncherService
                              $"Calling parameters: {psi.Arguments}\n" +
                              $"Emulator output: {output}\n" +
                              $"Emulator error: {error}\n";
-        _logger.Warning(contextMessage);
+        _logger.Information(contextMessage);
 
         return Task.CompletedTask;
     }

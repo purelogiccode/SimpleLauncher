@@ -1416,10 +1416,9 @@ public class LauncherService : ILauncherService
                 return;
             // DEP violation — log only, no user notification
             case DepViolation:
-                Log.Warning(
-                    "Data Execution Prevention (DEP) violation error running the emulator.\n" +
-                    "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                    "Stdout: {Stdout}\nStderr: {Stderr}",
+                Log.Information("Data Execution Prevention (DEP) violation error running the emulator.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}",
                     exitCode, emulatorPath, arguments, stdout, stderr);
                 return;
         }
@@ -1493,18 +1492,16 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("Required files are missing", StringComparison.OrdinalIgnoreCase):
             {
                 Log.Debug("MAME ROM set error detected");
-                Log.Warning(
-                    "MAME ROM set error.\n" +
-                    "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                    "Stdout: {Stdout}\nStderr: {Stderr}",
+                Log.Information("MAME ROM set error.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}",
                     exitCode, emulatorPath, arguments, stdout, stderr);
 
                 if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
                 {
                     await _messageBox.MameRomSetErrorMessageBoxAsync();
                     await _messageBox.WouldYouLikeToOpenTheLogMessageBoxAsync(LogFilePath());
-                    await _askAiToFixParameters.ExecuteAsync(
-                        selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
                 }
 
                 return;
@@ -1515,18 +1512,15 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase):
             {
                 Log.Debug("MAME Unknown system error detected");
-                Log.Warning(
-                    "MAME Unknown system error.\n" +
-                    "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                    "Stdout: {Stdout}\nStderr: {Stderr}",
-                    exitCode, emulatorPath, arguments, stdout, stderr);
+                Log.Information("MAME Unknown system error.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}", exitCode, emulatorPath, arguments, stdout, stderr);
 
                 if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
                 {
                     await _messageBox.MameUnknownSystemErrorMessageBoxAsync();
                     await _messageBox.WouldYouLikeToOpenTheLogMessageBoxAsync(LogFilePath());
-                    await _askAiToFixParameters.ExecuteAsync(
-                        selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
                 }
 
                 return;
@@ -1792,7 +1786,7 @@ public class LauncherService : ILauncherService
         catch (Exception ex)
         {
             Log.Error(ex, "Error checking if protocol '{Protocol}' is registered", protocol);
-            Log.Debug("[IsProtocolRegistered] Error checking protocol '{Protocol}': {Message}", protocol, ex.Message);
+            Log.Debug(ex, "[IsProtocolRegistered] Error checking protocol '{Protocol}':", protocol);
             return false;
         }
     }

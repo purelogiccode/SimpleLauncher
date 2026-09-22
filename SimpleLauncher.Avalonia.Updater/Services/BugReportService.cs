@@ -15,6 +15,16 @@ internal static class BugReportService
     private const string ApiKeyEncoded =
         "YUdwb04zbDFOblExTm5SNWNqVTBNRzg1ZFRnM05qYzJOelp5TlRZM05EVXpORFExTXpJek5USTJOR00zTldJMmREZG5aMmRvWjJjM05uUnlaalUyTkdVPQ==";
 
+    /// <summary>
+    ///     Environment variable that disables bug report submission when set to "1". Automated tests set it so test
+    ///     runs — including application processes they launch — never contact the live bug report API.
+    /// </summary>
+    public const string DisableBugReportsEnvironmentVariable = "SIMPLELAUNCHER_BUGREPORT_DISABLE";
+
+    private static readonly bool BugReportsDisabled =
+        string.Equals(Environment.GetEnvironmentVariable(DisableBugReportsEnvironmentVariable), "1",
+            StringComparison.Ordinal);
+
     private static readonly string ApiKey = DecodeApiKey();
 
     private static readonly string LogFilePath =
@@ -43,6 +53,8 @@ internal static class BugReportService
     /// <param name="additionalInfo">Additional context information</param>
     public static async Task ReportBugAsync(Exception exception, string? additionalInfo = null)
     {
+        if (BugReportsDisabled) return;
+
         // Prevent recursive bug reporting using thread-safe Interlocked.CompareExchange
         if (Interlocked.CompareExchange(ref _isReporting, 1, 0) == 1) return;
 
