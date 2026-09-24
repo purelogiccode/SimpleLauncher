@@ -1874,6 +1874,6 @@ public partial class GameLauncherService : ILauncherService
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",
         Justification = "Capturing group is needed to extract the URL")]
-    [GeneratedRegex(@"URL=(.+)", RegexOptions.IgnoreCase, "pt-BR")]
+    [GeneratedRegex(@"URL=(.+)", RegexOptions.IgnoreCase, 1000, "pt-BR")]
     private static partial Regex MyRegex();
 }

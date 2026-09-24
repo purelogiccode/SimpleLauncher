@@ -125,6 +125,6 @@ public partial class ScanRockstarGames : IGamePlatformScanner
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",
         Justification = "Capturing group is needed to extract the Rockstar title id")]
-    [GeneratedRegex(@"(?:Launcher|uninstall)\.exe.+uninstall=(.+)$", RegexOptions.IgnoreCase, "pt-BR")]
+    [GeneratedRegex(@"(?:Launcher|uninstall)\.exe.+uninstall=(.+)$", RegexOptions.IgnoreCase, 1000, "pt-BR")]
     private static partial Regex MyRegex();
 }

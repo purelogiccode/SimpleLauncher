@@ -164,6 +164,7 @@ packaging. Bump all of them together.
 - `Nullable` enabled everywhere; `LangVersion 14`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
 - `NoWarn` in app: `NU1903;CS0436`.
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).
+- **Every regex must specify a match timeout** (Meziantou `MA0009`): `[GeneratedRegex(pattern, options, 1000)]` (add a culture before the timeout only when needed: `[GeneratedRegex(pattern, options, 1000, "pt-BR")]`), and pass a `TimeSpan`/milliseconds to `new Regex(...)` and static `Regex.Match/IsMatch/Replace/Split/Matches` calls. `Regex.Escape`/`Unescape` need no timeout.
 - Conventions observed in the codebase: services take Serilog `ILogger`; UI services use the host-interface pattern (`Initialize(host)`) instead of receiving windows; ViewModels use CommunityToolkit.Mvvm.
 
 ## Continuous integration

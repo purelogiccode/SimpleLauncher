@@ -560,6 +560,6 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",
         Justification = "Capturing group is needed to extract the SearchPath1 value")]
-    [GeneratedRegex(@"^SearchPath1\s*=\s*(.+)$", RegexOptions.IgnoreCase, "pt-BR")]
+    [GeneratedRegex(@"^SearchPath1\s*=\s*(.+)$", RegexOptions.IgnoreCase, 1000, "pt-BR")]
     private static partial Regex MyRegex();
 }
