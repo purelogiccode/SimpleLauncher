@@ -68,7 +68,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 
 | Class | Purpose |
 |---|---|
-| `DownloadService\DownloadManager` | HTTP downloads with progress, retry + exponential backoff, disk-space check, cancellation |
+| `DownloadService\DownloadManager` | HTTP downloads with progress, retry + exponential backoff, disk-space check, cancellation; single-file emulator downloads (`.AppImage`/`.run`/`.sh`) are installed directly with Unix execute bits instead of being extracted (bug #67537) |
 | `DownloadService\FormatFileSizeService` (+ `FormatFileSize`) | Human-readable file sizes |
 | `EasyMode\EasyModeManager` | Easy Mode manifest: systems → emulator/core/image-pack download links (+ cache) |
 

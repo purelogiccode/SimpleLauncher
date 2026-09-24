@@ -84,7 +84,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 
 `SimpleLauncher.Core\Services\ExtractFiles\ExtractionService.cs`
 
-- `ExtractToTempAndGetLaunchFileAsync` (`:41`), `ExtractToFolderAsync` (`:70`); only 7z/zip/rar (`:126`); **file-lock retry 10×1 s** (`:100-123`).
+- `ExtractToTempAndGetLaunchFileAsync` (`:41`), `ExtractToFolderAsync` (`:70`); only 7z/zip/rar (`IsSupportedArchivePath`), unsupported formats are an expected input condition logged at Information + user box (bug #67537); **file-lock retry 10×1 s** (`:100-123`).
 - **`.extraction_in_progress` marker** written before extract, removed on success. On failure only the marker plus the files written by that run are deleted — destination folders are never wiped (CORE-01), and tracked files are removed before the marker.
 - **Disk-space check:** estimated size × 1.2 vs `DriveInfo.AvailableFreeSpace` → `DiskSpaceErrorMessageBoxAsync` + IOException (`:165-196`).
 - **Path-traversal guard:** every entry must resolve under the destination root (`:199-219`, `:364-382`); the comparison is Ordinal on case-sensitive filesystems, and `DIR\FILE.BIN` entry names are normalized to the platform separator before combining (LB-16); random temp names (`:351-354`).

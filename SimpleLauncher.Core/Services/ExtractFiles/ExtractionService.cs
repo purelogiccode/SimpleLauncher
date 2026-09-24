@@ -123,14 +123,15 @@ public class ExtractionService : IExtractionService
         }
 
         var extension = Path.GetExtension(archivePath).ToLowerInvariant();
-        if (!string.Equals(extension, ".7z", StringComparison.Ordinal) &&
-            !string.Equals(extension, ".zip", StringComparison.Ordinal) &&
-            !string.Equals(extension, ".rar", StringComparison.Ordinal))
+        if (!IsSupportedArchivePath(archivePath))
         {
             // Notify developer
+            // Expected user-error condition (unsupported input): per repo policy it must not be
+            // reported as a bug, so log it at Information, below the bug-report sink threshold
+            // (bug #67537 reported this as a Warning).
             var contextMessage = $"Only 7z, ZIP, and RAR files are supported by this extraction method.\n" +
                                  $"File type: {extension}";
-            _logger.Warning(contextMessage);
+            _logger.Information(contextMessage);
 
             // Notify user
             await _messageBoxLibrary.FileNeedToBeCompressedMessageBoxAsync();
@@ -367,10 +368,14 @@ public class ExtractionService : IExtractionService
         }
 
         var extension = Path.GetExtension(archivePath).ToLowerInvariant();
-        if (!string.Equals(extension, ".7z", StringComparison.Ordinal) &&
-            !string.Equals(extension, ".zip", StringComparison.Ordinal) &&
-            !string.Equals(extension, ".rar", StringComparison.Ordinal))
+        if (!IsSupportedArchivePath(archivePath))
         {
+            // Expected user-error condition (unsupported input): log at Information so it is
+            // never picked up by the bug-report service (bug #67537); the user already gets
+            // a message box explaining the supported formats.
+            _logger.Information(
+                $"Only 7z, ZIP, and RAR files are supported by this extraction method. File type: {extension}");
+
             // Notify user
             await _messageBoxLibrary.FileNeedToBeCompressedMessageBoxAsync();
 
@@ -496,6 +501,19 @@ public class ExtractionService : IExtractionService
             return architecture == Architecture.Arm64 ? "7za_arm64.exe" : "7za.exe";
 
         return architecture == Architecture.Arm64 ? "7zz_arm64" : "7zz";
+    }
+
+    /// <summary>
+    ///     Returns true when the path carries an archive extension this service can extract
+    ///     (7z, ZIP, RAR). Everything else — e.g. a Linux .AppImage emulator download — must
+    ///     not be routed through the extraction methods (bug #67537).
+    /// </summary>
+    internal static bool IsSupportedArchivePath(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return extension.Equals(".7z", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".zip", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".rar", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

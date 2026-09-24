@@ -1,6 +1,8 @@
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.CleanAndDeleteFiles;
+using SimpleLauncher.Core.Services.ExtractFiles;
 
 namespace SimpleLauncher.Core.Services.DownloadService;
 
@@ -423,7 +425,8 @@ public class DownloadManager : IDisposable
 
 
     /// <summary>
-    ///     Extracts a compressed file to the specified destination.
+    ///     Extracts a compressed file to the specified destination, or installs a single-file
+    ///     download (Linux .AppImage / .run / .sh emulators) by copying it into the destination.
     /// </summary>
     /// <param name="filePath">The path to the compressed file.</param>
     /// <param name="destinationPath">The destination path to extract to.</param>
@@ -442,7 +445,12 @@ public class DownloadManager : IDisposable
                 });
             });
 
-            var result = await _extractionService.ExtractToFolderAsync(filePath, destinationPath);
+            // Single-file emulator downloads (e.g. the .AppImage links used by the Linux Easy
+            // Mode manifest) are not archives: install them directly instead of failing the
+            // extraction and reporting a bug (bug #67537).
+            var result = IsSingleFileExecutableDownload(filePath)
+                ? await InstallSingleFileAsync(filePath, destinationPath)
+                : await _extractionService.ExtractToFolderAsync(filePath, destinationPath);
 
             if (result)
             {
@@ -483,6 +491,79 @@ public class DownloadManager : IDisposable
             // Notify developer
             _logger.Error(ex, $"Error extracting file: {filePath} to {destinationPath}");
 
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Returns true for downloaded files that are single-file executables rather than
+    ///     archives: Linux AppImages and .run/.sh wrappers, which are installed by copying
+    ///     them into the destination folder (bug #67537).
+    /// </summary>
+    internal static bool IsSingleFileExecutableDownload(string filePath)
+    {
+        var extension = Path.GetExtension(filePath);
+        return extension.Equals(".appimage", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".run", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".sh", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Installs a single-file download (e.g. a Linux .AppImage emulator) by copying it into
+    ///     the destination folder and, on Unix, adding the execute bits so the emulator can be
+    ///     launched straight away (bug #67537).
+    /// </summary>
+    private async Task<bool> InstallSingleFileAsync(string filePath, string destinationPath)
+    {
+        var resolvedDestinationPath = PathHelper.ResolveRelativeToAppDirectory(destinationPath);
+        if (string.IsNullOrEmpty(resolvedDestinationPath))
+        {
+            // Notify developer
+            _logger.Error(
+                $"Error installing the downloaded file: the destination path could not be resolved: {destinationPath}");
+            return false;
+        }
+
+        var fileName = Path.GetFileName(filePath);
+        if (string.IsNullOrEmpty(fileName))
+        {
+            // Notify developer
+            _logger.Error($"Error installing the downloaded file: the file name could not be determined: {filePath}");
+            return false;
+        }
+
+        var destinationFilePath = Path.Combine(resolvedDestinationPath, fileName);
+
+        try
+        {
+            Directory.CreateDirectory(resolvedDestinationPath);
+
+            // Copy rather than move: the temp file lives in the shared SimpleLauncher temp
+            // folder and a cross-device rename fails on Unix when /tmp is a different filesystem.
+            await Task.Run(() => File.Copy(filePath, destinationFilePath, true));
+
+            if (!OperatingSystem.IsWindows())
+            {
+                // AppImages and .run/.sh wrappers are launched directly: without the execute
+                // bits Process.Start fails with EACCES (LB-18).
+                try
+                {
+                    ExtractionService.EnsureExecuteBits(destinationFilePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug(
+                        $"[DownloadManager] Could not set the execute bits on {destinationFilePath}: {ex.Message}");
+                }
+            }
+
+            _logger.Information($"Downloaded file installed directly (not an archive): {destinationFilePath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Notify developer
+            _logger.Error(ex, $"Error installing the downloaded file: {filePath} to {destinationPath}");
             return false;
         }
     }

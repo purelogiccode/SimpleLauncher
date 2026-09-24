@@ -22,6 +22,21 @@ public class ExtractionServiceTests
         Assert.Equal(expected, ExtractionService.GetSevenZipExecutableName(architecture, isWindows));
     }
 
+    [Theory]
+    [InlineData("game.zip", true)]
+    [InlineData("GAME.ZIP", true)]
+    [InlineData("game.7z", true)]
+    [InlineData("game.rar", true)]
+    [InlineData("azahar.AppImage", false)]
+    [InlineData("dosbox-staging-linux-x86_64-v0.83.0.tar.xz", false)]
+    [InlineData("retroarch", false)]
+    public void IsSupportedArchivePath_ClassifiesArchiveExtensions(string fileName, bool expected)
+    {
+        // Bug #67537: non-archive downloads (Linux AppImages) must not be routed into
+        // the extraction methods.
+        Assert.Equal(expected, ExtractionService.IsSupportedArchivePath(fileName));
+    }
+
     [Fact]
     public async Task ExtractToTempAndGetLaunchFileAsync_FindsUpperCaseNamesForLowerCaseFormats()
     {
