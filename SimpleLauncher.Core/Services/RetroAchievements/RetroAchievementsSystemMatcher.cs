@@ -57,7 +57,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["genesis/mega drive"] = new RaSystemInfo(1,
         [
             "genesis/mega drive", "genesis", "mega drive", "megadrive", "sega genesis", "sega megadrive",
-            "sega mega drive"
+            "sega mega drive", "Sega Mega Drive (Sega Genesis)"
         ]),
         ["sega cd"] = new RaSystemInfo(9,
         [
