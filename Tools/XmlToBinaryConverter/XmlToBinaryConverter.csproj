@@ -20,13 +20,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.274">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.290">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MessagePack" Version="3.1.9" />
-        <PackageReference Include="MessagePack.Annotations" Version="3.1.9" />
-        <PackageReference Include="MessagePackAnalyzer" Version="3.1.9">
+        <PackageReference Include="MessagePack" Version="3.1.10" />
+        <PackageReference Include="MessagePack.Annotations" Version="3.1.10" />
+        <PackageReference Include="MessagePackAnalyzer" Version="3.1.10">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

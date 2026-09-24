@@ -30,11 +30,11 @@
         <PackageReference Include="CHDSharp" Version="1.4.3" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.274">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.290">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MessagePack" Version="3.1.9" />
+        <PackageReference Include="MessagePack" Version="3.1.10" />
         <PackageReference Include="NAudio.Alsa" Version="3.1.0" />
         <PackageReference Include="NAudio.SoundFile" Version="3.1.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401">
