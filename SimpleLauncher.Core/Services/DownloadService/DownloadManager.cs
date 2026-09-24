@@ -252,9 +252,9 @@ public class DownloadManager : IDisposable
         {
             await _downloadGate.WaitAsync();
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException ex)
         {
-            throw new ObjectDisposedException(nameof(DownloadManager));
+            throw new ObjectDisposedException(nameof(DownloadManager), ex);
         }
 
         try
