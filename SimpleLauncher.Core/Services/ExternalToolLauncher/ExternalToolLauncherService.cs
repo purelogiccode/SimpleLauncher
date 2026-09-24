@@ -250,6 +250,15 @@ public class ExternalToolLauncherService : IExternalToolLauncher
             {
             }
         }
+        catch (Win32Exception ex) when (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(ex))
+        {
+            // Expected user-environment condition (OS application control policy blocks the tool):
+            // not a bug, keep it out of the bug report service (bug #67359). Must be checked before
+            // the generic code-5 branch below, which would otherwise report it as a user cancel.
+            _logger.Information(ex,
+                $"Application control policy blocked launching external tool: {toolPath}");
+            await _messageBoxLibrary.ApplicationControlPolicyBlockedMessageBoxAsync();
+        }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223 || ex.NativeErrorCode == 5 ||
                                         (uint)ex.HResult == 0x800704C7)
         {

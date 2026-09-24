@@ -226,6 +226,14 @@ public partial class GameLauncherService : ILauncherService
             {
                 // User canceled the operation (e.g., clicked Cancel on UAC prompt) - do nothing, don't log
             }
+            else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex))
+            {
+                // Expected user-error condition (the batch file is not a valid application for this
+                // OS platform): not a bug, keep it out of the bug report service.
+                _logger.Information(ex, "Invalid executable format: {BatchFile}", resolvedFilePath);
+                await _messageBoxLibrary.InvalidExecutableFileMessageBoxAsync();
+                _updateStatusBar.UpdateContent($"Error: {Path.GetFileName(resolvedFilePath)} failed");
+            }
             else
             {
                 var errorDetail =
@@ -371,6 +379,13 @@ public partial class GameLauncherService : ILauncherService
             else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
             {
                 // User canceled the operation (e.g., clicked Cancel on UAC prompt) - do nothing, don't log
+            }
+            else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex))
+            {
+                // Expected user-error condition (the shortcut target is not a valid application for
+                // this OS platform): not a bug, keep it out of the bug report service.
+                _logger.Information(ex, "Invalid executable format: {ShortcutFile}", resolvedFilePath);
+                await _messageBoxLibrary.InvalidExecutableFileMessageBoxAsync();
             }
             else
             {
@@ -1106,6 +1121,16 @@ public partial class GameLauncherService : ILauncherService
                     else if (CheckApplicationControlPolicyService.IsOperationCanceledByUser(ex))
                     {
                         // User canceled the operation (e.g., clicked Cancel on UAC prompt) - do nothing, don't log
+                    }
+                    else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(ex))
+                    {
+                        // Expected user-error condition (the emulator is not a valid application for this OS
+                        // platform, e.g. a non-Win32 or wrong-architecture binary): not a bug, keep it out of
+                        // the bug report service, and don't offer the AI parameter fix.
+                        _logger.Information(ex,
+                            "Invalid executable format: the emulator is not a valid application for this OS platform. Emulator: {EmulatorPath}",
+                            psi.FileName);
+                        await _messageBoxLibrary.InvalidExecutableFileMessageBoxAsync();
                     }
                     else
                     {

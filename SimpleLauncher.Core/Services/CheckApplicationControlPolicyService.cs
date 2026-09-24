@@ -15,17 +15,23 @@ public static class CheckApplicationControlPolicyService
     /// <returns>True if the exception indicates an application control policy block, false otherwise.</returns>
     public static bool IsApplicationControlPolicyBlocked(Exception ex)
     {
-        if (ex is Win32Exception win32Ex)
-        {
-            // NativeErrorCode 5 (Access Denied) is a common manifestation of AppLocker/WDAC.
-            // The message content is a more specific indicator.
-            var message = win32Ex.Message;
-            return win32Ex.NativeErrorCode == 5 &&
-                   (message.Contains("Control de aplicaciones bloqueó", StringComparison.OrdinalIgnoreCase) ||
-                    message.Contains("Application Control policy blocked", StringComparison.OrdinalIgnoreCase));
-        }
+        if (ex is not Win32Exception win32Ex) return false;
 
-        return false;
+        // 4551 (ERROR_BLOCKED_BY_POLICY) is what Windows application control returns when a
+        // policy blocks the file (observed with AppLocker/WDAC on Windows 10/11). Unlike
+        // code 5 it is not overloaded, so it needs no message check and is locale-independent
+        // (bug #67359: French Windows reported 4551 with "Une stratégie de contrôle
+        // d'application a bloqué ce fichier.").
+        if (win32Ex.NativeErrorCode == 4551) return true;
+
+        // NativeErrorCode 5 (Access Denied) is a common manifestation of AppLocker/WDAC.
+        // The message content is a more specific indicator; match the known OS wordings
+        // (English, Spanish, French) case-insensitively.
+        var message = win32Ex.Message;
+        return win32Ex.NativeErrorCode == 5 &&
+               (message.Contains("Application Control policy blocked", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("Control de aplicaciones bloqueó", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("contrôle d'application a bloqué", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

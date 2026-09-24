@@ -43,6 +43,38 @@ public class CheckApplicationControlPolicyTests
     }
 
     /// <summary>
+    ///     Verifies that Win32 error code 4551 (ERROR_BLOCKED_BY_POLICY) marks the file as policy-blocked
+    ///     without relying on the (localized) message (bug #67359).
+    /// </summary>
+    [Fact]
+    public void IsApplicationControlPolicyBlockedWithWin32Exception4551ReturnsTrue()
+    {
+        var ex = new Win32Exception(4551, "Une stratégie de contrôle d'application a bloqué ce fichier.");
+        Assert.True(CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(ex));
+    }
+
+    /// <summary>
+    ///     Verifies that a Win32 error code 5 with a French policy-blocked message returns true.
+    /// </summary>
+    [Fact]
+    public void IsApplicationControlPolicyBlockedWithWin32AccessDeniedAndFrenchMessageReturnsTrue()
+    {
+        var ex = new Win32Exception(5, "Une stratégie de contrôle d'application a bloqué ce fichier.");
+        Assert.True(CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(ex));
+    }
+
+    /// <summary>
+    ///     Verifies that the app's own French wording ("politique" instead of the OS "stratégie")
+    ///     also returns true for a Win32 error code 5.
+    /// </summary>
+    [Fact]
+    public void IsApplicationControlPolicyBlockedWithWin32AccessDeniedAndFrenchPolitiqueMessageReturnsTrue()
+    {
+        var ex = new Win32Exception(5, "Une politique de contrôle d'application a bloqué ce fichier ou ce lien.");
+        Assert.True(CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(ex));
+    }
+
+    /// <summary>
     ///     Verifies that a Win32 error code 5 with an unrelated message returns false.
     /// </summary>
     [Fact]

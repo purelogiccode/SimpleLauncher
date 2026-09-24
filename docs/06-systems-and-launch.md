@@ -54,15 +54,16 @@ Key points (with citations):
 
 ### Elevation & AppLocker detection
 
-`CheckApplicationControlPolicyService` (Core, `:15-51`): Win32 error classification —
+`CheckApplicationControlPolicyService` (Core, `:16-35`): Win32 error classification —
 
 | NativeErrorCode | Meaning | UI |
 |---|---|---|
-| 5 + AppLocker/WDAC message | Blocked by policy | `ApplicationControlPolicyBlockedMessageBoxAsync` |
+| 4551 (`ERROR_BLOCKED_BY_POLICY`) | Blocked by policy (locale-independent, AppLocker/WDAC) | `ApplicationControlPolicyBlockedMessageBoxAsync` |
+| 5 + AppLocker/WDAC message (EN/ES/FR) | Blocked by policy | `ApplicationControlPolicyBlockedMessageBoxAsync` |
 | 740 | Requires elevation | `ElevationRequiredMessageBoxAsync` |
 | 1223 | User canceled UAC | silent |
 
-Used in batch/shortcut/exe/emulator launch paths (`:471-483`, `:622-632`, `:753-765`, `:1210-1223`).
+Used in batch/shortcut/exe/emulator launch paths and in the Core external-tool launcher.
 
 ## Launch strategies (8)
 

@@ -1095,10 +1095,28 @@ public class LauncherService : ILauncherService
             {
                 if (ex is Win32Exception win32Ex)
                 {
+                    // Expected user-environment/user-error Win32 conditions must not fall
+                    // through to the generic Error log below — that reported them as bugs.
                     if (CheckApplicationControlPolicyService.IsApplicationControlPolicyBlocked(win32Ex))
+                    {
                         Log.Information(win32Ex, "Application control policy blocked launching batch file");
-                    else if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                        error = ex;
+                        return;
+                    }
+
+                    if (CheckApplicationControlPolicyService.IsElevationRequired(win32Ex))
+                    {
                         Log.Information(win32Ex, "Elevation required to launch batch file");
+                        error = ex;
+                        return;
+                    }
+
+                    if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
+                    {
+                        Log.Information(win32Ex, "Invalid executable format: {Path}", resolvedFilePath);
+                        error = ex;
+                        return;
+                    }
                 }
 
                 Log.Error(ex, "Failed to launch {Path}", resolvedFilePath);
