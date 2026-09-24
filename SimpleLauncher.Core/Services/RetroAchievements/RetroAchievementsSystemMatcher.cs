@@ -91,7 +91,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "Sony Playstation2"
         ]),
         ["playstation portable"] =
-            new RaSystemInfo(41, ["playstation portable", "psp", "Sony PSP", "SONY PlayStation Portable"]),
+            new RaSystemInfo(41, ["playstation portable", "psp", "Sony PSP", "SONY PlayStation Portable", "PSP GOLD"]),
 
         // NEC systems
         ["pc engine/turbografx-16"] = new RaSystemInfo(8,
@@ -213,7 +213,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "Videoton TVC",
             "Tiger GameCom", "Tiger Game.com", "Game.com", "Systema1", "Tomy Pyuta",
             "C64 - Cartridge [EasyFlash Collection]",
-            "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000", "TestDOS"
+            "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000", "TestDOS", "No system selected", "Aucun système sélectionné"
         ]),
         ["Xbox"] = new RaSystemInfo(22, ["xbox", "x-box", "Microsoft Xbox"]),
         ["DOS"] = new RaSystemInfo(26, ["dos", "microsoft dos", "MS DOS", "MSDOS", "MS-DOS"]),
