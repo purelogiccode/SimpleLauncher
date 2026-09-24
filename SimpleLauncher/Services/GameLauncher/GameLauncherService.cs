@@ -1686,17 +1686,13 @@ public partial class GameLauncherService : ILauncherService
              output.ToString().Contains("No such file or directory", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unable to load image error");
-            _logger.Warning(contextMessage);
+            _logger.Information(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameUnableToLoadImageMessageBoxAsync();
-                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(
-                    PathHelper.ResolveLogFilePath(_configuration));
-
-                // Offer AI parameter fix
-                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
-                    _parameterResolverService, _configuration, _serviceProvider, _logger);
+                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary, _parameterResolverService, _configuration, _serviceProvider, _logger);
             }
 
             return;

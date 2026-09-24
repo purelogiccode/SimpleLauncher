@@ -1549,18 +1549,16 @@ public class LauncherService : ILauncherService
                 combinedOutput.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase):
             {
                 Log.Debug("MAME Unable to load image error detected");
-                Log.Warning(
-                    "MAME Unable to load image error.\n" +
-                    "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                    "Stdout: {Stdout}\nStderr: {Stderr}",
+                Log.Information("MAME Unable to load image error.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}",
                     exitCode, emulatorPath, arguments, stdout, stderr);
 
                 if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
                 {
                     await _messageBox.MameUnableToLoadImageMessageBoxAsync();
                     await _messageBox.WouldYouLikeToOpenTheLogMessageBoxAsync(LogFilePath());
-                    await _askAiToFixParameters.ExecuteAsync(
-                        selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
                 }
 
                 return;
