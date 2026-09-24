@@ -193,6 +193,14 @@ internal class UpdateService
                 await _zipService.ExtractFromStreamAsync(updateFileStream, cancellationToken);
                 ExtractionCompleted?.Invoke(this, EventArgs.Empty);
             }
+            // A file that stays locked by another process (the application not fully exited,
+            // an antivirus scan, a second instance) is an expected user-environment condition
+            // (bugs #67442-67445): log at Information so the bug-report sink never sees it.
+            catch (FileLockedException ex)
+            {
+                Log.Information(ex, "Update files are locked by another process");
+                throw;
+            }
             // InvalidOperationException is excluded here because it typically indicates the UI (Dispatcher)
             // has been shut down (e.g., window closed), which is a normal application lifecycle event
             // during update and not a bug that needs reporting. Other exceptions during extraction
@@ -222,6 +230,25 @@ internal class UpdateService
         }
         catch (Exception ex)
         {
+            // A file that stays locked by another process is an expected user-environment
+            // condition — report it to the user with actionable guidance instead of a bug.
+            if (ex is FileLockedException)
+            {
+                Log.Information(ex, "Automatic update failed: a file is still in use by another process");
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>(
+                        "The update could not be installed because a file is still in use by another process."));
+                return new UpdateResult
+                {
+                    Success = false,
+                    ErrorMessage =
+                        "The update could not be installed because a file is still in use by another process.\n\n" +
+                        "Close Simple Launcher (and any antivirus scan of the install folder), then try again — " +
+                        "or update manually.",
+                    RequiresManualUpdate = true
+                };
+            }
+
             // Network/transport failures (both sources already retried) and the
             // app-did-not-exit timeout are expected user conditions — log at
             // Information, not as a bug. Only unexpected exceptions are errors.

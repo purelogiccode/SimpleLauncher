@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security;
 using SharpCompress.Common;
 using SharpCompress.Readers;
@@ -13,6 +14,8 @@ internal class ZipService
     private const int FileBufferSize = 81920; // 80KB buffer for efficient file I/O
     private const int FileWriteRetryAttempts = 5; // Number of retry attempts for locked files
     private const int FileWriteRetryDelayMs = 500; // Delay between retry attempts
+    private const int FileUnlockWaitTimeoutMs = 30000; // Max wait for a file held by another process to be released
+    private const int FileUnlockPollIntervalMs = 500; // Poll interval while waiting for file locks to clear
 
     private readonly string _appDirectory;
 
@@ -196,7 +199,17 @@ internal class ZipService
                         // UPD-24: log here with entry context, but report the bug ONCE
                         // at the UpdateService level — reporting here too spammed the
                         // bug API twice per file (including for malicious zips).
-                        Log.Error(ex, "Error extracting file: {EntryKey}", entryKey);
+                        // A locked staging file is an expected user-environment condition
+                        // (bugs #67442-67445) — Information level, never a bug report.
+                        if (ex is FileLockedException)
+                        {
+                            Log.Information(ex, "File locked while extracting: {EntryKey}", entryKey);
+                        }
+                        else
+                        {
+                            Log.Error(ex, "Error extracting file: {EntryKey}", entryKey);
+                        }
+
                         throw;
                     }
                 }
@@ -246,6 +259,11 @@ internal class ZipService
                 $"Insufficient disk space for update: need {DownloadService.FormatBytes(stagedBytes + reserveBytes)}, " +
                 $"only {DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
         }
+
+        // Wait for any live file that is still held open (the application not fully exited
+        // yet, an antivirus scan, a second instance) to be released before the swap — a
+        // locked file aborted the update with "used by another process" (bugs #67442-67445).
+        await WaitForLockedTargetFilesAsync(stagedFiles, cancellationToken);
 
         LogMessage?.Invoke(this,
             new EventArgs<string>($"Staged {stagedFiles.Count} files — installing onto live application..."));
@@ -351,6 +369,80 @@ internal class ZipService
     }
 
     /// <summary>
+    ///     Waits (bounded) for files that are about to be replaced to be released by any other
+    ///     process before the swap starts. The main application is force-closed before the
+    ///     updater runs, but its handles (or an antivirus scan of the new binary) can outlive
+    ///     it — writing through such a lock aborted the update with "used by another process"
+    ///     (bugs #67442-67445). Throws <see cref="FileLockedException" /> when a file stays
+    ///     locked past the wait; callers treat that as an expected user condition.
+    /// </summary>
+    private async Task WaitForLockedTargetFilesAsync(
+        List<(string RelativePath, string StagedPath, UnixFileMode? ArchiveMode)> stagedFiles,
+        CancellationToken cancellationToken)
+    {
+        var lockedFiles = new List<(string RelativePath, string FinalPath)>();
+        foreach (var (relativePath, _, _) in stagedFiles)
+        {
+            var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
+            if (File.Exists(finalPath) && !IsFileUnlocked(finalPath))
+                lockedFiles.Add((relativePath, finalPath));
+        }
+
+        if (lockedFiles.Count == 0)
+            return;
+
+        LogMessage?.Invoke(this,
+            new EventArgs<string>(
+                $"Waiting for {lockedFiles.Count} file(s) still in use by another process to be released..."));
+        foreach (var (relativePath, _) in lockedFiles)
+            LogMessage?.Invoke(this, new EventArgs<string>($"File in use: {relativePath}"));
+
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.ElapsedMilliseconds < FileUnlockWaitTimeoutMs)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Delay(FileUnlockPollIntervalMs, cancellationToken);
+
+            lockedFiles.RemoveAll(file => IsFileUnlocked(file.FinalPath));
+            if (lockedFiles.Count == 0)
+            {
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>("All update files have been released. Installing..."));
+                return;
+            }
+        }
+
+        var lockedNames = string.Join(", ", lockedFiles.Select(file => file.RelativePath));
+        throw new FileLockedException(
+            "The update cannot be installed because the following file(s) are still in use by another process: " +
+            $"{lockedNames}. Close Simple Launcher (and any antivirus scan of the install folder) and try again.");
+    }
+
+    /// <summary>
+    ///     Probes whether a file can be opened exclusively — i.e. no other process holds it.
+    ///     Read-only files are reported as unlocked: the swap clears the read-only attribute
+    ///     before moving them, so their ACL state must not stall the wait.
+    /// </summary>
+    private static bool IsFileUnlocked(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            return true;
+        }
+        catch (IOException ex) when (IsFileLockError(ex))
+        {
+            return false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Deterministic I/O or ACL failures are not lock conditions — let the swap
+            // surface their real cause instead of stalling the wait.
+            return true;
+        }
+    }
+
+    /// <summary>
     ///     Moves a file with retry logic for locked files (same-volume moves are atomic).
     ///     UPD-21: only transient file LOCK errors are retried — deterministic failures
     ///     (disk full, ACL, path too long) throw immediately with their real cause
@@ -372,12 +464,15 @@ internal class ZipService
             {
                 if (!IsFileLockError(ex) || attempt >= FileWriteRetryAttempts)
                 {
-                    throw new IOException(
-                        IsFileLockError(ex)
-                            ? $"Failed to move file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
-                              "The file is locked by another process."
-                            : $"Failed to move file '{entryKey}': {ex.Message}",
-                        ex);
+                    if (IsFileLockError(ex))
+                    {
+                        throw new FileLockedException(
+                            $"Failed to move file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
+                            "The file is locked by another process.",
+                            ex);
+                    }
+
+                    throw new IOException($"Failed to move file '{entryKey}': {ex.Message}", ex);
                 }
 
                 // File is locked by another process, retry after delay
@@ -657,12 +752,15 @@ internal class ZipService
             {
                 if (!IsFileLockError(ex) || attempt >= FileWriteRetryAttempts)
                 {
-                    throw new IOException(
-                        IsFileLockError(ex)
-                            ? $"Failed to extract file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
-                              "The file is locked by another process."
-                            : $"Failed to write file '{entryKey}': {ex.Message}",
-                        ex);
+                    if (IsFileLockError(ex))
+                    {
+                        throw new FileLockedException(
+                            $"Failed to extract file after {FileWriteRetryAttempts} attempts: {entryKey}. " +
+                            "The file is locked by another process.",
+                            ex);
+                    }
+
+                    throw new IOException($"Failed to write file '{entryKey}': {ex.Message}", ex);
                 }
 
                 // File is locked by another process, retry after delay

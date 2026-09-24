@@ -79,6 +79,11 @@ must resolve under the destination root, with a case-sensitive (Ordinal) prefix 
 Unix so a case-variant prefix (`/app/` vs `/APP/`) cannot pass. On Unix, a replaced file keeps
 its live mode and a file added by the update receives the mode carried by the release zip
 (0755 for executables), so newly bundled tools stay executable.
+- **Locked files**: extraction is staged and the live install is only swapped afterwards; before
+  the swap the updater waits up to 30 s for any file still held open by another process (the
+  application not fully exited, an antivirus scan, a second instance) to be released. A file that
+  stays locked aborts the update with a manual-update prompt and an Information log — an expected
+  user condition, never a bug report (#67442-67445).
 
 Behavior parity with the dropped WPF updater is intentional: same Serilog setup (rolling warning
 file + bug-report sink) and launch stats, same progress/log window with a Cancel button, the same
