@@ -33,6 +33,7 @@
                                ToolTip="{DynamicResource DuckStationConfig_Runahead_Tooltip}" />
                         <Slider Value="{Binding DuckStationRunaheadFrameCount}" Minimum="0" Maximum="8"
                                 IsSnapToTickEnabled="True" TickFrequency="1"
+                                AutomationProperties.Name="Runahead Frames"
                                 ToolTip="{DynamicResource DuckStationConfig_Runahead_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -50,6 +51,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RendererOptions}"
                                       SelectedItem="{Binding DuckStationRenderer}"
+                                      AutomationProperties.Name="Renderer"
+                                      AutomationProperties.AutomationId="RendererComboBox"
                                       ToolTip="{DynamicResource DuckStationConfig_Renderer_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -64,6 +67,8 @@
                                       SelectedValue="{Binding DuckStationResolutionScale}"
                                       SelectedValuePath="Tag"
                                       DisplayMemberPath="Display"
+                                      AutomationProperties.Name="Internal Resolution Scale"
+                                      AutomationProperties.AutomationId="ResolutionScaleComboBox"
                                       ToolTip="{DynamicResource DuckStationConfig_ResolutionScale_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -76,6 +81,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding TextureFilterOptions}"
                                       SelectedItem="{Binding DuckStationTextureFilter}"
+                                      AutomationProperties.Name="Texture Filtering"
+                                      AutomationProperties.AutomationId="TextureFilterComboBox"
                                       ToolTip="{DynamicResource DuckStationConfig_TextureFilter_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -88,6 +95,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectRatioOptions}"
                                       SelectedItem="{Binding DuckStationAspectRatio}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectRatioComboBox"
                                       ToolTip="{DynamicResource DuckStationConfig_AspectRatio_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding DuckStationWidescreenHack}"
@@ -112,6 +121,7 @@
                                ToolTip="{DynamicResource DuckStationConfig_Volume_Tooltip}" />
                         <Slider Value="{Binding DuckStationOutputVolume}" Minimum="0" Maximum="100"
                                 IsSnapToTickEnabled="True" TickFrequency="1"
+                                AutomationProperties.Name="Master Volume"
                                 ToolTip="{DynamicResource DuckStationConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -135,15 +145,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource DuckStationConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource DuckStationConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource DuckStationConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource DuckStationConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource DuckStationConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource DuckStationConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

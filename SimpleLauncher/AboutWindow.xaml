@@ -53,18 +53,24 @@
                 Style="{DynamicResource MahApps.Styles.Button.Square}"
                 Command="{Binding CheckForUpdatesCommand}"
                 Content="{DynamicResource CheckForUpdate}"
+                AutomationProperties.Name="{DynamicResource CheckForUpdate}"
+                AutomationProperties.AutomationId="CheckForUpdateButton"
                 ToolTip="{DynamicResource TooltipCheckForUpdate}" />
             <Button
                 Style="{DynamicResource MahApps.Styles.Button.Square}"
                 Margin="10,0,0,0"
                 Command="{Binding OpenUpdateHistoryCommand}"
                 Content="{DynamicResource UpdateHistory}"
+                AutomationProperties.Name="{DynamicResource UpdateHistory}"
+                AutomationProperties.AutomationId="UpdateHistoryButton"
                 ToolTip="{DynamicResource TooltipUpdateHistory}" />
             <Button
                 Style="{DynamicResource MahApps.Styles.Button.Square}"
                 Margin="10,0,0,0"
                 Command="{Binding CloseCommand}"
                 Content="{DynamicResource Close}"
+                AutomationProperties.Name="{DynamicResource Close}"
+                AutomationProperties.AutomationId="CloseButton"
                 ToolTip="{DynamicResource TooltipClose}" />
         </StackPanel>
     </Grid>

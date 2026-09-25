@@ -32,6 +32,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectOptions}"
                                       SelectedItem="{Binding Aspect}"
+                                      AutomationProperties.Name="{ext:Translate BlastemConfig_Aspect_Tooltip}"
                                       ToolTip.Tip="{ext:Translate BlastemConfig_Aspect_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -40,6 +41,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ScalingOptions}"
                                       SelectedItem="{Binding Scaling}"
+                                      AutomationProperties.Name="{ext:Translate BlastemConfig_Scaling_Tooltip}"
                                       ToolTip.Tip="{ext:Translate BlastemConfig_Scaling_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -54,6 +56,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AudioRateOptions}"
                                       SelectedItem="{Binding AudioRate}"
+                                      AutomationProperties.Name="{ext:Translate BlastemConfig_AudioRate_Tooltip}"
                                       ToolTip.Tip="{ext:Translate BlastemConfig_AudioRate_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -68,6 +71,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding SyncSourceOptions}"
                                       SelectedItem="{Binding SyncSource}"
+                                      AutomationProperties.Name="{ext:Translate BlastemConfig_SyncSource_Tooltip}"
                                       ToolTip.Tip="{ext:Translate BlastemConfig_SyncSource_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -91,16 +95,19 @@
                     Content="{ext:Translate BlastemConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate BlastemConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate BlastemConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate BlastemConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate BlastemConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate BlastemConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate BlastemConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate BlastemConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate BlastemConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

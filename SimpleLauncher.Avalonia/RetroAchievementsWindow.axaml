@@ -34,7 +34,8 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Button x:Name="ViewProfileOnRaButton" Content="{ext:Translate ViewProfileOnRA}"
                                             Classes="primary" Click="ViewProfileOnRaButton_Click" Margin="0,10,0,0"
-                                            ToolTip.Tip="{ext:Translate ViewProfileOnRaButtonTooltip}" />
+                                            ToolTip.Tip="{ext:Translate ViewProfileOnRaButtonTooltip}"
+                                            AutomationProperties.Name="{ext:Translate ViewProfileOnRaButtonTooltip}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -142,7 +143,8 @@
                             <ListBox x:Name="UserProfileRecentlyPlayed" BorderThickness="1"
                                      BorderBrush="{DynamicResource BorderNormalBrush}"
                                      Background="{DynamicResource BgSecondaryBrush}"
-                                     ToolTip.Tip="{ext:Translate RecentlyPlayedGamesTooltip}">
+                                     ToolTip.Tip="{ext:Translate RecentlyPlayedGamesTooltip}"
+                                     AutomationProperties.Name="{ext:Translate RecentlyPlayedGamesTooltip}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:RaRecentlyPlayedGame">
                                         <StackPanel Orientation="Horizontal" Margin="0,2">
@@ -188,7 +190,8 @@
                                            Margin="0,10,0,0" TextWrapping="Wrap" TextAlignment="Center" />
                                 <Button Content="{ext:Translate OpenRaSettings}" Margin="0,15,0,0"
                                         Classes="primary" Click="OpenRaSettings_Click"
-                                        ToolTip.Tip="{ext:Translate OpenRaSettingsButtonTooltip}" />
+                                        ToolTip.Tip="{ext:Translate OpenRaSettingsButtonTooltip}"
+                                        AutomationProperties.Name="{ext:Translate OpenRaSettingsButtonTooltip}" />
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -203,17 +206,21 @@
                                    FontSize="14"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                         <DatePicker x:Name="FromDatePicker" Width="140"
-                                    ToolTip.Tip="{ext:Translate FromDatePickerTooltip}" />
+                                    ToolTip.Tip="{ext:Translate FromDatePickerTooltip}"
+                                    AutomationProperties.Name="{ext:Translate FromDatePickerTooltip}" />
                         <TextBlock Text="{ext:Translate ToDate}" VerticalAlignment="Center" Margin="15,0,5,0"
                                    FontSize="14"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <DatePicker x:Name="ToDatePicker" Width="140" ToolTip.Tip="{ext:Translate ToDatePickerTooltip}" />
+                        <DatePicker x:Name="ToDatePicker" Width="140" ToolTip.Tip="{ext:Translate ToDatePickerTooltip}"
+                                    AutomationProperties.Name="{ext:Translate ToDatePickerTooltip}" />
                         <Button Content="{ext:Translate FetchUnlocks}" Click="FetchUnlocksClickAsync" Margin="15,0,0,0"
                                 Padding="10,5" x:Name="FetchUnlocksButton" Classes="primary"
-                                ToolTip.Tip="{ext:Translate FetchUnlocksButtonTooltip}" />
+                                ToolTip.Tip="{ext:Translate FetchUnlocksButtonTooltip}"
+                                AutomationProperties.Name="{ext:Translate FetchUnlocksButtonTooltip}" />
                         <Button Content="{ext:Translate ResetDates}" Click="ResetDatesClickAsync" Margin="10,0,0,0"
                                 Padding="10,5"
-                                Classes="secondary" ToolTip.Tip="{ext:Translate ResetDatesButtonTooltip}" />
+                                Classes="secondary" ToolTip.Tip="{ext:Translate ResetDatesButtonTooltip}"
+                                AutomationProperties.Name="{ext:Translate ResetDatesButtonTooltip}" />
                     </StackPanel>
 
                     <Border Grid.Row="1" Margin="10,0,10,15" Padding="15"
@@ -239,7 +246,8 @@
                               Margin="10,0,10,10" HeadersVisibility="Column"
                               Background="{DynamicResource BgSecondaryBrush}"
                               BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
-                              ToolTip.Tip="{ext:Translate UnlocksDataGridTooltip}">
+                              ToolTip.Tip="{ext:Translate UnlocksDataGridTooltip}"
+                              AutomationProperties.Name="{ext:Translate UnlocksDataGridTooltip}">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="{ext:Translate HeaderGameIcon}" Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -289,7 +297,8 @@
                                        TextAlignment="Center" />
                             <Button Content="{ext:Translate OpenRaSettings}" Margin="0,15,0,0"
                                     Classes="primary" Click="OpenRaSettings_Click"
-                                    ToolTip.Tip="{ext:Translate OpenRaSettingsButtonTooltip}" />
+                                    ToolTip.Tip="{ext:Translate OpenRaSettingsButtonTooltip}"
+                                    AutomationProperties.Name="{ext:Translate OpenRaSettingsButtonTooltip}" />
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -303,7 +312,8 @@
                               Margin="10" HeadersVisibility="Column"
                               Background="{DynamicResource BgSecondaryBrush}"
                               BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
-                              ToolTip.Tip="{ext:Translate UserProgressDataGridTooltip}">
+                              ToolTip.Tip="{ext:Translate UserProgressDataGridTooltip}"
+                              AutomationProperties.Name="{ext:Translate UserProgressDataGridTooltip}">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="{ext:Translate HeaderIcon}" Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -349,7 +359,8 @@
                                        Margin="0,10,0,0" TextWrapping="Wrap" TextAlignment="Center" />
                             <Button Content="{ext:Translate OpenRaSettings}" Margin="0,15,0,0"
                                     Classes="primary" Click="OpenRaSettings_Click"
-                                    ToolTip.Tip="{ext:Translate OpenRaSettingsButtonTooltip}" />
+                                    ToolTip.Tip="{ext:Translate OpenRaSettingsButtonTooltip}"
+                                    AutomationProperties.Name="{ext:Translate OpenRaSettingsButtonTooltip}" />
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -360,12 +371,14 @@
         <Border x:Name="LoadingOverlay" Background="{DynamicResource OverlayProcessingBrush}" IsVisible="False"
                 ZIndex="10">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="260">
-                <ProgressBar IsIndeterminate="True" Width="220" />
+                <ProgressBar IsIndeterminate="True" Width="220"
+                             AutomationProperties.Name="Loading" />
                 <TextBlock x:Name="LoadingOverlayMessage" Text="{ext:Translate Loading}" Margin="0,12,0,0"
                            HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
                 <Button x:Name="EmergencyReturnButton" Content="{ext:Translate EditSystemWindow_Return}"
                         Margin="0,15,0,0"
-                        Classes="secondary" Click="EmergencyOverlayRelease_Click" />
+                        Classes="secondary" Click="EmergencyOverlayRelease_Click"
+                        AutomationProperties.Name="{ext:Translate EditSystemWindow_Return}" />
             </StackPanel>
         </Border>
     </Grid>

@@ -23,7 +23,8 @@
                     TickFrequency="{Binding TickFrequencyValue}"
                     IsSnapToTickEnabled="True"
                     Width="200"
-                    VerticalAlignment="Center" />
+                    VerticalAlignment="Center"
+                    AutomationProperties.Name="{ext:Translate NewThresholdLabel}" />
             <TextBlock Text="{Binding ThresholdPercentage}" Margin="10" VerticalAlignment="Center" />
         </StackPanel>
 
@@ -47,9 +48,11 @@
         <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal"
                     HorizontalAlignment="Center" Margin="10,20,10,10">
             <Button Content="{ext:Translate OkButtonText}" Command="{Binding SaveCommand}"
-                    Classes="primary" Padding="10" Margin="0,0,10,0" IsDefault="True" />
+                    Classes="primary" Padding="10" Margin="0,0,10,0" IsDefault="True"
+                    AutomationProperties.Name="{ext:Translate OkButtonText}" />
             <Button Content="{ext:Translate YumirConfig_Cancel_Button}" Command="{Binding CancelCommand}"
-                    Classes="secondary" Padding="10" IsCancel="True" />
+                    Classes="secondary" Padding="10" IsCancel="True"
+                    AutomationProperties.Name="{ext:Translate YumirConfig_Cancel_Button}" />
         </StackPanel>
     </Grid>
 </Window>

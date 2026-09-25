@@ -19,6 +19,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding VideoDriver}"
+                                      AutomationProperties.Name="{ext:Translate AresConfig_VideoDriver_Tooltip}"
                                       ToolTip.Tip="{ext:Translate AresConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Exclusive}"
@@ -30,6 +31,7 @@
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       ItemsSource="{Binding ShaderOptions}"
                                       Text="{Binding Shader}"
+                                      AutomationProperties.Name="{ext:Translate AresConfig_Shader_Tooltip}"
                                       ToolTip.Tip="{ext:Translate AresConfig_Shader_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -37,6 +39,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding MultiplierOptions}"
                                       SelectedItem="{Binding Multiplier}"
+                                      AutomationProperties.Name="{ext:Translate AresConfig_Multiplier_Tooltip}"
                                       ToolTip.Tip="{ext:Translate AresConfig_Multiplier_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -44,6 +47,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectCorrectionOptions}"
                                       SelectedItem="{Binding AspectCorrection}"
+                                      AutomationProperties.Name="{ext:Translate AresConfig_AspectCorrection_Tooltip}"
                                       ToolTip.Tip="{ext:Translate AresConfig_AspectCorrection_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -60,6 +64,7 @@
                         <Slider Value="{Binding Volume}"
                                 Minimum="0.0" Maximum="2.0"
                                 IsSnapToTickEnabled="True" TickFrequency="0.1"
+                                AutomationProperties.Name="{ext:Translate AresConfig_Volume_Tooltip}"
                                 ToolTip.Tip="{ext:Translate AresConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -104,16 +109,19 @@
                     Content="{ext:Translate AresConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate AresConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate AresConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate AresConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate AresConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate AresConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate AresConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate AresConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate AresConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

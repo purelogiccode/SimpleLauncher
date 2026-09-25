@@ -26,6 +26,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoOptions}"
                                       SelectedItem="{Binding MameVideo}"
+                                      AutomationProperties.Name="Video Mode"
+                                      AutomationProperties.AutomationId="VideoComboBox"
                                       ToolTip="{DynamicResource MameConfig_VideoMode_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,0,0,5">
@@ -37,6 +39,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding BgfxBackendOptions}"
                                       SelectedItem="{Binding MameBgfxBackend}"
+                                      AutomationProperties.Name="BGFX Backend"
+                                      AutomationProperties.AutomationId="BgfxBackendComboBox"
                                       ToolTip="{DynamicResource MameConfig_BgfxBackend_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,0,0,5">
@@ -48,6 +52,8 @@
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       ItemsSource="{Binding BgfxChainsOptions}"
                                       Text="{Binding MameBgfxScreenChains}"
+                                      AutomationProperties.Name="BGFX Shader"
+                                      AutomationProperties.AutomationId="BgfxShaderComboBox"
                                       ToolTip="{DynamicResource MameConfig_BgfxShader_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding MameFilter}"
@@ -125,15 +131,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource MameConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource MameConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource MameConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource MameConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource MameConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource MameConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

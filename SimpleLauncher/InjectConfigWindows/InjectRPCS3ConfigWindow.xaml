@@ -26,6 +26,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RendererOptions}"
                                       SelectedItem="{Binding Rpcs3Renderer}"
+                                      AutomationProperties.Name="Renderer"
+                                      AutomationProperties.AutomationId="RendererComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_Renderer_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -37,6 +39,8 @@
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       ItemsSource="{Binding ResolutionOptions}"
                                       Text="{Binding Rpcs3Resolution}"
+                                      AutomationProperties.Name="Resolution"
+                                      AutomationProperties.AutomationId="ResolutionComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_Resolution_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -48,6 +52,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectRatioOptions}"
                                       SelectedItem="{Binding Rpcs3AspectRatio}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectRatioComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_AspectRatio_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -60,6 +66,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ResolutionScaleOptions}"
                                       SelectedItem="{Binding Rpcs3ResolutionScale}"
+                                      AutomationProperties.Name="Resolution Scale"
+                                      AutomationProperties.AutomationId="ResolutionScaleComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_ResolutionScale_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -72,6 +80,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AnisotropicFilterOptions}"
                                       SelectedItem="{Binding Rpcs3AnisotropicFilter}"
+                                      AutomationProperties.Name="Anisotropic Filter"
+                                      AutomationProperties.AutomationId="AnisotropicFilterComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_AnisotropicFilter_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Rpcs3Vsync}"
@@ -92,6 +102,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding PpuDecoderOptions}"
                                       SelectedItem="{Binding Rpcs3PpuDecoder}"
+                                      AutomationProperties.Name="PPU Decoder"
+                                      AutomationProperties.AutomationId="PpuDecoderComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_PpuDecoder_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -103,6 +115,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding SpuDecoderOptions}"
                                       SelectedItem="{Binding Rpcs3SpuDecoder}"
+                                      AutomationProperties.Name="SPU Decoder"
+                                      AutomationProperties.AutomationId="SpuDecoderComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_SpuDecoder_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -121,6 +135,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AudioRendererOptions}"
                                       SelectedItem="{Binding Rpcs3AudioRenderer}"
+                                      AutomationProperties.Name="Audio Renderer"
+                                      AutomationProperties.AutomationId="AudioRendererComboBox"
                                       ToolTip="{DynamicResource RPCS3Config_AudioRenderer_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Rpcs3AudioBuffering}"
@@ -157,15 +173,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource RPCS3Config_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource RPCS3Config_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource RPCS3Config_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource RPCS3Config_Run_Tooltip}" />
             <Button Content="{DynamicResource RPCS3Config_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource RPCS3Config_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

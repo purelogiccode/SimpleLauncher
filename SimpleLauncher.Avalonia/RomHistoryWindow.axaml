@@ -22,6 +22,7 @@
                  IsReadOnly="True"
                  AcceptsReturn="True"
                  TextWrapping="Wrap"
-                 Text="{Binding HistoryText, Mode=OneWay}" />
+                 Text="{Binding HistoryText, Mode=OneWay}"
+                 AutomationProperties.Name="ROM history" />
     </Grid>
 </Window>

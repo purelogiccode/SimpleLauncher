@@ -32,10 +32,12 @@
                         <Grid ColumnDefinitions="*,Auto,*">
                             <NumericUpDown Grid.Column="0" Minimum="320" Maximum="7680" Increment="1"
                                            Value="{Binding RaineResX}"
+                                           AutomationProperties.Name="{ext:Translate RaineConfig_ResolutionX_Tooltip}"
                                            ToolTip.Tip="{ext:Translate RaineConfig_ResolutionX_Tooltip}" />
                             <TextBlock Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="10,0" />
                             <NumericUpDown Grid.Column="2" Minimum="240" Maximum="4320" Increment="1"
                                            Value="{Binding RaineResY}"
+                                           AutomationProperties.Name="{ext:Translate RaineConfig_ResolutionY_Tooltip}"
                                            ToolTip.Tip="{ext:Translate RaineConfig_ResolutionY_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -47,11 +49,13 @@
                         <TextBlock Text="{ext:Translate RaineConfig_AudioDriver}" Classes="form-label" />
                         <ComboBox ItemsSource="{Binding SoundDriverOptions}"
                                   SelectedItem="{Binding RaineSoundDriver}"
+                                  AutomationProperties.Name="{ext:Translate RaineConfig_AudioDriver_Tooltip}"
                                   ToolTip.Tip="{ext:Translate RaineConfig_AudioDriver_Tooltip}" />
 
                         <TextBlock Text="{ext:Translate RaineConfig_SampleRate}" Classes="form-label" Margin="0,5,0,0" />
                         <ComboBox ItemsSource="{Binding SampleRateOptions}"
                                   SelectedValue="{Binding RaineSampleRate}"
+                                  AutomationProperties.Name="{ext:Translate RaineConfig_SampleRate_Tooltip}"
                                   ToolTip.Tip="{ext:Translate RaineConfig_SampleRate_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -64,6 +68,7 @@
                         <TextBlock Text="{ext:Translate RaineConfig_Frame_Skip}" Classes="form-label" />
                         <ComboBox ItemsSource="{Binding FrameSkipOptions}"
                                   SelectedValue="{Binding RaineFrameSkip}"
+                                  AutomationProperties.Name="{ext:Translate RaineConfig_FrameSkip_Tooltip}"
                                   ToolTip.Tip="{ext:Translate RaineConfig_FrameSkip_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -75,6 +80,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox Grid.Column="0" Margin="0,0,5,10"
                                      Text="{Binding RaineNeoCdBios}"
+                                     AutomationProperties.Name="{ext:Translate RaineConfig_NeoCdBios_Tooltip}"
                                      ToolTip.Tip="{ext:Translate RaineConfig_NeoCdBios_Tooltip}" />
                             <Button Grid.Column="1" Content="..." Width="30" Height="25" VerticalAlignment="Bottom"
                                     Margin="0,0,0,10"
@@ -85,11 +91,13 @@
                         <TextBlock Text="{ext:Translate RaineConfig_MusicVolume}" Classes="form-label" />
                         <NumericUpDown Minimum="0" Maximum="200" Increment="1" Margin="0,0,0,5"
                                        Value="{Binding RaineMusicVolume}"
+                                       AutomationProperties.Name="{ext:Translate RaineConfig_MusicVolume_Tooltip}"
                                        ToolTip.Tip="{ext:Translate RaineConfig_MusicVolume_Tooltip}" />
 
                         <TextBlock Text="{ext:Translate RaineConfig_SfxVolume}" Classes="form-label" />
                         <NumericUpDown Minimum="0" Maximum="200" Increment="1" Margin="0,0,0,5"
                                        Value="{Binding RaineSfxVolume}"
+                                       AutomationProperties.Name="{ext:Translate RaineConfig_SfxVolume_Tooltip}"
                                        ToolTip.Tip="{ext:Translate RaineConfig_SfxVolume_Tooltip}" />
 
                         <CheckBox IsChecked="{Binding RaineMuteSfx}" Content="{ext:Translate RaineConfig_MuteSfx}"
@@ -106,6 +114,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox Grid.Column="0" Margin="0,0,5,0"
                                      Text="{Binding RaineRomDirectory}"
+                                     AutomationProperties.Name="{ext:Translate RaineConfig_RomDirectory_Tooltip}"
                                      ToolTip.Tip="{ext:Translate RaineConfig_RomDirectory_Tooltip}" />
                             <Button Grid.Column="1" Content="..." Width="30" Height="25"
                                     Command="{Binding SelectRaineRomDirectoryCommand}"
@@ -131,16 +140,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate RaineConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate RaineConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate RaineConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate RaineConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate RaineConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate RaineConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate RaineConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate RaineConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate RaineConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

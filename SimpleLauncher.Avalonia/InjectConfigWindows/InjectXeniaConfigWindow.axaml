@@ -21,6 +21,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding GpuOptions}"
                                       SelectedItem="{Binding XeniaGpu}"
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_GpuApi_Tooltip}"
                                       ToolTip.Tip="{ext:Translate XeniaConfig_GpuApi_Tooltip}" />
                         </Grid>
 
@@ -41,11 +42,13 @@
                             <ComboBox Grid.Column="0"
                                       ItemsSource="{Binding ResScaleOptions}"
                                       Text="{Binding XeniaResScaleX}"
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_ResolutionScaleX_Tooltip}"
                                       ToolTip.Tip="{ext:Translate XeniaConfig_ResolutionScaleX_Tooltip}" />
                             <TextBlock Text="x" Grid.Column="1" VerticalAlignment="Center" Margin="10,0" />
                             <ComboBox Grid.Column="2"
                                       ItemsSource="{Binding ResScaleOptions}"
                                       Text="{Binding XeniaResScaleY}"
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_ResolutionScaleY_Tooltip}"
                                       ToolTip.Tip="{ext:Translate XeniaConfig_ResolutionScaleY_Tooltip}" />
                         </Grid>
 
@@ -54,7 +57,8 @@
                         <ComboBox ItemsSource="{Binding AaOptions}"
                                   SelectedValue="{Binding XeniaAa}"
                                   SelectedValueBinding="{Binding Tag}"
-                                  ToolTip.Tip="{ext:Translate XeniaConfig_PostProcessingAa_Tooltip}">
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_PostProcessingAa_Tooltip}"
+                                      ToolTip.Tip="{ext:Translate XeniaConfig_PostProcessingAa_Tooltip}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:TagOption">
                                     <TextBlock Text="{Binding Display}" />
@@ -66,12 +70,14 @@
                                    Margin="0,5,0,0" />
                         <ComboBox ItemsSource="{Binding ScalingOptions}"
                                   SelectedItem="{Binding XeniaScaling}"
+                                  AutomationProperties.Name="{ext:Translate XeniaConfig_ScalingSharpening_Tooltip}"
                                   ToolTip.Tip="{ext:Translate XeniaConfig_ScalingSharpening_Tooltip}" />
 
                         <TextBlock Text="{ext:Translate XeniaConfig_ReadbackResolve_Label}" Classes="form-label"
                                    Margin="0,5,0,0" />
                         <ComboBox ItemsSource="{Binding ReadbackOptions}"
                                   SelectedItem="{Binding XeniaReadbackResolve}"
+                                  AutomationProperties.Name="{ext:Translate XeniaConfig_ReadbackResolve_Tooltip}"
                                   ToolTip.Tip="{ext:Translate XeniaConfig_ReadbackResolve_Tooltip}" />
 
                         <CheckBox IsChecked="{Binding XeniaGammaSrgb}"
@@ -91,6 +97,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ApuOptions}"
                                       SelectedItem="{Binding XeniaApu}"
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_AudioDriver_Tooltip}"
                                       ToolTip.Tip="{ext:Translate XeniaConfig_AudioDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding XeniaMute}"
@@ -122,6 +129,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding HidOptions}"
                                       SelectedItem="{Binding XeniaHid}"
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_Hid_Tooltip}"
                                       ToolTip.Tip="{ext:Translate XeniaConfig_Hid_Tooltip}" />
                         </Grid>
 
@@ -132,6 +140,7 @@
                                       ItemsSource="{Binding LangOptions}"
                                       SelectedValue="{Binding XeniaUserLanguage}"
                                       SelectedValueBinding="{Binding Tag}"
+                                      AutomationProperties.Name="{ext:Translate XeniaConfig_UserLanguage_Tooltip}"
                                       ToolTip.Tip="{ext:Translate XeniaConfig_UserLanguage_Tooltip}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:TagOption">
@@ -161,16 +170,19 @@
                     Content="{ext:Translate XeniaConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate XeniaConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate XeniaConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate XeniaConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate XeniaConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate XeniaConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate XeniaConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate XeniaConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate XeniaConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

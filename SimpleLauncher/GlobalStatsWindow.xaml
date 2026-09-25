@@ -28,6 +28,8 @@
             <Button Width="110"
                     Command="{Binding StartCommand}"
                     Content="{DynamicResource StartProcess}"
+                    AutomationProperties.Name="{DynamicResource StartProcess}"
+                    AutomationProperties.AutomationId="StartProcessButton"
                     ToolTip="{DynamicResource TooltipStartProcess}" />
         </StackPanel>
 
@@ -36,6 +38,8 @@
             <DataGrid ItemsSource="{Binding SystemStats}" AutoGenerateColumns="False" CanUserAddRows="False"
                       GridLinesVisibility="All" BorderThickness="1"
                       BorderBrush="{DynamicResource MahApps.Brushes.Gray7}"
+                      AutomationProperties.Name="System statistics"
+                      AutomationProperties.AutomationId="SystemStatsDataGrid"
                       ScrollViewer.CanContentScroll="True" d:DataContext="{d:DesignInstance }">
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
@@ -70,6 +74,8 @@
                 Width="110"
                 Command="{Binding SaveReportCommand}"
                 Content="{DynamicResource SaveReport}"
+                AutomationProperties.Name="{DynamicResource SaveReport}"
+                AutomationProperties.AutomationId="SaveReportButton"
                 ToolTip="{DynamicResource TooltipSaveReport}" />
         </StackPanel>
 
@@ -91,6 +97,8 @@
                     Width="110"
                     Command="{Binding CancelCommand}"
                     Content="{DynamicResource Cancel}"
+                    AutomationProperties.Name="{DynamicResource Cancel}"
+                    AutomationProperties.AutomationId="CancelButton"
                     ToolTip="{DynamicResource ToolTipCancel}" />
         </Grid>
     </Grid>

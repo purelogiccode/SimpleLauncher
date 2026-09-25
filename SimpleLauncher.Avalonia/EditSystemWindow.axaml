@@ -28,33 +28,39 @@
                               SelectionChanged="SystemNameDropdown_SelectionChanged"
                               Background="{DynamicResource BgSecondaryBrush}"
                               Foreground="{DynamicResource TextPrimaryBrush}"
-                              BorderBrush="{DynamicResource BorderNormalBrush}" />
+                              BorderBrush="{DynamicResource BorderNormalBrush}"
+                              AutomationProperties.Name="{ext:Translate System}" />
                 </Grid>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button x:Name="AddSystemButton" Content="{ext:Translate EditSystemWindow_Add_New}"
                             Classes="secondary"
                             Padding="14,6" Margin="4,0"
-                            Click="AddSystemButton_ClickAsync" />
+                            Click="AddSystemButton_ClickAsync"
+                            AutomationProperties.Name="{ext:Translate EditSystemWindow_Add_New}" />
                     <Button x:Name="SaveSystemButton" Content="{ext:Translate SaveorUpdateSystem}"
                             Classes="primary"
                             Padding="20,6" Margin="4,0"
                             IsEnabled="False"
-                            Click="SaveSystemButton_ClickAsync" />
+                            Click="SaveSystemButton_ClickAsync"
+                            AutomationProperties.Name="{ext:Translate SaveorUpdateSystem}" />
                     <Button x:Name="DeleteSystemButton" Content="{ext:Translate EditSystemWindow_Delete}"
                             Classes="secondary"
                             Padding="14,6" Margin="4,0"
                             IsEnabled="False"
-                            Click="DeleteSystemButton_ClickAsync" />
+                            Click="DeleteSystemButton_ClickAsync"
+                            AutomationProperties.Name="{ext:Translate EditSystemWindow_Delete}" />
                     <Button Content="{ext:Translate EditSystemWindow_Help}"
                             Classes="secondary"
                             Padding="14,6" Margin="4,0"
                             ToolTip.Tip="{ext:Translate EditSystemWindow_Open_the_parameters_wiki}"
-                            Click="HelpLink_ClickAsync" />
+                            Click="HelpLink_ClickAsync"
+                            AutomationProperties.Name="{ext:Translate EditSystemWindow_Open_the_parameters_wiki}" />
                     <Button Content="{ext:Translate Close}"
                             Classes="secondary"
                             Padding="14,6" Margin="4,0"
-                            Click="CloseButton_Click" />
+                            Click="CloseButton_Click"
+                            AutomationProperties.Name="{ext:Translate Close}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -92,7 +98,8 @@
                                     <Button Content="{ext:Translate EditSystemWindow_Choose_Image}" Classes="secondary"
                                             Padding="12,6"
                                             ToolTip.Tip="{ext:Translate TooltipChooseSystemImage}"
-                                            Click="ChooseSystemImageButton_ClickAsync" />
+                                            Click="ChooseSystemImageButton_ClickAsync"
+                                            AutomationProperties.Name="{ext:Translate TooltipChooseSystemImage}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -103,7 +110,8 @@
                                      Background="{DynamicResource BgTertiaryBrush}"
                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                      BorderBrush="{DynamicResource BorderNormalBrush}"
-                                     LostFocus="SystemNameTextBox_LostFocus" />
+                                     LostFocus="SystemNameTextBox_LostFocus"
+                                     AutomationProperties.Name="{ext:Translate SystemNameHeader}" />
 
                             <!-- System folders -->
                             <TextBlock Text="{ext:Translate EditSystemWindow_System_Folder_ROMs}" FontSize="12"
@@ -113,12 +121,14 @@
                                          VerticalContentAlignment="Center"
                                          Background="{DynamicResource BgTertiaryBrush}"
                                          Foreground="{DynamicResource TextPrimaryBrush}"
-                                         BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                         BorderBrush="{DynamicResource BorderNormalBrush}"
+                                         AutomationProperties.Name="{ext:Translate EditSystemWindow_System_Folder_ROMs}" />
                                 <Button Grid.Column="1" Content="{ext:Translate SetSystemFolder}" MinWidth="110"
                                         Height="40" Padding="12,6" Margin="6,0,0,0"
                                         Classes="secondary"
                                         ToolTip.Tip="{ext:Translate TooltipChooseSystemFolder}"
-                                        Click="ChooseSystemFolder" />
+                                        Click="ChooseSystemFolder"
+                                        AutomationProperties.Name="{ext:Translate TooltipChooseSystemFolder}" />
                             </Grid>
 
                             <!-- Additional folders (WPF AdditionalFoldersExpander parity) -->
@@ -127,20 +137,24 @@
                                       ToolTip.Tip="{ext:Translate TooltipAdditionalFoldersExpander}"
                                       HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Stretch"
-                                      Margin="0,8,0,0">
+                                      Margin="0,8,0,0"
+                                      AutomationProperties.Name="{ext:Translate TooltipAdditionalFoldersExpander}">
                                 <StackPanel HorizontalAlignment="Stretch">
                                     <ListBox x:Name="AdditionalFoldersListBox" Height="90" Margin="0,4,0,4"
                                              Background="{DynamicResource BgTertiaryBrush}"
                                              Foreground="{DynamicResource TextPrimaryBrush}"
-                                             BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                             BorderBrush="{DynamicResource BorderNormalBrush}"
+                                             AutomationProperties.Name="Additional system folders" />
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                         <Button Content="{ext:Translate EditSystemWindow_Add_Folder}" Padding="10,4"
                                                 Classes="secondary"
                                                 Margin="0,0,6,0"
-                                                Click="AddAdditionalFolder_Click" />
+                                                Click="AddAdditionalFolder_Click"
+                                                AutomationProperties.Name="{ext:Translate EditSystemWindow_Add_Folder}" />
                                         <Button Content="{ext:Translate EditSystemWindow_Remove_Selected}" Padding="10,4"
                                                 Classes="secondary"
-                                                Click="RemoveAdditionalFolder_Click" />
+                                                Click="RemoveAdditionalFolder_Click"
+                                                AutomationProperties.Name="{ext:Translate EditSystemWindow_Remove_Selected}" />
                                     </StackPanel>
                                 </StackPanel>
                             </Expander>
@@ -153,12 +167,14 @@
                                          VerticalContentAlignment="Center"
                                          Background="{DynamicResource BgTertiaryBrush}"
                                          Foreground="{DynamicResource TextPrimaryBrush}"
-                                         BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                         BorderBrush="{DynamicResource BorderNormalBrush}"
+                                         AutomationProperties.Name="{ext:Translate SystemImageFolder}" />
                                 <Button Grid.Column="1" Content="{ext:Translate SetSystemImageFolder}" MinWidth="130"
                                         Height="40" Padding="12,6" Margin="6,0,0,0"
                                         Classes="secondary"
                                         ToolTip.Tip="{ext:Translate TooltipChooseSystemImageFolder2}"
-                                        Click="ChooseSystemImageFolder" />
+                                        Click="ChooseSystemImageFolder"
+                                        AutomationProperties.Name="{ext:Translate TooltipChooseSystemImageFolder2}" />
                             </Grid>
 
                             <!-- Formats -->
@@ -171,7 +187,8 @@
                                     <TextBox x:Name="FormatToSearchTextBox" Height="40" Margin="0,4,0,12"
                                              Background="{DynamicResource BgTertiaryBrush}"
                                              Foreground="{DynamicResource TextPrimaryBrush}"
-                                             BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                             BorderBrush="{DynamicResource BorderNormalBrush}"
+                                             AutomationProperties.Name="{ext:Translate EditSystemWindow_Formats_to_Search_comma_separated}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock
@@ -181,7 +198,8 @@
                                     <TextBox x:Name="FormatToLaunchTextBox" Height="40" Margin="0,4,0,12"
                                              Background="{DynamicResource BgTertiaryBrush}"
                                              Foreground="{DynamicResource TextPrimaryBrush}"
-                                             BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                             BorderBrush="{DynamicResource BorderNormalBrush}"
+                                             AutomationProperties.Name="{ext:Translate EditSystemWindow_Formats_to_Launch_comma_separated}" />
                                 </StackPanel>
                             </Grid>
 
@@ -193,7 +211,8 @@
                                     <ComboBox x:Name="ExtractFileBeforeLaunchComboBox" Height="40" Margin="0,4,0,0"
                                               Background="{DynamicResource BgTertiaryBrush}"
                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                              BorderBrush="{DynamicResource BorderNormalBrush}">
+                                              BorderBrush="{DynamicResource BorderNormalBrush}"
+                                              AutomationProperties.Name="{ext:Translate ExtractFileBeforeLaunch}">
                                         <ComboBoxItem Content="false" />
                                         <ComboBoxItem Content="true" />
                                     </ComboBox>
@@ -204,7 +223,8 @@
                                     <ComboBox x:Name="GroupByFolderComboBox" Height="40" Margin="0,4,0,0"
                                               Background="{DynamicResource BgTertiaryBrush}"
                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                              BorderBrush="{DynamicResource BorderNormalBrush}">
+                                              BorderBrush="{DynamicResource BorderNormalBrush}"
+                                              AutomationProperties.Name="{ext:Translate EditSystemWindow_Group_By_Folder}">
                                         <ComboBoxItem Content="false" />
                                         <ComboBoxItem Content="true" />
                                     </ComboBox>
@@ -215,7 +235,8 @@
                                     <ComboBox x:Name="DisableRecursiveSearchComboBox" Height="40" Margin="0,4,0,0"
                                               Background="{DynamicResource BgTertiaryBrush}"
                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                              BorderBrush="{DynamicResource BorderNormalBrush}">
+                                              BorderBrush="{DynamicResource BorderNormalBrush}"
+                                              AutomationProperties.Name="{ext:Translate DisableRecursiveSearch}">
                                         <ComboBoxItem Content="false" />
                                         <ComboBoxItem Content="true" />
                                     </ComboBox>
@@ -234,7 +255,8 @@
 
                             <Expander x:Name="Emulator1Expander" Header="{ext:Translate Emulator1}" IsExpanded="True"
                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      AutomationProperties.Name="{ext:Translate Emulator1}">
                                 <StackPanel Margin="0,8,0,0" HorizontalAlignment="Stretch">
                                     <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
                                         <StackPanel Margin="0,0,8,0">
@@ -243,7 +265,8 @@
                                             <TextBox x:Name="Emulator1NameTextBox" Height="40" Margin="0,4,0,8"
                                                      Background="{DynamicResource BgTertiaryBrush}"
                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                     BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                     BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                     AutomationProperties.Name="{ext:Translate Name}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{ext:Translate EditSystemWindow_Notify_on_Error}"
@@ -252,7 +275,8 @@
                                                       Margin="0,4,0,8"
                                                       Background="{DynamicResource BgTertiaryBrush}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      BorderBrush="{DynamicResource BorderNormalBrush}">
+                                                      BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                      AutomationProperties.Name="{ext:Translate EditSystemWindow_Notify_on_Error}">
                                                 <ComboBoxItem Content="false" />
                                                 <ComboBoxItem Content="true" />
                                             </ComboBox>
@@ -265,12 +289,14 @@
                                                  VerticalContentAlignment="Center"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Path_exe_bat}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SetEmulator1Path}"
                                                 MinWidth="130" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipChooseEmulator1Path}"
-                                                Click="ChooseEmulator1Path" />
+                                                Click="ChooseEmulator1Path"
+                                                AutomationProperties.Name="{ext:Translate TooltipChooseEmulator1Path}" />
                                     </Grid>
                                     <TextBlock Text="{ext:Translate EditSystemWindow_Parameters}" FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -278,19 +304,22 @@
                                         <TextBox x:Name="Emulator1ParametersTextBox" Height="40"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Parameters}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SuggestParameters}"
                                                 MinWidth="90" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipSuggestParameters}"
-                                                Click="SuggestEmulator1Parameters_ClickAsync" />
+                                                Click="SuggestEmulator1Parameters_ClickAsync"
+                                                AutomationProperties.Name="{ext:Translate TooltipSuggestParameters}" />
                                     </Grid>
                                 </StackPanel>
                             </Expander>
 
                             <Expander x:Name="Emulator2Expander" Header="{ext:Translate Emulator2}"
                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      AutomationProperties.Name="{ext:Translate Emulator2}">
                                 <StackPanel Margin="0,8,0,0" HorizontalAlignment="Stretch">
                                     <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
                                         <StackPanel Margin="0,0,8,0">
@@ -299,7 +328,8 @@
                                             <TextBox x:Name="Emulator2NameTextBox" Height="40" Margin="0,4,0,8"
                                                      Background="{DynamicResource BgTertiaryBrush}"
                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                     BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                     BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                     AutomationProperties.Name="{ext:Translate Name}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{ext:Translate EditSystemWindow_Notify_on_Error}"
@@ -308,7 +338,8 @@
                                                       Margin="0,4,0,8"
                                                       Background="{DynamicResource BgTertiaryBrush}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      BorderBrush="{DynamicResource BorderNormalBrush}">
+                                                      BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                      AutomationProperties.Name="{ext:Translate EditSystemWindow_Notify_on_Error}">
                                                 <ComboBoxItem Content="false" />
                                                 <ComboBoxItem Content="true" />
                                             </ComboBox>
@@ -321,12 +352,14 @@
                                                  VerticalContentAlignment="Center"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Path_exe_bat}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SetEmulator2Path}"
                                                 MinWidth="130" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipChooseEmulator2Path}"
-                                                Click="ChooseEmulator2Path" />
+                                                Click="ChooseEmulator2Path"
+                                                AutomationProperties.Name="{ext:Translate TooltipChooseEmulator2Path}" />
                                     </Grid>
                                     <TextBlock Text="{ext:Translate EditSystemWindow_Parameters}" FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -334,19 +367,22 @@
                                         <TextBox x:Name="Emulator2ParametersTextBox" Height="40"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Parameters}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SuggestParameters}"
                                                 MinWidth="90" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipSuggestParameters}"
-                                                Click="SuggestEmulator2Parameters_ClickAsync" />
+                                                Click="SuggestEmulator2Parameters_ClickAsync"
+                                                AutomationProperties.Name="{ext:Translate TooltipSuggestParameters}" />
                                     </Grid>
                                 </StackPanel>
                             </Expander>
 
                             <Expander x:Name="Emulator3Expander" Header="{ext:Translate Emulator3}"
                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      AutomationProperties.Name="{ext:Translate Emulator3}">
                                 <StackPanel Margin="0,8,0,0" HorizontalAlignment="Stretch">
                                     <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
                                         <StackPanel Margin="0,0,8,0">
@@ -355,7 +391,8 @@
                                             <TextBox x:Name="Emulator3NameTextBox" Height="40" Margin="0,4,0,8"
                                                      Background="{DynamicResource BgTertiaryBrush}"
                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                     BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                     BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                     AutomationProperties.Name="{ext:Translate Name}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{ext:Translate EditSystemWindow_Notify_on_Error}"
@@ -364,7 +401,8 @@
                                                       Margin="0,4,0,8"
                                                       Background="{DynamicResource BgTertiaryBrush}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      BorderBrush="{DynamicResource BorderNormalBrush}">
+                                                      BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                      AutomationProperties.Name="{ext:Translate EditSystemWindow_Notify_on_Error}">
                                                 <ComboBoxItem Content="false" />
                                                 <ComboBoxItem Content="true" />
                                             </ComboBox>
@@ -377,12 +415,14 @@
                                                  VerticalContentAlignment="Center"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Path_exe_bat}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SetEmulator3Path}"
                                                 MinWidth="130" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipChooseEmulator3Path}"
-                                                Click="ChooseEmulator3Path" />
+                                                Click="ChooseEmulator3Path"
+                                                AutomationProperties.Name="{ext:Translate TooltipChooseEmulator3Path}" />
                                     </Grid>
                                     <TextBlock Text="{ext:Translate EditSystemWindow_Parameters}" FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -390,19 +430,22 @@
                                         <TextBox x:Name="Emulator3ParametersTextBox" Height="40"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Parameters}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SuggestParameters}"
                                                 MinWidth="90" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipSuggestParameters}"
-                                                Click="SuggestEmulator3Parameters_ClickAsync" />
+                                                Click="SuggestEmulator3Parameters_ClickAsync"
+                                                AutomationProperties.Name="{ext:Translate TooltipSuggestParameters}" />
                                     </Grid>
                                 </StackPanel>
                             </Expander>
 
                             <Expander x:Name="Emulator4Expander" Header="{ext:Translate Emulator4}"
                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      AutomationProperties.Name="{ext:Translate Emulator4}">
                                 <StackPanel Margin="0,8,0,0" HorizontalAlignment="Stretch">
                                     <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
                                         <StackPanel Margin="0,0,8,0">
@@ -411,7 +454,8 @@
                                             <TextBox x:Name="Emulator4NameTextBox" Height="40" Margin="0,4,0,8"
                                                      Background="{DynamicResource BgTertiaryBrush}"
                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                     BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                     BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                     AutomationProperties.Name="{ext:Translate Name}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{ext:Translate EditSystemWindow_Notify_on_Error}"
@@ -420,7 +464,8 @@
                                                       Margin="0,4,0,8"
                                                       Background="{DynamicResource BgTertiaryBrush}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      BorderBrush="{DynamicResource BorderNormalBrush}">
+                                                      BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                      AutomationProperties.Name="{ext:Translate EditSystemWindow_Notify_on_Error}">
                                                 <ComboBoxItem Content="false" />
                                                 <ComboBoxItem Content="true" />
                                             </ComboBox>
@@ -433,12 +478,14 @@
                                                  VerticalContentAlignment="Center"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Path_exe_bat}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SetEmulator4Path}"
                                                 MinWidth="130" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipChooseEmulator4Path}"
-                                                Click="ChooseEmulator4Path" />
+                                                Click="ChooseEmulator4Path"
+                                                AutomationProperties.Name="{ext:Translate TooltipChooseEmulator4Path}" />
                                     </Grid>
                                     <TextBlock Text="{ext:Translate EditSystemWindow_Parameters}" FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -446,19 +493,22 @@
                                         <TextBox x:Name="Emulator4ParametersTextBox" Height="40"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Parameters}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SuggestParameters}"
                                                 MinWidth="90" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipSuggestParameters}"
-                                                Click="SuggestEmulator4Parameters_ClickAsync" />
+                                                Click="SuggestEmulator4Parameters_ClickAsync"
+                                                AutomationProperties.Name="{ext:Translate TooltipSuggestParameters}" />
                                     </Grid>
                                 </StackPanel>
                             </Expander>
 
                             <Expander x:Name="Emulator5Expander" Header="{ext:Translate Emulator5}"
                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      AutomationProperties.Name="{ext:Translate Emulator5}">
                                 <StackPanel Margin="0,8,0,0" HorizontalAlignment="Stretch">
                                     <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
                                         <StackPanel Margin="0,0,8,0">
@@ -467,7 +517,8 @@
                                             <TextBox x:Name="Emulator5NameTextBox" Height="40" Margin="0,4,0,8"
                                                      Background="{DynamicResource BgTertiaryBrush}"
                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                     BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                     BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                     AutomationProperties.Name="{ext:Translate Name}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{ext:Translate EditSystemWindow_Notify_on_Error}"
@@ -476,7 +527,8 @@
                                                       Margin="0,4,0,8"
                                                       Background="{DynamicResource BgTertiaryBrush}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      BorderBrush="{DynamicResource BorderNormalBrush}">
+                                                      BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                      AutomationProperties.Name="{ext:Translate EditSystemWindow_Notify_on_Error}">
                                                 <ComboBoxItem Content="false" />
                                                 <ComboBoxItem Content="true" />
                                             </ComboBox>
@@ -489,12 +541,14 @@
                                                  VerticalContentAlignment="Center"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Path_exe_bat}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SetEmulator5Path}"
                                                 MinWidth="130" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipChooseEmulator5Path}"
-                                                Click="ChooseEmulator5Path" />
+                                                Click="ChooseEmulator5Path"
+                                                AutomationProperties.Name="{ext:Translate TooltipChooseEmulator5Path}" />
                                     </Grid>
                                     <TextBlock Text="{ext:Translate EditSystemWindow_Parameters}" FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -502,12 +556,14 @@
                                         <TextBox x:Name="Emulator5ParametersTextBox" Height="40"
                                                  Background="{DynamicResource BgTertiaryBrush}"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                 BorderBrush="{DynamicResource BorderNormalBrush}" />
+                                                 BorderBrush="{DynamicResource BorderNormalBrush}"
+                                                 AutomationProperties.Name="{ext:Translate EditSystemWindow_Parameters}" />
                                         <Button Grid.Column="1" Content="{ext:Translate SuggestParameters}"
                                                 MinWidth="90" Height="40" Padding="12,6" Margin="6,0,0,0"
                                                 Classes="secondary"
                                                 ToolTip.Tip="{ext:Translate TooltipSuggestParameters}"
-                                                Click="SuggestEmulator5Parameters_ClickAsync" />
+                                                Click="SuggestEmulator5Parameters_ClickAsync"
+                                                AutomationProperties.Name="{ext:Translate TooltipSuggestParameters}" />
                                     </Grid>
                                 </StackPanel>
                             </Expander>
@@ -567,7 +623,8 @@
                         Width="100" Margin="0,16,0,0"
                         Classes="secondary"
                         Click="EmergencyOverlayRelease_Click"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center"
+                        AutomationProperties.Name="{ext:Translate EditSystemWindow_Return}" />
             </StackPanel>
         </Border>
     </Grid>

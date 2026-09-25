@@ -43,6 +43,8 @@
                               SelectedItem="{Binding SelectedSystemName}"
                               IsEnabled="{Binding IsSystemDropdownEnabled}"
                               ToolTip="{DynamicResource TooltipChooseSystem}"
+                              AutomationProperties.Name="{DynamicResource PleaseselectanImagePack}"
+                              AutomationProperties.AutomationId="SystemComboBox"
                               controls:TextBoxHelper.Watermark="{DynamicResource SelectASystemWatermark}" />
                 </controls:MetroHeader>
 
@@ -92,6 +94,7 @@
                                             IsEnabled="{Binding CanStartDownload}"
                                             ToolTip="{DynamicResource TooltipDownloadImagePack}"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{Binding DisplayName}"
                                             d:DataContext="{d:DesignInstance }" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -121,7 +124,8 @@
                     </Grid.RowDefinitions>
 
                     <Grid>
-                        <ProgressBar Value="{Binding ProgressPercentage, Mode=OneWay}" Height="20" />
+                        <ProgressBar Value="{Binding ProgressPercentage, Mode=OneWay}" Height="20"
+                                     AutomationProperties.Name="{DynamicResource DownloadProgress}" />
                         <TextBlock Text="{DynamicResource DownloadProgress}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource MahApps.Brushes.Text}"
@@ -143,6 +147,8 @@
                         IsEnabled="{Binding IsStopEnabled}"
                         ToolTip="{DynamicResource TooltipStopImageDownload}"
                         Style="{DynamicResource MahApps.Styles.Button.Square}"
+                        AutomationProperties.Name="{DynamicResource StopDownload}"
+                        AutomationProperties.AutomationId="StopDownloadButton"
                         Padding="20,10" />
             </Grid>
         </Border>

@@ -28,7 +28,8 @@
                           Margin="0,5,0,0"
                           ItemsSource="{Binding SystemNames}"
                           SelectedItem="{Binding SelectedSystemName}"
-                          IsEnabled="{Binding IsSystemDropdownEnabled}" />
+                          IsEnabled="{Binding IsSystemDropdownEnabled}"
+                          AutomationProperties.Name="{ext:Translate PleaseselectanImagePack}" />
 
                 <!-- Resources Links -->
                 <StackPanel Margin="0,20,0,0">
@@ -41,14 +42,16 @@
                             HorizontalAlignment="Left"
                             Command="{Binding HyperlinkNavigateCommand}"
                             CommandParameter="https://github.com/libretro-thumbnails/libretro-thumbnails"
-                            Content="{ext:Translate DownloadImagePackWindow_Libretro_Thumbnails_GitHub}" />
+                            Content="{ext:Translate DownloadImagePackWindow_Libretro_Thumbnails_GitHub}"
+                            AutomationProperties.Name="{ext:Translate DownloadImagePackWindow_Libretro_Thumbnails_GitHub}" />
                     <Button Padding="0"
                             Background="Transparent" BorderThickness="0"
                             Foreground="{DynamicResource LinkBrush}"
                             HorizontalAlignment="Left"
                             Command="{Binding HyperlinkNavigateCommand}"
                             CommandParameter="https://emumovies.com/files/"
-                            Content="{ext:Translate DownloadImagePackWindow_EmuMovies_Files}" />
+                            Content="{ext:Translate DownloadImagePackWindow_EmuMovies_Files}"
+                            AutomationProperties.Name="{ext:Translate DownloadImagePackWindow_EmuMovies_Files}" />
                 </StackPanel>
             </StackPanel>
 
@@ -68,6 +71,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="models:ImagePackDownloadItem">
                                     <Button Content="{Binding DisplayName}"
+                                            AutomationProperties.Name="{Binding DisplayName}"
                                             Height="40"
                                             Margin="5"
                                             Command="{Binding $parent[Window].DataContext.DownloadImagePackCommand, FallbackValue={x:Null}}"
@@ -94,7 +98,8 @@
                 <Grid Grid.Column="0" Margin="0,0,20,0" RowDefinitions="Auto,Auto">
                     <Grid>
                         <ProgressBar Value="{Binding ProgressPercentage, Mode=OneWay}" Height="20" Minimum="0"
-                                     Maximum="100" />
+                                     Maximum="100"
+                                     AutomationProperties.Name="{ext:Translate DownloadProgress}" />
                         <TextBlock Text="{ext:Translate DownloadProgress}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -115,7 +120,8 @@
                         IsEnabled="{Binding IsStopEnabled}"
                         Classes="secondary"
                         Padding="20,10"
-                        VerticalAlignment="Top" />
+                        VerticalAlignment="Top"
+                        AutomationProperties.Name="{ext:Translate StopDownload}" />
             </Grid>
         </Border>
 
@@ -125,7 +131,8 @@
                 IsVisible="{Binding IsLoading}"
                 ZIndex="10">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar IsIndeterminate="True" Width="220" />
+                <ProgressBar IsIndeterminate="True" Width="220"
+                             AutomationProperties.Name="Loading" />
                 <TextBlock Text="{Binding LoadingMessage}"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            FontSize="14"
@@ -135,7 +142,8 @@
                         Margin="0,16,0,0"
                         Classes="secondary"
                         Click="EmergencyOverlayRelease_Click"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center"
+                        AutomationProperties.Name="{ext:Translate EditSystemWindow_Return}" />
             </StackPanel>
         </Border>
     </Grid>

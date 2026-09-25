@@ -12,7 +12,8 @@
                  Margin="10"
                  Padding="5"
                  VerticalAlignment="Stretch"
-                 HorizontalAlignment="Stretch">
+                 HorizontalAlignment="Stretch"
+                 AutomationProperties.Name="Window list">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="models:WindowItem">
                     <StackPanel>

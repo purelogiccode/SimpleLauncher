@@ -36,7 +36,8 @@
                     Classes="secondary"
                     Padding="14,6" Margin="4,0"
                     VerticalAlignment="Top"
-                    Click="CloseButton_Click" />
+                    Click="CloseButton_Click"
+                    AutomationProperties.Name="{ext:Translate Close}" />
         </Grid>
 
         <!-- Row 1: Main content (two columns) -->
@@ -56,7 +57,8 @@
                           Background="{DynamicResource BgSecondaryBrush}"
                           Foreground="{DynamicResource TextPrimaryBrush}"
                           BorderBrush="{DynamicResource BorderNormalBrush}"
-                          Margin="0,0,0,20">
+                          Margin="0,0,0,20"
+                          AutomationProperties.Name="{ext:Translate ChooseASystemToAdd}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="models:EasyModeSystemConfig">
                             <TextBlock Text="{Binding SystemName}" />
@@ -76,7 +78,8 @@
                              Height="32"
                              Background="{DynamicResource BgSecondaryBrush}"
                              Foreground="{DynamicResource TextPrimaryBrush}"
-                             BorderBrush="{DynamicResource BorderNormalBrush}" />
+                             BorderBrush="{DynamicResource BorderNormalBrush}"
+                             AutomationProperties.Name="{ext:Translate ChooseFolderWithROMsOrIsos}" />
                     <Button Grid.Column="1" Content="..."
                             Width="40" Height="32"
                             Padding="0"
@@ -96,11 +99,13 @@
                     <HyperlinkButton NavigateUri="https://github.com/libretro-thumbnails/libretro-thumbnails"
                                      Content="{ext:Translate DownloadImagePackWindow_Libretro_Thumbnails_GitHub}"
                                      Foreground="{DynamicResource LinkBrush}"
-                                     Margin="0,2" />
+                                     Margin="0,2"
+                                     AutomationProperties.Name="{ext:Translate DownloadImagePackWindow_Libretro_Thumbnails_GitHub}" />
                     <HyperlinkButton NavigateUri="https://emumovies.com/files/"
                                      Content="{ext:Translate DownloadImagePackWindow_EmuMovies_Files}"
                                      Foreground="{DynamicResource LinkBrush}"
-                                     Margin="0,2" />
+                                     Margin="0,2"
+                                     AutomationProperties.Name="{ext:Translate DownloadImagePackWindow_EmuMovies_Files}" />
                 </StackPanel>
             </StackPanel>
 
@@ -123,12 +128,14 @@
                                         Command="{Binding DownloadEmulatorCommand}"
                                         IsEnabled="{Binding IsEmulatorDownloaded, Converter={StaticResource InverseBool}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadEmulator}" />
                                 <Button Content="{ext:Translate DownloadCore}"
                                         Command="{Binding DownloadCoreCommand}"
                                         IsEnabled="{Binding IsCoreDownloaded, Converter={StaticResource InverseBool}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadCore}" />
                             </UniformGrid>
                         </StackPanel>
                     </Border>
@@ -148,31 +155,36 @@
                                         IsEnabled="{Binding IsImagePack1Downloaded, Converter={StaticResource InverseBool}}"
                                         IsVisible="{Binding IsImagePack1Available, Converter={StaticResource BoolToVisibility}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadImagePack1}" />
                                 <Button Content="{ext:Translate DownloadImagePack2}"
                                         Command="{Binding DownloadImagePack2Command}"
                                         IsEnabled="{Binding IsImagePack2Downloaded, Converter={StaticResource InverseBool}}"
                                         IsVisible="{Binding IsImagePack2Available, Converter={StaticResource BoolToVisibility}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadImagePack2}" />
                                 <Button Content="{ext:Translate DownloadImagePack3}"
                                         Command="{Binding DownloadImagePack3Command}"
                                         IsEnabled="{Binding IsImagePack3Downloaded, Converter={StaticResource InverseBool}}"
                                         IsVisible="{Binding IsImagePack3Available, Converter={StaticResource BoolToVisibility}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadImagePack3}" />
                                 <Button Content="{ext:Translate DownloadImagePack4}"
                                         Command="{Binding DownloadImagePack4Command}"
                                         IsEnabled="{Binding IsImagePack4Downloaded, Converter={StaticResource InverseBool}}"
                                         IsVisible="{Binding IsImagePack4Available, Converter={StaticResource BoolToVisibility}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadImagePack4}" />
                                 <Button Content="{ext:Translate DownloadImagePack5}"
                                         Command="{Binding DownloadImagePack5Command}"
                                         IsEnabled="{Binding IsImagePack5Downloaded, Converter={StaticResource InverseBool}}"
                                         IsVisible="{Binding IsImagePack5Available, Converter={StaticResource BoolToVisibility}}"
                                         Height="38" Margin="4"
-                                        Classes="primary" />
+                                        Classes="primary"
+                                        AutomationProperties.Name="{ext:Translate DownloadImagePack5}" />
                             </UniformGrid>
                         </StackPanel>
                     </Border>
@@ -192,7 +204,8 @@
                     <Grid>
                         <ProgressBar Height="20"
                                      Value="{Binding DownloadProgress, Mode=OneWay}"
-                                     Minimum="0" Maximum="100" />
+                                     Minimum="0" Maximum="100"
+                                     AutomationProperties.Name="{ext:Translate DownloadProgress}" />
                         <TextBlock Text="{ext:Translate DownloadProgress}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -205,7 +218,8 @@
                                 Margin="10,0,0,0" Padding="10,4"
                                 Command="{Binding StopDownloadCommand}"
                                 IsEnabled="{Binding CanStopDownload}"
-                                Classes="secondary" />
+                                Classes="secondary"
+                                AutomationProperties.Name="{ext:Translate StopDownload}" />
                         <TextBlock Text="{Binding DownloadStatus}"
                                    TextWrapping="Wrap"
                                    VerticalAlignment="Center"
@@ -221,7 +235,8 @@
                         IsEnabled="{Binding IsAddSystemEnabled}"
                         FontSize="16" FontWeight="Bold"
                         Padding="32,12"
-                        Classes="primary" />
+                        Classes="primary"
+                        AutomationProperties.Name="{ext:Translate AddSystem}" />
             </Grid>
         </Border>
 
@@ -241,7 +256,8 @@
                         Width="100" Margin="0,16,0,0"
                         Classes="secondary"
                         Click="EmergencyOverlay_Click"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center"
+                        AutomationProperties.Name="{ext:Translate Cancel}" />
             </StackPanel>
         </Border>
     </Grid>

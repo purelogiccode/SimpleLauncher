@@ -21,15 +21,18 @@
             <ComboBox ItemsSource="{Binding Systems}"
                       SelectedItem="{Binding SelectedSystem}"
                       Margin="0,0,0,30"
-                      ToolTip.Tip="{ext:Translate SystemSelectionWindow_Choose_the_system_for_this_game}" />
+                      ToolTip.Tip="{ext:Translate SystemSelectionWindow_Choose_the_system_for_this_game}"
+                      AutomationProperties.Name="{ext:Translate SystemSelectionWindow_Choose_the_system_for_this_game}" />
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="{ext:Translate Confirm}" Command="{Binding ConfirmCommand}" IsDefault="True"
                         Classes="primary" Margin="0,0,10,0" Width="120"
-                        ToolTip.Tip="{ext:Translate SystemSelectionWindow_Confirm_the_selected_system}" />
+                        ToolTip.Tip="{ext:Translate SystemSelectionWindow_Confirm_the_selected_system}"
+                        AutomationProperties.Name="{ext:Translate SystemSelectionWindow_Confirm_the_selected_system}" />
                 <Button Content="{ext:Translate YumirConfig_Cancel_Button}" Command="{Binding CancelCommand}"
                         IsCancel="True"
-                        Classes="secondary" Width="80" ToolTip.Tip="{ext:Translate YumirConfig_Cancel_Button}" />
+                        Classes="secondary" Width="80" ToolTip.Tip="{ext:Translate YumirConfig_Cancel_Button}"
+                        AutomationProperties.Name="{ext:Translate YumirConfig_Cancel_Button}" />
             </StackPanel>
         </StackPanel>
     </Grid>

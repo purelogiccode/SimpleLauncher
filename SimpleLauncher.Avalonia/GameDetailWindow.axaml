@@ -85,17 +85,20 @@
                     Content="{ext:Translate Remove}"
                     Classes="secondary"
                     Padding="14,8" Margin="0,0,8,0"
-                    Click="RemoveButton_Click" />
+                    Click="RemoveButton_Click"
+                    AutomationProperties.Name="{ext:Translate Remove}" />
             <Button x:Name="FavoriteButton"
                     Content="{ext:Translate GameDetailWindow_Favorite}"
                     Classes="secondary"
                     Padding="14,8" Margin="0,0,8,0"
-                    Click="FavoriteButton_Click" />
+                    Click="FavoriteButton_Click"
+                    AutomationProperties.Name="{ext:Translate GameDetailWindow_Favorite}" />
             <Button x:Name="PlayButton"
                     Content="{ext:Translate GameDetailWindow_Play}"
                     Classes="primary"
                     Padding="20,8"
-                    Click="PlayButton_Click" />
+                    Click="PlayButton_Click"
+                    AutomationProperties.Name="{ext:Translate GameDetailWindow_Play}" />
         </StackPanel>
     </Grid>
 </Window>

@@ -25,6 +25,8 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding GraphicsApi}"
                                       SelectedValuePath="Tag"
+                                      AutomationProperties.Name="Graphics API"
+                                      AutomationProperties.AutomationId="GraphicsApiComboBox"
                                       ToolTip="{DynamicResource AzaharConfig_GraphicsApi_Tooltip}">
                                 <ComboBoxItem Content="OpenGL" Tag="0" />
                                 <ComboBoxItem Content="Vulkan" Tag="2" />
@@ -40,6 +42,8 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding Resolution}"
                                       SelectedValuePath="Tag"
+                                      AutomationProperties.Name="Resolution Factor"
+                                      AutomationProperties.AutomationId="ResolutionComboBox"
                                       ToolTip="{DynamicResource AzaharConfig_Resolution_Tooltip}">
                                 <ComboBoxItem Content="Auto" Tag="0" />
                                 <ComboBoxItem Content="1x Native" Tag="1" />
@@ -74,6 +78,8 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding Layout}"
                                       SelectedValuePath="Tag"
+                                      AutomationProperties.Name="Screen Layout"
+                                      AutomationProperties.AutomationId="LayoutComboBox"
                                       ToolTip="{DynamicResource AzaharConfig_Layout_Tooltip}">
                                 <ComboBoxItem Content="Default" Tag="0" />
                                 <ComboBoxItem Content="Single Screen" Tag="1" />
@@ -88,6 +94,7 @@
                     <StackPanel Margin="5">
                         <Label Content="{DynamicResource AzaharConfig_Volume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding Volume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Master Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource AzaharConfig_Volume_Tooltip}" />
                         <CheckBox IsChecked="{Binding AudioStretching}"
                                   Content="{DynamicResource AzaharConfig_AudioStretching_Checkbox}" Margin="0,5"
@@ -112,14 +119,17 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button x:Name="BtnSave" Content="{DynamicResource AzaharConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}" Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource AzaharConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource AzaharConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}" Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource AzaharConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource AzaharConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource AzaharConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

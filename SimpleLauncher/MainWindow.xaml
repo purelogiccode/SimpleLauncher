@@ -986,6 +986,7 @@
                                         VerticalAlignment="Center"
                                         SelectionChanged="SystemComboBoxSelectionChangedAsync"
                                         AutomationProperties.Name="{DynamicResource SelectSystemComboBox}"
+                                        AutomationProperties.AutomationId="SystemComboBox"
                                         ToolTip="{DynamicResource TooltipSelectSystem}" />
 
                                     <StackPanel
@@ -1000,6 +1001,7 @@
                                                  VerticalAlignment="Center"
                                                  KeyDown="SearchTextBoxKeyDownAsync"
                                                  AutomationProperties.Name="{DynamicResource SearchTextBoxLabel}"
+                                                 AutomationProperties.AutomationId="SearchTextBox"
                                                  AutomationProperties.HelpText="{DynamicResource SearchTextBoxHelpText}"
                                                  ToolTip="{DynamicResource TooltipSearch}" />
                                         <Button x:Name="SearchButton"
@@ -1029,6 +1031,7 @@
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Center"
                                         AutomationProperties.Name="{DynamicResource SelectEmulatorComboBox}"
+                                        AutomationProperties.AutomationId="EmulatorComboBox"
                                         ToolTip="{DynamicResource TooltipSelectEmulator}" />
 
                                     <Button
@@ -1106,6 +1109,8 @@
                                             TickFrequency="50"
                                             Margin="4,0"
                                             VerticalAlignment="Center"
+                                            AutomationProperties.Name="{DynamicResource SetButtonSize}"
+                                            AutomationProperties.AutomationId="CardSizeSlider"
                                             AutomationProperties.HelpText="{DynamicResource TooltipButtonSizeMenu}" />
                                         <TextBlock
                                             Text="○"
@@ -1172,6 +1177,7 @@
                                           SelectionChanged="GameListSelectionChanged"
                                           MouseRightButtonUp="GameListRightClickContextMenuAsync"
                                           AutomationProperties.Name="{DynamicResource GameListGrid}"
+                                          AutomationProperties.AutomationId="GameDataGrid"
                                           AutomationProperties.HelpText="{DynamicResource GameListGridHelpText}"
                                           ToolTip="{DynamicResource TooltipGameDataGrid}"
                                           RowStyle="{StaticResource CustomDataGridRowStyle}">

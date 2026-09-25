@@ -19,6 +19,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoOptions}"
                                       SelectedItem="{Binding MameVideo}"
+                                      AutomationProperties.Name="{ext:Translate MameConfig_VideoMode_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MameConfig_VideoMode_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,0,0,5">
@@ -26,6 +27,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding BgfxBackendOptions}"
                                       SelectedItem="{Binding MameBgfxBackend}"
+                                      AutomationProperties.Name="{ext:Translate MameConfig_BgfxBackend_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MameConfig_BgfxBackend_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,0,0,5">
@@ -33,6 +35,7 @@
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       ItemsSource="{Binding BgfxChainsOptions}"
                                       Text="{Binding MameBgfxScreenChains}"
+                                      AutomationProperties.Name="{ext:Translate MameConfig_BgfxShader_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MameConfig_BgfxShader_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding MameFilter}"
@@ -121,16 +124,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate MameConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate MameConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate MameConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate MameConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate MameConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate MameConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate MameConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate MameConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate MameConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

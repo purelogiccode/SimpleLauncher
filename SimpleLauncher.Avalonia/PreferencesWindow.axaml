@@ -23,6 +23,7 @@
                 <Button Grid.Column="1" Content="{ext:Translate Close}"
                         Classes="secondary"
                         Padding="14,6" Margin="4,0"
+                        AutomationProperties.Name="{ext:Translate Close}"
                         Click="CloseButton_Click" />
             </Grid>
         </Border>
@@ -34,7 +35,8 @@
             <Border Grid.Column="0" Background="{DynamicResource BgSecondaryBrush}">
                 <ListBox x:Name="NavList" Margin="0,8,0,0"
                          Background="Transparent" BorderThickness="0"
-                         SelectionChanged="NavList_SelectionChanged">
+                         SelectionChanged="NavList_SelectionChanged"
+                         AutomationProperties.Name="Preferences navigation">
                     <ListBoxItem Tag="general" IsSelected="True">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="⚙  " FontSize="14" />
@@ -103,7 +105,8 @@
                             <TextBlock Text="{ext:Translate LanguageIcon}" FontSize="13" FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" />
                             <ComboBox x:Name="LanguageCombo" Width="200" Margin="0,0,0,20"
-                                      SelectionChanged="LanguageCombo_SelectionChanged">
+                                      SelectionChanged="LanguageCombo_SelectionChanged"
+                                      AutomationProperties.Name="{ext:Translate LanguageIcon}">
                                 <ComboBoxItem Content="English" Tag="en" />
                                 <ComboBoxItem Content="Português" Tag="pt" />
                                 <ComboBoxItem Content="Español" Tag="es" />
@@ -124,12 +127,14 @@
                                     Classes="primary"
                                     HorizontalAlignment="Left"
                                     Padding="20,10"
+                                    AutomationProperties.Name="{ext:Translate PreferencesWindow_Add_Edit_Systems_Expert_Mode}"
                                     Click="OpenEditSystem_Click" />
                             <Button Content="{ext:Translate PreferencesWindow_Easy_Mode_Download_a_Ready_Made_System}"
                                     Classes="secondary"
                                     HorizontalAlignment="Left"
                                     Padding="20,10"
                                     Margin="0,10,0,0"
+                                    AutomationProperties.Name="{ext:Translate PreferencesWindow_Easy_Mode_Download_a_Ready_Made_System}"
                                     Click="OpenEasyMode_Click" />
                         </StackPanel>
 
@@ -144,6 +149,7 @@
                                     Classes="primary"
                                     HorizontalAlignment="Left"
                                     Padding="20,10"
+                                    AutomationProperties.Name="{ext:Translate PreferencesWindow_Open_Edit_System_Expert_Mode}"
                                     Click="OpenEditSystem_Click" />
                             <TextBlock
                                 Text="{ext:Translate PreferencesWindow_Emulator_1_5_paths_launch_parameters_and}"
@@ -163,6 +169,7 @@
                                     Classes="primary"
                                     HorizontalAlignment="Left"
                                     Padding="20,10"
+                                    AutomationProperties.Name="{ext:Translate DownloadImagePack}"
                                     Click="DownloadImagePack_Click" />
                         </StackPanel>
 
@@ -174,7 +181,8 @@
                             <TextBlock Text="{ext:Translate PreferencesWindow_Default_View}" FontSize="13"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" />
-                            <ComboBox x:Name="DefaultViewCombo" Width="200" Margin="0,0,0,20">
+                            <ComboBox x:Name="DefaultViewCombo" Width="200" Margin="0,0,0,20"
+                                      AutomationProperties.Name="{ext:Translate PreferencesWindow_Default_View}">
                                 <ComboBoxItem Content="{ext:Translate GridView}" Tag="GridView" />
                                 <ComboBoxItem Content="{ext:Translate ListView}" Tag="ListView" />
                             </ComboBox>
@@ -183,7 +191,8 @@
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" />
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                <TextBox x:Name="CardWidthBox" Width="60" Text="168" />
+                                <TextBox x:Name="CardWidthBox" Width="60" Text="168"
+                                         AutomationProperties.Name="{ext:Translate PreferencesWindow_Default_Card_Width}" />
                                 <TextBlock Text="{ext:Translate PreferencesWindow_pixels_148_280}"
                                            Foreground="{DynamicResource TextMutedBrush}"
                                            FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" />
@@ -228,16 +237,20 @@
 
                             <TextBlock Text="{ext:Translate Username}" FontSize="13" FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" />
-                            <TextBox x:Name="RaUsernameBox" Width="250" Margin="0,0,0,12" />
+                            <TextBox x:Name="RaUsernameBox" Width="250" Margin="0,0,0,12"
+                                     AutomationProperties.Name="{ext:Translate Username}" />
 
                             <TextBlock Text="{ext:Translate PreferencesWindow_API_Key}" FontSize="13"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" />
-                            <TextBox x:Name="RaApiKeyBox" Width="350" Margin="0,0,0,20" />
+                            <TextBox x:Name="RaApiKeyBox" Width="350" Margin="0,0,0,20"
+                                     AutomationProperties.Name="{ext:Translate PreferencesWindow_API_Key}" />
 
                             <Button x:Name="RaTestButton" Content="{ext:Translate PreferencesWindow_Test_Connection}"
                                     Classes="secondary"
-                                    Width="140" Click="RaTestButton_Click" />
+                                    Width="140"
+                                    AutomationProperties.Name="{ext:Translate PreferencesWindow_Test_Connection}"
+                                    Click="RaTestButton_Click" />
                         </StackPanel>
 
                         <!-- UPDATES -->
@@ -253,6 +266,7 @@
                                     Classes="primary"
                                     HorizontalAlignment="Left"
                                     Padding="20,10"
+                                    AutomationProperties.Name="{ext:Translate PreferencesWindow_Check_for_Updates_Now}"
                                     Click="CheckUpdates_Click" />
                         </StackPanel>
 

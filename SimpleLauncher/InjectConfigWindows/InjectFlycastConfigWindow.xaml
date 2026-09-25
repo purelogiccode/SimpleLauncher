@@ -62,15 +62,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource FlycastConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource FlycastConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource FlycastConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource FlycastConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource FlycastConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource FlycastConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

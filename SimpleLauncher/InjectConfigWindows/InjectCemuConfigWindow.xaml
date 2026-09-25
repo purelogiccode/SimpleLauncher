@@ -30,6 +30,8 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding GraphicApi}"
                                       SelectedValuePath="Tag"
+                                      AutomationProperties.Name="Graphics API"
+                                      AutomationProperties.AutomationId="GraphicApiComboBox"
                                       ToolTip="{DynamicResource CemuConfig_Api_Tooltip}">
                                 <ComboBoxItem Content="OpenGL" Tag="0" />
                                 <ComboBoxItem Content="Vulkan" Tag="1" />
@@ -45,6 +47,8 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding Vsync}"
                                       SelectedValuePath="Tag"
+                                      AutomationProperties.Name="VSync"
+                                      AutomationProperties.AutomationId="VsyncComboBox"
                                       ToolTip="{DynamicResource CemuConfig_Vsync_Tooltip}">
                                 <ComboBoxItem Content="{DynamicResource CemuConfig_Vsync_Off}" Tag="0" />
                                 <ComboBoxItem Content="{DynamicResource CemuConfig_Vsync_On}" Tag="1" />
@@ -62,6 +66,7 @@
                     <StackPanel Margin="5">
                         <Label Content="{DynamicResource CemuConfig_Volume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding Volume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="TV Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource CemuConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -80,6 +85,8 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding Language}"
                                       SelectedValuePath="Tag"
+                                      AutomationProperties.Name="Console Language"
+                                      AutomationProperties.AutomationId="LanguageComboBox"
                                       ToolTip="{DynamicResource CemuConfig_Language_Tooltip}">
                                 <ComboBoxItem Content="Japanese" Tag="0" />
                                 <ComboBoxItem Content="English" Tag="1" />
@@ -109,14 +116,17 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button x:Name="BtnSave" Content="{DynamicResource CemuConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}" Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource CemuConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource CemuConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}" Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource CemuConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource CemuConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource CemuConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

@@ -27,6 +27,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding MednafenVideoDriver}"
+                                      AutomationProperties.Name="Video Driver"
+                                      AutomationProperties.AutomationId="VideoDriverComboBox"
                                       ToolTip="{DynamicResource MednafenConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding MednafenFullscreen}"
@@ -44,6 +46,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding StretchOptions}"
                                       SelectedItem="{Binding MednafenStretch}"
+                                      AutomationProperties.Name="Aspect Ratio / Stretch"
+                                      AutomationProperties.AutomationId="StretchComboBox"
                                       ToolTip="{DynamicResource MednafenConfig_Stretch_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding MednafenBilinear}"
@@ -58,6 +62,7 @@
                         <Label Content="{DynamicResource MednafenConfig_Scanlines_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding MednafenScanlines}" Minimum="0" Maximum="100"
                                 IsSnapToTickEnabled="True" TickFrequency="1"
+                                AutomationProperties.Name="Scanlines Opacity"
                                 ToolTip="{DynamicResource MednafenConfig_Scanlines_Tooltip}" />
                         <Grid Margin="0,5,0,5">
                             <Grid.ColumnDefinitions>
@@ -68,6 +73,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ShaderOptions}"
                                       SelectedItem="{Binding MednafenShader}"
+                                      AutomationProperties.Name="Shader"
+                                      AutomationProperties.AutomationId="ShaderComboBox"
                                       ToolTip="{DynamicResource MednafenConfig_Shader_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -78,6 +85,7 @@
                     <StackPanel Margin="5">
                         <Label Content="{DynamicResource MednafenConfig_Volume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding MednafenVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Master Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource MednafenConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -113,15 +121,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource MednafenConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource MednafenConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource MednafenConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource MednafenConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource MednafenConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource MednafenConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

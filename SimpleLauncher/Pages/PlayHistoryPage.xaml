@@ -28,27 +28,33 @@
                 <Button Content="{DynamicResource RemovefromHistory}" Click="RemoveHistoryItemButton_ClickAsync"
                         Style="{DynamicResource SecondaryActionButtonStyle}"
                         ToolTip="{DynamicResource TooltipRemoveFromHistory}"
+                        AutomationProperties.AutomationId="RemoveFromHistoryButton"
                         AutomationProperties.Name="{DynamicResource RemovefromHistory}" />
                 <Button Content="{DynamicResource RemoveAllfromHistory}" Click="RemoveAllHistoryItemButton_ClickAsync"
                         Style="{DynamicResource SecondaryActionButtonStyle}"
                         ToolTip="{DynamicResource TooltipRemoveAllFromHistory}"
+                        AutomationProperties.AutomationId="RemoveAllFromHistoryButton"
                         AutomationProperties.Name="{DynamicResource RemoveAllfromHistory}" />
                 <Button Content="{DynamicResource LaunchSelectedGame}" Click="LaunchGameClickAsync"
                         Style="{DynamicResource PrimaryActionButtonStyle}"
                         IsDefault="True"
                         ToolTip="{DynamicResource TooltipLaunchFromHistory}"
+                        AutomationProperties.AutomationId="LaunchSelectedGameButton"
                         AutomationProperties.Name="{DynamicResource LaunchSelectedGame}" />
                 <Button Content="{DynamicResource SortByDate}" Click="SortByDate_Click"
                         Style="{DynamicResource SecondaryActionButtonStyle}"
                         ToolTip="{DynamicResource TooltipSortByDate}"
+                        AutomationProperties.AutomationId="SortByDateButton"
                         AutomationProperties.Name="{DynamicResource SortByDate}" />
                 <Button Content="{DynamicResource SortByPlayTime}" Click="SortByTotalPlayTime_Click"
                         Style="{DynamicResource SecondaryActionButtonStyle}"
                         ToolTip="{DynamicResource TooltipSortByPlayTime}"
+                        AutomationProperties.AutomationId="SortByPlayTimeButton"
                         AutomationProperties.Name="{DynamicResource SortByPlayTime}" />
                 <Button Content="{DynamicResource SortByTimesPlayed}" Click="SortByTimesPlayed_Click"
                         Style="{DynamicResource SecondaryActionButtonStyle}"
                         ToolTip="{DynamicResource TooltipSortByTimesPlayed}"
+                        AutomationProperties.AutomationId="SortByTimesPlayedButton"
                         AutomationProperties.Name="{DynamicResource SortByTimesPlayed}" />
             </StackPanel>
             <DataGrid Name="PlayHistoryDataGrid"
@@ -66,6 +72,8 @@
                       MouseRightButtonUp="PlayHistoryPrepareForRightClickContextAsync"
                       MouseDoubleClick="LaunchGameWithDoubleClickAsync"
                       SelectionChanged="SetPreviewImageOnSelectionChangedAsync"
+                      AutomationProperties.Name="{DynamicResource TooltipPlayHistoryDataGrid}"
+                      AutomationProperties.AutomationId="PlayHistoryDataGrid"
                       PreviewKeyDown="DeleteHistoryItemWithDelButtonAsync">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="{DynamicResource FileNameColumnHeader}" Binding="{Binding DisplayName}"

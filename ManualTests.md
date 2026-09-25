@@ -221,3 +221,217 @@ Run "Scan for store games" after installing 1–2 real games per store. Verify p
 
 - Covered by unit tests (do **not** re-test manually): settings & system manager persistence, favorites, play history, game scanner core, file finder, search orchestrator, launch strategies (default, DOSBox, Commander Genius, CHD/CUE, PBP, XISO, ZIP), mount-strategy matching, Core-side emulator config-injection services, models/DTOs, path/URL/sanitizer/pagination/filter helpers, RetroAchievements manager/matcher/hasher, Steam VDF parser, update-check, API connectivity, converters' strategy classes — plus the recently added: parameter resolver API service, `system.xml` writer + emulator XML helpers, game file watcher, loading overlay, UI reset, status bar, menu check-marks, credential protector (DPAPI), system-selection ViewModel, search-result model, default-folder/temp/missing-file services.
 - Not covered and listed above: all WPF windows/Views/ViewModels, UI services, app lifecycle, per-emulator launch handlers, live file operations (extraction, mounting, conversion tools), platform scanners, downloads, RA API layer, gamepad/audio, debug/bug-report pipeline.
+
+---
+
+# GUI testing runbook (Avalonia / Linux VM): AT-SPI navigation + vision checks
+
+How to run GUI checks automatically: the harness drives the app through its **AT-SPI accessibility
+tree** (find by name/AutomationId, click, expand, read state) and uses a vision-capable LLM only for
+*visual* verdicts (rendering, palettes, text legibility). The WPF checklist above is the source of
+scenarios; for the **Avalonia/Linux** build use `docs/manual-tests.md` (same list, with Avalonia/Linux
+items marked). This runbook describes the tooling built on 2026-09-25 and how to resume it in a new
+session.
+
+## 1. Environment
+
+| Item | Value |
+|---|---|
+| VM | Hyper-V `LinuxMint` (Gen 2, 4 vCPU, 8 GB RAM, 80 GB VHDX on `D:`) |
+| Guest OS | Linux Mint 22.3 Cinnamon (X11, LightDM **autologin** as `vm`) |
+| Login | user `vm`, password `vm` (sudo password `vm`) |
+| Guest IP | DHCP (was `172.24.166.133`) — re-check after VM reboot |
+| App | `~/SimpleLauncher/SimpleLauncher.Avalonia` (self-contained `linux-x64` publish) |
+| Display | `:0`, `XAUTHORITY=/home/vm/.Xauthority` |
+| Host harness | `D:\Hyper-V\vision\` (`ask_vision.py`, `atspi_nav.py`, `lib.ps1`, `run-suite.ps1`) — not in git |
+| Guest a11y deps | `at-spi2-core`, `python3-pyatspi` (already present on Mint 22.3); `wmctrl` for maximize; `at-spi-bus-launcher` auto-starts with the session |
+| Shots / reports | `D:\Hyper-V\vision\shots\`, `D:\Hyper-V\vision\reports\` |
+| Host prereqs | PowerShell 7 + `Posh-SSH`, Python 3.14, user env var `OPENROUTER_API_KEY` (`sk-or-...`) |
+| Model | `xiaomi/mimo-v2.6-flash` on OpenRouter (accepts image input; 1M context) |
+
+## 2. Pipeline logic
+
+```
+run-suite.ps1 scenario
+  -> one cached SSH session (Posh-SSH) per run; atspi_nav.py deployed via SCP
+  -> the app is restarted once at suite start (fresh Welcome state)
+  -> scenario = a Python script (heredoc) that:
+       * connects to the app accessibility tree (pyatspi)
+       * navigates / asserts deterministically (print "SL_RESULT: {...}")
+  -> gnome-screenshot inside guest (only for visual scenarios)
+  -> SCP the PNG to D:\Hyper-V\vision\shots
+  -> if the scenario has a Prompt: POST base64 image to OpenRouter and parse
+     the first line "VERDICT: PASS|FAIL"
+  -> final verdict = deterministic AND vision (when vision is used)
+  -> append both evidences to reports\run-<timestamp>.md
+```
+
+The key is never written to disk or logs by the harness: `lib.ps1` reads it from the user env var via
+`[Environment]::GetEnvironmentVariable('OPENROUTER_API_KEY','User')` (a new shell started after the
+variable was set still sees it that way, even though an already-running process does not).
+
+## 3. Resume / recovery steps (new session)
+
+1. Check the VM: `Get-VM LinuxMint` (elevated) or Hyper-V Manager. If off: `Start-VM LinuxMint` (elevated).
+   When resuming non-elevated management, log off/on once if the account was just added to
+   `Hyper-V Administrators`; otherwise run Hyper-V cmdlets and `vmconnect.exe` elevated.
+2. Open the console: `vmconnect.exe localhost LinuxMint` (elevated if needed).
+3. Find the guest IP: `arp -a` / `Get-NetNeighbor` on `vEthernet (Default Switch)` (host is `172.24.160.1/20`),
+   or read it from the VM console with `hostname -I`.
+4. Test SSH (expects port 22 open) and the app process:
+   ```powershell
+   Import-Module Posh-SSH
+   $cred = [pscredential]::new('vm', (ConvertTo-SecureString 'vm' -AsPlainText -Force))
+   $s = New-SSHSession -ComputerName '<guest-ip>' -Credential $cred -AcceptKey
+   Invoke-SSHCommand -SessionId $s.SessionId -Command 'pgrep -af SimpleLauncher.Avalonia || echo NOT-RUNNING'
+   ```
+   If the harness hardcodes the old IP, update `$script:VmHostAddress` in `D:\Hyper-V\vision\lib.ps1`.
+5. Relaunch the app if needed:
+   ```bash
+   cd ~/SimpleLauncher
+   setsid env DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority ./SimpleLauncher.Avalonia \
+     >/tmp/simplelauncher.log 2>&1 < /dev/null &
+   ```
+6. The console resolution resets to 1024x768 after a guest reboot; re-apply 1080p:
+   ```bash
+   DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080
+   ```
+   (Or make it permanent on the host with `Set-VMVideo -VMName LinuxMint -HorizontalResolution 1920 -VerticalResolution 1080`.)
+7. Run the suite (below).
+
+## 4. Running the suite
+
+```powershell
+# all scenarios
+pwsh -NoProfile -File D:\Hyper-V\vision\run-suite.ps1
+
+# only some scenarios (comma-separated; also works with -Only A,B from -File)
+pwsh -NoProfile -File D:\Hyper-V\vision\run-suite.ps1 -Only MENU-01,EASY-01
+
+# different model
+pwsh -NoProfile -File D:\Hyper-V\vision\run-suite.ps1 -Model 'google/gemini-3.8-flash'
+```
+
+Ad-hoc check without touching the suite:
+```powershell
+. D:\Hyper-V\vision\lib.ps1
+$shot = Save-VmShot -Name 'adhoc'
+Invoke-VisionCheck -Image $shot -Prompt 'Expected ... First line: VERDICT: PASS or VERDICT: FAIL'
+```
+
+## 5. Scenario anatomy (`run-suite.ps1`) and the AT-SPI nav layer
+
+Each scenario is a PowerShell hashtable:
+
+| Field | Meaning |
+|---|---|
+| `Id` / `Name` | Report identity |
+| `Py` | Python script executed in the guest. Imports `/home/vm/vision/atspi_nav.py`, navigates and asserts, prints one `SL_RESULT: {"ok":bool,"checks":{...},"extra":{...}}` line |
+| `Shot` | Optional screenshot base name (PNG lands in `shots\`); taken after the script leaves the UI in the asserted state |
+| `Prompt` | Optional vision question; omit for purely deterministic scenarios (no LLM call) |
+
+Verdict rules in the harness: the deterministic part must PASS (`ok == true`, at least one check, no
+`exception` in `extra`); when a `Prompt` exists, the vision `VERDICT` must also be PASS.
+
+Prompt contract (parsed by `Get-SuiteVerdict`):
+```
+First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
+Then report ... and any mismatch. Be brief.
+```
+
+### AT-SPI navigation layer (`atspi_nav.py`)
+
+Avalonia 12.1 starts its AT-SPI server unconditionally on X11, so the app tree is available without
+changing the app. Key API (all handles are re-resolved on every call — cached peers go stale after
+layout changes):
+
+| Method | Purpose |
+|---|---|
+| `snapshot()` / `find(id=,name=,role=,contains=)` / `wait_for(...)` | Tree walk + lookup (AutomationId falls back to `x:Name`) |
+| `click(entry)` / `toggle` / `expand` | Native action when available (IInvoke/IToggle/IExpandCollapse); otherwise click at live extents |
+| `open_menu("Options")`, `popup_items()`, `click_menu_item(name)` | Menu bar + popup navigation. Popup entries are the menu items below the `[menu]` node's bottom edge |
+| `set_text`, `read_text`, `read_value` | TextBox / Slider interfaces |
+| `activate_window`, `maximize_window`, `close_welcome`, `close_dialogs`, `ensure_ready` | Deterministic app state |
+| `press(keys)` | xdotool fallback (Escape, etc.) |
+
+Lessons baked into the library:
+- **Menu items have no AT-SPI action** (`MenuItemAutomationPeer` implements only `IToggleProvider`), so
+  they are clicked via their extents after activating the window.
+- **First popup item matters:** bounds are the menubar bottom, not "top-level items < y+40" (the first
+  item sits ~4 px below the bar). Use the `[menu]` node extents.
+- **Duplicated names:** a submenu item can repeat its parent's name (Sound Configuration); the rightmost
+  match is the flyout entry. Click the parent once to open the flyout, then click again.
+- **Modal dialogs:** the first-run `Welcome` dialog is modal; dismiss it (`No`) before clicking. Menus,
+  Easy Mode and dialogs stay usable afterwards (see BUG-02 for the main-content caveat).
+- **One assertion per scenario** and prefer tree assertions (names, enabled/disabled via
+  `pyatspi.STATE_ENABLED`, sorted item lists) over screenshots; keep vision for visual-only claims.
+- **Reasoning model:** `xiaomi/mimo-v2.6-flash` spends tokens on hidden reasoning. If `content` comes
+  back empty, raise `--max-tokens` (lib.ps1 default is now 8000).
+- **Interference:** Mint Update may pop up or run an `apt` upgrade; it starves the app and the AT-SPI
+  tree degrades. Wait for `apt`/`dpkg` to finish and restart the app before trusting a red run.
+- **Evidence:** keep every screenshot; the report references it.
+
+### Legacy coordinate map (fallback only)
+
+Kept for ad-hoc xdotool fallbacks and for interpreting old screenshots (app maximized, 1920x1080):
+menu bar `y=44`: Options `x=45`, Edit System `x=112`, Select Window `x=211`, Donate `x=309`,
+About `x=370`. Window handle: `xdotool search --name "^Simple Launcher$"`. Extents from the AT-SPI
+tree are authoritative and layout-independent — prefer them.
+
+## 6. Scenario inventory and current status
+
+Last full run 2026-09-25: **7/7 green** (`D:\Hyper-V\vision\reports\run-<timestamp>.md`).
+
+| Id | Covers | Deterministic | Vision | Notes |
+|---|---|---|---|---|
+| EASY-01 | Welcome -> Yes -> Easy Mode; dropdown populated + sorted; Add/Download disabled | PASS | PASS | ~28 s |
+| MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | PASS | PASS | |
+| MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | PASS | PASS | first item was hidden before the menubar-bounds fix |
+| MENU-02 | About menu exact 4 items | PASS | PASS | |
+| DIALOG-01 | Options > About opens the About window with a version string | PASS | PASS | |
+| DIALOG-02 | Options > Sound Configuration > flyout > window | PASS | PASS | needs the two-click submenu sequence |
+| DIALOG-03 | Edit System menu exact set; Add New System opens Easy Mode; no Windows-only scan | PASS | - | no LLM call; the Edit System window needs a configured system |
+
+Remaining work:
+1. Configure a dummy system (Easy Mode with a dummy ROM folder and a script as "emulator") so the
+   grid/list, filter bar, status bar, Favorites, Global Search, Play History and context menus become
+   testable (checklist sections 2-5 of `docs/manual-tests.md`).
+2. Once a system exists, add the Edit System window scenario: on a fresh setup it errors with
+   `'system.xml' not found inside the application folder` until the first system is added.
+3. Add negative checks where useful (empty states, disabled buttons) - cheap for the model to judge.
+4. After deploying a payload with the accessibility annotations, re-run the suite: menu/dialog names
+   should be unchanged, image-only buttons should now report real names instead of `Avalonia.Controls.Image`.
+
+## 7. Cost
+
+One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; observed cost
+**USD 0.0004-0.0007** per scenario with `xiaomi/mimo-v2.6-flash`. A full 30-scenario pass is a few cents.
+
+## 8. Known findings (vision runs)
+
+- **BUG-01 - Adaptive base theme rendered a mixed dark/light UI (Linux/Avalonia). FIXED 2026-09-25.**
+  Confirmed and fixed the same day on Linux Mint 22.3. `AvaloniaThemeService` now resolves `Adaptive`
+  against the machine theme: Avalonia `PlatformSettings` on Windows/macOS, and on Linux the GTK preference
+  (`org.gnome.desktop.interface color-scheme`, then the GTK theme name via `gsettings` for
+  GNOME/Cinnamon/MATE/XFCE) because Avalonia's X11 backend reports Light for some desktops. Runtime
+  changes re-apply the palette (`ActualThemeVariantChanged`, plus a 15 s poll while Adaptive is active on
+  Linux). Regression tests: `SimpleLauncher.Avalonia.Tests/AvaloniaThemeServiceTests.cs`. Vision
+  verification: light machine theme -> all light PASS, dark machine theme at startup -> all dark PASS,
+  live dark->light switch while running -> all light PASS. Full report:
+  `D:\Hyper-V\vision\reports\BUG-adaptive-theme.md`.
+- **BUG-02 (upstream, Avalonia 12.1) - main-content AT-SPI subtree collapses after the first modal dialog
+  closes.** On Linux Mint the app exposes a full tree (350 nodes: nav rail, combos, slider, game grid,
+  status) while the first-run `Welcome` dialog is up. Dismissing it (clicking No or pressing Escape)
+  permanently drops `MainContentGrid`'s children from the tree (97 nodes remain; only the menu bar and
+  the first nav button are exposed) even though the UI renders normally (evidence:
+  `D:\Hyper-V\vision\shots\state.png`). Menus, Easy Mode and every dialog window stay exposed, so the
+  suite navigates via those; main-content verification stays with vision. Suspected cause: Avalonia's
+  AT-SPI server holds a stale peer/root when the visual tree is rebuilt on dialog close
+  (`X11AtSpiAccessibility` / peer re-registration). Restarting the app restores the tree, so scenarios
+  that need main-content exposure must run before any modal is dismissed. Worth reporting upstream.
+- **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
+  `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
+  AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:
+  `SimpleLauncher.Avalonia.Tests/AvaloniaAccessibilityTests.cs` and
+  `SimpleLauncher.Tests/WpfAccessibilityTests.cs` fail the build when a new interactive control has no
+  accessible name (buttons with literal text are exempt). Counts: Avalonia ~205, WPF ~320 annotations.

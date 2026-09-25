@@ -28,18 +28,22 @@
                Margin="0,0,10,10" />
         <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,0,10"
                  Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{DynamicResource Username}"
+                 AutomationProperties.AutomationId="UsernameTextBox"
                  ToolTip="{DynamicResource TooltipRaUsername}" />
 
         <!-- API Key -->
         <Label Grid.Row="1" Grid.Column="0" Content="{DynamicResource ApiKey}" VerticalAlignment="Center"
                Margin="0,0,10,10" />
         <PasswordBox x:Name="ApiKeyPasswordBox" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center"
+                     AutomationProperties.Name="{DynamicResource ApiKey}"
                      Margin="0,0,0,10" ToolTip="{DynamicResource TooltipRaApiKey}" />
 
         <!-- RA Password -->
         <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource RetroAchievementsPassword}"
                VerticalAlignment="Center" Margin="0,0,10,10" />
         <PasswordBox x:Name="RaPasswordPasswordBox" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center"
+                     AutomationProperties.Name="{DynamicResource RetroAchievementsPassword}"
                      Margin="0,0,0,10" ToolTip="{DynamicResource TooltipRaPassword}" />
 
         <!-- Hyperlink -->
@@ -84,9 +88,13 @@
                     HorizontalAlignment="Right">
             <Button Content="{DynamicResource Save}" Command="{Binding SaveCommand}"
                     Style="{DynamicResource MahApps.Styles.Button.Square.Accent}" IsDefault="True" Width="80"
+                    AutomationProperties.Name="{DynamicResource Save}"
+                    AutomationProperties.AutomationId="SaveButton"
                     Margin="0,0,10,0" ToolTip="{DynamicResource TooltipSaveRaSettings}" />
             <Button Content="{DynamicResource Cancel}" Command="{Binding CancelCommand}"
                     Style="{DynamicResource MahApps.Styles.Button.Square}" IsCancel="True" Width="80"
+                    AutomationProperties.Name="{DynamicResource Cancel}"
+                    AutomationProperties.AutomationId="CancelButton"
                     ToolTip="{DynamicResource ToolTipCancel}" />
         </StackPanel>
     </Grid>

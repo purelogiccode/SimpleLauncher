@@ -34,6 +34,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectRatioOptions}"
                                       SelectedItem="{Binding AspectRatio}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectRatioComboBox"
                                       ToolTip="{DynamicResource MesenConfig_AspectRatio_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -45,6 +47,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoFilterOptions}"
                                       SelectedItem="{Binding VideoFilter}"
+                                      AutomationProperties.Name="Video Filter"
+                                      AutomationProperties.AutomationId="VideoFilterComboBox"
                                       ToolTip="{DynamicResource MesenConfig_VideoFilter_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -58,6 +62,7 @@
                                   ToolTip="{DynamicResource MesenConfig_EnableAudio_Tooltip}" />
                         <Label Content="{DynamicResource MesenConfig_MasterVolume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding MasterVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Master Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource MesenConfig_MasterVolume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -72,6 +77,7 @@
                                   ToolTip="{DynamicResource MesenConfig_PauseInBackground_Tooltip}" />
                         <Label Content="{DynamicResource MesenConfig_RunAhead_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding RunAhead}" Minimum="0" Maximum="8" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Run-Ahead Frames"
                                 TickFrequency="1" ToolTip="{DynamicResource MesenConfig_RunAhead_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -95,15 +101,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource MesenConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource MesenConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource MesenConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource MesenConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource MesenConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource MesenConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

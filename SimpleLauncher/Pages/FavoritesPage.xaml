@@ -29,11 +29,13 @@
                 <Button Content="{DynamicResource RemoveFromFavorites}" Click="RemoveFavoriteButton_ClickAsync"
                         Style="{DynamicResource SecondaryActionButtonStyle}"
                         ToolTip="{DynamicResource TooltipRemoveFromFavorites}"
+                        AutomationProperties.AutomationId="RemoveFromFavoritesButton"
                         AutomationProperties.Name="{DynamicResource RemoveFromFavorites}" />
                 <Button Content="{DynamicResource LaunchSelectedGame}" Click="LaunchGameClickAsync"
                         Style="{DynamicResource PrimaryActionButtonStyle}"
                         IsDefault="True"
                         ToolTip="{DynamicResource TooltipLaunchFavorite}"
+                        AutomationProperties.AutomationId="LaunchSelectedGameButton"
                         AutomationProperties.Name="{DynamicResource LaunchSelectedGame}" />
             </StackPanel>
             <DataGrid Name="FavoritesDataGrid"
@@ -51,6 +53,8 @@
                       MouseRightButtonUp="FavoritesPrepareForRightClickContextMenuAsync"
                       MouseDoubleClick="LaunchGameWithDoubleClickAsync"
                       SelectionChanged="SetPreviewImageOnSelectionChangedAsync"
+                      AutomationProperties.Name="{DynamicResource TooltipFavoritesDataGrid}"
+                      AutomationProperties.AutomationId="FavoritesDataGrid"
                       PreviewKeyDown="FavoritesDataGrid_PreviewKeyDownAsync">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="{DynamicResource FileNameColumnHeader}" Binding="{Binding FileName}"

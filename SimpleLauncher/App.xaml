@@ -627,6 +627,7 @@
                     <!-- Emergency Return Button at Bottom Right -->
                     <Button x:Name="PART_EmergencyReturnButton"
                             Content="{DynamicResource ReturnButton}"
+                            AutomationProperties.Name="{DynamicResource ReturnButton}"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="30"

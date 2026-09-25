@@ -21,6 +21,8 @@
                  HorizontalAlignment="Center"
                  HorizontalScrollBarVisibility="Disabled"
                  Text="{Binding RomNameText}"
+                 AutomationProperties.Name="{DynamicResource RomName}"
+                 AutomationProperties.AutomationId="RomNameTextBox"
                  ToolTip="{DynamicResource RomName}" />
         <TextBox Grid.Row="1"
                  IsReadOnly="True"
@@ -31,6 +33,8 @@
                  HorizontalScrollBarVisibility="Disabled"
                  Text="{Binding RomDescriptionText}"
                  Visibility="{Binding DescriptionVisibility}"
+                 AutomationProperties.Name="{DynamicResource RomDescription}"
+                 AutomationProperties.AutomationId="RomDescriptionTextBox"
                  ToolTip="{DynamicResource RomDescription}" />
         <md:MarkdownScrollViewer x:Name="HistoryMarkdownViewer"
                                  Grid.Row="2"

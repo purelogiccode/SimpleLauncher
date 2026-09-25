@@ -20,10 +20,12 @@
                         <Grid ColumnDefinitions="*,Auto,*">
                             <NumericUpDown Grid.Column="0" Minimum="640" Maximum="7680" Increment="1"
                                            Value="{Binding ResX}"
+                                           AutomationProperties.Name="{ext:Translate SegaModel2Config_ResolutionX_Tooltip}"
                                            ToolTip.Tip="{ext:Translate SegaModel2Config_ResolutionX_Tooltip}" />
                             <TextBlock Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="10,0" />
                             <NumericUpDown Grid.Column="2" Minimum="480" Maximum="4320" Increment="1"
                                            Value="{Binding ResY}"
+                                           AutomationProperties.Name="{ext:Translate SegaModel2Config_ResolutionY_Tooltip}"
                                            ToolTip.Tip="{ext:Translate SegaModel2Config_ResolutionY_Tooltip}" />
                         </Grid>
 
@@ -34,6 +36,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding WideScreenOptions}"
                                       SelectedItem="{Binding WideScreen}"
+                                      AutomationProperties.Name="{ext:Translate SegaModel2Config_Widescreen_Tooltip}"
                                       ToolTip.Tip="{ext:Translate SegaModel2Config_Widescreen_Tooltip}" />
                         </Grid>
 
@@ -44,6 +47,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding FsaaOptions}"
                                       SelectedItem="{Binding Fsaa}"
+                                      AutomationProperties.Name="{ext:Translate SegaModel2Config_FSAA_Tooltip}"
                                       ToolTip.Tip="{ext:Translate SegaModel2Config_FSAA_Tooltip}" />
                         </Grid>
 
@@ -105,16 +109,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate SegaModel2Config_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate SegaModel2Config_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate SegaModel2Config_Save_Tooltip}" />
             <Button Content="{ext:Translate SegaModel2Config_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate SegaModel2Config_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate SegaModel2Config_Run_Tooltip}" />
             <Button Content="{ext:Translate SegaModel2Config_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate SegaModel2Config_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate SegaModel2Config_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

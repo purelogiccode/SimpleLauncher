@@ -27,6 +27,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding GfxBackendOptions}"
                                       SelectedItem="{Binding GfxBackend}"
+                                      AutomationProperties.Name="Graphics Backend"
+                                      AutomationProperties.AutomationId="GfxBackendComboBox"
                                       ToolTip="{DynamicResource DolphinConfig_GfxBackend_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding DspThread}"
@@ -67,15 +69,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource DolphinConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource DolphinConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource DolphinConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource DolphinConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource DolphinConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource DolphinConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

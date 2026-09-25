@@ -61,10 +61,12 @@
                         <Label Content="{DynamicResource SupermodelConfig_MusicVolume_Label}"
                                VerticalAlignment="Center" />
                         <Slider Value="{Binding MusicVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Music Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource SupermodelConfig_MusicVolume_Tooltip}" />
                         <Label Content="{DynamicResource SupermodelConfig_SoundVolume_Label}"
                                VerticalAlignment="Center" Margin="0,5,0,0" />
                         <Slider Value="{Binding SoundVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Sound Effects Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource SupermodelConfig_SoundVolume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -89,6 +91,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding InputSystemOptions}"
                                       SelectedItem="{Binding InputSystem}"
+                                      AutomationProperties.Name="Input System"
+                                      AutomationProperties.AutomationId="InputSystemComboBox"
                                       ToolTip="{DynamicResource SupermodelConfig_InputSystem_Tooltip}" />
                         </Grid>
 
@@ -102,6 +106,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding PpcFrequencyOptions}"
                                       SelectedItem="{Binding PowerPcFrequency}"
+                                      AutomationProperties.Name="PowerPC Frequency (MHz)"
+                                      AutomationProperties.AutomationId="PpcFrequencyComboBox"
                                       ToolTip="{DynamicResource SupermodelConfig_PpcFrequency_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -126,15 +132,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource SupermodelConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource SupermodelConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource SupermodelConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource SupermodelConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource SupermodelConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource SupermodelConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

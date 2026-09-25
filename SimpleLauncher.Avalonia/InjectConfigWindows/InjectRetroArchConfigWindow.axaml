@@ -19,6 +19,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding VideoDriver}"
+                                      AutomationProperties.Name="{ext:Translate RetroArchConfig_VideoDriver_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RetroArchConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Fullscreen}"
@@ -42,6 +43,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectRatioIndexOptions}"
                                       SelectedItem="{Binding AspectRatioIndex}"
+                                      AutomationProperties.Name="{ext:Translate RetroArchConfig_AspectRatio_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RetroArchConfig_AspectRatio_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding ScaleInteger}"
@@ -111,6 +113,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding MenuDriverOptions}"
                                       SelectedItem="{Binding MenuDriver}"
+                                      AutomationProperties.Name="{ext:Translate RetroArchConfig_MenuDriver_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RetroArchConfig_MenuDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding ShowAdvancedSettings}"
@@ -160,16 +163,19 @@
                     Content="{ext:Translate RetroArchConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate RetroArchConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate RetroArchConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate RetroArchConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate RetroArchConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate RetroArchConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate RetroArchConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate RetroArchConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate RetroArchConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

@@ -26,6 +26,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding VideoDriver}"
+                                      AutomationProperties.Name="Video Driver"
+                                      AutomationProperties.AutomationId="VideoDriverComboBox"
                                       ToolTip="{DynamicResource AresConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Exclusive}"
@@ -40,6 +42,8 @@
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       ItemsSource="{Binding ShaderOptions}"
                                       Text="{Binding Shader}"
+                                      AutomationProperties.Name="Shader"
+                                      AutomationProperties.AutomationId="ShaderComboBox"
                                       ToolTip="{DynamicResource AresConfig_Shader_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -51,6 +55,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding MultiplierOptions}"
                                       SelectedItem="{Binding Multiplier}"
+                                      AutomationProperties.Name="Internal Resolution Scale"
+                                      AutomationProperties.AutomationId="MultiplierComboBox"
                                       ToolTip="{DynamicResource AresConfig_Multiplier_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -63,6 +69,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectCorrectionOptions}"
                                       SelectedItem="{Binding AspectCorrection}"
+                                      AutomationProperties.Name="Aspect Correction"
+                                      AutomationProperties.AutomationId="AspectCorrectionComboBox"
                                       ToolTip="{DynamicResource AresConfig_AspectCorrection_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -75,6 +83,7 @@
                                   Margin="0,5" ToolTip="{DynamicResource AresConfig_Mute_Tooltip}" />
                         <Label Content="{DynamicResource AresConfig_Volume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding Volume}" Minimum="0.0" Maximum="2.0" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Volume"
                                 TickFrequency="0.1" ToolTip="{DynamicResource AresConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -115,15 +124,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource AresConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource AresConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource AresConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource AresConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource AresConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource AresConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

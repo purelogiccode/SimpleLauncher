@@ -37,6 +37,8 @@
                                     <Button x:Name="ViewProfileOnRaButton" Content="{DynamicResource ViewProfileOnRA}"
                                             Click="ViewProfileOnRaButton_Click" Margin="0,10,0,0"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{DynamicResource ViewProfileOnRA}"
+                                            AutomationProperties.AutomationId="ViewProfileOnRaButton"
                                             ToolTip="{DynamicResource ViewProfileOnRaButtonTooltip}" />
                                 </StackPanel>
                             </StackPanel>
@@ -170,6 +172,7 @@
                                      Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                      Style="{DynamicResource MahApps.Styles.ListBox}"
                                      ItemContainerStyle="{StaticResource CustomListBoxItemStyle}"
+                                     AutomationProperties.Name="{DynamicResource RecentlyPlayedGamesTooltip}"
                                      ToolTip="{DynamicResource RecentlyPlayedGamesTooltip}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
@@ -241,6 +244,8 @@
                                 <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                         Click="OpenRaSettings_Click"
                                         Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                        AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                        AutomationProperties.AutomationId="NoProfileOpenRaSettingsButton"
                                         ToolTip="{DynamicResource OpenRaSettingsButtonTooltip}" />
                             </StackPanel>
                         </Grid>
@@ -263,18 +268,24 @@
                                    FontSize="14" Foreground="{DynamicResource MahApps.Brushes.Text}" />
                         <DatePicker x:Name="FromDatePicker" Width="120"
                                     ToolTip="{DynamicResource FromDatePickerTooltip}"
+                                    AutomationProperties.Name="{DynamicResource FromDate}"
                                     Style="{DynamicResource MahApps.Styles.DatePicker}" />
                         <TextBlock Text="{DynamicResource ToDate}" VerticalAlignment="Center" Margin="15,0,5,0"
                                    FontSize="14" Foreground="{DynamicResource MahApps.Brushes.Text}" />
                         <DatePicker x:Name="ToDatePicker" Width="120" ToolTip="{DynamicResource ToDatePickerTooltip}"
+                                    AutomationProperties.Name="{DynamicResource ToDate}"
                                     Style="{DynamicResource MahApps.Styles.DatePicker}" />
                         <Button Content="{DynamicResource FetchUnlocks}" Click="FetchUnlocksClickAsync"
                                 Margin="15,0,0,0" Padding="10,5" x:Name="FetchUnlocksButton"
                                 Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                AutomationProperties.Name="{DynamicResource FetchUnlocks}"
+                                AutomationProperties.AutomationId="FetchUnlocksButton"
                                 ToolTip="{DynamicResource FetchUnlocksButtonTooltip}" />
                         <Button Content="{DynamicResource ResetDates}" Click="ResetDatesClickAsync" Margin="10,0,0,0"
                                 Padding="10,5"
                                 Style="{DynamicResource MahApps.Styles.Button.Square}"
+                                AutomationProperties.Name="{DynamicResource ResetDates}"
+                                AutomationProperties.AutomationId="ResetDatesButton"
                                 ToolTip="{DynamicResource ResetDatesButtonTooltip}" />
                     </StackPanel>
 
@@ -309,6 +320,8 @@
                               Background="{DynamicResource MahApps.Brushes.Control.Background}"
                               BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
                               d:DataContext="{d:DesignInstance }"
+                              AutomationProperties.Name="{DynamicResource UnlocksDataGridTooltip}"
+                              AutomationProperties.AutomationId="UnlocksDataGrid"
                               ToolTip="{DynamicResource UnlocksDataGridTooltip}">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="{DynamicResource HeaderGameIcon}" Width="Auto">
@@ -365,6 +378,8 @@
                             <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                     Click="OpenRaSettings_Click"
                                     Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                    AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                    AutomationProperties.AutomationId="NoUnlocksOpenRaSettingsButton"
                                     ToolTip="{DynamicResource OpenRaSettingsButtonTooltip}" />
                         </StackPanel>
                     </Grid>
@@ -384,6 +399,8 @@
                               Background="{DynamicResource MahApps.Brushes.Control.Background}"
                               BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
                               d:DataContext="{d:DesignInstance }"
+                              AutomationProperties.Name="{DynamicResource UserProgressDataGridTooltip}"
+                              AutomationProperties.AutomationId="UserProgressDataGrid"
                               ToolTip="{DynamicResource UserProgressDataGridTooltip}">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="{DynamicResource HeaderIcon}" Width="Auto">
@@ -435,6 +452,8 @@
                             <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                     Click="OpenRaSettings_Click"
                                     Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                    AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                    AutomationProperties.AutomationId="NoUserProgressOpenRaSettingsButton"
                                     ToolTip="{DynamicResource OpenRaSettingsButtonTooltip}" />
                         </StackPanel>
                     </Grid>

@@ -15,7 +15,8 @@
                     IsVisible="{Binding IsStartButtonVisible}">
             <Button Width="110"
                     Command="{Binding StartCommand}"
-                    Content="{ext:Translate StartProcess}" />
+                    Content="{ext:Translate StartProcess}"
+                    AutomationProperties.Name="{ext:Translate StartProcess}" />
         </StackPanel>
 
         <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
@@ -24,7 +25,8 @@
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       GridLinesVisibility="All"
-                      BorderThickness="1">
+                      BorderThickness="1"
+                      AutomationProperties.Name="System statistics">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="{ext:Translate SystemNameHeader}" Binding="{Binding SystemName}"
                                         Width="*" />
@@ -42,7 +44,8 @@
                     IsVisible="{Binding IsSaveButtonVisible}">
             <Button Width="110"
                     Command="{Binding SaveReportCommand}"
-                    Content="{ext:Translate SaveReport}" />
+                    Content="{ext:Translate SaveReport}"
+                    AutomationProperties.Name="{ext:Translate SaveReport}" />
         </StackPanel>
 
         <!-- BUSY OVERLAY -->
@@ -51,7 +54,8 @@
                 IsVisible="{Binding IsBusyOverlayVisible}"
                 ZIndex="10">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar IsIndeterminate="True" Width="220" />
+                <ProgressBar IsIndeterminate="True" Width="220"
+                             AutomationProperties.Name="Loading" />
                 <TextBlock Text="{Binding BusyOverlayText}"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            FontSize="14"
@@ -63,7 +67,8 @@
                         Classes="secondary"
                         Command="{Binding CancelCommand}"
                         IsVisible="{Binding IsCancelOverlayVisible}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center"
+                        AutomationProperties.Name="{ext:Translate YumirConfig_Cancel_Button}" />
             </StackPanel>
         </Border>
     </Grid>

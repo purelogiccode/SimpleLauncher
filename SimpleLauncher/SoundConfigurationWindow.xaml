@@ -40,6 +40,8 @@
                  ToolTip="{DynamicResource TooltipChooseSoundFile}"
                  Margin="5,0,5,0"
                  VerticalAlignment="Center"
+                 AutomationProperties.Name="{DynamicResource NotificationSoundFileLabel}"
+                 AutomationProperties.AutomationId="NotificationSoundFileTextBox"
                  IsEnabled="{Binding IsSoundControlsEnabled}" />
         <Button Grid.Row="1" Grid.Column="2"
                 Style="{DynamicResource MahApps.Styles.Button.Square}"
@@ -48,6 +50,8 @@
                 Command="{Binding ChooseSoundFileCommand}"
                 VerticalAlignment="Center"
                 Width="100"
+                AutomationProperties.Name="{DynamicResource ChooseFile}"
+                AutomationProperties.AutomationId="ChooseFileButton"
                 IsEnabled="{Binding IsSoundControlsEnabled}" />
 
         <Button Grid.Row="2" Grid.Column="1"
@@ -58,6 +62,8 @@
                 Margin="5,10,5,0"
                 HorizontalAlignment="Left"
                 Width="150"
+                AutomationProperties.Name="{DynamicResource PlayCurrentSound}"
+                AutomationProperties.AutomationId="PlayCurrentSoundButton"
                 IsEnabled="{Binding IsSoundControlsEnabled}" />
 
         <Button Grid.Row="3" Grid.Column="1"
@@ -68,6 +74,8 @@
                 Margin="5,10,5,0"
                 HorizontalAlignment="Left"
                 Width="150"
+                AutomationProperties.Name="{DynamicResource ResetToDefault}"
+                AutomationProperties.AutomationId="ResetToDefaultButton"
                 IsEnabled="{Binding IsSoundControlsEnabled}" />
 
         <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3"
@@ -78,12 +86,16 @@
                     ToolTip="{DynamicResource TooltipSaveSound}"
                     Command="{Binding SaveCommand}"
                     IsDefault="True"
+                    AutomationProperties.Name="{DynamicResource Save}"
+                    AutomationProperties.AutomationId="SaveButton"
                     Width="100" Margin="0,0,10,0" />
             <Button Style="{DynamicResource MahApps.Styles.Button.Square}"
                     Content="{DynamicResource Cancel}"
                     ToolTip="{DynamicResource ToolTipCancel}"
                     Command="{Binding CancelCommand}"
                     IsCancel="True"
+                    AutomationProperties.Name="{DynamicResource Cancel}"
+                    AutomationProperties.AutomationId="CancelButton"
                     Width="100" />
         </StackPanel>
     </Grid>

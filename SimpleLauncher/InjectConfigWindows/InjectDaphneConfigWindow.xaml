@@ -83,15 +83,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource DaphneConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource DaphneConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource DaphneConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource DaphneConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource DaphneConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource DaphneConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

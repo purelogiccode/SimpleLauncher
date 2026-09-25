@@ -13,6 +13,8 @@
         <TextBox Text="{Binding LogText, Mode=OneWay}"
                  HorizontalScrollBarVisibility="Auto"
                  Style="{StaticResource LogTextBoxStyle}"
+                 AutomationProperties.Name="{DynamicResource TooltipUpdateLog}"
+                 AutomationProperties.AutomationId="LogTextBox"
                  ToolTip="{DynamicResource TooltipUpdateLog}" />
     </Grid>
 </controls:MetroWindow>

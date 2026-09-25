@@ -50,6 +50,8 @@
                         Margin="0,20,10,10"
                         HorizontalAlignment="Stretch"
                         SelectionChanged="SystemNameDropdown_SelectionChanged"
+                        AutomationProperties.Name="{DynamicResource Chooseasystem}"
+                        AutomationProperties.AutomationId="SystemNameDropdown"
                         ToolTip="{DynamicResource TooltipChooseSystem2}" />
                 </Grid>
 
@@ -76,6 +78,7 @@
                         Click="AddSystemButton_ClickAsync"
                         Content="{DynamicResource AddNewSystem}"
                         ToolTip="{DynamicResource TooltipAddNewSystem2}"
+                        AutomationProperties.AutomationId="AddNewSystemButton"
                         AutomationProperties.Name="{DynamicResource AddNewSystem}" />
 
                     <!-- Save New System -->
@@ -90,6 +93,7 @@
                         Click="SaveSystemButtonClickAsync"
                         Content="{DynamicResource SaveorUpdateSystem}"
                         ToolTip="{DynamicResource TooltipSaveSystem2}"
+                        AutomationProperties.AutomationId="SaveSystemButton"
                         AutomationProperties.Name="{DynamicResource SaveorUpdateSystem}" />
 
                     <!-- Delete System -->
@@ -104,6 +108,7 @@
                         Click="DeleteSystemButton_ClickAsync"
                         Content="{DynamicResource DeleteSelectedSystem}"
                         ToolTip="{DynamicResource TooltipDeleteSystem2}"
+                        AutomationProperties.AutomationId="DeleteSystemButton"
                         AutomationProperties.Name="{DynamicResource DeleteSelectedSystem}" />
 
                     <Button
@@ -116,6 +121,7 @@
                         Width="80"
                         Height="80"
                         ToolTip="{DynamicResource TooltipEditSystem}"
+                        AutomationProperties.AutomationId="HelpButton"
                         AutomationProperties.Name="{DynamicResource Help}">
                         <Image
                             Source="images/help-desk.png"
@@ -136,6 +142,7 @@
                         Click="CloseButton_Click"
                         Content="{DynamicResource Close}"
                         ToolTip="{DynamicResource TooltipClose}"
+                        AutomationProperties.AutomationId="CloseButton"
                         AutomationProperties.Name="{DynamicResource Close}" />
                 </Grid>
 
@@ -206,6 +213,8 @@
                             Click="ChooseSystemImageButton_ClickAsync"
                             Content="{DynamicResource ChooseSystemImage}"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource ChooseSystemImage}"
+                            AutomationProperties.AutomationId="ChooseSystemImageButton"
                             ToolTip="{DynamicResource TooltipChooseSystemImage}" />
 
                         <!-- System Name -->
@@ -225,6 +234,8 @@
                             IsReadOnly="True"
                             IsEnabled="False"
                             LostFocus="SystemNameTextBox_LostFocus"
+                            AutomationProperties.Name="{DynamicResource SystemNameRequired}"
+                            AutomationProperties.AutomationId="SystemNameTextBox"
                             ToolTip="{DynamicResource TooltipSystemName}" />
 
                         <!-- System Folder -->
@@ -242,6 +253,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource SystemFolderRequired}"
+                            AutomationProperties.AutomationId="SystemFolderTextBox"
                             ToolTip="{DynamicResource TooltipChooseSystemFolder2}" />
                         <Button
                             x:Name="ChooseSystemFolderButton"
@@ -252,11 +265,14 @@
                             Content="{DynamicResource SetSystemFolder}"
                             IsEnabled="False"
                             HorizontalAlignment="Left"
+                            AutomationProperties.Name="{DynamicResource SetSystemFolder}"
+                            AutomationProperties.AutomationId="ChooseSystemFolderButton"
                             ToolTip="{DynamicResource TooltipChooseSystemFolder}" />
 
                         <!-- Additional System Folders -->
                         <Expander x:Name="AdditionalFoldersExpander" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
                                   Header="{DynamicResource AdditionalSystemFoldersOptional}" Margin="10"
+                                  AutomationProperties.Name="{DynamicResource AdditionalSystemFoldersOptional}"
                                   IsExpanded="True" ToolTip="{DynamicResource TooltipAdditionalFoldersExpander}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -264,13 +280,18 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <ListBox x:Name="AdditionalFoldersListBox" Margin="5" IsEnabled="False"
+                                         AutomationProperties.Name="{DynamicResource AdditionalSystemFoldersOptional}"
                                          ToolTip="{DynamicResource TooltipAddAdditionalFolder2}" />
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <Button x:Name="AddFolderButton" Content="{DynamicResource Add}" Margin="5"
                                             Click="AddFolderButton_Click" IsEnabled="False"
+                                            AutomationProperties.Name="{DynamicResource Add}"
+                                            AutomationProperties.AutomationId="AddFolderButton"
                                             ToolTip="{DynamicResource TooltipAddAdditionalFolder2}" />
                                     <Button x:Name="RemoveFolderButton" Content="{DynamicResource Remove}" Margin="5"
                                             Click="RemoveFolderButton_Click" IsEnabled="False"
+                                            AutomationProperties.Name="{DynamicResource Remove}"
+                                            AutomationProperties.AutomationId="RemoveFolderButton"
                                             ToolTip="{DynamicResource TooltipRemoveAdditionalFolder2}" />
                                 </StackPanel>
                             </Grid>
@@ -291,6 +312,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource SystemImageFolderOptional}"
+                            AutomationProperties.AutomationId="SystemImageFolderTextBox"
                             ToolTip="{DynamicResource TooltipChooseSystemImageFolder2}" />
                         <Button
                             Margin="0,0,10,10"
@@ -301,6 +324,8 @@
                             Content="{DynamicResource SetSystemImageFolder}"
                             IsEnabled="False"
                             HorizontalAlignment="Left"
+                            AutomationProperties.Name="{DynamicResource SetSystemImageFolder}"
+                            AutomationProperties.AutomationId="ChooseSystemImageFolderButton"
                             ToolTip="{DynamicResource TooltipChooseSystemImageFolder2}" />
 
                         <!-- Format To Search Inside System Folder -->
@@ -318,6 +343,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource ExtensiontoSearchintheSystemFolderRequired}"
+                            AutomationProperties.AutomationId="FormatToSearchTextBox"
                             ToolTip="{DynamicResource TooltipExtensions}" />
                         <Label
                             Margin="0,0,10,10"
@@ -342,6 +369,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource ExtractFileBeforeLaunch}"
+                            AutomationProperties.AutomationId="ExtractFileBeforeLaunchComboBox"
                             ToolTip="{DynamicResource TooltipExtractBeforeLaunch2}">
                             <ComboBoxItem>true</ComboBoxItem>
                             <ComboBoxItem>false</ComboBoxItem>
@@ -362,6 +391,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource ExtensiontoLaunchAfterExtractionMaybeRequired}"
+                            AutomationProperties.AutomationId="FormatToLaunchTextBox"
                             ToolTip="{DynamicResource TooltipExtensions}" />
                         <Label
                             Margin="0,0,10,10"
@@ -386,6 +417,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource GroupFilesByFolder}"
+                            AutomationProperties.AutomationId="GroupByFolderComboBox"
                             ToolTip="{DynamicResource TooltipGroupByFolder2}">
                             <ComboBoxItem>false</ComboBoxItem>
                             <ComboBoxItem>true</ComboBoxItem>
@@ -406,6 +439,8 @@
                             Grid.Column="1"
                             IsReadOnly="True"
                             IsEnabled="False"
+                            AutomationProperties.Name="{DynamicResource DisableRecursiveSearch}"
+                            AutomationProperties.AutomationId="DisableRecursiveSearchComboBox"
                             ToolTip="{DynamicResource TooltipDisableRecursiveSearch2}">
                             <ComboBoxItem>false</ComboBoxItem>
                             <ComboBoxItem>true</ComboBoxItem>
@@ -414,6 +449,7 @@
                         <!-- Emulator 1 -->
                         <Expander x:Name="Emulator1Expander" Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3"
                                   Margin="10" Header="{DynamicResource Emulator1}" IsExpanded="True"
+                                  AutomationProperties.Name="{DynamicResource Emulator1}"
                                   ToolTip="{DynamicResource TooltipEmulator1Expander}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -441,6 +477,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator1NameRequired}"
+                                    AutomationProperties.AutomationId="Emulator1NameTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorName}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -457,6 +495,8 @@
                                     IsReadOnly="True"
                                     IsEnabled="False"
                                     HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="{DynamicResource Emulator1Path}"
+                                    AutomationProperties.AutomationId="Emulator1PathTextBox"
                                     ToolTip="{DynamicResource TooltipChooseEmulatorPath}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -467,6 +507,8 @@
                                     Content="{DynamicResource SetEmulator1Path}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SetEmulator1Path}"
+                                    AutomationProperties.AutomationId="ChooseEmulator1PathButton"
                                     ToolTip="{DynamicResource TooltipChooseEmulator1Path}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -482,6 +524,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator1Parameters}"
+                                    AutomationProperties.AutomationId="Emulator1ParametersTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorParameters}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -492,6 +536,8 @@
                                     Content="{DynamicResource SuggestParameters}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SuggestParameters}"
+                                    AutomationProperties.AutomationId="SuggestEmulator1ParametersButton"
                                     ToolTip="{DynamicResource TooltipSuggestParameters}" />
 
                                 <Label
@@ -508,6 +554,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource ReceiveANotificationOnEmulatorError}"
+                                    AutomationProperties.AutomationId="ReceiveANotificationOnEmulatorError1"
                                     ToolTip="{DynamicResource TooltipNotificationOnEmulatorError2}">
                                     <ComboBoxItem>true</ComboBoxItem>
                                     <ComboBoxItem>false</ComboBoxItem>
@@ -519,6 +567,7 @@
                         <!-- Emulator 2 -->
                         <Expander x:Name="Emulator2Expander" Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="3"
                                   Margin="10" Header="{DynamicResource Emulator2}" IsExpanded="True"
+                                  AutomationProperties.Name="{DynamicResource Emulator2}"
                                   ToolTip="{DynamicResource TooltipEmulator2Expander}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -546,6 +595,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator2NameMaybeRequired}"
+                                    AutomationProperties.AutomationId="Emulator2NameTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorName}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -562,6 +613,8 @@
                                     IsReadOnly="True"
                                     IsEnabled="False"
                                     HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="{DynamicResource Emulator2Path}"
+                                    AutomationProperties.AutomationId="Emulator2PathTextBox"
                                     ToolTip="{DynamicResource TooltipChooseEmulatorPath}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -572,6 +625,8 @@
                                     Content="{DynamicResource SetEmulator2Path}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SetEmulator2Path}"
+                                    AutomationProperties.AutomationId="ChooseEmulator2PathButton"
                                     ToolTip="{DynamicResource TooltipChooseEmulator2Path}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -587,6 +642,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator2Parameters}"
+                                    AutomationProperties.AutomationId="Emulator2ParametersTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorParameters}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -597,6 +654,8 @@
                                     Content="{DynamicResource SuggestParameters}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SuggestParameters}"
+                                    AutomationProperties.AutomationId="SuggestEmulator2ParametersButton"
                                     ToolTip="{DynamicResource TooltipSuggestParameters}" />
 
                                 <Label
@@ -613,6 +672,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource ReceiveANotificationOnEmulatorError}"
+                                    AutomationProperties.AutomationId="ReceiveANotificationOnEmulatorError2"
                                     ToolTip="{DynamicResource TooltipNotificationOnEmulatorError2}">
                                     <ComboBoxItem>true</ComboBoxItem>
                                     <ComboBoxItem>false</ComboBoxItem>
@@ -623,6 +684,7 @@
                         <!-- Emulator 3 -->
                         <Expander x:Name="Emulator3Expander" Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3"
                                   Margin="10" Header="{DynamicResource Emulator3}" IsExpanded="True"
+                                  AutomationProperties.Name="{DynamicResource Emulator3}"
                                   ToolTip="{DynamicResource TooltipEmulator3Expander}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -650,6 +712,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator3NameMaybeRequired}"
+                                    AutomationProperties.AutomationId="Emulator3NameTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorName}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -666,6 +730,8 @@
                                     IsReadOnly="True"
                                     IsEnabled="False"
                                     HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="{DynamicResource Emulator3Path}"
+                                    AutomationProperties.AutomationId="Emulator3PathTextBox"
                                     ToolTip="{DynamicResource TooltipChooseEmulatorPath}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -676,6 +742,8 @@
                                     Content="{DynamicResource SetEmulator3Path}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SetEmulator3Path}"
+                                    AutomationProperties.AutomationId="ChooseEmulator3PathButton"
                                     ToolTip="{DynamicResource TooltipChooseEmulator3Path}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -691,6 +759,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator3Parameters}"
+                                    AutomationProperties.AutomationId="Emulator3ParametersTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorParameters}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -701,6 +771,8 @@
                                     Content="{DynamicResource SuggestParameters}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SuggestParameters}"
+                                    AutomationProperties.AutomationId="SuggestEmulator3ParametersButton"
                                     ToolTip="{DynamicResource TooltipSuggestParameters}" />
 
                                 <Label
@@ -717,6 +789,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource ReceiveANotificationOnEmulatorError}"
+                                    AutomationProperties.AutomationId="ReceiveANotificationOnEmulatorError3"
                                     ToolTip="{DynamicResource TooltipNotificationOnEmulatorError2}">
                                     <ComboBoxItem>true</ComboBoxItem>
                                     <ComboBoxItem>false</ComboBoxItem>
@@ -727,6 +801,7 @@
                         <!-- Emulator 4 -->
                         <Expander x:Name="Emulator4Expander" Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="3"
                                   Margin="10" Header="{DynamicResource Emulator4}" IsExpanded="True"
+                                  AutomationProperties.Name="{DynamicResource Emulator4}"
                                   ToolTip="{DynamicResource TooltipEmulator4Expander}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -754,6 +829,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator4NameMaybeRequired}"
+                                    AutomationProperties.AutomationId="Emulator4NameTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorName}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -770,6 +847,8 @@
                                     IsReadOnly="True"
                                     IsEnabled="False"
                                     HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="{DynamicResource Emulator4Path}"
+                                    AutomationProperties.AutomationId="Emulator4PathTextBox"
                                     ToolTip="{DynamicResource TooltipChooseEmulatorPath}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -780,6 +859,8 @@
                                     Content="{DynamicResource SetEmulator4Path}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SetEmulator4Path}"
+                                    AutomationProperties.AutomationId="ChooseEmulator4PathButton"
                                     ToolTip="{DynamicResource TooltipChooseEmulator4Path}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -795,6 +876,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator4Parameters}"
+                                    AutomationProperties.AutomationId="Emulator4ParametersTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorParameters}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -805,6 +888,8 @@
                                     Content="{DynamicResource SuggestParameters}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SuggestParameters}"
+                                    AutomationProperties.AutomationId="SuggestEmulator4ParametersButton"
                                     ToolTip="{DynamicResource TooltipSuggestParameters}" />
 
                                 <Label
@@ -821,6 +906,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource ReceiveANotificationOnEmulatorError}"
+                                    AutomationProperties.AutomationId="ReceiveANotificationOnEmulatorError4"
                                     ToolTip="{DynamicResource TooltipNotificationOnEmulatorError2}">
                                     <ComboBoxItem>true</ComboBoxItem>
                                     <ComboBoxItem>false</ComboBoxItem>
@@ -831,6 +918,7 @@
                         <!-- Emulator 5 -->
                         <Expander x:Name="Emulator5Expander" Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3"
                                   Margin="10" Header="{DynamicResource Emulator5}" IsExpanded="True"
+                                  AutomationProperties.Name="{DynamicResource Emulator5}"
                                   ToolTip="{DynamicResource TooltipEmulator5Expander}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -858,6 +946,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator5NameMaybeRequired}"
+                                    AutomationProperties.AutomationId="Emulator5NameTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorName}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -874,6 +964,8 @@
                                     IsReadOnly="True"
                                     IsEnabled="False"
                                     HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="{DynamicResource Emulator5Path}"
+                                    AutomationProperties.AutomationId="Emulator5PathTextBox"
                                     ToolTip="{DynamicResource TooltipChooseEmulatorPath}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -884,6 +976,8 @@
                                     Content="{DynamicResource SetEmulator5Path}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SetEmulator5Path}"
+                                    AutomationProperties.AutomationId="ChooseEmulator5PathButton"
                                     ToolTip="{DynamicResource TooltipChooseEmulator5Path}" />
                                 <Label
                                     Margin="10,0,10,10"
@@ -899,6 +993,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource Emulator5Parameters}"
+                                    AutomationProperties.AutomationId="Emulator5ParametersTextBox"
                                     ToolTip="{DynamicResource TooltipEmulatorParameters}" />
                                 <Button
                                     Margin="0,0,10,10"
@@ -909,6 +1005,8 @@
                                     Content="{DynamicResource SuggestParameters}"
                                     IsEnabled="False"
                                     HorizontalAlignment="Left"
+                                    AutomationProperties.Name="{DynamicResource SuggestParameters}"
+                                    AutomationProperties.AutomationId="SuggestEmulator5ParametersButton"
                                     ToolTip="{DynamicResource TooltipSuggestParameters}" />
 
                                 <Label
@@ -925,6 +1023,8 @@
                                     Grid.Column="1"
                                     IsReadOnly="True"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{DynamicResource ReceiveANotificationOnEmulatorError}"
+                                    AutomationProperties.AutomationId="ReceiveANotificationOnEmulatorError5"
                                     ToolTip="{DynamicResource TooltipNotificationOnEmulatorError2}">
                                     <ComboBoxItem>true</ComboBoxItem>
                                     <ComboBoxItem>false</ComboBoxItem>

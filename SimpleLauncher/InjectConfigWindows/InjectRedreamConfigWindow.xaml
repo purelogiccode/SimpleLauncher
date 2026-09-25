@@ -26,6 +26,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding CableOptions}"
                                       SelectedItem="{Binding RedreamCable}"
+                                      AutomationProperties.Name="Cable"
+                                      AutomationProperties.AutomationId="CableComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Cable_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,0,0,5">
@@ -37,6 +39,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding BroadcastOptions}"
                                       SelectedItem="{Binding RedreamBroadcast}"
+                                      AutomationProperties.Name="Broadcast"
+                                      AutomationProperties.AutomationId="BroadcastComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Broadcast_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding RedreamVsync}"
@@ -54,6 +58,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectOptions}"
                                       SelectedItem="{Binding RedreamAspect}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Aspect_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -66,6 +72,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ResOptions}"
                                       SelectedItem="{Binding RedreamRes}"
+                                      AutomationProperties.Name="Resolution Scale"
+                                      AutomationProperties.AutomationId="ResComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_ResolutionScale_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -77,6 +85,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RendererOptions}"
                                       SelectedItem="{Binding RedreamRenderer}"
+                                      AutomationProperties.Name="Renderer"
+                                      AutomationProperties.AutomationId="RendererComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Renderer_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -89,6 +99,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding FullmodeOptions}"
                                       SelectedItem="{Binding RedreamFullmode}"
+                                      AutomationProperties.Name="Fullscreen Mode"
+                                      AutomationProperties.AutomationId="FullmodeComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_FullscreenMode_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -108,7 +120,8 @@
                                            Width="40" DockPanel.Dock="Right" VerticalAlignment="Center"
                                            Margin="5,0,0,0" />
                                 <Slider x:Name="SldVolume" Value="{Binding RedreamVolume}" Minimum="0" Maximum="100"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" />
+                                    AutomationProperties.Name="Volume"
+                                    TickFrequency="1" IsSnapToTickEnabled="True" />
                             </DockPanel>
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -119,6 +132,8 @@
                             <Label Content="{DynamicResource RedreamConfig_Latency_ms}" VerticalAlignment="Center" />
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       Text="{Binding RedreamLatency}"
+                                      AutomationProperties.Name="Latency (ms)"
+                                      AutomationProperties.AutomationId="LatencyComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Latency_Tooltip}">
                                 <ComboBoxItem Content="8" />
                                 <ComboBoxItem Content="16" />
@@ -139,6 +154,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding LanguageOptions}"
                                       SelectedItem="{Binding RedreamLanguage}"
+                                      AutomationProperties.Name="Language"
+                                      AutomationProperties.AutomationId="LanguageComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Language_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -150,6 +167,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RegionOptions}"
                                       SelectedItem="{Binding RedreamRegion}"
+                                      AutomationProperties.Name="Region"
+                                      AutomationProperties.AutomationId="RegionComboBox"
                                       ToolTip="{DynamicResource RedreamConfig_Region_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -173,15 +192,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource RedreamConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource RedreamConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource RedreamConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource RedreamConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource RedreamConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource RedreamConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

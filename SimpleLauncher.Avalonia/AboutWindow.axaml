@@ -40,11 +40,14 @@
                     HorizontalAlignment="Center"
                     Orientation="Horizontal">
             <Button Classes="secondary" Content="{ext:Translate CheckForUpdate}"
-                    Command="{Binding CheckForUpdatesCommand}" />
+                    Command="{Binding CheckForUpdatesCommand}"
+                    AutomationProperties.Name="{ext:Translate CheckForUpdate}" />
             <Button Classes="secondary" Margin="10,0,0,0" Content="{ext:Translate UpdateHistory}"
-                    Command="{Binding OpenUpdateHistoryCommand}" />
+                    Command="{Binding OpenUpdateHistoryCommand}"
+                    AutomationProperties.Name="{ext:Translate UpdateHistory}" />
             <Button Classes="secondary" Margin="10,0,0,0" Content="{ext:Translate Close}"
-                    Command="{Binding CloseCommand}" IsCancel="True" />
+                    Command="{Binding CloseCommand}" IsCancel="True"
+                    AutomationProperties.Name="{ext:Translate Close}" />
         </StackPanel>
     </Grid>
 </Window>

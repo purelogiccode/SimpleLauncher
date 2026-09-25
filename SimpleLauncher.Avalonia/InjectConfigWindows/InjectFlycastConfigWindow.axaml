@@ -29,10 +29,12 @@
                         <Grid ColumnDefinitions="*,Auto,*">
                             <NumericUpDown Grid.Column="0" Minimum="640" Maximum="7680" Increment="1"
                                            Value="{Binding Width}"
+                                           AutomationProperties.Name="{ext:Translate FlycastConfig_ResolutionX_Tooltip}"
                                            ToolTip.Tip="{ext:Translate FlycastConfig_ResolutionX_Tooltip}" />
                             <TextBlock Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="10,0" />
                             <NumericUpDown Grid.Column="2" Minimum="480" Maximum="4320" Increment="1"
                                            Value="{Binding Height}"
+                                           AutomationProperties.Name="{ext:Translate FlycastConfig_ResolutionY_Tooltip}"
                                            ToolTip.Tip="{ext:Translate FlycastConfig_ResolutionY_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -55,16 +57,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate FlycastConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate FlycastConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate FlycastConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate FlycastConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate FlycastConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate FlycastConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate FlycastConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate FlycastConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate FlycastConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

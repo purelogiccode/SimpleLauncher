@@ -23,7 +23,8 @@
                  Margin="10,0"
                  Padding="5"
                  VerticalAlignment="Stretch"
-                 HorizontalAlignment="Stretch">
+                 HorizontalAlignment="Stretch"
+                 AutomationProperties.Name="{ext:Translate DosBoxFileSelectionWindow_Select_the_file_to_launch}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="models:DosBoxFileItem">
                     <StackPanel>
@@ -46,13 +47,15 @@
                     Margin="5,0"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
-                    MinWidth="75" IsCancel="True" />
+                    MinWidth="75" IsCancel="True"
+                    AutomationProperties.Name="{ext:Translate YumirConfig_Cancel_Button}" />
             <Button Content="{ext:Translate DosBoxFileSelectionWindow_Launch}"
                     Margin="5,0"
                     Classes="primary"
                     Command="{Binding LaunchCommand}"
                     MinWidth="75"
-                    IsEnabled="{Binding IsLaunchEnabled}" IsDefault="True" />
+                    IsEnabled="{Binding IsLaunchEnabled}" IsDefault="True"
+                    AutomationProperties.Name="{ext:Translate DosBoxFileSelectionWindow_Launch}" />
         </StackPanel>
     </Grid>
 </Window>

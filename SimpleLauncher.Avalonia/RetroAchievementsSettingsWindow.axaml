@@ -11,14 +11,16 @@
         <!-- Username -->
         <TextBlock Grid.Row="0" Grid.Column="0" Text="{ext:Translate Username}" Classes="form-label" Margin="0,0,10,10" />
         <TextBox Grid.Row="0" Grid.Column="1" Classes="dialog-textbox" VerticalAlignment="Center" Margin="0,0,0,10"
-                 Text="{Binding Username}" ToolTip.Tip="{ext:Translate TooltipRaUsername}" />
+                 Text="{Binding Username}" ToolTip.Tip="{ext:Translate TooltipRaUsername}"
+                 AutomationProperties.Name="{ext:Translate TooltipRaUsername}" />
 
         <!-- API Key -->
         <TextBlock Grid.Row="1" Grid.Column="0" Text="{ext:Translate ApiKey}" Classes="form-label" Margin="0,0,10,10" />
         <TextBox x:Name="ApiKeyPasswordBox" Grid.Row="1" Grid.Column="1" Classes="dialog-textbox"
                  PasswordChar="●"
                  VerticalAlignment="Center" Margin="0,0,0,10"
-                 ToolTip.Tip="{ext:Translate TooltipRaApiKey}" />
+                 ToolTip.Tip="{ext:Translate TooltipRaApiKey}"
+                 AutomationProperties.Name="{ext:Translate TooltipRaApiKey}" />
 
         <!-- RA Password -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="{ext:Translate RetroAchievementsPassword}" Classes="form-label"
@@ -26,7 +28,8 @@
         <TextBox x:Name="RaPasswordPasswordBox" Grid.Row="2" Grid.Column="1" Classes="dialog-textbox"
                  PasswordChar="●"
                  VerticalAlignment="Center" Margin="0,0,0,10"
-                 ToolTip.Tip="{ext:Translate TooltipRaPassword}" />
+                 ToolTip.Tip="{ext:Translate TooltipRaPassword}"
+                 AutomationProperties.Name="{ext:Translate TooltipRaPassword}" />
 
         <!-- Link to control panel -->
         <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,10,0,10">
@@ -34,7 +37,8 @@
             <Button Content="{ext:Translate RaSettingsControlPanelLink}"
                     Classes="secondary"
                     Padding="10,4"
-                    Click="OpenControlPanel_Click" />
+                    Click="OpenControlPanel_Click"
+                    AutomationProperties.Name="{ext:Translate RaSettingsControlPanelLink}" />
         </StackPanel>
 
         <!-- Emulator Integration Section (Windows-only: the configurator writes Windows config
@@ -65,9 +69,11 @@
         <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button Content="{ext:Translate Save}" Command="{Binding SaveCommand}" Classes="primary" IsDefault="True"
-                    Width="90" Margin="0,0,10,0" ToolTip.Tip="{ext:Translate TooltipSaveRaSettings}" />
+                    Width="90" Margin="0,0,10,0" ToolTip.Tip="{ext:Translate TooltipSaveRaSettings}"
+                    AutomationProperties.Name="{ext:Translate TooltipSaveRaSettings}" />
             <Button Content="{ext:Translate Cancel}" Command="{Binding CancelCommand}" Classes="secondary"
-                    IsCancel="True" Width="90" ToolTip.Tip="{ext:Translate ToolTipCancel}" />
+                    IsCancel="True" Width="90" ToolTip.Tip="{ext:Translate ToolTipCancel}"
+                    AutomationProperties.Name="{ext:Translate ToolTipCancel}" />
         </StackPanel>
     </Grid>
 </Window>

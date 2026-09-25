@@ -34,6 +34,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectOptions}"
                                       SelectedItem="{Binding Aspect}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectComboBox"
                                       ToolTip="{DynamicResource BlastemConfig_Aspect_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -45,6 +47,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ScalingOptions}"
                                       SelectedItem="{Binding Scaling}"
+                                      AutomationProperties.Name="Scaling Filter"
+                                      AutomationProperties.AutomationId="ScalingComboBox"
                                       ToolTip="{DynamicResource BlastemConfig_Scaling_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -62,6 +66,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AudioRateOptions}"
                                       SelectedItem="{Binding AudioRate}"
+                                      AutomationProperties.Name="Audio Sample Rate"
+                                      AutomationProperties.AutomationId="AudioRateComboBox"
                                       ToolTip="{DynamicResource BlastemConfig_AudioRate_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -80,6 +86,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding SyncSourceOptions}"
                                       SelectedItem="{Binding SyncSource}"
+                                      AutomationProperties.Name="Sync Source"
+                                      AutomationProperties.AutomationId="SyncSourceComboBox"
                                       ToolTip="{DynamicResource BlastemConfig_SyncSource_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -104,15 +112,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource BlastemConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource BlastemConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource BlastemConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource BlastemConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource BlastemConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource BlastemConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

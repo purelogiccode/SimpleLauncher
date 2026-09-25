@@ -90,6 +90,8 @@
             HorizontalAlignment="Center"
             IsSnapToTickEnabled="True"
             Value="{Binding DeadZoneX, Mode=TwoWay}"
+            AutomationProperties.Name="{DynamicResource DeadZoneX}"
+            AutomationProperties.AutomationId="DeadZoneXSlider"
             ToolTip="{DynamicResource TooltipDeadZoneX}" />
         <TextBlock
             Margin="10"
@@ -120,6 +122,8 @@
             HorizontalAlignment="Center"
             IsSnapToTickEnabled="True"
             Value="{Binding DeadZoneY, Mode=TwoWay}"
+            AutomationProperties.Name="{DynamicResource DeadZoneY}"
+            AutomationProperties.AutomationId="DeadZoneYSlider"
             ToolTip="{DynamicResource TooltipDeadZoneY}" />
         <TextBlock
             Margin="10"
@@ -140,6 +144,8 @@
                     Padding="10"
                     Command="{Binding SaveCommand}"
                     Content="{DynamicResource SaveDeadZone}"
+                    AutomationProperties.Name="{DynamicResource SaveDeadZone}"
+                    AutomationProperties.AutomationId="SaveButton"
                     ToolTip="{DynamicResource TooltipSaveDeadZone}" />
 
                 <!-- Revert Button -->
@@ -149,6 +155,8 @@
                     Padding="10"
                     Command="{Binding RevertCommand}"
                     Content="{DynamicResource ReverttoDefaultValues}"
+                    AutomationProperties.Name="{DynamicResource ReverttoDefaultValues}"
+                    AutomationProperties.AutomationId="RevertButton"
                     ToolTip="{DynamicResource TooltipRevertDeadZone}" />
 
                 <!-- Cancel Button -->
@@ -157,6 +165,8 @@
                     Margin="5,20,0,10"
                     Command="{Binding CancelCommand}"
                     Content="{DynamicResource Cancel}"
+                    AutomationProperties.Name="{DynamicResource Cancel}"
+                    AutomationProperties.AutomationId="CancelButton"
                     ToolTip="{DynamicResource TooltipClose}" />
             </StackPanel>
         </Grid>

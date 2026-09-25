@@ -32,6 +32,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectRatioOptions}"
                                       SelectedItem="{Binding AspectRatio}"
+                                      AutomationProperties.Name="{ext:Translate MesenConfig_AspectRatio_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MesenConfig_AspectRatio_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -40,6 +41,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoFilterOptions}"
                                       SelectedItem="{Binding VideoFilter}"
+                                      AutomationProperties.Name="{ext:Translate MesenConfig_VideoFilter_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MesenConfig_VideoFilter_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -59,6 +61,7 @@
                                 Maximum="100"
                                 IsSnapToTickEnabled="True"
                                 TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate MesenConfig_MasterVolume_Tooltip}"
                                 ToolTip.Tip="{ext:Translate MesenConfig_MasterVolume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -81,6 +84,7 @@
                                 Maximum="8"
                                 IsSnapToTickEnabled="True"
                                 TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate MesenConfig_RunAhead_Tooltip}"
                                 ToolTip.Tip="{ext:Translate MesenConfig_RunAhead_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -103,16 +107,19 @@
                     Content="{ext:Translate MesenConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate MesenConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate MesenConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate MesenConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate MesenConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate MesenConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate MesenConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate MesenConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate MesenConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

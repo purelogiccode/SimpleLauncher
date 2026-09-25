@@ -26,6 +26,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RendererDisplayNames}"
                                       SelectedItem="{Binding Pcsx2Renderer}"
+                                      AutomationProperties.Name="Renderer"
+                                      AutomationProperties.AutomationId="RendererComboBox"
                                       ToolTip="{DynamicResource Pcsx2Config_Renderer_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -37,6 +39,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding UpscaleDisplayNames}"
                                       SelectedItem="{Binding Pcsx2UpscaleMultiplier}"
+                                      AutomationProperties.Name="Internal Resolution"
+                                      AutomationProperties.AutomationId="UpscaleComboBox"
                                       ToolTip="{DynamicResource Pcsx2Config_Upscale_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -48,6 +52,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectOptions}"
                                       SelectedItem="{Binding Pcsx2AspectRatio}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectComboBox"
                                       ToolTip="{DynamicResource Pcsx2Config_Aspect_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Pcsx2Vsync}"
@@ -70,6 +76,7 @@
                                   ToolTip="{DynamicResource Pcsx2Config_Cheats_Tooltip}" />
                         <Label Content="{DynamicResource Pcsx2Config_Volume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding Pcsx2Volume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Master Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource Pcsx2Config_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -104,15 +111,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource Pcsx2Config_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource Pcsx2Config_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource Pcsx2Config_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource Pcsx2Config_Run_Tooltip}" />
             <Button Content="{DynamicResource Pcsx2Config_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource Pcsx2Config_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

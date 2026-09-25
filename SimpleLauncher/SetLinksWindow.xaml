@@ -53,6 +53,8 @@
             Grid.Column="2"
             HorizontalAlignment="Stretch"
             Text="{Binding VideoUrl, UpdateSourceTrigger=PropertyChanged}"
+            AutomationProperties.Name="{DynamicResource VideoLinkButton}"
+            AutomationProperties.AutomationId="VideoUrlTextBox"
             ToolTip="{DynamicResource TooltipVideoLink}" />
 
         <!-- Info Link -->
@@ -75,6 +77,8 @@
             Grid.Row="2"
             Grid.Column="2"
             Text="{Binding InfoUrl, UpdateSourceTrigger=PropertyChanged}"
+            AutomationProperties.Name="{DynamicResource InfoLinkButton}"
+            AutomationProperties.AutomationId="InfoUrlTextBox"
             ToolTip="{DynamicResource TooltipInfoLink}" />
 
         <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3">
@@ -94,6 +98,8 @@
                 IsDefault="True"
                 Command="{Binding SaveCommand}"
                 Content="{DynamicResource SaveorUpdateLinks}"
+                AutomationProperties.Name="{DynamicResource SaveorUpdateLinks}"
+                AutomationProperties.AutomationId="SaveButton"
                 ToolTip="{DynamicResource TooltipSaveLinks}" />
 
             <!-- Revert Button -->
@@ -105,6 +111,8 @@
                 HorizontalAlignment="Center"
                 Command="{Binding RevertCommand}"
                 Content="{DynamicResource ReverttoDefaultValues}"
+                AutomationProperties.Name="{DynamicResource ReverttoDefaultValues}"
+                AutomationProperties.AutomationId="RevertButton"
                 ToolTip="{DynamicResource TooltipRevertLinks}" />
 
             <!-- Cancel Button -->
@@ -115,6 +123,8 @@
                 HorizontalAlignment="Left"
                 Command="{Binding CancelCommand}"
                 Content="{DynamicResource Cancel}"
+                AutomationProperties.Name="{DynamicResource Cancel}"
+                AutomationProperties.AutomationId="CancelButton"
                 ToolTip="{DynamicResource TooltipClose}" />
         </Grid>
 

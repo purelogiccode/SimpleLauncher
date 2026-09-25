@@ -16,15 +16,19 @@
                  Margin="5"
                  FontSize="12"
                  FontFamily="Consolas, Courier New, monospace"
-                 Text="{Binding LogText, Mode=OneWay}" />
+                 Text="{Binding LogText, Mode=OneWay}"
+                 AutomationProperties.Name="Debug log" />
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <Button Content="{ext:Translate ClearLog}" Margin="5,0" Classes="secondary"
-                    Command="{Binding ClearLogCommand}" />
+                    Command="{Binding ClearLogCommand}"
+                    AutomationProperties.Name="{ext:Translate ClearLog}" />
             <Button Content="{ext:Translate CopyLog}" Margin="5,0" Classes="secondary"
-                    Command="{Binding CopyLogCommand}" />
+                    Command="{Binding CopyLogCommand}"
+                    AutomationProperties.Name="{ext:Translate CopyLog}" />
             <Button Content="{ext:Translate Close}" Margin="5,0" Classes="secondary"
-                    Click="CloseButton_Click" />
+                    Click="CloseButton_Click"
+                    AutomationProperties.Name="{ext:Translate Close}" />
         </StackPanel>
     </Grid>
 </Window>

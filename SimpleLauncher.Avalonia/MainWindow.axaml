@@ -687,58 +687,68 @@
                     ToolTip.Tip="{ext:Translate TooltipLeftNavigationPanel}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Spacing="2">
                     <Button x:Name="NavRestartButton" Classes="nav-icon" ToolTip.Tip="{ext:Translate TooltipRestart}"
+                            AutomationProperties.Name="{ext:Translate TooltipRestart}"
                             Click="NavRestartButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/home.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavFavoritesButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipFavorites}"
+                            AutomationProperties.Name="{ext:Translate TooltipFavorites}"
                             Click="NavFavoritesButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/heart.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavGlobalSearchButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipGlobalSearch}"
+                            AutomationProperties.Name="{ext:Translate TooltipGlobalSearch}"
                             Click="NavGlobalSearchButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/search2.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavHistoryButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipPlayHistory}"
+                            AutomationProperties.Name="{ext:Translate TooltipPlayHistory}"
                             Click="NavHistoryButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/playhistory.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavRetroAchievementsButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipRetroAchievements}"
+                            AutomationProperties.Name="{ext:Translate TooltipRetroAchievements}"
                             Click="NavRetroAchievementsButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/trophy.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavEditSystemButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipEditSystem}"
+                            AutomationProperties.Name="{ext:Translate TooltipEditSystem}"
                             Click="NavEditSystemButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/settings.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavToggleViewModeButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipToggleViewMode}"
+                            AutomationProperties.Name="{ext:Translate TooltipToggleViewMode}"
                             Click="NavToggleViewModeButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/show.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavToggleButtonAspectRatioButton" Classes="nav-icon"
                             ToolTip.Tip="{ext:Translate TooltipToggleAspectRatio}"
+                            AutomationProperties.Name="{ext:Translate TooltipToggleAspectRatio}"
                             Click="NavToggleButtonAspectRatioButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/aspectratio.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavZoomInButton" Classes="nav-icon" ToolTip.Tip="{ext:Translate TooltipZoomIn}"
+                            AutomationProperties.Name="{ext:Translate TooltipZoomIn}"
                             Click="NavZoomInButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/zoom-in.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Button>
                     <Button x:Name="NavZoomOutButton" Classes="nav-icon" ToolTip.Tip="{ext:Translate TooltipZoomOut}"
+                            AutomationProperties.Name="{ext:Translate TooltipZoomOut}"
                             Click="NavZoomOutButton_Click">
                         <Image Source="avares://SimpleLauncher.Avalonia/images/zoom-out.png"
                                Width="27" Height="27" RenderOptions.BitmapInterpolationMode="HighQuality" />
@@ -778,6 +788,7 @@
                                   HorizontalAlignment="Stretch" VerticalAlignment="Center"
                                   Margin="5,10,0,0"
                                   SelectionChanged="SystemComboBox_SelectionChanged"
+                                  AutomationProperties.Name="{ext:Translate TooltipSelectSystem}"
                                   ToolTip.Tip="{ext:Translate TooltipSelectSystem}" />
 
                         <!-- Rows 1-2, Column 2: Search box + button (WPF SearchTextBox/SearchButton) -->
@@ -792,6 +803,7 @@
                                      AutomationProperties.Name="{ext:Translate SearchTextBoxLabel}" />
                             <Button x:Name="SearchButton"
                                     Classes="toolbar-icon" Padding="6,4"
+                                    AutomationProperties.Name="{ext:Translate TooltipSearch}"
                                     ToolTip.Tip="{ext:Translate TooltipSearch}"
                                     Click="SearchButton_Click">
                                 <Image Source="avares://SimpleLauncher.Avalonia/images/search3.png"
@@ -809,6 +821,7 @@
                                   HorizontalAlignment="Stretch" VerticalAlignment="Center"
                                   Margin="5,5,0,0"
                                   SelectionChanged="EmulatorComboBox_SelectionChanged"
+                                  AutomationProperties.Name="{ext:Translate TooltipSelectEmulator}"
                                   ToolTip.Tip="{ext:Translate TooltipSelectEmulator}" />
 
                         <!-- Rows 1-2: action buttons (favorite / dice / RA / sort — WPF order) -->
@@ -816,6 +829,7 @@
                                 Classes="toolbar-icon" Padding="8,4"
                                 Grid.Row="1" Grid.RowSpan="2" Grid.Column="3"
                                 VerticalAlignment="Center" Margin="10,10,0,0"
+                                AutomationProperties.Name="{ext:Translate TooltipSelectedSystemFavorite2}"
                                 ToolTip.Tip="{ext:Translate TooltipSelectedSystemFavorite2}"
                                 Click="SelectedSystemFavoriteButton_Click">
                             <Image Source="avares://SimpleLauncher.Avalonia/images/star.png"
@@ -825,6 +839,7 @@
                                 Classes="toolbar-icon" Padding="8,4"
                                 Grid.Row="1" Grid.RowSpan="2" Grid.Column="4"
                                 VerticalAlignment="Center" Margin="10,10,0,0"
+                                AutomationProperties.Name="{ext:Translate TooltipFeelingLucky}"
                                 ToolTip.Tip="{ext:Translate TooltipFeelingLucky}"
                                 Click="RandomGameButton_Click">
                             <Image Source="avares://SimpleLauncher.Avalonia/images/dice.png"
@@ -834,6 +849,7 @@
                                 Classes="toolbar-icon" Padding="8,4"
                                 Grid.Row="1" Grid.RowSpan="2" Grid.Column="5"
                                 VerticalAlignment="Center" Margin="10,10,0,0"
+                                AutomationProperties.Name="{ext:Translate TooltipShowGamesWithRA}"
                                 ToolTip.Tip="{ext:Translate TooltipShowGamesWithRA}"
                                 Command="{Binding ShowGamesWithRetroAchievementsCommand}">
                             <Image Source="avares://SimpleLauncher.Avalonia/images/trophy.png"
@@ -843,6 +859,7 @@
                                 Classes="toolbar-icon" Padding="8,4"
                                 Grid.Row="1" Grid.RowSpan="2" Grid.Column="6"
                                 VerticalAlignment="Center" Margin="10,10,0,0"
+                                AutomationProperties.Name="{ext:Translate TooltipSortOrder}"
                                 ToolTip.Tip="{ext:Translate TooltipSortOrder}"
                                 Click="MameSortOrderButton_Click">
                             <Image Source="avares://SimpleLauncher.Avalonia/images/sort-az.png"
@@ -859,6 +876,8 @@
                                     IsSnapToTickEnabled="True"
                                     TickFrequency="50"
                                     Value="{Binding CardWidth}"
+                                    AutomationProperties.Name="Card size"
+                                    AutomationProperties.HelpText="Adjusts how large game cards are shown"
                                     Margin="4,0" VerticalAlignment="Center" />
                             <TextBlock Text="○" Foreground="{DynamicResource TextMutedBrush}"
                                        FontSize="10" VerticalAlignment="Center" />
@@ -884,6 +903,7 @@
                                      IsVisible="{Binding IsGridView}"
                                      Background="Transparent"
                                      BorderThickness="0"
+                                     AutomationProperties.Name="Game grid"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                      ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <ListBox.Styles>
@@ -892,6 +912,7 @@
                                     <Style Selector="ListBoxItem">
                                         <Setter Property="Background" Value="Transparent" />
                                         <Setter Property="Padding" Value="0" />
+                                        <Setter Property="AutomationProperties.Name" Value="{Binding DisplayTitle}" />
                                     </Style>
                                     <Style
                                         Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -926,6 +947,7 @@
                                          (Classes="game-button-3d" — see DarkTheme.axaml). -->
                                         <Button Classes="game-button-3d"
                                                 Width="{Binding DataContext.CardWidth, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=168}"
+                                                AutomationProperties.Name="{Binding DisplayTitle}"
                                                 Click="GameCard_Click"
                                                 PointerPressed="GameCard_PointerPressed">
                                             <Button.Height>
@@ -1040,6 +1062,8 @@
                                 <DataGrid x:Name="GameDataGrid"
                                           Grid.Column="0"
                                           ItemsSource="{Binding Games}"
+                                          AutomationProperties.Name="Game list"
+                                          AutomationProperties.HelpText="{ext:Translate TooltipGameDataGrid}"
                                           AutoGenerateColumns="False"
                                           IsReadOnly="True"
                                           CanUserSortColumns="True"
@@ -1149,9 +1173,11 @@
                                 <!-- Center Content (Spinner and Message) -->
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <ProgressBar IsIndeterminate="True" Width="200" Height="4"
+                                                 AutomationProperties.Name="Loading"
                                                  Foreground="{DynamicResource AccentBrush}" />
                                     <TextBlock x:Name="LoadingMessage"
                                                Text="{Binding LoadingMessage}"
+                                               AutomationProperties.LiveSetting="Polite"
                                                Foreground="White" FontSize="14"
                                                HorizontalAlignment="Center" Margin="0,12,0,0" />
                                 </StackPanel>
@@ -1171,6 +1197,7 @@
                                         BorderThickness="1"
                                         Cursor="Hand"
                                         ToolTip.Tip="{ext:Translate ClickHereIfTheLoadingScreenIsStuckToReturnToTheMainMenu}"
+                                        AutomationProperties.Name="{ext:Translate ClickHereIfTheLoadingScreenIsStuckToReturnToTheMainMenu}"
                                         Click="EmergencyReturnButton_Click" />
                             </Grid>
                         </Border>
@@ -1206,9 +1233,11 @@
                                            FontFamily="{DynamicResource PrimaryFont}" />
                                 <Button Classes="secondary" Content="{ext:Translate RemoveFromFavorites}"
                                         ToolTip.Tip="{ext:Translate TooltipRemoveFromFavorites}"
+                                        AutomationProperties.Name="{ext:Translate TooltipRemoveFromFavorites}"
                                         Click="FavoritesRemoveButton_Click" />
                                 <Button Classes="primary" Content="{ext:Translate LaunchSelectedGame}"
                                         ToolTip.Tip="{ext:Translate TooltipLaunchFavorite}"
+                                        AutomationProperties.Name="{ext:Translate TooltipLaunchFavorite}"
                                         Command="{Binding LaunchSelectedCommand}" />
                             </StackPanel>
                             <Grid Grid.Row="1" ColumnDefinitions="*,6,240">
@@ -1222,6 +1251,7 @@
                                           GridLinesVisibility="All"
                                           BorderThickness="1"
                                           ToolTip.Tip="{ext:Translate TooltipFavoritesDataGrid}"
+                                          AutomationProperties.Name="{ext:Translate TooltipFavoritesDataGrid}"
                                           DoubleTapped="FavoritesDataGrid_DoubleTapped"
                                           KeyDown="FavoritesDataGrid_KeyDown">
                                     <DataGrid.Columns>
@@ -1267,23 +1297,29 @@
                                            FontFamily="{DynamicResource PrimaryFont}" />
                                 <Button Classes="secondary" Content="{ext:Translate RemovefromHistory}"
                                         ToolTip.Tip="{ext:Translate TooltipRemoveFromHistory}"
+                                        AutomationProperties.Name="{ext:Translate TooltipRemoveFromHistory}"
                                         Command="{Binding RemoveSelectedCommand}" />
                                 <Button Classes="secondary" Content="{ext:Translate RemoveAllfromHistory}"
                                         ToolTip.Tip="{ext:Translate TooltipRemoveAllFromHistory}"
+                                        AutomationProperties.Name="{ext:Translate TooltipRemoveAllFromHistory}"
                                         Command="{Binding RemoveAllCommand}" />
                                 <Button Classes="primary" Content="{ext:Translate LaunchSelectedGame}"
                                         ToolTip.Tip="{ext:Translate TooltipLaunchFavorite}"
+                                        AutomationProperties.Name="{ext:Translate TooltipLaunchFavorite}"
                                         Command="{Binding LaunchSelectedCommand}" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
                                 <Button Classes="secondary" Content="{ext:Translate SortByDate}"
                                         ToolTip.Tip="{ext:Translate TooltipSortByDate}"
+                                        AutomationProperties.Name="{ext:Translate TooltipSortByDate}"
                                         Command="{Binding SortByDateCommand}" />
                                 <Button Classes="secondary" Content="{ext:Translate SortByPlayTime}"
                                         ToolTip.Tip="{ext:Translate TooltipSortByPlayTime}"
+                                        AutomationProperties.Name="{ext:Translate TooltipSortByPlayTime}"
                                         Command="{Binding SortByTotalPlayTimeCommand}" />
                                 <Button Classes="secondary" Content="{ext:Translate SortByTimesPlayed}"
                                         ToolTip.Tip="{ext:Translate TooltipSortByTimesPlayed}"
+                                        AutomationProperties.Name="{ext:Translate TooltipSortByTimesPlayed}"
                                         Command="{Binding SortByTimesPlayedCommand}" />
                             </StackPanel>
                             <Grid Grid.Row="2" ColumnDefinitions="*,6,240">
@@ -1295,6 +1331,7 @@
                                           IsReadOnly="True"
                                           GridLinesVisibility="All"
                                           BorderThickness="1"
+                                          AutomationProperties.Name="{ext:Translate PlayHistory}"
                                           DoubleTapped="PlayHistoryDataGrid_DoubleTapped"
                                           KeyDown="PlayHistoryDataGrid_KeyDown">
                                     <DataGrid.Columns>
@@ -1343,17 +1380,21 @@
                                 <TextBox x:Name="GlobalSearchTextBox" Width="220" VerticalAlignment="Center"
                                          Text="{Binding SearchText}"
                                          KeyDown="GlobalSearchTextBox_KeyDown"
-                                         ToolTip.Tip="{ext:Translate TooltipSearch}" />
+                                         ToolTip.Tip="{ext:Translate TooltipSearch}"
+                                         AutomationProperties.Name="{ext:Translate TooltipSearch}" />
                                 <ComboBox ItemsSource="{Binding SystemNames}"
                                           SelectedIndex="{Binding SelectedSystemIndex}"
                                           Width="180" VerticalAlignment="Center"
-                                          ToolTip.Tip="{ext:Translate TooltipSelectSystem}" />
+                                          ToolTip.Tip="{ext:Translate TooltipSelectSystem}"
+                                          AutomationProperties.Name="{ext:Translate TooltipSelectSystem}" />
                                 <Button Classes="secondary" Content="{ext:Translate Search}" VerticalAlignment="Center"
                                         ToolTip.Tip="{ext:Translate TooltipGlobalSearchButton}"
+                                        AutomationProperties.Name="{ext:Translate TooltipGlobalSearchButton}"
                                         Click="GlobalSearchButton_Click" />
                                 <Button Classes="primary" Content="{ext:Translate LaunchSelectedGame}"
                                         VerticalAlignment="Center"
                                         ToolTip.Tip="{ext:Translate TooltipLaunchFromSearch}"
+                                        AutomationProperties.Name="{ext:Translate TooltipLaunchFromSearch}"
                                         Command="{Binding LaunchSelectedCommand}"
                                         IsEnabled="{Binding LaunchButtonEnabled}" />
                             </StackPanel>
@@ -1384,6 +1425,7 @@
                                               IsReadOnly="True"
                                               GridLinesVisibility="All"
                                               BorderThickness="1"
+                                              AutomationProperties.Name="{ext:Translate GlobalSearch}"
                                               DoubleTapped="GlobalSearchResults_DoubleTapped">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="{ext:Translate FileNameColumnHeader}"
@@ -1432,6 +1474,7 @@
                         <!-- Left: general status (WPF StatusBarText) -->
                         <TextBlock x:Name="StatusLeft"
                                    Text="{Binding StatusText}"
+                                   AutomationProperties.LiveSetting="Polite"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontSize="11" VerticalAlignment="Center"
                                    HorizontalAlignment="Left" />
@@ -1443,18 +1486,21 @@
                                     Classes="secondary"
                                     Padding="8,3"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{ext:Translate TooltipPreviousPage}"
                                     Click="PrevPage_Click"
                                     ToolTip.Tip="{ext:Translate TooltipPreviousPage}">
                                 <Image Source="avares://SimpleLauncher.Avalonia/images/arrowleft.png"
                                        Width="16" Height="16" RenderOptions.BitmapInterpolationMode="HighQuality" />
                             </Button>
                             <TextBlock x:Name="PaginationLabel"
+                                       AutomationProperties.LiveSetting="Polite"
                                        Foreground="{DynamicResource TextMutedBrush}"
                                        FontSize="11" VerticalAlignment="Center" />
                             <Button x:Name="NextPageButton"
                                     Classes="secondary"
                                     Padding="8,3"
                                     IsEnabled="False"
+                                    AutomationProperties.Name="{ext:Translate TooltipNextPage}"
                                     Click="NextPage_Click"
                                     ToolTip.Tip="{ext:Translate TooltipNextPage}">
                                 <Image Source="avares://SimpleLauncher.Avalonia/images/arrowright.png"
@@ -1465,6 +1511,7 @@
                         <TextBlock x:Name="GameCountTextBlock"
                                    Grid.Column="1"
                                    Text="{Binding GameCountText}"
+                                   AutomationProperties.LiveSetting="Polite"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"
                                    IsVisible="{Binding #PaginationPanel.IsVisible, Converter={StaticResource InverseBoolToVisibility}}" />
@@ -1496,6 +1543,7 @@
                         </StackPanel>
                         <!-- Far right: secondary status (No Games Found; auto-cleared by the status-bar timer) -->
                         <TextBlock x:Name="StatusRight" Grid.Column="4"
+                                   AutomationProperties.LiveSetting="Polite"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontSize="11" VerticalAlignment="Center"
                                    HorizontalAlignment="Right"

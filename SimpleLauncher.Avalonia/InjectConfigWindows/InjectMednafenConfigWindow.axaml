@@ -20,6 +20,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding MednafenVideoDriver}"
+                                      AutomationProperties.Name="{ext:Translate MednafenConfig_VideoDriver_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MednafenConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding MednafenFullscreen}"
@@ -36,6 +37,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding StretchOptions}"
                                       SelectedItem="{Binding MednafenStretch}"
+                                      AutomationProperties.Name="{ext:Translate MednafenConfig_Stretch_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MednafenConfig_Stretch_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding MednafenBilinear}"
@@ -52,6 +54,7 @@
                                    VerticalAlignment="Center" />
                         <Slider Value="{Binding MednafenScanlines}" Minimum="0" Maximum="100"
                                 IsSnapToTickEnabled="True" TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate MednafenConfig_Scanlines_Tooltip}"
                                 ToolTip.Tip="{ext:Translate MednafenConfig_Scanlines_Tooltip}" />
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
                             <TextBlock Text="{ext:Translate MednafenConfig_Shader_Label}" Classes="form-label"
@@ -59,6 +62,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ShaderOptions}"
                                       SelectedItem="{Binding MednafenShader}"
+                                      AutomationProperties.Name="{ext:Translate MednafenConfig_Shader_Tooltip}"
                                       ToolTip.Tip="{ext:Translate MednafenConfig_Shader_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -70,7 +74,9 @@
                         <TextBlock Text="{ext:Translate MednafenConfig_Volume_Label}" Classes="form-label"
                                    VerticalAlignment="Center" />
                         <Slider Value="{Binding MednafenVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
-                                TickFrequency="1" ToolTip.Tip="{ext:Translate MednafenConfig_Volume_Tooltip}" />
+                                TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate MednafenConfig_Volume_Tooltip}"
+                                ToolTip.Tip="{ext:Translate MednafenConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
 
@@ -105,16 +111,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate MednafenConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate MednafenConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate MednafenConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate MednafenConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate MednafenConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate MednafenConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate MednafenConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate MednafenConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate MednafenConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

@@ -33,6 +33,7 @@
                  Padding="5"
                  VerticalAlignment="Stretch"
                  HorizontalAlignment="Stretch"
+                 AutomationProperties.Name="{DynamicResource DosBoxSelectFileInstruction}"
                  ToolTip="{DynamicResource DosBoxSelectFileTooltip}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -56,12 +57,16 @@
                     Margin="5,0"
                     Command="{Binding CancelCommand}"
                     MinWidth="75"
+                    AutomationProperties.Name="{DynamicResource Cancel}"
+                    AutomationProperties.AutomationId="CancelButton"
                     ToolTip="{DynamicResource TooltipDosBoxCancel}" />
             <Button Content="{DynamicResource DosBoxSelectFileLaunch}"
                     Margin="5,0"
                     Command="{Binding LaunchCommand}"
                     MinWidth="75"
                     IsEnabled="{Binding IsLaunchEnabled}"
+                    AutomationProperties.Name="{DynamicResource DosBoxSelectFileLaunch}"
+                    AutomationProperties.AutomationId="LaunchButton"
                     ToolTip="{DynamicResource TooltipDosBoxLaunch}" />
         </StackPanel>
     </Grid>

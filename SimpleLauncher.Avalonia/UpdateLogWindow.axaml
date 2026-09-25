@@ -11,6 +11,7 @@
                  IsReadOnly="True"
                  AcceptsReturn="True"
                  TextWrapping="NoWrap"
-                 FontFamily="Consolas, Courier New, monospace" />
+                 FontFamily="Consolas, Courier New, monospace"
+                 AutomationProperties.Name="Update log" />
     </Grid>
 </Window>

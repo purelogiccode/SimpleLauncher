@@ -26,6 +26,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding GpuOptions}"
                                       SelectedItem="{Binding XeniaGpu}"
+                                      AutomationProperties.Name="Graphics API"
+                                      AutomationProperties.AutomationId="GpuComboBox"
                                       ToolTip="{DynamicResource XeniaConfig_GpuApi_Tooltip}" />
                         </Grid>
 
@@ -47,11 +49,15 @@
                             <ComboBox Grid.Column="0"
                                       ItemsSource="{Binding ResScaleOptions}"
                                       Text="{Binding XeniaResScaleX}"
+                                      AutomationProperties.Name="Resolution Scale X"
+                                      AutomationProperties.AutomationId="ResScaleXComboBox"
                                       ToolTip="{DynamicResource XeniaConfig_ResolutionScaleX_Tooltip}" />
                             <TextBlock Text="x" Grid.Column="1" VerticalAlignment="Center" Margin="10,0" />
                             <ComboBox Grid.Column="2"
                                       ItemsSource="{Binding ResScaleOptions}"
                                       Text="{Binding XeniaResScaleY}"
+                                      AutomationProperties.Name="Resolution Scale Y"
+                                      AutomationProperties.AutomationId="ResScaleYComboBox"
                                       ToolTip="{DynamicResource XeniaConfig_ResolutionScaleY_Tooltip}" />
                         </Grid>
 
@@ -60,16 +66,22 @@
                                   SelectedValue="{Binding XeniaAa}"
                                   SelectedValuePath="Tag"
                                   DisplayMemberPath="Display"
+                                  AutomationProperties.Name="Post-Processing AA"
+                                  AutomationProperties.AutomationId="AaComboBox"
                                   ToolTip="{DynamicResource XeniaConfig_PostProcessingAa_Tooltip}" />
 
                         <Label Content="{DynamicResource XeniaConfig_ScalingSharpening_Label}" Margin="0,5,0,0" />
                         <ComboBox ItemsSource="{Binding ScalingOptions}"
                                   SelectedItem="{Binding XeniaScaling}"
+                                  AutomationProperties.Name="Scaling And Sharpening"
+                                  AutomationProperties.AutomationId="ScalingComboBox"
                                   ToolTip="{DynamicResource XeniaConfig_ScalingSharpening_Tooltip}" />
 
                         <Label Content="{DynamicResource XeniaConfig_ReadbackResolve_Label}" Margin="0,5,0,0" />
                         <ComboBox ItemsSource="{Binding ReadbackOptions}"
                                   SelectedItem="{Binding XeniaReadbackResolve}"
+                                  AutomationProperties.Name="Readback Resolve"
+                                  AutomationProperties.AutomationId="ReadbackComboBox"
                                   ToolTip="{DynamicResource XeniaConfig_ReadbackResolve_Tooltip}" />
 
                         <CheckBox IsChecked="{Binding XeniaGammaSrgb}"
@@ -91,6 +103,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ApuOptions}"
                                       SelectedItem="{Binding XeniaApu}"
+                                      AutomationProperties.Name="Audio Driver"
+                                      AutomationProperties.AutomationId="ApuComboBox"
                                       ToolTip="{DynamicResource XeniaConfig_AudioDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding XeniaMute}"
@@ -121,6 +135,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding HidOptions}"
                                       SelectedItem="{Binding XeniaHid}"
+                                      AutomationProperties.Name="Input Driver (HID)"
+                                      AutomationProperties.AutomationId="HidComboBox"
                                       ToolTip="{DynamicResource XeniaConfig_Hid_Tooltip}" />
                         </Grid>
 
@@ -136,6 +152,8 @@
                                       SelectedValue="{Binding XeniaUserLanguage}"
                                       SelectedValuePath="Tag"
                                       DisplayMemberPath="Display"
+                                      AutomationProperties.Name="User Language"
+                                      AutomationProperties.AutomationId="LangComboBox"
                                       ToolTip="{DynamicResource XeniaConfig_UserLanguage_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -159,15 +177,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource XeniaConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource XeniaConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource XeniaConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource XeniaConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource XeniaConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource XeniaConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

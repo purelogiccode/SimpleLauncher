@@ -27,6 +27,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding VideoDriver}"
+                                      AutomationProperties.Name="Video Driver"
+                                      AutomationProperties.AutomationId="VideoDriverComboBox"
                                       ToolTip="{DynamicResource RetroArchConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding Fullscreen}"
@@ -51,6 +53,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectRatioIndexOptions}"
                                       SelectedItem="{Binding AspectRatioIndex}"
+                                      AutomationProperties.Name="Aspect Ratio"
+                                      AutomationProperties.AutomationId="AspectRatioIndexComboBox"
                                       ToolTip="{DynamicResource RetroArchConfig_AspectRatio_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding ScaleInteger}"
@@ -114,6 +118,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding MenuDriverOptions}"
                                       SelectedItem="{Binding MenuDriver}"
+                                      AutomationProperties.Name="Menu Driver"
+                                      AutomationProperties.AutomationId="MenuDriverComboBox"
                                       ToolTip="{DynamicResource RetroArchConfig_MenuDriver_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding ShowAdvancedSettings}"
@@ -158,15 +164,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource RetroArchConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource RetroArchConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource RetroArchConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource RetroArchConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource RetroArchConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource RetroArchConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

@@ -28,10 +28,12 @@
                         <Grid ColumnDefinitions="*,Auto,*">
                             <NumericUpDown Grid.Column="0" Minimum="640" Maximum="7680" Increment="1"
                                            Value="{Binding DaphneResX}"
+                                           AutomationProperties.Name="{ext:Translate DaphneConfig_ResolutionX_Tooltip}"
                                            ToolTip.Tip="{ext:Translate DaphneConfig_ResolutionX_Tooltip}" />
                             <TextBlock Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="10,0" />
                             <NumericUpDown Grid.Column="2" Minimum="480" Maximum="4320" Increment="1"
                                            Value="{Binding DaphneResY}"
+                                           AutomationProperties.Name="{ext:Translate DaphneConfig_ResolutionY_Tooltip}"
                                            ToolTip.Tip="{ext:Translate DaphneConfig_ResolutionY_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -78,16 +80,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate DaphneConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate DaphneConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate DaphneConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate DaphneConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate DaphneConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate DaphneConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate DaphneConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate DaphneConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate DaphneConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

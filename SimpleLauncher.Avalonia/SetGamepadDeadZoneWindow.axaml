@@ -45,7 +45,8 @@
                 TickFrequency="0.01"
                 HorizontalAlignment="Center"
                 IsSnapToTickEnabled="True"
-                Value="{Binding DeadZoneX}" />
+                Value="{Binding DeadZoneX}"
+                AutomationProperties.Name="{ext:Translate SetGamepadDeadZoneWindow_Dead_Zone_X}" />
         <TextBlock Grid.Row="2" Grid.Column="2"
                    Margin="10"
                    VerticalAlignment="Center"
@@ -66,7 +67,8 @@
                 TickFrequency="0.01"
                 HorizontalAlignment="Center"
                 IsSnapToTickEnabled="True"
-                Value="{Binding DeadZoneY}" />
+                Value="{Binding DeadZoneY}"
+                AutomationProperties.Name="{ext:Translate SetGamepadDeadZoneWindow_Dead_Zone_Y}" />
         <TextBlock Grid.Row="3" Grid.Column="2"
                    Margin="10"
                    VerticalAlignment="Center"
@@ -80,18 +82,21 @@
                         Margin="0,20,5,10"
                         Padding="10"
                         Command="{Binding SaveCommand}"
-                        Content="{ext:Translate SetGamepadDeadZoneWindow_Save_Dead_Zone}" />
+                        Content="{ext:Translate SetGamepadDeadZoneWindow_Save_Dead_Zone}"
+                        AutomationProperties.Name="{ext:Translate SetGamepadDeadZoneWindow_Save_Dead_Zone}" />
                 <!-- Revert Button -->
                 <Button Classes="secondary"
                         Margin="5,20,0,10"
                         Padding="10"
                         Command="{Binding RevertCommand}"
-                        Content="{ext:Translate ReverttoDefaultValues}" />
+                        Content="{ext:Translate ReverttoDefaultValues}"
+                        AutomationProperties.Name="{ext:Translate ReverttoDefaultValues}" />
                 <!-- Cancel Button -->
                 <Button Classes="secondary"
                         Margin="5,20,0,10"
                         Command="{Binding CancelCommand}"
-                        Content="{ext:Translate YumirConfig_Cancel_Button}" IsCancel="True" />
+                        Content="{ext:Translate YumirConfig_Cancel_Button}" IsCancel="True"
+                        AutomationProperties.Name="{ext:Translate YumirConfig_Cancel_Button}" />
             </StackPanel>
         </Grid>
     </Grid>

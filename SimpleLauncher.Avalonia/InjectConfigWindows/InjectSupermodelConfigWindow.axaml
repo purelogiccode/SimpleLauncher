@@ -45,10 +45,12 @@
                         <Grid ColumnDefinitions="*,Auto,*">
                             <NumericUpDown Grid.Column="0" Minimum="640" Maximum="7680" Increment="1"
                                            Value="{Binding ResX}"
+                                           AutomationProperties.Name="{ext:Translate SupermodelConfig_ResolutionX_Tooltip}"
                                            ToolTip.Tip="{ext:Translate SupermodelConfig_ResolutionX_Tooltip}" />
                             <TextBlock Grid.Column="1" Text="x" VerticalAlignment="Center" Margin="10,0" />
                             <NumericUpDown Grid.Column="2" Minimum="480" Maximum="4320" Increment="1"
                                            Value="{Binding ResY}"
+                                           AutomationProperties.Name="{ext:Translate SupermodelConfig_ResolutionY_Tooltip}"
                                            ToolTip.Tip="{ext:Translate SupermodelConfig_ResolutionY_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -60,11 +62,15 @@
                         <TextBlock Text="{ext:Translate SupermodelConfig_MusicVolume_Label}" Classes="form-label"
                                    VerticalAlignment="Center" />
                         <Slider Value="{Binding MusicVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
-                                TickFrequency="1" ToolTip.Tip="{ext:Translate SupermodelConfig_MusicVolume_Tooltip}" />
+                                TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate SupermodelConfig_MusicVolume_Tooltip}"
+                                ToolTip.Tip="{ext:Translate SupermodelConfig_MusicVolume_Tooltip}" />
                         <TextBlock Text="{ext:Translate SupermodelConfig_SoundVolume_Label}" Classes="form-label"
                                    VerticalAlignment="Center" Margin="0,5,0,0" />
                         <Slider Value="{Binding SoundVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
-                                TickFrequency="1" ToolTip.Tip="{ext:Translate SupermodelConfig_SoundVolume_Tooltip}" />
+                                TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate SupermodelConfig_SoundVolume_Tooltip}"
+                                ToolTip.Tip="{ext:Translate SupermodelConfig_SoundVolume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
 
@@ -86,6 +92,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding InputSystemOptions}"
                                       SelectedItem="{Binding InputSystem}"
+                                      AutomationProperties.Name="{ext:Translate SupermodelConfig_InputSystem_Tooltip}"
                                       ToolTip.Tip="{ext:Translate SupermodelConfig_InputSystem_Tooltip}" />
                         </Grid>
 
@@ -95,6 +102,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding PpcFrequencyOptions}"
                                       SelectedItem="{Binding PowerPcFrequency}"
+                                      AutomationProperties.Name="{ext:Translate SupermodelConfig_PpcFrequency_Tooltip}"
                                       ToolTip.Tip="{ext:Translate SupermodelConfig_PpcFrequency_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -117,16 +125,19 @@
             <Button x:Name="BtnSave" Content="{ext:Translate SupermodelConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate SupermodelConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate SupermodelConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate SupermodelConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate SupermodelConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate SupermodelConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate SupermodelConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate SupermodelConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate SupermodelConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

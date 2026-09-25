@@ -22,18 +22,26 @@
                  Margin="5"
                  FontSize="12"
                  Text="{Binding LogText, Mode=OneWay}"
+                 AutomationProperties.Name="{DynamicResource TooltipDebuggerLog}"
+                 AutomationProperties.AutomationId="LogTextBox"
                  ToolTip="{DynamicResource TooltipDebuggerLog}" />
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <Button Content="{DynamicResource ClearLog}" Margin="5,0" Command="{Binding ClearLogCommand}"
                     Style="{DynamicResource MahApps.Styles.Button.Square}"
+                    AutomationProperties.Name="{DynamicResource ClearLog}"
+                    AutomationProperties.AutomationId="ClearLogButton"
                     ToolTip="{DynamicResource TooltipClearLog}" />
             <Button Content="{DynamicResource CopyLog}" Margin="5,0" Command="{Binding CopyLogCommand}"
                     Style="{DynamicResource MahApps.Styles.Button.Square}"
+                    AutomationProperties.Name="{DynamicResource CopyLog}"
+                    AutomationProperties.AutomationId="CopyLogButton"
                     ToolTip="{DynamicResource TooltipCopyLog}" />
             <Button Content="{DynamicResource Close}" Margin="5,0"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Click="CloseButton_Click"
+                    AutomationProperties.Name="{DynamicResource Close}"
+                    AutomationProperties.AutomationId="CloseButton"
                     ToolTip="{DynamicResource TooltipClose}" />
         </StackPanel>
     </Grid>

@@ -21,13 +21,15 @@
                  Text="{Binding NotificationSoundFile}"
                  Margin="5,0,5,0"
                  VerticalAlignment="Center"
-                 IsEnabled="{Binding IsSoundControlsEnabled}" />
+                 IsEnabled="{Binding IsSoundControlsEnabled}"
+                 AutomationProperties.Name="{ext:Translate SoundConfigurationWindow_Notification_sound_file}" />
         <Button Grid.Row="1" Grid.Column="2"
                 Content="{ext:Translate ChooseFile}"
                 Command="{Binding ChooseSoundFileCommand}"
                 VerticalAlignment="Center"
                 Width="100"
-                IsEnabled="{Binding IsSoundControlsEnabled}" />
+                IsEnabled="{Binding IsSoundControlsEnabled}"
+                AutomationProperties.Name="{ext:Translate ChooseFile}" />
 
         <Button Grid.Row="2" Grid.Column="1"
                 Content="{ext:Translate PlayCurrentSound}"
@@ -35,7 +37,8 @@
                 Margin="5,10,5,0"
                 HorizontalAlignment="Left"
                 Width="150"
-                IsEnabled="{Binding IsSoundControlsEnabled}" />
+                IsEnabled="{Binding IsSoundControlsEnabled}"
+                AutomationProperties.Name="{ext:Translate PlayCurrentSound}" />
 
         <Button Grid.Row="3" Grid.Column="1"
                 Content="{ext:Translate ResetToDefault}"
@@ -43,7 +46,8 @@
                 Margin="5,10,5,0"
                 HorizontalAlignment="Left"
                 Width="150"
-                IsEnabled="{Binding IsSoundControlsEnabled}" />
+                IsEnabled="{Binding IsSoundControlsEnabled}"
+                AutomationProperties.Name="{ext:Translate ResetToDefault}" />
 
         <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3"
                     Orientation="Horizontal"
@@ -52,12 +56,14 @@
                     Content="{ext:Translate Save}"
                     Command="{Binding SaveCommand}"
                     IsDefault="True"
-                    Width="100" Margin="0,0,10,0" />
+                    Width="100" Margin="0,0,10,0"
+                    AutomationProperties.Name="{ext:Translate Save}" />
             <Button Classes="secondary"
                     Content="{ext:Translate Cancel}"
                     Command="{Binding CancelCommand}"
                     IsCancel="True"
-                    Width="100" />
+                    Width="100"
+                    AutomationProperties.Name="{ext:Translate Cancel}" />
         </StackPanel>
     </Grid>
 </Window>

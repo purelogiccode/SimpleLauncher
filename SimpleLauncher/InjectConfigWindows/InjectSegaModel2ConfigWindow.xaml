@@ -44,6 +44,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding WideScreenOptions}"
                                       SelectedItem="{Binding WideScreen}"
+                                      AutomationProperties.Name="Widescreen (Windowed)"
+                                      AutomationProperties.AutomationId="WideScreenComboBox"
                                       ToolTip="{DynamicResource SegaModel2Config_Widescreen_Tooltip}" />
                         </Grid>
 
@@ -56,6 +58,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding FsaaOptions}"
                                       SelectedItem="{Binding Fsaa}"
+                                      AutomationProperties.Name="Fullscreen Anti-Aliasing (FSAA)"
+                                      AutomationProperties.AutomationId="FsaaComboBox"
                                       ToolTip="{DynamicResource SegaModel2Config_FSAA_Tooltip}" />
                         </Grid>
 
@@ -111,15 +115,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource SegaModel2Config_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource SegaModel2Config_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource SegaModel2Config_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource SegaModel2Config_Run_Tooltip}" />
             <Button Content="{DynamicResource SegaModel2Config_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource SegaModel2Config_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

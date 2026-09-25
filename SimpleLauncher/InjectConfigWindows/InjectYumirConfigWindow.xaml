@@ -37,6 +37,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ForcedAspectOptions}"
                                       SelectedItem="{Binding YumirForcedAspect}"
+                                      AutomationProperties.Name="Aspect Ratio Value"
+                                      AutomationProperties.AutomationId="ForcedAspectComboBox"
                                       ToolTip="{DynamicResource YumirConfig_ForcedAspect_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -49,6 +51,7 @@
                                   Margin="0,5" ToolTip="{DynamicResource YumirConfig_Mute_Tooltip}" />
                         <Label Content="{DynamicResource YumirConfig_Volume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding YumirVolume}" Minimum="0.0" Maximum="1.0" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Volume Level"
                                 TickFrequency="0.05" ToolTip="{DynamicResource YumirConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -69,6 +72,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoStandardOptions}"
                                       SelectedItem="{Binding YumirVideoStandard}"
+                                      AutomationProperties.Name="Video Standard"
+                                      AutomationProperties.AutomationId="VideoStandardComboBox"
                                       ToolTip="{DynamicResource YumirConfig_VideoStandard_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding YumirPauseWhenUnfocused}"
@@ -95,15 +100,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource YumirConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource YumirConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource YumirConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource YumirConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource YumirConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource YumirConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

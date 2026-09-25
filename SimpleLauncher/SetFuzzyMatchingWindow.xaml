@@ -39,6 +39,8 @@
                     TickFrequency="{Binding TickFrequencyValue}"
                     IsSnapToTickEnabled="True"
                     Width="200"
+                    AutomationProperties.Name="{DynamicResource NewThresholdLabel}"
+                    AutomationProperties.AutomationId="ThresholdSlider"
                     ToolTip="{DynamicResource TooltipThresholdSlider}" />
             <TextBlock Text="{Binding ThresholdPercentage}" Margin="10" />
         </StackPanel>
@@ -63,10 +65,14 @@
             <Button Content="{DynamicResource OkButtonText}" Command="{Binding SaveCommand}"
                     Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
                     IsDefault="True" Padding="10" Margin="0,0,10,0"
+                    AutomationProperties.Name="{DynamicResource OkButtonText}"
+                    AutomationProperties.AutomationId="OkButton"
                     ToolTip="{DynamicResource TooltipOkButton}" />
             <Button Content="{DynamicResource CancelButtonText}" Command="{Binding CancelCommand}"
                     Style="{DynamicResource MahApps.Styles.Button.Square}"
                     IsCancel="True" Padding="10"
+                    AutomationProperties.Name="{DynamicResource CancelButtonText}"
+                    AutomationProperties.AutomationId="CancelButton"
                     ToolTip="{DynamicResource ToolTipCancel}" />
         </StackPanel>
     </Grid>

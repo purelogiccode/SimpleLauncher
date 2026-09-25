@@ -35,6 +35,8 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding VideoDriverOptions}"
                                       SelectedItem="{Binding VideoDriver}"
+                                      AutomationProperties.Name="Video Driver"
+                                      AutomationProperties.AutomationId="VideoDriverComboBox"
                                       ToolTip="{DynamicResource StellaConfig_VideoDriver_Tooltip}" />
                         </Grid>
                         <Grid Margin="0,5,0,5">
@@ -46,10 +48,13 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding TvFilterOptions}"
                                       SelectedItem="{Binding TvFilter}"
+                                      AutomationProperties.Name="TV Effects"
+                                      AutomationProperties.AutomationId="TvFilterComboBox"
                                       ToolTip="{DynamicResource StellaConfig_TvFilter_Tooltip}" />
                         </Grid>
                         <Label Content="{DynamicResource StellaConfig_Scanlines_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding Scanlines}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Scanlines Intensity"
                                 TickFrequency="1" ToolTip="{DynamicResource StellaConfig_Scanlines_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -62,6 +67,7 @@
                                   ToolTip="{DynamicResource StellaConfig_AudioEnabled_Tooltip}" />
                         <Label Content="{DynamicResource StellaConfig_AudioVolume_Label}" VerticalAlignment="Center" />
                         <Slider Value="{Binding AudioVolume}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="Master Volume"
                                 TickFrequency="1" ToolTip="{DynamicResource StellaConfig_AudioVolume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -97,15 +103,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource StellaConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource StellaConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource StellaConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource StellaConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource StellaConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource StellaConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

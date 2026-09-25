@@ -19,6 +19,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding CableOptions}"
                                       SelectedItem="{Binding RedreamCable}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Cable_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Cable_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,0,0,5">
@@ -26,6 +27,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding BroadcastOptions}"
                                       SelectedItem="{Binding RedreamBroadcast}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Broadcast_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Broadcast_Tooltip}" />
                         </Grid>
                         <CheckBox IsChecked="{Binding RedreamVsync}"
@@ -41,6 +43,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AspectOptions}"
                                       SelectedItem="{Binding RedreamAspect}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Aspect_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Aspect_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -48,6 +51,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding ResOptions}"
                                       SelectedItem="{Binding RedreamRes}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_ResolutionScale_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_ResolutionScale_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -55,6 +59,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RendererOptions}"
                                       SelectedItem="{Binding RedreamRenderer}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Renderer_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Renderer_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -62,6 +67,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding FullmodeOptions}"
                                       SelectedItem="{Binding RedreamFullmode}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_FullscreenMode_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_FullscreenMode_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -79,6 +85,7 @@
                                 <Slider x:Name="SldVolume"
                                         Value="{Binding RedreamVolume}"
                                         Minimum="0" Maximum="100"
+                                        AutomationProperties.Name="Volume"
                                         TickFrequency="1" IsSnapToTickEnabled="True" />
                             </DockPanel>
                         </Grid>
@@ -86,6 +93,7 @@
                             <TextBlock Text="{ext:Translate RedreamConfig_Latency_ms}" Classes="form-label" />
                             <ComboBox Grid.Column="1" IsEditable="True"
                                       Text="{Binding RedreamLatency}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Latency_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Latency_Tooltip}">
                                 <ComboBoxItem Content="8" />
                                 <ComboBoxItem Content="16" />
@@ -103,6 +111,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding LanguageOptions}"
                                       SelectedItem="{Binding RedreamLanguage}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Language_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Language_Tooltip}" />
                         </Grid>
                         <Grid ColumnDefinitions="*,*" Margin="0,5,0,5">
@@ -110,6 +119,7 @@
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding RegionOptions}"
                                       SelectedItem="{Binding RedreamRegion}"
+                                      AutomationProperties.Name="{ext:Translate RedreamConfig_Region_Tooltip}"
                                       ToolTip.Tip="{ext:Translate RedreamConfig_Region_Tooltip}" />
                         </Grid>
                     </StackPanel>
@@ -133,16 +143,19 @@
                     Content="{ext:Translate RedreamConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate RedreamConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate RedreamConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate RedreamConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate RedreamConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate RedreamConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate RedreamConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate RedreamConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate RedreamConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

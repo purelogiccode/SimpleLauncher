@@ -45,10 +45,14 @@
 
                 <Label Grid.Row="0" Grid.Column="0" Content="{DynamicResource SearchFor}" VerticalAlignment="Center" />
                 <TextBox Grid.Row="0" Grid.Column="1" Name="SearchTextBox" Height="26" VerticalAlignment="Center"
+                         AutomationProperties.Name="{DynamicResource SearchFor}"
+                         AutomationProperties.AutomationId="SearchTextBox"
                          KeyDown="SearchWhenPressEnterKey" Margin="5,0,0,0" ToolTip="{DynamicResource TooltipSearch}" />
 
                 <Label Grid.Row="1" Grid.Column="0" Content="{DynamicResource InSystem}" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="1" Grid.Column="1" Name="SystemComboBox" Margin="5,5,0,5"
+                          AutomationProperties.Name="{DynamicResource InSystem}"
+                          AutomationProperties.AutomationId="SystemComboBox"
                           VerticalAlignment="Center" ToolTip="{DynamicResource TooltipSelectSystem}" />
 
                 <GroupBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Header="{DynamicResource SearchOptions}"
@@ -73,12 +77,14 @@
                     <Button Content="{DynamicResource Search}" Click="SearchButtonClickAsync"
                             Style="{DynamicResource SecondaryActionButtonStyle}"
                             ToolTip="{DynamicResource TooltipGlobalSearchButton}"
+                            AutomationProperties.AutomationId="SearchButton"
                             AutomationProperties.Name="{DynamicResource Search}" />
                     <Button Name="LaunchButton" Content="{DynamicResource LaunchSelectedGame}"
                             Click="LaunchButton_ClickAsync"
                             IsEnabled="False"
                             Style="{DynamicResource PrimaryActionButtonStyle}"
                             ToolTip="{DynamicResource TooltipLaunchFromSearch}"
+                            AutomationProperties.AutomationId="LaunchButton"
                             AutomationProperties.Name="{DynamicResource LaunchSelectedGame}" />
                 </StackPanel>
             </Grid>
@@ -102,6 +108,8 @@
                       ToolTip="{DynamicResource TooltipResultsDataGrid}"
                       MouseRightButtonUp="GlobalSearchPrepareForRightClickContextMenuAsync"
                       MouseDoubleClick="ResultsDataGrid_MouseDoubleClickAsync"
+                      AutomationProperties.Name="{DynamicResource TooltipResultsDataGrid}"
+                      AutomationProperties.AutomationId="ResultsDataGrid"
                       SelectionChanged="ActionsWhenUserSelectAResultItemAsync">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="{DynamicResource FileNameColumnHeader}"

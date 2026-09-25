@@ -73,6 +73,7 @@
                                                    Foreground="{DynamicResource MahApps.Brushes.Text}" />
                                         <ProgressBar Grid.Row="1" Grid.Column="0" x:Name="CasualProgressbar"
                                                      Height="20" Margin="0,0,10,0"
+                                                     AutomationProperties.Name="Casual progress"
                                                      Style="{DynamicResource MahApps.Styles.ProgressBar.Accent}" />
                                         <TextBlock Grid.Row="1" Grid.Column="1" x:Name="CasualProgressText"
                                                    VerticalAlignment="Center" FontWeight="Bold" Width="60"
@@ -95,6 +96,7 @@
                                                    Margin="0,0,0,5" Foreground="{DynamicResource MahApps.Brushes.Text}" />
                                         <ProgressBar Grid.Row="1" Grid.Column="0" x:Name="HardcoreProgressbar"
                                                      Height="20" Margin="0,0,10,0"
+                                                     AutomationProperties.Name="Hardcore progress"
                                                      Style="{DynamicResource MahApps.Styles.ProgressBar.Accent}" />
                                         <TextBlock Grid.Row="1" Grid.Column="1" x:Name="HardcoreProgressText"
                                                    VerticalAlignment="Center" FontWeight="Bold" Width="60"
@@ -190,6 +192,8 @@
                                       Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                       BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
                                       ToolTip="{DynamicResource TooltipAchievementsDataGrid}"
+                                      AutomationProperties.Name="{DynamicResource TooltipAchievementsDataGrid}"
+                                      AutomationProperties.AutomationId="AchievementsDataGrid"
                                       d:DataContext="{d:DesignInstance }">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="{DynamicResource HeaderIcon}" Width="Auto">
@@ -241,6 +245,8 @@
                                     <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                             Click="OpenRaSettings_Click"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                            AutomationProperties.AutomationId="NoAchievementsOpenRaSettingsButton"
                                             ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                                 </StackPanel>
                             </Grid>
@@ -326,6 +332,8 @@
                                 <Button x:Name="ViewGameOnRaButton" Content="{DynamicResource ViewOnRetroAchievements}"
                                         Click="ViewGameOnRaButton_Click" Margin="15,0,0,0"
                                         Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                        AutomationProperties.Name="{DynamicResource ViewOnRetroAchievements}"
+                                        AutomationProperties.AutomationId="ViewGameOnRaButton"
                                         ToolTip="{DynamicResource ViewGameOnRetroAchievementsTooltip}" />
                             </StackPanel>
                             <Grid Margin="0,0,0,25">
@@ -495,6 +503,8 @@
                                           BorderThickness="1"
                                           MaxHeight="400"
                                           ToolTip="{DynamicResource TooltipGameInfoAchievementsDataGrid}"
+                                          AutomationProperties.Name="{DynamicResource TooltipGameInfoAchievementsDataGrid}"
+                                          AutomationProperties.AutomationId="GameInfoAchievementsDataGrid"
                                           d:DataContext="{d:DesignInstance }">
                                     <DataGrid.Columns>
                                         <DataGridTemplateColumn Header="{DynamicResource HeaderIcon}" Width="Auto">
@@ -540,6 +550,8 @@
                                     <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                             Click="OpenRaSettings_Click"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                            AutomationProperties.AutomationId="NoGameInfoOpenRaSettingsButton"
                                             ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                                 </StackPanel>
                             </Grid>
@@ -595,6 +607,8 @@
                                         <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                                 Click="OpenRaSettings_Click"
                                                 Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                                AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                                AutomationProperties.AutomationId="NoUserRankOpenRaSettingsButton"
                                                 ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                                     </StackPanel>
                                 </Grid>
@@ -612,6 +626,8 @@
                                       Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                       BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
                                       ToolTip="{DynamicResource TooltipLatestMastersDataGrid}"
+                                      AutomationProperties.Name="{DynamicResource TooltipLatestMastersDataGrid}"
+                                      AutomationProperties.AutomationId="LatestMastersDataGrid"
                                       d:DataContext="{d:DesignInstance }">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{DynamicResource HeaderRank}" Binding="{Binding Rank}"
@@ -646,6 +662,8 @@
                                     <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                             Click="OpenRaSettings_Click"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                            AutomationProperties.AutomationId="NoLatestMastersOpenRaSettingsButton"
                                             ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                                 </StackPanel>
                             </Grid>
@@ -662,6 +680,8 @@
                                       Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                       BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
                                       ToolTip="{DynamicResource TooltipHighScoresDataGrid}"
+                                      AutomationProperties.Name="{DynamicResource TooltipHighScoresDataGrid}"
+                                      AutomationProperties.AutomationId="HighScoresDataGrid"
                                       d:DataContext="{d:DesignInstance }">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{DynamicResource HeaderRank}" Binding="{Binding Rank}"
@@ -696,6 +716,8 @@
                                     <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                             Click="OpenRaSettings_Click"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                            AutomationProperties.AutomationId="NoHighScoresOpenRaSettingsButton"
                                             ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                                 </StackPanel>
                             </Grid>
@@ -724,6 +746,8 @@
                                                 Content="{DynamicResource ViewProfileOnRA}"
                                                 Click="ViewProfileOnRaButton_Click" Margin="0,10,0,0"
                                                 Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                                AutomationProperties.Name="{DynamicResource ViewProfileOnRA}"
+                                                AutomationProperties.AutomationId="ViewProfileOnRaButton"
                                                 ToolTip="{DynamicResource ViewProfileOnRetroAchievementsTooltip}" />
                                     </StackPanel>
                                 </StackPanel>
@@ -859,6 +883,7 @@
                                          BorderBrush="{DynamicResource MahApps.Brushes.Gray5}"
                                          Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                          Style="{DynamicResource MahApps.Styles.ListBox}"
+                                         AutomationProperties.Name="{DynamicResource RecentlyPlayedGamesTooltip}"
                                          ItemContainerStyle="{StaticResource CustomListBoxItemStyle}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
@@ -932,6 +957,8 @@
                                     <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                             Click="OpenRaSettings_Click"
                                             Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                            AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                            AutomationProperties.AutomationId="NoProfileOpenRaSettingsButton"
                                             ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                                 </StackPanel>
                             </Grid>
@@ -953,19 +980,25 @@
                                        FontSize="14" Foreground="{DynamicResource MahApps.Brushes.Text}" />
                             <DatePicker x:Name="FromDatePicker" Width="120"
                                         ToolTip="Select the start date for unlocks (defaults to 1 month ago)"
+                                        AutomationProperties.Name="Select the start date for unlocks (defaults to 1 month ago)"
                                         Style="{DynamicResource MahApps.Styles.DatePicker}" />
                             <TextBlock Text="{DynamicResource ToDate}" VerticalAlignment="Center" Margin="15,0,5,0"
                                        FontSize="14" Foreground="{DynamicResource MahApps.Brushes.Text}" />
                             <DatePicker x:Name="ToDatePicker" Width="120"
                                         ToolTip="Select the end date for unlocks (defaults to today)"
+                                        AutomationProperties.Name="Select the end date for unlocks (defaults to today)"
                                         Style="{DynamicResource MahApps.Styles.DatePicker}" />
                             <Button Content="{DynamicResource FetchUnlocks}" Click="FetchUnlocksClickAsync"
                                     Margin="15,0,0,0" Padding="10,5" x:Name="FetchUnlocksButton"
                                     Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                    AutomationProperties.Name="{DynamicResource FetchUnlocks}"
+                                    AutomationProperties.AutomationId="FetchUnlocksButton"
                                     ToolTip="{DynamicResource FetchUnlocksTooltip}" />
                             <Button Content="{DynamicResource ResetDates}" Click="ResetDatesClickAsync"
                                     Margin="10,0,0,0" Padding="10,5"
                                     Style="{DynamicResource MahApps.Styles.Button.Square}"
+                                    AutomationProperties.Name="{DynamicResource ResetDates}"
+                                    AutomationProperties.AutomationId="ResetDatesButton"
                                     ToolTip="{DynamicResource ResetDatesTooltip}" />
                         </StackPanel>
 
@@ -999,6 +1032,8 @@
                                   RowDetailsVisibilityMode="Collapsed"
                                   Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                   BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
+                                  AutomationProperties.Name="Unlocks"
+                                  AutomationProperties.AutomationId="UnlocksDataGrid"
                                   d:DataContext="{d:DesignInstance }">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Header="{DynamicResource HeaderGameIcon}" Width="Auto">
@@ -1056,6 +1091,8 @@
                                 <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                         Click="OpenRaSettings_Click"
                                         Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                        AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                        AutomationProperties.AutomationId="NoUnlocksOpenRaSettingsButton"
                                         ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                             </StackPanel>
                         </Grid>
@@ -1073,6 +1110,8 @@
                                   RowDetailsVisibilityMode="Collapsed"
                                   Background="{DynamicResource MahApps.Brushes.Control.Background}"
                                   BorderBrush="{DynamicResource MahApps.Brushes.AccentBase}" BorderThickness="1"
+                                  AutomationProperties.Name="User progress"
+                                  AutomationProperties.AutomationId="UserProgressDataGrid"
                                   d:DataContext="{d:DesignInstance }">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Header="{DynamicResource HeaderIcon}" Width="Auto">
@@ -1127,6 +1166,8 @@
                                 <Button Content="{DynamicResource OpenRaSettings}" Margin="0,15,0,0"
                                         Click="OpenRaSettings_Click"
                                         Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                                        AutomationProperties.Name="{DynamicResource OpenRaSettings}"
+                                        AutomationProperties.AutomationId="NoUserProgressOpenRaSettingsButton"
                                         ToolTip="{DynamicResource OpenRetroAchievementsSettings}" />
                             </StackPanel>
                         </Grid>

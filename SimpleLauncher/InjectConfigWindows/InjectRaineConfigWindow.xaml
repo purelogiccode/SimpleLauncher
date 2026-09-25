@@ -50,11 +50,15 @@
                         <Label Content="{DynamicResource RaineConfig_AudioDriver}" />
                         <ComboBox ItemsSource="{Binding SoundDriverOptions}"
                                   SelectedItem="{Binding RaineSoundDriver}"
+                                  AutomationProperties.Name="Sound Driver"
+                                  AutomationProperties.AutomationId="SoundDriverComboBox"
                                   ToolTip="{DynamicResource RaineConfig_AudioDriver_Tooltip}" />
 
                         <Label Content="{DynamicResource RaineConfig_SampleRate}" Margin="0,5,0,0" />
                         <ComboBox ItemsSource="{Binding SampleRateOptions}"
                                   SelectedValue="{Binding RaineSampleRate}"
+                                  AutomationProperties.Name="Sample Rate (Hz)"
+                                  AutomationProperties.AutomationId="SampleRateComboBox"
                                   ToolTip="{DynamicResource RaineConfig_SampleRate_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -67,6 +71,8 @@
                         <Label Content="{DynamicResource RaineConfig_FrameSkip}" />
                         <ComboBox ItemsSource="{Binding FrameSkipOptions}"
                                   SelectedValue="{Binding RaineFrameSkip}"
+                                  AutomationProperties.Name="Frame Skip"
+                                  AutomationProperties.AutomationId="FrameSkipComboBox"
                                   ToolTip="{DynamicResource RaineConfig_FrameSkip_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -82,6 +88,8 @@
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" Margin="0,0,5,10"
                                      Text="{Binding RaineNeoCdBios}"
+                                     AutomationProperties.Name="NeoGeo CD BIOS"
+                                     AutomationProperties.AutomationId="NeoCdBiosTextBox"
                                      ToolTip="{DynamicResource RaineConfig_NeoCdBios_Tooltip}" />
                             <Button Grid.Column="1" Content="..." Width="30" Height="25" VerticalAlignment="Bottom"
                                     Margin="0,0,0,10"
@@ -117,6 +125,8 @@
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" Margin="0,0,5,0"
                                      Text="{Binding RaineRomDirectory}"
+                                     AutomationProperties.Name="ROM Directory"
+                                     AutomationProperties.AutomationId="RomDirectoryTextBox"
                                      ToolTip="{DynamicResource RaineConfig_RomDirectory_Tooltip}" />
                             <Button Grid.Column="1" Content="..." Width="30" Height="25"
                                     Click="BtnSelectRaineRomDirectory_Click"
@@ -144,15 +154,18 @@
             <Button x:Name="BtnSave" Content="{DynamicResource RaineConfig_Save_Button}"
                     Style="{DynamicResource DialogSecondaryButtonStyle}"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="Save"
                     ToolTip="{DynamicResource RaineConfig_Save_Tooltip}" />
             <Button x:Name="BtnRun" Content="{DynamicResource RaineConfig_Run_Button2}"
                     Style="{DynamicResource DialogPrimaryButtonStyle}"
                     Command="{Binding RunCommand}" IsDefault="True"
                     Visibility="{Binding IsLauncherMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.Name="Save &amp; Run"
                     ToolTip="{DynamicResource RaineConfig_Run_Tooltip}" />
             <Button Content="{DynamicResource RaineConfig_Cancel_Button}"
                     Style="{DynamicResource DialogCancelButtonStyle}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="Cancel"
                     ToolTip="{DynamicResource RaineConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>

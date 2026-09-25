@@ -24,12 +24,16 @@
             <StackPanel Grid.Row="1" Grid.Column="0" Margin="10,0,10,10" Orientation="Horizontal">
                 <TextBlock Text="{DynamicResource Name}" Width="95" VerticalAlignment="Center" />
                 <TextBox x:Name="NameTextBox" Width="270" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{DynamicResource Name}"
+                         AutomationProperties.AutomationId="NameTextBox"
                          ToolTip="{DynamicResource TooltipName}" />
             </StackPanel>
 
             <StackPanel Grid.Row="2" Grid.Column="0" Margin="10,0,10,20" Orientation="Horizontal">
                 <TextBlock Text="{DynamicResource Email}" Width="95" VerticalAlignment="Center" />
                 <TextBox x:Name="EmailTextBox" Width="270" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="{DynamicResource Email}"
+                         AutomationProperties.AutomationId="EmailTextBox"
                          ToolTip="{DynamicResource TooltipEmail}" />
             </StackPanel>
 
@@ -42,6 +46,8 @@
                 TextWrapping="Wrap"
                 VerticalScrollBarVisibility="Auto"
                 Text="{Binding SupportRequest, UpdateSourceTrigger=PropertyChanged}"
+                AutomationProperties.Name="{DynamicResource TooltipSupportDetails}"
+                AutomationProperties.AutomationId="SupportTextBox"
                 ToolTip="{DynamicResource TooltipSupportDetails}" />
 
             <StackPanel
@@ -54,6 +60,8 @@
                     IsDefault="True"
                     Command="{Binding SendSupportRequestCommand}"
                     Content="{DynamicResource SendSupportRequest}"
+                    AutomationProperties.Name="{DynamicResource SendSupportRequest}"
+                    AutomationProperties.AutomationId="SendSupportRequestButton"
                     ToolTip="{DynamicResource TooltipSendSupport}" />
                 <Button
                     Style="{DynamicResource MahApps.Styles.Button.Square}"
@@ -61,6 +69,8 @@
                     Margin="10,0,0,0"
                     Command="{Binding CloseCommand}"
                     Content="{DynamicResource Close}"
+                    AutomationProperties.Name="{DynamicResource Close}"
+                    AutomationProperties.AutomationId="CloseButton"
                     ToolTip="{DynamicResource TooltipClose}" />
             </StackPanel>
         </Grid>

@@ -20,6 +20,8 @@
             <ComboBox ItemsSource="{Binding Systems}"
                       SelectedItem="{Binding SelectedSystem}"
                       Margin="0,0,0,30"
+                      AutomationProperties.Name="{DynamicResource SystemSelectionPrompt}"
+                      AutomationProperties.AutomationId="SystemComboBox"
                       ToolTip="{DynamicResource TooltipChooseSystemForGame}" />
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -29,6 +31,8 @@
                         Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
                         Margin="0,0,10,0"
                         Width="120"
+                        AutomationProperties.Name="{DynamicResource ConfirmSelectionButton}"
+                        AutomationProperties.AutomationId="ConfirmSelectionButton"
                         ToolTip="{DynamicResource TooltipConfirmSelection}" />
 
                 <Button Content="{DynamicResource Cancel}"
@@ -36,6 +40,8 @@
                         IsCancel="True"
                         Style="{DynamicResource MahApps.Styles.Button.Square}"
                         Width="80"
+                        AutomationProperties.Name="{DynamicResource Cancel}"
+                        AutomationProperties.AutomationId="CancelButton"
                         ToolTip="{DynamicResource ToolTipCancel}" />
             </StackPanel>
         </StackPanel>

@@ -15,6 +15,7 @@
                  Padding="5"
                  VerticalAlignment="Stretch"
                  HorizontalAlignment="Stretch"
+                 AutomationProperties.Name="{DynamicResource SelectWindowToActivate}"
                  ToolTip="{DynamicResource SelectWindowToActivate}">
             <ListBox.ItemTemplate>
                 <DataTemplate>

@@ -24,6 +24,7 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding GraphicApi}"
                                       SelectedValueBinding="{Binding Tag}"
+                                      AutomationProperties.Name="{ext:Translate CemuConfig_Api_Tooltip}"
                                       ToolTip.Tip="{ext:Translate CemuConfig_Api_Tooltip}">
                                 <ComboBoxItem Content="OpenGL" Tag="0" />
                                 <ComboBoxItem Content="Vulkan" Tag="1" />
@@ -35,6 +36,7 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding Vsync}"
                                       SelectedValueBinding="{Binding Tag}"
+                                      AutomationProperties.Name="{ext:Translate CemuConfig_Vsync_Tooltip}"
                                       ToolTip.Tip="{ext:Translate CemuConfig_Vsync_Tooltip}">
                                 <ComboBoxItem Content="Off" Tag="0" />
                                 <ComboBoxItem Content="On" Tag="1" />
@@ -55,6 +57,7 @@
                         <Slider Value="{Binding Volume}"
                                 Minimum="0" Maximum="100"
                                 IsSnapToTickEnabled="True" TickFrequency="1"
+                                AutomationProperties.Name="{ext:Translate CemuConfig_Volume_Tooltip}"
                                 ToolTip.Tip="{ext:Translate CemuConfig_Volume_Tooltip}" />
                     </StackPanel>
                 </GroupBox>
@@ -71,6 +74,7 @@
                             <ComboBox Grid.Column="1"
                                       SelectedValue="{Binding Language}"
                                       SelectedValueBinding="{Binding Tag}"
+                                      AutomationProperties.Name="{ext:Translate CemuConfig_Language_Tooltip}"
                                       ToolTip.Tip="{ext:Translate CemuConfig_Language_Tooltip}">
                                 <ComboBoxItem Content="Japanese" Tag="0" />
                                 <ComboBoxItem Content="English" Tag="1" />
@@ -101,16 +105,19 @@
                     Content="{ext:Translate CemuConfig_Save_Button}"
                     Classes="secondary"
                     Command="{Binding SaveCommand}"
+                    AutomationProperties.Name="{ext:Translate CemuConfig_Save_Tooltip}"
                     ToolTip.Tip="{ext:Translate CemuConfig_Save_Tooltip}" />
             <Button Content="{ext:Translate CemuConfig_Run_Button2}"
                     Classes="primary"
                     Command="{Binding RunCommand}"
                     IsDefault="True"
                     IsVisible="{Binding IsLauncherMode, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="{ext:Translate CemuConfig_Run_Tooltip}"
                     ToolTip.Tip="{ext:Translate CemuConfig_Run_Tooltip}" />
             <Button Content="{ext:Translate CemuConfig_Cancel_Button}"
                     Classes="secondary"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{ext:Translate CemuConfig_Cancel_Tooltip}"
                     ToolTip.Tip="{ext:Translate CemuConfig_Cancel_Tooltip}" />
         </StackPanel>
     </Grid>
