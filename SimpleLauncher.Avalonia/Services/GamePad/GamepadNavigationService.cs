@@ -159,8 +159,7 @@ public sealed class GamepadNavigationService : IDisposable
 
     private static void MoveFocus(TopLevel target, NavDirection direction)
     {
-        var focused = target.FocusManager?.GetFocusedElement() as InputElement;
-        if (focused is null)
+        if (target.FocusManager?.GetFocusedElement() is not InputElement focused)
         {
             // Nothing is focused yet (for example right after startup): let the tab order
             // pick the first focusable control.

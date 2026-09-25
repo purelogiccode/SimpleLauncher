@@ -227,6 +227,9 @@ public class EasyModeManagerFallbackTests : IDisposable
     {
         public List<LogEvent> Events { get; } = [];
 
-        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
+        public void Emit(LogEvent logEvent)
+        {
+            Events.Add(logEvent);
+        }
     }
 }

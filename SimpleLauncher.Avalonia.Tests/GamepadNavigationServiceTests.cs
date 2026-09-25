@@ -128,7 +128,7 @@ public class GamepadNavigationServiceTests
     [Fact]
     public void ProcessInput_SecondaryButton_WithoutMenu_FallsBackToEscape()
     {
-        var (window, _, _) = CreateAttachedWindow(out var service, out var controller, openContextMenu: () => false);
+        var (window, _, _) = CreateAttachedWindow(out var service, out var controller, () => false);
         using (controller)
         using (service)
         {

@@ -1489,7 +1489,7 @@ public partial class MainWindow : Window, IPaginationHost
                 : GameDataGrid.SelectedItem as GameCardViewModel;
             if (game is null) return false;
 
-            Control target = gridView
+            var target = gridView
                 ? GameGridView.ContainerFromItem(game) ?? GameGridView
                 : GameDataGrid;
             ShowGameContextMenu(game, target);
