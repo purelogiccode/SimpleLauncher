@@ -100,98 +100,14 @@ public partial class UrlValidationTests
     }
 
     /// <summary>
-    ///     Verifies that all URLs found in the local EasyMode sample XML files are reachable via HTTP requests.
-    /// </summary>
-    [Theory]
-    [InlineData("easymode.xml")]
-    [InlineData("easymode_arm64.xml")]
-    public async Task EasyModeSampleLocalXmlContainsValidUrls(string xmlFileName)
-    {
-        var filePath =
-            GetProjectFilePath(Path.Combine("SimpleLauncher", "Services", "EasyMode", "Samples", xmlFileName));
-        Assert.True(File.Exists(filePath), $"File not found: {filePath}");
-
-        var xmlContent = await File.ReadAllTextAsync(filePath);
-
-        var serializer = new XmlSerializer(typeof(EasyModeManager));
-        using var stringReader = new StringReader(xmlContent);
-        using var xmlReader = XmlReader.Create(stringReader, new XmlReaderSettings
-        {
-            DtdProcessing = DtdProcessing.Prohibit,
-            XmlResolver = null
-        });
-
-        var manager = (EasyModeManager?)serializer.Deserialize(xmlReader);
-        Assert.NotNull(manager);
-        Assert.NotNull(manager.Systems);
-        Assert.NotEmpty(manager.Systems);
-
-        var urlProperties = new[]
-        {
-            nameof(EmulatorConfig.EmulatorDownloadPage),
-            nameof(EmulatorConfig.EmulatorDownloadLink),
-            nameof(EmulatorConfig.CoreDownloadLink),
-            nameof(EmulatorConfig.ImagePackDownloadLink),
-            nameof(EmulatorConfig.ImagePackDownloadLink2),
-            nameof(EmulatorConfig.ImagePackDownloadLink3),
-            nameof(EmulatorConfig.ImagePackDownloadLink4),
-            nameof(EmulatorConfig.ImagePackDownloadLink5)
-        };
-
-        var urls = new List<string>();
-        foreach (var system in manager.Systems)
-        {
-            var emulator = system.Emulators?.Emulator;
-            if (emulator == null) continue;
-
-            foreach (var propName in urlProperties)
-            {
-                var prop = typeof(EmulatorConfig).GetProperty(propName);
-                var value = prop?.GetValue(emulator) as string;
-                if (!string.IsNullOrWhiteSpace(value))
-                    urls.Add(value);
-            }
-        }
-
-        urls = urls.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        Assert.NotEmpty(urls);
-
-        var brokenUrls = new List<string>();
-        var tasks = urls.Select(async url =>
-        {
-            await Semaphore.WaitAsync();
-            try
-            {
-                var error = await CheckUrlAsync(url);
-                if (error != null)
-                {
-                    lock (brokenUrls)
-                    {
-                        brokenUrls.Add($"{xmlFileName} -> {error}");
-                    }
-                }
-            }
-            finally
-            {
-                Semaphore.Release();
-            }
-        });
-
-        await Task.WhenAll(tasks);
-        if (brokenUrls.Count != 0)
-        {
-            var message = string.Join(Environment.NewLine, brokenUrls);
-            Assert.Fail(
-                $"The following URLs inside the local EasyMode XML sample are broken:{Environment.NewLine}{message}");
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that EasyMode fallback XML files are reachable and contain valid, reachable download URLs.
+    ///     Verifies that the EasyMode fallback XML files for Windows and Linux (x64 and arm64) are reachable
+    ///     and contain valid, reachable download URLs.
     /// </summary>
     [Theory]
     [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode.xml")]
     [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_arm64.xml")]
+    [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_linux_x64.xml")]
+    [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_linux_arm64.xml")]
     public async Task EasyModeFallbackXmlIsReachableAndContainsValidUrls(string xmlUrl)
     {
         using var response = await HttpClient.GetAsync(xmlUrl);

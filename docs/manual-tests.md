@@ -18,6 +18,11 @@ and dispatcher-dependent WPF services are inherently untested and are the bulk o
 **Suggested workflow:** one full pass through Easy Mode → Edit System → Emulator Settings → launch a game per emulator →
 RetroAchievements → a download → a store-game scan covers most of this checklist.
 
+**Recorded platform verification:** SimpleLauncher.Avalonia 5.8.0 (`linux-x64`, current HEAD `1142d050`, packaged with
+`scripts/package-release-linux.ps1`) was smoke-tested on **Debian 13 (trixie) x64** in a VMware Workstation VM — GNOME
+Wayland session, app rendered through Xwayland. `unzip` restored the executable bits from the ZIP; the first-run
+"Welcome" dialog and the main window rendered correctly and the app produced no stdout/stderr errors (2026-09-24).
+
 ---
 
 ## 1. Startup & app lifecycle
