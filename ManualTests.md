@@ -231,7 +231,9 @@ tree** (find by name/AutomationId, click, expand, read state) and uses a vision-
 *visual* verdicts (rendering, palettes, text legibility). The WPF checklist above is the source of
 scenarios; for the **Avalonia/Linux** build use `docs/manual-tests.md` (same list, with Avalonia/Linux
 items marked). This runbook describes the tooling built on 2026-09-25 and how to resume it in a new
-session.
+session. **For a different machine, follow `docs/gui-test-harness.md`** — the portable manual with
+prerequisites, harness file inventory, configuration values to adapt, the fixture contract, the
+`atspi_nav` API reference, scenario authoring rules and troubleshooting.
 
 ## 1. Environment
 
@@ -242,10 +244,12 @@ session.
 | Login | user `vm`, password `vm` (sudo password `vm`) |
 | Guest IP | DHCP (was `172.24.166.133`) — re-check after VM reboot |
 | App | `~/SimpleLauncher/SimpleLauncher.Avalonia` (self-contained `linux-x64` publish) |
+| Fixture | `fixture.py` seeds `~/.local/share/SimpleLauncher/settings.dat` (SQLite): systems Test System / Second System / Broken System, ROMs in `~/roms/<System>`, covers in `~/images/<System>` |
+| Dummy emulator | `/home/vm/dummy-emulator.sh` (logs its args to `/tmp/dummy-emulator.log`, sleeps 7 s — play history needs >5 s) |
 | Display | `:0`, `XAUTHORITY=/home/vm/.Xauthority` |
-| Host harness | `D:\Hyper-V\vision\` (`ask_vision.py`, `atspi_nav.py`, `lib.ps1`, `run-suite.ps1`) — not in git |
+| Host harness | `scripts\gui-test-harness\` (`ask_vision.py`, `atspi_nav.py`, `fixture.py`, `lib.ps1`, `run-suite.ps1`) — tracked in git; paths derive from `$PSScriptRoot` |
 | Guest a11y deps | `at-spi2-core`, `python3-pyatspi` (already present on Mint 22.3); `wmctrl` for maximize; `at-spi-bus-launcher` auto-starts with the session |
-| Shots / reports | `D:\Hyper-V\vision\shots\`, `D:\Hyper-V\vision\reports\` |
+| Shots / reports | `scripts\gui-test-harness\shots\`, `scripts\gui-test-harness\reports\` (gitignored evidence) |
 | Host prereqs | PowerShell 7 + `Posh-SSH`, Python 3.14, user env var `OPENROUTER_API_KEY` (`sk-or-...`) |
 | Model | `xiaomi/mimo-v2.6-flash` on OpenRouter (accepts image input; 1M context) |
 
@@ -253,13 +257,14 @@ session.
 
 ```
 run-suite.ps1 scenario
-  -> one cached SSH session (Posh-SSH) per run; atspi_nav.py deployed via SCP
-  -> the app is restarted once at suite start (fresh Welcome state)
+  -> one cached SSH session (Posh-SSH) per run; atspi_nav.py + fixture.py deployed via SCP
+  -> the app is restarted whenever the scenario's Fixture changes (fixture.py writes the
+     unified SQLite settings.dat while the app is stopped)
   -> scenario = a Python script (heredoc) that:
        * connects to the app accessibility tree (pyatspi)
        * navigates / asserts deterministically (print "SL_RESULT: {...}")
   -> gnome-screenshot inside guest (only for visual scenarios)
-  -> SCP the PNG to D:\Hyper-V\vision\shots
+  -> SCP the PNG to scripts\gui-test-harness\shots
   -> if the scenario has a Prompt: POST base64 image to OpenRouter and parse
      the first line "VERDICT: PASS|FAIL"
   -> final verdict = deterministic AND vision (when vision is used)
@@ -285,7 +290,7 @@ variable was set still sees it that way, even though an already-running process 
    $s = New-SSHSession -ComputerName '<guest-ip>' -Credential $cred -AcceptKey
    Invoke-SSHCommand -SessionId $s.SessionId -Command 'pgrep -af SimpleLauncher.Avalonia || echo NOT-RUNNING'
    ```
-   If the harness hardcodes the old IP, update `$script:VmHostAddress` in `D:\Hyper-V\vision\lib.ps1`.
+   If the harness hardcodes the old IP, update `$script:VmHostAddress` in `scripts\gui-test-harness\lib.ps1`.
 5. Relaunch the app if needed:
    ```bash
    cd ~/SimpleLauncher
@@ -303,18 +308,18 @@ variable was set still sees it that way, even though an already-running process 
 
 ```powershell
 # all scenarios
-pwsh -NoProfile -File D:\Hyper-V\vision\run-suite.ps1
+pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1
 
 # only some scenarios (comma-separated; also works with -Only A,B from -File)
-pwsh -NoProfile -File D:\Hyper-V\vision\run-suite.ps1 -Only MENU-01,EASY-01
+pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1 -Only MENU-01,EASY-01
 
 # different model
-pwsh -NoProfile -File D:\Hyper-V\vision\run-suite.ps1 -Model 'google/gemini-3.8-flash'
+pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1 -Model 'google/gemini-3.8-flash'
 ```
 
 Ad-hoc check without touching the suite:
 ```powershell
-. D:\Hyper-V\vision\lib.ps1
+. scripts\gui-test-harness\lib.ps1
 $shot = Save-VmShot -Name 'adhoc'
 Invoke-VisionCheck -Image $shot -Prompt 'Expected ... First line: VERDICT: PASS or VERDICT: FAIL'
 ```
@@ -329,6 +334,9 @@ Each scenario is a PowerShell hashtable:
 | `Py` | Python script executed in the guest. Imports `/home/vm/vision/atspi_nav.py`, navigates and asserts, prints one `SL_RESULT: {"ok":bool,"checks":{...},"extra":{...}}` line |
 | `Shot` | Optional screenshot base name (PNG lands in `shots\`); taken after the script leaves the UI in the asserted state |
 | `Prompt` | Optional vision question; omit for purely deterministic scenarios (no LLM call) |
+| `Fixture` | Guest data state applied before the scenario: `empty` (no systems, first-run Welcome) or `seeded` (default; 3 systems from `fixture.py`). Changing it restarts the app |
+| `Restart` | Force an app restart before the scenario (THEME-02 verifies theme persistence) |
+| `LaunchArgs` | Extra app arguments (DEBUG-01 uses `-debug`); changing it restarts the app |
 
 Verdict rules in the harness: the deterministic part must PASS (`ok == true`, at least one check, no
 `exception` in `extra`); when a `Prompt` exists, the vision `VERDICT` must also be PASS.
@@ -380,27 +388,71 @@ tree are authoritative and layout-independent — prefer them.
 
 ## 6. Scenario inventory and current status
 
-Last full run 2026-09-25: **7/7 green** (`D:\Hyper-V\vision\reports\run-<timestamp>.md`).
+Last runs 2026-09-25 (subsets, `scripts\gui-test-harness\reports\run-<timestamp>.md`): the original 7
+scenarios were green; the suite was then extended to **31 scenarios** covering the Linux-applicable
+checklist (sections 1-13 of `docs/manual-tests.md`) using the seeded fixture. Current status:
 
-| Id | Covers | Deterministic | Vision | Notes |
+| Id | Covers | Fixture | Status (2026-09-25) | Notes |
 |---|---|---|---|---|
-| EASY-01 | Welcome -> Yes -> Easy Mode; dropdown populated + sorted; Add/Download disabled | PASS | PASS | ~28 s |
-| MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | PASS | PASS | |
-| MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | PASS | PASS | first item was hidden before the menubar-bounds fix |
-| MENU-02 | About menu exact 4 items | PASS | PASS | |
-| DIALOG-01 | Options > About opens the About window with a version string | PASS | PASS | |
-| DIALOG-02 | Options > Sound Configuration > flyout > window | PASS | PASS | needs the two-click submenu sequence |
-| DIALOG-03 | Edit System menu exact set; Add New System opens Easy Mode; no Windows-only scan | PASS | - | no LLM call; the Edit System window needs a configured system |
+| EASY-01 | Welcome -> Easy Mode; dropdown populated + sorted; Add/Download disabled | empty | PASS (7/7 run) | re-verify in the full pass |
+| EASY-02 | Selecting "Atari 2600" enables Download Emulator/Core; Add System stays disabled | seeded | PASS | |
+| MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | seeded | PASS (7/7 run) | re-verify in the full pass |
+| MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | seeded | PASS (7/7 run) | re-verify in the full pass |
+| MENU-02 | About menu exact 4 items | seeded | PASS (7/7 run) | re-verify in the full pass |
+| DIALOG-01 | Options > About opens the About window with a version string | seeded | PASS (7/7 run) | re-verify in the full pass |
+| DIALOG-02 | Options > Sound Configuration > flyout > window | seeded | PASS (7/7 run) | two-click submenu sequence |
+| DIALOG-03 | Edit System menu exact set; Add New System opens Easy Mode | seeded | PASS (7/7 run) | re-verify in the full pass |
+| SYS-01 | 3 systems load; grid shows 4 Test System games; covers/placeholders | seeded | PASS | vision checks covers and "1 to 4 out of 4" |
+| SYS-02 | Broken System -> "Errors" dialog with invalid folder/image paths | seeded | not run yet | |
+| FILTER-01 | All shows all; "B" filters to Beta Blaster; status "Filtering by B" | seeded | PASS | |
+| SEARCH-01 | "Alpha" -> 1; "zzz" -> "No Games Found" + 0 total; clear restores | seeded | PASS | search triggers on Return |
+| VIEW-01 | Toggle grid -> list (GameDataGrid) | seeded | det PASS | vision prompt fixed (was expecting Sonic); re-run |
+| VIEW-02 | View Mode menu checkmarks track selection; grid restored | seeded | PASS | |
+| THEME-01 | Base Theme checkmark; switch to Dark; value persisted in settings.dat | seeded | PASS | |
+| THEME-02 | Dark persists across restart; switch back to Adaptive | seeded + Restart | PASS | |
+| EDIT-01 | Edit System window opens with the selected system loaded | seeded | OPEN | Help control lookup + vision prompt |
+| HELP-01 | Edit System help pane shows content ("No information available..." for Test System) | seeded | OPEN | Help control lookup |
+| DIALOG-04 | Threshold slider 80 -> 90 persisted, restored to 80 | seeded | PASS | |
+| DIALOG-05 | Gamepad dead zone dialog: two sliders + Cancel | seeded | PASS | |
+| DIALOG-06 | Edit Links window: 2 URL fields + Save/Revert/Cancel | seeded | PASS | |
+| SOUND-01 | Enable toggle disables Choose file/Play, re-enable works | seeded | PASS | |
+| ABOUT-02 | About version string + Update History renders WhatsNew.md | seeded | not run yet | |
+| SUPPORT-01 | Empty Send shows the "enter the details" validation | seeded | not run yet | |
+| FAV-01 | Add To Favorites via context menu; Favorites page lists Alpha Quest | seeded | not run yet | |
+| FAV-02 | Remove From Favorites via context menu; DB empty | seeded | not run yet | |
+| HIST-01 | Launch (>5 s) records PlayHistory; Play History page shows it | seeded | not run yet | |
+| ZIP-01 | ZIP launch extracts to `/tmp/SimpleLauncher`; temp cleaned after exit | seeded | not run yet | |
+| WATCH-01 | File watcher refreshes the count on external add/remove | seeded | not run yet | |
+| DEBUG-01 | `-debug` opens the Debug Window; daily log files exist | seeded + `-debug` | not run yet | |
+| ROMHIST-01 | Open ROM History on a non-MAME game -> no-history message | seeded | not run yet | |
 
-Remaining work:
-1. Configure a dummy system (Easy Mode with a dummy ROM folder and a script as "emulator") so the
-   grid/list, filter bar, status bar, Favorites, Global Search, Play History and context menus become
-   testable (checklist sections 2-5 of `docs/manual-tests.md`).
-2. Once a system exists, add the Edit System window scenario: on a fresh setup it errors with
-   `'system.xml' not found inside the application folder` until the first system is added.
-3. Add negative checks where useful (empty states, disabled buttons) - cheap for the model to judge.
-4. After deploying a payload with the accessibility annotations, re-run the suite: menu/dialog names
-   should be unchanged, image-only buttons should now report real names instead of `Avalonia.Controls.Image`.
+### Open items for the next session
+
+1. **EDIT-01 / HELP-01**: the Help control is an unnamed button with a `? Help` label (AT-SPI shows
+   the label only). Change both scenarios to find the label (`find(name="Help", contains=True)`, any
+   role) and click its extents. Also relax EDIT-01: the Edit System window shows no System Image text
+   field (only "Choose Image...") and no emulator section - update the vision prompt/checks to what is
+   actually visible (System Name, System Folder, buttons, help pane).
+2. **VIEW-01**: re-run with the fixed vision prompt (expects the 4 Test System games, not Sonic).
+3. **First runs**: SYS-02, ABOUT-02, SUPPORT-01, FAV-01, FAV-02, HIST-01, ZIP-01, WATCH-01, DEBUG-01,
+   ROMHIST-01 - iterate until green.
+4. **Full pass**: `pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1` (31 scenarios, ~40-60 min
+   with vision), then update the `docs/manual-tests.md` checkboxes only for items the suite verified.
+5. **Coverage gap (manual/integration by design)**: store scanners, emulator downloads, config
+   injection, RA API/login, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater,
+   Commander Genius - keep as manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already
+   verified by code/tests).
+
+### Resume checklist (next session)
+
+1. Start the VM (`Start-VM LinuxMint`, elevated); re-check the DHCP IP with
+   `Get-NetNeighbor -InterfaceAlias 'vEthernet (Default Switch)'` and update
+   `$script:VmHostAddress` in `scripts\gui-test-harness\lib.ps1` if it changed.
+2. After a guest reboot re-apply 1080p:
+   `DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080`.
+3. Fix the open items above, then run subsets while iterating and finally the full suite.
+4. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
+   and the coverage delta against `docs/manual-tests.md`.
 
 ## 7. Cost
 
@@ -418,13 +470,13 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   Linux). Regression tests: `SimpleLauncher.Avalonia.Tests/AvaloniaThemeServiceTests.cs`. Vision
   verification: light machine theme -> all light PASS, dark machine theme at startup -> all dark PASS,
   live dark->light switch while running -> all light PASS. Full report:
-  `D:\Hyper-V\vision\reports\BUG-adaptive-theme.md`.
+  `scripts\gui-test-harness\reports\BUG-adaptive-theme.md`.
 - **BUG-02 (upstream, Avalonia 12.1) - main-content AT-SPI subtree collapses after the first modal dialog
   closes.** On Linux Mint the app exposes a full tree (350 nodes: nav rail, combos, slider, game grid,
   status) while the first-run `Welcome` dialog is up. Dismissing it (clicking No or pressing Escape)
   permanently drops `MainContentGrid`'s children from the tree (97 nodes remain; only the menu bar and
   the first nav button are exposed) even though the UI renders normally (evidence:
-  `D:\Hyper-V\vision\shots\state.png`). Menus, Easy Mode and every dialog window stay exposed, so the
+  `scripts\gui-test-harness\shots\state.png`). Menus, Easy Mode and every dialog window stay exposed, so the
   suite navigates via those; main-content verification stays with vision. Suspected cause: Avalonia's
   AT-SPI server holds a stale peer/root when the visual tree is rebuilt on dialog close
   (`X11AtSpiAccessibility` / peer re-registration). Restarting the app restores the tree, so scenarios
@@ -435,3 +487,29 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   `SimpleLauncher.Avalonia.Tests/AvaloniaAccessibilityTests.cs` and
   `SimpleLauncher.Tests/WpfAccessibilityTests.cs` fail the build when a new interactive control has no
   accessible name (buttons with literal text are exempt). Counts: Avalonia ~205, WPF ~320 annotations.
+- **Fixture / unified DB (2026-09-25).** Systems, favorites, play history, settings and emulator
+  configs live in the SQLite `settings.dat`. `fixture.py` seeds it while the app is stopped:
+  `Systems.ConfigJson` is `SystemConfigData` JSON (e.g. `EmulatorLocation` =
+  `/home/vm/dummy-emulator.sh`, `EmulatorParameters` = `"%ROM%"`). View mode and theme persist there
+  too, so grid-dependent scenarios call `ensure_grid_view()`.
+- **Play history needs >5 s** (`SimpleLauncher.Avalonia/Services/GameLauncher/LauncherService.cs:675`);
+  the dummy emulator sleeps 7 s so launches record history. Play history/DataGrid rows are not exposed
+  as named AT-SPI rows (only "DataGridRow" cells) - deterministic checks read the DB, vision confirms
+  rendering.
+- **Grid item peers lose their names after the first render** (clicking a letter/All rebuilds the
+  containers; same Avalonia peer-staleness family as BUG-02). Assertions use `PaginationLabel` /
+  `StatusLeft` / the DB / the emulator log; card interactions use fixed coordinates (1920x1080: first
+  card after a letter filter is centred around (195, 330)).
+- **Context menus** open as a `PopupRoot` frame whose `menu item`s ARE exposed; right-click must be
+  done with xdotool at live extents (`Nav.right_click`). "Edit Links" and "Sound Configuration" need
+  the two-click submenu sequence (parent opens a flyout with the same name).
+- **Escape in the browser** returns to the system-selection screen; `Nav.open_system()` handles both
+  states. The filter button "All" means "All Games" across systems, and a system's games only appear
+  after that system was opened once in the session.
+- **Search triggers on Return** (not the Search button); the no-match state shows "No Games Found"
+  and pagination "0 to 0 out of 0". The filter status text is `Filtering by B` (not just `B`).
+- **Accessibility gaps found (not fixed yet):** the system-selection cards are code-created buttons
+  with a `StackPanel` content and no `AutomationProperties.Name` (AT-SPI name is
+  `Avalonia.Controls.StackPanel`), and the Edit System Help button is unnamed (only a `? Help` label
+  is exposed). `AvaloniaAccessibilityTests` scans XAML only, so code-created controls would need a
+  separate guardrail if these are fixed.
