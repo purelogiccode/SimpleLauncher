@@ -158,6 +158,14 @@ public partial class MainWindow : Window, IPaginationHost
         PlayHistorySectionRoot.DataContext = PlayHistorySection;
         GlobalSearchSectionRoot.DataContext = GlobalSearchSection;
 
+        // Avalonia's DataGrid marks Enter as handled (cell/row editing navigation), so the
+        // XAML KeyDown wiring never saw it and Enter did not launch from these grids.
+        // Subscribe with handledEventsToo so Delete (remove) and Enter (launch) both work.
+        FavoritesDataGrid.AddHandler(KeyDownEvent,
+            (_, e) => _ = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
+        PlayHistoryDataGrid.AddHandler(KeyDownEvent,
+            (_, e) => _ = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
+
         // Populate system data from system.xml (sidebar + top System ComboBox)
         PopulateSidebarFromSystemXml();
 
@@ -599,6 +607,9 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            // WPF parity (GlobalSearchPage EmergencyOverlayRelease_Click): a stuck global
+            // search must be canceled when the user force-releases the overlay.
+            GlobalSearchSection.CancelSearch();
             _loadingOverlay.EmergencyRelease();
             ShowToast(_localization.GetString("EmergencyReset", "Emergency Reset"),
                 _localization.GetString("Toast.EmergencyReset"));
@@ -1226,6 +1237,13 @@ public partial class MainWindow : Window, IPaginationHost
         // WPF parity: the status bar is shown whenever a system/game view is active
         StatusBarArea.IsVisible = true;
 
+        // WPF parity (GlobalSearchPage_Unloaded): leaving the Global Search page cancels an
+        // in-flight search so it cannot keep enumerating folders in the background.
+        if (section != MainSection.GlobalSearch && GlobalSearchSectionRoot.IsVisible)
+        {
+            GlobalSearchSection.CancelSearch();
+        }
+
         FavoritesSectionRoot.IsVisible = section == MainSection.Favorites;
         PlayHistorySectionRoot.IsVisible = section == MainSection.PlayHistory;
         GlobalSearchSectionRoot.IsVisible = section == MainSection.GlobalSearch;
@@ -1766,7 +1784,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private async void FavoritesDataGrid_KeyDown(object? sender, KeyEventArgs e)
+    private async Task HandleFavoritesKeyDownAsync(KeyEventArgs e)
     {
         try
         {
@@ -1801,7 +1819,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private async void PlayHistoryDataGrid_KeyDown(object? sender, KeyEventArgs e)
+    private async Task HandlePlayHistoryKeyDownAsync(KeyEventArgs e)
     {
         try
         {

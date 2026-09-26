@@ -27,6 +27,9 @@ public class AvaloniaGameFilterService
 
     /// <summary>
     ///     Filters the game list by the Show Games setting (ShowAll / ShowWithCover / ShowWithoutCover).
+    ///     A game "has a cover" only when its resolved cover is a real image: the resolver falls back
+    ///     to images\default.png (which exists), so checking the file alone would mark every game as
+    ///     covered and make "Show Only Games Without Cover" always empty (WPF GameFilterService parity).
     /// </summary>
     public List<GameCardViewModel> FilterByShowGamesSetting(List<GameCardViewModel> games)
     {
@@ -35,8 +38,15 @@ public class AvaloniaGameFilterService
             return games;
 
         return games.Where(g => string.Equals(showGamesMode, "ShowWithCover", StringComparison.Ordinal)
-            ? g.HasCover
-            : !g.HasCover).ToList();
+            ? HasRealCover(g)
+            : !HasRealCover(g)).ToList();
+    }
+
+    private static bool HasRealCover(GameCardViewModel game)
+    {
+        return !string.IsNullOrEmpty(game.CoverPath)
+               && File.Exists(game.CoverPath)
+               && !game.CoverPath.EndsWith("default.png", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

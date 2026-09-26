@@ -1252,8 +1252,7 @@
                                           BorderThickness="1"
                                           ToolTip.Tip="{ext:Translate TooltipFavoritesDataGrid}"
                                           AutomationProperties.Name="{ext:Translate TooltipFavoritesDataGrid}"
-                                          DoubleTapped="FavoritesDataGrid_DoubleTapped"
-                                          KeyDown="FavoritesDataGrid_KeyDown">
+                                          DoubleTapped="FavoritesDataGrid_DoubleTapped">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="{ext:Translate FileNameColumnHeader}"
                                                             Binding="{Binding DisplayName}" Width="*" />
@@ -1332,8 +1331,7 @@
                                           GridLinesVisibility="All"
                                           BorderThickness="1"
                                           AutomationProperties.Name="{ext:Translate PlayHistory}"
-                                          DoubleTapped="PlayHistoryDataGrid_DoubleTapped"
-                                          KeyDown="PlayHistoryDataGrid_KeyDown">
+                                          DoubleTapped="PlayHistoryDataGrid_DoubleTapped">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="{ext:Translate FileNameColumnHeader}"
                                                             Binding="{Binding DisplayName}" Width="*" />
