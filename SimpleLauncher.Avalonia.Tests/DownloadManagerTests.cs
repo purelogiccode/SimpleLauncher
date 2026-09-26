@@ -31,6 +31,23 @@ public class DownloadManagerTests
             new AvaloniaDispatcherService());
     }
 
+    private static DownloadManager CreateStreamingManager(Func<HttpContent> contentFactory)
+    {
+        HeadlessAvalonia.EnsureInitialized();
+
+        var httpClient = TestDependencies.HttpClientWith(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = contentFactory()
+        });
+
+        return new DownloadManager(
+            TestDependencies.HttpFactory(httpClient).Object,
+            new Mock<IExtractionService>().Object,
+            TestDependencies.Logger().Object,
+            TestDependencies.ResourceProvider().Object,
+            new AvaloniaDispatcherService());
+    }
+
     private static void DeleteTempDownload(string? path)
     {
         if (string.IsNullOrEmpty(path)) return;
@@ -150,6 +167,136 @@ public class DownloadManagerTests
         {
             DeleteTempDownload(downloaded);
             destination.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task DownloadFileAsync_UserCancelDeletesThePartialFile()
+    {
+        var stream = new StallingStream(prefixBytes: 4096);
+        using var manager = CreateStreamingManager(() => new RawStreamContent(stream));
+        var tempFile = Path.Combine(manager.TempFolder, "cancel-me.zip");
+        try
+        {
+            var download = manager.DownloadFileAsync("https://example.com/cancel-me.zip");
+            await stream.WaitUntilStalledAsync();
+            Assert.True(File.Exists(tempFile), "the download should have written a partial file");
+
+            manager.CancelDownload();
+            var result = await download;
+
+            Assert.Null(result);
+            Assert.False(File.Exists(tempFile), "a user cancel must remove the partial download (BUG-07)");
+        }
+        finally
+        {
+            DeleteTempDownload(tempFile);
+        }
+    }
+
+    [Fact]
+    public async Task DownloadFileAsync_StalledBodyFailsAfterRetriesAndCleansUp()
+    {
+        using var manager = CreateStreamingManager(
+            () => new RawStreamContent(new StallingStream(prefixBytes: 4096)));
+        manager.StallTimeout = TimeSpan.FromMilliseconds(150);
+        var tempFile = Path.Combine(manager.TempFolder, "stalled.zip");
+        try
+        {
+            var result = await manager.DownloadFileAsync("https://example.com/stalled.zip");
+
+            Assert.Null(result);
+            Assert.False(File.Exists(tempFile), "a stalled download must clean up its partial file (BUG-08)");
+        }
+        finally
+        {
+            DeleteTempDownload(tempFile);
+        }
+    }
+
+    /// <summary>
+    ///     Emits a fixed prefix and then blocks until the read is canceled, simulating a
+    ///     connection that dies while the response body is still streaming.
+    /// </summary>
+    private sealed class StallingStream(int prefixBytes) : Stream
+    {
+        private readonly TaskCompletionSource _stalled =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        private int _position;
+
+        public Task WaitUntilStalledAsync()
+        {
+            return _stalled.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            if (_position < prefixBytes)
+            {
+                var count = Math.Min(buffer.Length, prefixBytes - _position);
+                buffer.Span[..count].Fill(0x41);
+                _position += count;
+                return count;
+            }
+
+            _stalled.TrySetResult();
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return 0;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position
+        {
+            get => _position;
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    private sealed class RawStreamContent(Stream stream) : HttpContent
+    {
+        protected override Task<Stream> CreateContentReadStreamAsync()
+        {
+            return Task.FromResult(stream);
+        }
+
+        protected override Task SerializeToStreamAsync(Stream target, TransportContext? context)
+        {
+            return Task.CompletedTask;
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return false;
         }
     }
 }

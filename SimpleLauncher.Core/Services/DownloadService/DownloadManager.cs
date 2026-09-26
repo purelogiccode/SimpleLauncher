@@ -104,6 +104,14 @@ public class DownloadManager : IDisposable
     internal string TempFolder { get; }
 
     /// <summary>
+    ///     Maximum time without received data before a download attempt is treated as stalled.
+    ///     The resilience pipeline only wraps SendAsync (headers), so without this a connection
+    ///     that dies while the body is streaming would keep the read loop waiting forever (BUG-08).
+    ///     Tests shorten it.
+    /// </summary>
+    internal TimeSpan StallTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
     ///     Gets a value indicating whether the file was locked during the download attempt.
     /// </summary>
     internal bool IsFileLockedDuringDownload
@@ -366,7 +374,12 @@ public class DownloadManager : IDisposable
                 catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException
                                                or Polly.Timeout.TimeoutRejectedException)
                 {
-                    if (IsUserCancellation) return null;
+                    if (IsUserCancellation)
+                    {
+                        // A user cancel must not leave the partial download behind (BUG-07).
+                        await DeleteFiles.TryDeleteFileAsync(downloadFilePath);
+                        return null;
+                    }
 
                     // Check for file lock specifically
                     if (ex.Message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase))
@@ -597,8 +610,26 @@ public class DownloadManager : IDisposable
         int bytesRead;
         var lastProgressUpdate = DateTime.Now;
 
-        while ((bytesRead = await contentStream.ReadAsync(buffer, cancellationToken)) > 0)
+        // The resilience pipeline wraps only SendAsync, so a connection that dies while the body
+        // is streaming would keep this read loop waiting forever. Reset an idle timer before every
+        // read: a stalled attempt fails like a network error (and is retried) instead of hanging.
+        using var stallCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        while (true)
         {
+            stallCts.CancelAfter(StallTimeout);
+            try
+            {
+                bytesRead = await contentStream.ReadAsync(buffer, stallCts.Token);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new IOException(
+                    $"Download stalled: no data received for {StallTimeout.TotalSeconds:0.#} seconds.");
+            }
+
+            if (bytesRead <= 0) break;
+
             if (IsUserCancellation) throw new TaskCanceledException();
 
             await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
