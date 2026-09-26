@@ -409,7 +409,7 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 | Screenshots at 1024x768 | Guest rebooted; re-apply `xrandr ... 1920x1080` (card coordinates assume 1080p) |
 | Menus/dialogs ignore clicks | A modal is open; start with `n.close_dialogs()`, or restart the app |
 | Vision says "empty content" / provider 5xx | `Invoke-VisionCheck` retries 3× automatically; raise `--max-tokens` if the model returns nothing |
-| AT-SPI tree empty for new app starts | Known registration flake; `Start-VmApp` waits up to 60 s and retries (3 starts). Never kill `at-spi-bus-launcher`/`at-spi2-registryd` (leaves a stale `AT_SPI_BUS` guid); reboot the VM if it persists |
+| AT-SPI tree empty for new app starts | Known registration flake; `Start-VmApp` waits up to 60 s and retries (3 starts). After a restart `run-suite.ps1` also checks `Test-VmNavHealth`, retries once and aborts with `AT-SPI tree not ready before <Id>` rather than recording false failures - rerun, and reboot the VM if it keeps failing. Never kill `at-spi-bus-launcher`/`at-spi2-registryd` (leaves a stale `AT_SPI_BUS` guid) |
 | Fixture changes not visible | The app must be **stopped** while `fixture.py` writes the DB; use `Restart-VmApp -Fixture` |
 | `fixture.py` warning about the DB | Brand-new VM: run the app once so it creates `settings.dat` |
 | Report says `exception` | Read `extra.exception` in the report; usually a stale selector or a modal |
@@ -419,7 +419,9 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 
 ## 13. Coverage map (what is automated vs manual)
 
-Automated by the 31 scenarios (**31/31 PASS, 2026-09-26**): startup/load, system selection,
+Automated by the 31 scenarios (**31/31 PASS in a single run, 2026-09-26**,
+`reports\run-20260926-143336.md`, on the payload built from HEAD `f68f6c91` + `7ddc6599`; WPF suite
+2122/2122 and Avalonia suite 677/677 the same day): startup/load, system selection,
 grid/list rendering, covers, filter bar, search + empty state, view-mode menu checkmarks, theme
 menu + persistence, Edit System window/help pane, Easy Mode selection state, fuzzy threshold,
 dead-zone, Edit Links, Sound Configuration, About/Update History, Support validation, Favorites
@@ -431,9 +433,12 @@ login/hashing, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater,
 and anything needing real network/emulators. Easy Mode downloads were swept manually on 2026-09-26:
 **15/15 distinct emulator downloads and the shared RetroArch core install correctly** (after fixing
 BUG-03 `.tar.gz`, BUG-04 zip execute bits, BUG-05 `.tar.xz` and BUG-06 solid-7z extraction
-performance) — see `ManualTests.md` §6 "Easy Mode emulator/core install sweep" and §8. `Stop`
-mid-download and network-loss handling are still unexercised. Update `docs/manual-tests.md`
-checkboxes only for items the suite actually verified.
+performance) — see `ManualTests.md` §6 "Easy Mode emulator/core install sweep" and §8. The Easy Mode
+edge cases were exercised ad-hoc on 2026-09-26 (same §6): `Stop` mid-download, network loss at
+download start and mid-body, the custom ROM folder picker and the separate Download Image Pack
+window - the session surfaced BUG-07 (cancel leaves the partial file) and BUG-08 (mid-body network
+loss stalls with no retry/timeout). Update `docs/manual-tests.md` checkboxes only for items the
+suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
 the VM/app state left behind, the console/screensaver recovery steps, how to rebuild+deploy the

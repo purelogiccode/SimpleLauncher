@@ -1,4 +1,4 @@
-$script:VmHostAddress = '192.168.65.34'
+$script:VmHostAddress = '172.31.176.191'
 $script:VmUserName = 'vm'
 $script:VmPassword = 'vm'
 $script:HarnessRoot = $PSScriptRoot

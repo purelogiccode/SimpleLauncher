@@ -388,12 +388,18 @@ tree are authoritative and layout-independent — prefer them.
 
 ## 6. Scenario inventory and current status
 
-Last full run 2026-09-26 (`scripts\gui-test-harness\reports\run-20260926-052045.md`): **31/31 scenarios
-PASS** on the Hyper-V `LinuxMint` VM (Linux Mint 22.3, Avalonia `linux-x64` publish), covering the
-Linux-applicable checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture.
+Last full run 2026-09-26 (`scripts\gui-test-harness\reports\run-20260926-143336.md`): **31/31 scenarios
+PASS in a single run** on the payload rebuilt from HEAD (`f68f6c91` + `7ddc6599`) - Hyper-V `LinuxMint`
+VM (Linux Mint 22.3, Avalonia `linux-x64` self-contained publish), covering the Linux-applicable
+checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture.
 
-After the Easy Mode `tar.gz` install fix (BUG-03, §8) a subset re-run on the rebuilt payload
-(`reports\run-20260926-104312.md`): EASY-01, EASY-02, MENU-00, SYS-01 **PASS**.
+A first pass the same day (`reports\run-20260926-133836.md`) hit the known AT-SPI registration flake
+during THEME-02's forced restart: 15 scenarios passed, then 16 failed with
+`RuntimeError("system card 'Test System' not found")` while the a11y tree was empty; a later restart
+restored the tree and DEBUG-01/ROMHIST-01 passed. The 14 failed scenarios were re-run once the tree was
+healthy (`reports\run-20260926-135646.md`): **14/14 PASS**. `run-suite.ps1` now checks
+`Test-VmNavHealth` after every restart, retries the restart once and aborts with a clear message if the
+tree is still missing, instead of recording a block of false failures.
 
 | Id | Covers | Fixture | Status (2026-09-26) | Notes |
 |---|---|---|---|---|
@@ -486,48 +492,87 @@ verify the installed path and its execute bit). After the three fixes below: **1
 | Amstrad CPC | RetroArch core | 7z (solid) | PASS | 110.9 s for 261 MB / 1.65 GB; 199 `_libretro.so` extracted to the manifest's `.AppImage.home/.config/retroarch/cores` path |
 
 Not exercised in the sweep: launching each installed emulator with a real ROM (only PPSSPP and
-Redream were launched - the other systems have no sample ROMs/BIOS on this machine), `Stop`
-mid-download, and network-loss handling.
+Redream were launched - the other systems have no sample ROMs/BIOS on this machine). `Stop`
+mid-download and network-loss handling were exercised separately the same day (next section).
+
+### Easy Mode edge-case session (2026-09-26, ad-hoc)
+
+Driven through the AT-SPI harness on the same VM after the full suite, on the payload built from
+HEAD (`f68f6c91` + `7ddc6599`); screenshots in `scripts\gui-test-harness\shots\`:
+
+- **Stop mid-download:** Easy Mode -> Arcade -> **Download Image Pack 1** (570 MB) -> **Stop
+  Download** while the progress bar was moving. Status showed `Download of Image Pack 1 was
+  canceled.`, the Stop button disabled and the pack button re-enabled (Failed state). **BUG-07**:
+  the partial archive (29 MB) stayed in `/tmp/SimpleLauncher` - the documented expectation is
+  "partial file removed, clean state".
+- **Network loss mid-download (connection at start):** with the two `assets.purelogiccode.com` IPs
+  blocked with `iptables` (OUTPUT+INPUT REJECT), starting the Atari 5200 pack download showed
+  `Download error. Retrying (1/3)...` after ~39 s; unblocking let the same retry complete -
+  `Image Pack 1 has been successfully downloaded and installed.` **PASS**.
+- **Network loss mid-download (body already streaming):** blocking the IPs during the Atari 2600
+  pack download (93.2%, 280/300 MB) **did not** produce the retry message or any error. The status
+  froze at the last progress, the TCP connection stayed ESTAB with no data for >6 min, and the
+  download resumed and completed (314,904,631 bytes, 2400 covers extracted) only when the IPs were
+  unblocked. **BUG-08**: the response-body read loop has no timeout and the resilience pipeline only
+  covers `SendAsync` (headers), so a mid-body network drop stalls the download indefinitely (the
+  user can still Stop it).
+- **Custom ROM folder picker:** Easy Mode -> Sony PSP -> the `...` browse button opened the GTK
+  "Choose a folder with ROMs or ISOs for this system" dialog; selecting `/home/vm/custom-roms`
+  filled the field, and after installing PPSSPP (48 MB AppImage) **Add System** added the system
+  with `SystemFolders: ["/home/vm/custom-roms"]` in the DB and created `images/Sony PSP`. The
+  custom picker itself is now fully exercised (the earlier session had only verified the default
+  folder).
+- **Separate Download Image Pack window** (Edit System -> Download Image Pack): the window opens
+  with the system dropdown, selecting Atari 5200 shows the "Image Pack 1" button, and the download
+  completed with the success dialog - the window's download path works end-to-end.
 
 ### Open items for the next session
 
-1. **Full pass**: re-run `pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1` (31 scenarios,
-   ~20-40 min with vision) after any app change; keep this runbook and `docs/manual-tests.md` in sync.
-   Pending after the BUG-03..BUG-06 fixes: only a subset (EASY-01/02, MENU-00, SYS-01) was re-run on
-   the first rebuilt payload; the final payload (solid-archive + tar.xz + exec-bit fixes) has **not**
-   had a suite run yet. The fixes themselves are covered by `ExtractionServiceTests` (Avalonia suite
-   677/677).
-2. **WPF suite re-run**: `dotnet test SimpleLauncher.Tests\SimpleLauncher.Tests.csproj` after the
-   Core `ExtractionService` changes. The last run (before the solid/tar.xz fixes) was 2103 pass with
-   19 environment-only failures (missing `E:\`/`F:\`/`J:\` sample drives for the mount integration
-   tests, and one transient DNS miss for `downloads.scummvm.org`).
+1. **Full pass - DONE 2026-09-26**: `reports\run-20260926-143336.md` **31/31 PASS in a single run** on
+   the payload built from HEAD (`f68f6c91` + `7ddc6599`), after rebuilding and redeploying the Core and
+   Avalonia DLLs to the VM. Keep this runbook and `docs/manual-tests.md` in sync after any app change.
+2. **WPF suite re-run - DONE 2026-09-26**: `dotnet test SimpleLauncher.Tests\SimpleLauncher.Tests.csproj`
+   **2122/2122 pass, 0 failures** (the 19 environment-only failures from the previous run did not
+   reproduce); Avalonia suite `SimpleLauncher.Avalonia.Tests` **677/677 pass**.
 3. **AT-SPI registration flakiness (environment)**: after a rapid app restart the app occasionally
-   fails to register with the a11y bus (empty tree while the window still renders). `Start-VmApp` now
-   waits up to 60 s for the frame and retries the launch (up to 3 starts). **Do not kill
-   `at-spi-bus-launcher` / `at-spi2-registryd`**: that leaves a stale `AT_SPI_BUS` guid on the X root
-   window and every new app then fails to register; recover with a VM reboot.
+   fails to register with the a11y bus (empty tree while the window still renders). It occurred twice
+   this session (THEME-02's restart in the first full pass, and the empty->seeded fixture change during
+   the guard smoke test); both times another restart recovered it, but the first bad window lasted
+   ~15 min while scenarios kept running. `run-suite.ps1` now checks `Test-VmNavHealth` after each
+   restart, retries the restart once, and aborts with a clear message if the tree is still missing -
+   never trust a red run against an empty tree. `Start-VmApp` still waits up to 60 s per start and
+   retries 3 starts. **Do not kill `at-spi-bus-launcher` / `at-spi2-registryd`**: that leaves a stale
+   `AT_SPI_BUS` guid on the X root window and every new app then fails to register; recover with a VM
+   reboot.
 4. **Coverage gap (manual/integration by design)**: store scanners, config injection, RA API/login,
    gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius - keep as
    manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already verified by code/tests).
-   Emulator/core downloads are now swept (15/15 + 1/1, above). Still unexercised: `Stop`
-   mid-download, network loss mid-download, custom ROM folder picker, separate Options -> Download
-   Image Pack window, and launching the newly installed emulators with real ROMs/BIOS.
+   Emulator/core downloads are now swept (15/15 + 1/1, above) and the Easy Mode edge cases were
+   exercised on 2026-09-26 (`Stop` mid-download, network loss at start and mid-body, custom ROM
+   folder picker, separate Download Image Pack window - previous section), which surfaced BUG-07 and
+   BUG-08. Still unexercised: the `<5 GB free` disk-space error, the final failure after all retries,
+   closing the window during a download, and launching the newly installed emulators with real
+   ROMs/BIOS.
 
 ### Resume checklist (next session)
 
 **Guest state left by the 2026-09-26 session** (all of this survives a host/VM reboot unless noted):
 
-- VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP was
-  `192.168.65.34` at stop time - always re-check (the Default Switch subnet changed from `172.31.x`
-  during this session; `lib.ps1` was updated once already).
-- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, latest payload deployed
-  (`SimpleLauncher.Core.dll` md5 `e08e367ee6ddface57727d085f1a0daf`, `SimpleLauncher.Avalonia.dll`
-  md5 `4d423f5660fdf7f2c2c9ff57f46230cf`) with the BUG-03..BUG-06 fixes; running with the seeded
-  fixture (3 systems).
-- Installed under `~/SimpleLauncher/emulators/`: all 15 Easy Mode emulators + the RetroArch bundle
-  with 199 cores (about 3.5 GB). `~/SimpleLauncher/roms/` still has the real PSP ISO, the Dreamcast
-  cue/bins and the 12 dummy PSP ISOs; `~/SimpleLauncher/images/Sony PSP/` has the 601 image-pack
-  covers. `settings.dat` was re-seeded (systems only), so Favorites/PlayHistory were cleared.
+- VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
+  `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
+  reboot; `lib.ps1` updated accordingly) - always re-check after a VM boot.
+- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD and deployed
+  (`SimpleLauncher.Core.dll` md5 `43b3c0068b66fce8fbd222b2903c7076`, `SimpleLauncher.Avalonia.dll`
+  md5 `b25b8f7f2e1285641f8278a8f2ec0d72`, includes the BUG-03..BUG-06 fixes); running with the seeded
+  fixture (3 systems). The 31/31 GUI suite ran on this payload; the WPF (2122/2122) and Avalonia
+  (677/677) suites ran on the current working tree, which has newer uncommitted source edits (item 9).
+- Installed under `~/SimpleLauncher/emulators/`: **only PPSSPP** (re-installed 2026-09-26 during the
+  edge-case session). The 15 emulators + RetroArch bundle (about 3.5 GB) and the real PSP
+  ISO/Dreamcast cue/bins from the earlier session are **gone** - the folder and the ROMs were
+  removed outside the harness session, so do not assume them. `~/SimpleLauncher/images/` now has the
+  Atari 2600 (2400 covers) and Atari 5200 (191 covers) packs plus an empty `Sony PSP` folder created
+  by the Add System test; the 601-cover PSP pack is gone too. `settings.dat` was re-seeded after the
+  edge cases (systems only, 3 fixture systems), so Favorites/PlayHistory were cleared.
 - Guest screensaver lock was disabled (`gsettings set org.cinnamon.desktop.screensaver lock-enabled
   false` + `idle-activation-enabled false`; persists in dconf) and `xset s off -dpms` was applied
   (does **not** persist across reboot). Without this the physical `:0` console locks and hides the
@@ -541,7 +586,7 @@ mid-download, and network-loss handling.
 1. Start the VM (`Start-VM LinuxMint`, elevated); re-check the DHCP IP with
    `Get-NetNeighbor -InterfaceAlias 'vEthernet (Default Switch)'` and update
    `$script:VmHostAddress` in `scripts\gui-test-harness\lib.ps1` if it changed (currently
-   `192.168.65.34`).
+   `172.31.176.191`).
 2. After a guest reboot re-apply 1080p and re-disable the screensaver:
    `DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080` and
    `gsettings set org.cinnamon.desktop.screensaver lock-enabled false; gsettings set
@@ -554,19 +599,22 @@ mid-download, and network-loss handling.
    `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
-6. Remaining work (see open items): full 31-scenario suite pass, WPF suite re-run, optional real-ROM
-   launches for the newly installed emulators, `Stop` mid-download / network-loss / custom ROM
-   folder picker / separate Download Image Pack window.
+6. Remaining work (see open items): optional real-ROM launches for the newly installed emulators,
+   `Stop` mid-download / network-loss / custom ROM folder picker / separate Download Image Pack
+   window. The full 31-scenario pass, WPF suite and Avalonia suite are all green as of 2026-09-26.
 7. Run subsets while iterating and finally the full suite; on failures read the newest
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Uncommitted work at stop time** (do not lose it): `ExtractionService.cs` (solid reader, tar.xz,
-   public `EnsureExecuteBits`), `EasyModeViewModel.cs` (exec bits after archive install),
-   `ExtractionServiceTests.cs` (+4 tests), `strings.en.json` + both `MessageBoxLibraryService`
-   fallbacks (message wording), `ManualTests.md`, `docs/manual-tests.md`, `docs/gui-test-harness.md`,
-   `scripts/gui-test-harness/lib.ps1` (IP). `ChdMountStrategy.cs` also shows a pre-existing
-   formatting diff that predates this session.
+9. **Uncommitted work at stop time** (do not lose it): `scripts/gui-test-harness/lib.ps1` (IP ->
+   `172.31.176.191`), `scripts/gui-test-harness/run-suite.ps1` (post-restart `Test-VmNavHealth` guard
+   with one retry and a clear abort), `ManualTests.md` (this runbook) and `docs/gui-test-harness.md`.
+   The BUG-03..BUG-06 code/tests/docs from the previous session were committed as `f68f6c91` and the
+   `ChdMountStrategy.cs` formatting as `7ddc6599`. Five further source files appeared modified in the
+   working tree during this session (not from the harness work, still uncommitted): both
+   `WindowScreenshot.cs` + `SimpleLauncher/App.xaml.cs` (logger fallback + `Initialize(Log.Logger)`),
+   `RetroAchievementsSystemMatcher.cs` (`MAME0143u7`, duplicate `"Aucun système sélectionné"`) and
+   `ExtractionService.cs` (`ArchiveHandle` readonly field).
 
 ## 7. Cost
 
@@ -636,6 +684,27 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   `ExtractToFolderAsync_ExtractsSolidSevenZipWithAllEntries` (builds a solid 7z with `-ms=on`).
   Verified on the VM: emulator install 118.7 s (download + extraction), core install 110.9 s, 199
   `_libretro.so` present at the manifest's `.AppImage.home/.config/retroarch/cores` path.
+- **BUG-07 - Easy Mode cancel leaves the partial download in the temp folder (open, 2026-09-26).**
+  Clicking **Stop Download** during an Easy Mode image-pack download cancels correctly in the UI
+  (`Download of Image Pack 1 was canceled.`, Stop disabled, pack button re-enabled) but the partial
+  archive stays in `/tmp/SimpleLauncher` (`arcade.zip`, 29 MB). In
+  `DownloadManager.DownloadFileAsync` the user-cancel path returns at the
+  `if (IsUserCancellation) return null;` catch without deleting `downloadFilePath`; the partial-file
+  cleanup only runs before a retry or when the file is locked. Successful downloads also leave the
+  archive in temp (removed at the next app start), but the documented checklist expectation for
+  cancel is "partial file removed, clean state". Shared Core service, so the WPF app behaves the
+  same. No unit test covers cancel cleanup.
+- **BUG-08 - Mid-body network loss stalls the download with no retry or timeout (open, 2026-09-26).**
+  Dropping the network while the response body is streaming (iptables REJECT on the asset IPs)
+  produces neither `Download error. Retrying (1/3)...` nor an error dialog: the status stays at the
+  last progress, the connection stays ESTAB with zero data for >6 minutes, and the download resumes
+  and completes only when connectivity returns. `DownloadManager.DownloadWithProgressAsync` reads
+  `contentStream.ReadAsync(buffer, cancellationToken)` in a loop with no per-read/overall timeout,
+  and the `AddStandardResilienceHandler` pipeline only wraps `SendAsync` (with
+  `HttpCompletionOption.ResponseHeadersRead` the body is read after the pipeline completed). If the
+  network never returns the download hangs indefinitely; the user can still click Stop. Only a
+  connection failure before the body starts (host unreachable/DNS) triggers the retry path, which
+  was verified working (`Retrying (1/3)` -> success after unblocking).
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:

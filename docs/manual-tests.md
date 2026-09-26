@@ -31,6 +31,13 @@ shared RetroArch core** in the Linux manifest (15/15 emulators + 1/1 core instal
 zip execute bits, BUG-05 `.tar.xz` support and BUG-06 solid-7z extraction performance). Details in `ManualTests.md`
 → "Easy Mode real-install session" and "Easy Mode emulator/core install sweep".
 
+The automated AT-SPI/vision suite (`scripts\gui-test-harness\`) also ran the full Linux checklist on this VM:
+**31/31 scenarios PASS in a single run** (2026-09-26, `reports\run-20260926-143336.md`) on the payload built from
+HEAD `f68f6c91` + `7ddc6599`; the WPF suite passed 2122/2122 and the Avalonia suite 677/677 the same day. The
+Easy Mode edge cases were exercised ad-hoc on the same VM that day (Stop mid-download, network loss at download
+start and mid-body, custom ROM folder picker, separate Download Image Pack window), which surfaced BUG-07/BUG-08
+in `ManualTests.md` §8.
+
 ---
 
 ## 1. Startup & app lifecycle
@@ -78,10 +85,10 @@ zip execute bits, BUG-05 `.tar.xz` support and BUG-06 solid-7z extraction perfor
 ### Easy Mode wizard (`EasyModeWindow`)
 - [X] With zero systems configured → welcome prompt opens Easy Mode; system dropdown sorted, only systems with download links listed.
 - [X] Selecting a system enables emulator/core/image-pack buttons only when a download link exists; "Add System" stays disabled until the required emulator/core is downloaded or already on disk.
-- [ ] Start each download → progress bar + status text; **Stop** mid-download → "Download canceled", button re-enables; closing the window during a download cancels cleanly (no crash, temp cleanup).
-- [X] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk. (Verified 2026-09-26 with the default folder: Easy Mode installed PPSSPP and Redream, created `roms/<System>` and `images/<System>` and the DB rows; the custom folder picker itself was not exercised.)
+- [X] Start each download → progress bar + status text; **Stop** mid-download → "Download canceled", button re-enables; closing the window during a download cancels cleanly (no crash, temp cleanup). (Verified 2026-09-26 on Linux Mint 22.3: Stop mid-download showed `Download of Image Pack 1 was canceled.`, the Stop button disabled and the pack button re-enabled; **the cancel left the partial archive in `/tmp/SimpleLauncher` - BUG-07 in `ManualTests.md` §8**. Closing the window during a download was not exercised.)
+- [X] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk. (Verified 2026-09-26 with the default folder: Easy Mode installed PPSSPP and Redream, created `roms/<System>` and `images/<System>` and the DB rows. The custom picker was verified end-to-end the same day: choosing `/home/vm/custom-roms` in the GTK folder dialog for Sony PSP produced `SystemFolders: ["/home/vm/custom-roms"]` in the DB and created `images/Sony PSP`.)
 - [ ] Kill the network mid-download → per-component error dialog, button resets to Failed; emergency return button releases a stuck overlay.
-- [ ] **[Integration] Download manager** (`DownloadManager`) — progress %/size updates; start a download with <5 GB free → "Insufficient disk space" error; drop the network mid-download → "Download error. Retrying (1/3)…" then success or failure; cancel → partial file removed, clean state.
+- [ ] **[Integration] Download manager** (`DownloadManager`) — progress %/size updates; start a download with <5 GB free → "Insufficient disk space" error; drop the network mid-download → "Download error. Retrying (1/3)…" then success or failure; cancel → partial file removed, clean state. (Partially verified 2026-09-26: progress %/size updates work and a connection failure at download start showed `Download error. Retrying (1/3)...` followed by success after connectivity returned. **Cancel left the partial file in the temp folder (BUG-07)** and a **mid-body network drop stalled with no retry or timeout (BUG-08)** - both in `ManualTests.md` §8. The <5 GB disk-space error and the final failure after all retries were not exercised.)
 
 ### Edit System save/validation (`EditSystemWindow.SaveSystem`)
 - [ ] Invalid characters in system name → rejected with message + red highlight.

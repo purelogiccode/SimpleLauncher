@@ -982,6 +982,13 @@ foreach ($scenario in $scenarios) {
         ($fixture -ne $currentFixture -or $scenario.Restart -or $launchArgs -ne $currentArgs)
     if ($needRestart) {
         Restart-VmApp -SettleSeconds 10 -Fixture $fixture -Arguments $launchArgs
+        if (-not (Test-VmNavHealth)) {
+            Write-Warning 'AT-SPI tree not ready after restart; retrying once'
+            Restart-VmApp -SettleSeconds 10 -Fixture $fixture -Arguments $launchArgs
+        }
+        if (-not (Test-VmNavHealth)) {
+            throw "AT-SPI tree not ready before $($scenario.Id); aborting the run (known registration flake - retry, or reboot the VM if it persists)"
+        }
         $currentFixture = $fixture
         $currentArgs = $launchArgs
     }
