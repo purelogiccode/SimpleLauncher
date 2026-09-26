@@ -731,13 +731,14 @@ public class ExtractionService : IExtractionService
     /// </summary>
     private sealed class ArchiveHandle(IArchive archive, string? temporaryTarPath) : IDisposable
     {
+        private readonly string? _temporaryTarPath = temporaryTarPath;
         public IArchive Archive { get; } = archive;
 
         public void Dispose()
         {
             Archive.Dispose();
 
-            if (temporaryTarPath != null) DeleteTemporaryTarFile(temporaryTarPath);
+            if (_temporaryTarPath != null) DeleteTemporaryTarFile(_temporaryTarPath);
         }
     }
 

@@ -406,6 +406,7 @@ public partial class App : IDisposable
         serviceCollection.AddSingleton<IGameBrowserService, GameBrowserService>();
 
         // F8 Screenshot Hotkey
+        WindowScreenshot.Initialize(Log.Logger);
         serviceCollection.AddSingleton<GlobalHotkeyService>();
         serviceCollection.AddSingleton<ActiveWindowScreenshotService>();
 

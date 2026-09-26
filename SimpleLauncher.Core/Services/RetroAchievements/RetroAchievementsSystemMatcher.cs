@@ -120,7 +120,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "arcade", "mame", "m.a.m.e.", "arcade games", "arcade classics", "fliperama",
             "neogeo", "neo geo", "neo-geo", "snk neo geo", "snk neogeo", "ARCADE GAME",
             "ARCADE - Multiple Arcade Machine Emulator", "sega model",
-            "sega_Model 2", "@sega_Model 2", "@sega model", "CPS 1", "CPS2", "CPS3", "CPS1"
+            "sega_Model 2", "@sega_Model 2", "@sega model", "CPS 1", "CPS2", "CPS3", "CPS1", "MAME0143u7"
         ]),
         ["neo geo pocket"] = new RaSystemInfo(14,
         [
@@ -212,7 +212,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "NEC PC9801", "NEC PC9821", "Metroid Saga", "PC_Shooter_1998-2002", "super a'can", "NEC PC98", "MAMEICHON",
             "Videoton TVC",
             "Tiger GameCom", "Tiger Game.com", "Game.com", "Systema1", "Tomy Pyuta",
-            "C64 - Cartridge [EasyFlash Collection]",
+            "C64 - Cartridge [EasyFlash Collection]", "Aucun système sélectionné", "Test System",
             "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000", "TestDOS", "No system selected", "Aucun système sélectionné"
         ]),
         ["Xbox"] = new RaSystemInfo(22, ["xbox", "x-box", "Microsoft Xbox"]),
