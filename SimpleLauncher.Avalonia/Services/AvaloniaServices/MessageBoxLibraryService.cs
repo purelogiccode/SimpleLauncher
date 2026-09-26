@@ -2281,7 +2281,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         var theselectedfilecannotbe =
             _localization.GetString("Theselectedfilecannotbe", "The selected file cannot be extracted.");
         var toextractafileitneedstobe = _localization.GetString("Toextractafileitneedstobe",
-            "To extract a file, it needs to be a 7z, zip, or rar file.");
+            "To extract a file, it needs to be a 7z, zip, rar, tar.gz, tgz, tar.xz, or txz file.");
         var pleasefixthatintheEditwindow =
             _localization.GetString("PleasefixthatintheEditwindow", "Please fix that in the Edit window.");
         var warning = _localization.GetString("Warning", "Warning");

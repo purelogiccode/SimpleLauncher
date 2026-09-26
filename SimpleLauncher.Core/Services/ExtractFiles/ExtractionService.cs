@@ -1,10 +1,14 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Text;
 using SharpCompress.Archives;
+using SharpCompress.Archives.Tar;
+using SharpCompress.Common;
+using SharpCompress.Compressors.Xz;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.CleanAndDeleteFiles;
 using FileLock = SimpleLauncher.Core.Services.CheckForFileLock.CheckForFileLockService;
@@ -129,7 +133,7 @@ public class ExtractionService : IExtractionService
             // Expected user-error condition (unsupported input): per repo policy it must not be
             // reported as a bug, so log it at Information, below the bug-report sink threshold
             // (bug #67537 reported this as a Warning).
-            var contextMessage = $"Only 7z, ZIP, and RAR files are supported by this extraction method.\n" +
+            var contextMessage = $"Only 7z, ZIP, RAR, tar.gz, tgz, tar.xz, and txz files are supported by this extraction method.\n" +
                                  $"File type: {extension}";
             _logger.Information(contextMessage);
 
@@ -172,7 +176,8 @@ public class ExtractionService : IExtractionService
 
             await Task.Run(async () =>
             {
-                using var archive = ArchiveFactory.OpenArchive(archivePath);
+                using var openedArchive = OpenArchive(archivePath);
+                var archive = openedArchive.Archive;
                 var entries = archive.Entries.ToList();
 
                 if (entries.Count == 0) throw new InvalidDataException("The archive file contains no entries.");
@@ -243,38 +248,53 @@ public class ExtractionService : IExtractionService
                     }
                 }
 
-                // Extract all entries
-                foreach (var entry in entries)
+                // Extract all entries. Solid archives (7z) must be read in a single forward
+                // pass: opening entries randomly re-decompresses the solid block from the
+                // start for every entry, which turns a 20-second extraction into hours for
+                // bundles like RetroArch (19,797 files).
+                if (archive.IsSolid)
                 {
-                    if (entry.IsDirectory) continue;
-
-                    if (entry.Key != null)
+                    await ExtractSolidEntriesToFolderAsync(archive, resolvedDestinationFolder,
+                        fullResolvedDestFolder, extractedFiles, archivePath);
+                }
+                else
+                {
+                    foreach (var entry in entries)
                     {
-                        // Re-validate per entry: never trust the first pass alone (CORE-02).
-                        var destinationPath =
-                            GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
-                        if (destinationPath == null)
+                        if (entry.IsDirectory) continue;
+
+                        if (entry.Key != null)
                         {
-                            await _messageBoxLibrary.PotentialPathManipulationDetectedMessageBoxAsync(archivePath);
-                            throw new SecurityException($"Potentially dangerous zip entry path: {entry.Key}");
+                            // Re-validate per entry: never trust the first pass alone (CORE-02).
+                            var destinationPath =
+                                GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
+                            if (destinationPath == null)
+                            {
+                                await _messageBoxLibrary.PotentialPathManipulationDetectedMessageBoxAsync(archivePath);
+                                throw new SecurityException($"Potentially dangerous zip entry path: {entry.Key}");
+                            }
+
+                            var directory = Path.GetDirectoryName(destinationPath);
+                            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                                Directory.CreateDirectory(directory);
+
+                            await using (var entryStream = await entry.OpenEntryStreamAsync())
+                            await using (var fileStream = File.Create(destinationPath))
+                            {
+                                // Track the file as soon as it exists on disk: if the copy fails
+                                // halfway the partial file must still be cleaned up.
+                                extractedFiles.Add(destinationPath);
+                                await entryStream.CopyToAsync(fileStream);
+                            }
+
+                            // Preserve file time if available
+                            if (entry.LastModifiedTime.HasValue)
+                                File.SetLastWriteTime(destinationPath, entry.LastModifiedTime.Value);
+
+                            // Tar archives carry Unix permission bits; restore them so extracted
+                            // emulator binaries (e.g. Redream's `redream`) stay executable.
+                            ApplyTarUnixPermissions(destinationPath, entry);
                         }
-
-                        var directory = Path.GetDirectoryName(destinationPath);
-                        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                            Directory.CreateDirectory(directory);
-
-                        await using (var entryStream = await entry.OpenEntryStreamAsync())
-                        await using (var fileStream = File.Create(destinationPath))
-                        {
-                            // Track the file as soon as it exists on disk: if the copy fails
-                            // halfway the partial file must still be cleaned up.
-                            extractedFiles.Add(destinationPath);
-                            await entryStream.CopyToAsync(fileStream);
-                        }
-
-                        // Preserve file time if available
-                        if (entry.LastModifiedTime.HasValue)
-                            File.SetLastWriteTime(destinationPath, entry.LastModifiedTime.Value);
                     }
                 }
             });
@@ -353,6 +373,78 @@ public class ExtractionService : IExtractionService
         }
     }
 
+    /// <summary>
+    ///     Restores the Unix permission bits stored in a tar entry (tar.gz/tgz emulator
+    ///     downloads) so extracted binaries keep their execute bits. No-op on Windows and
+    ///     for non-tar archives.
+    /// </summary>
+    private void ApplyTarUnixPermissions(string destinationPath, IEntry entry)
+    {
+        if (OperatingSystem.IsWindows() || entry is not TarArchiveEntry tarEntry) return;
+
+        // Keep only the permission bits (rwxrwxrwx); never apply setuid/setgid/sticky.
+        var permissions = (UnixFileMode)(tarEntry.Mode & 0x1FF);
+        if (permissions == UnixFileMode.None) return;
+
+        try
+        {
+            File.SetUnixFileMode(destinationPath, permissions);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug(
+                $"[ExtractionService] Could not restore Unix permissions on {destinationPath}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Extracts a solid archive in a single forward pass. Random access into a solid
+    ///     archive re-decompresses the block from the start for every entry (O(n²)), so the
+    ///     reader API is the only practical way to install bundles such as the 19,797-file
+    ///     RetroArch package. Path traversal is validated per entry before each write.
+    /// </summary>
+    private async Task ExtractSolidEntriesToFolderAsync(
+        IArchive archive,
+        string resolvedDestinationFolder,
+        string? fullResolvedDestFolder,
+        List<string> extractedFiles,
+        string archivePath)
+    {
+        using var reader = archive.ExtractAllEntries();
+        while (reader.MoveToNextEntry())
+        {
+            var entry = reader.Entry;
+            if (entry.IsDirectory) continue;
+            if (entry.Key == null) continue;
+
+            var destinationPath = GetSafeEntryPath(resolvedDestinationFolder, fullResolvedDestFolder, entry.Key);
+            if (destinationPath == null)
+            {
+                await _messageBoxLibrary.PotentialPathManipulationDetectedMessageBoxAsync(archivePath);
+                throw new SecurityException($"Potentially dangerous zip entry path: {entry.Key}");
+            }
+
+            var directory = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+
+            await using (var entryStream = reader.OpenEntryStream())
+            await using (var fileStream = File.Create(destinationPath))
+            {
+                // Track the file as soon as it exists on disk: if the copy fails
+                // halfway the partial file must still be cleaned up.
+                extractedFiles.Add(destinationPath);
+                await entryStream.CopyToAsync(fileStream);
+            }
+
+            // Preserve file time if available
+            if (entry.LastModifiedTime.HasValue)
+                File.SetLastWriteTime(destinationPath, entry.LastModifiedTime.Value);
+
+            ApplyTarUnixPermissions(destinationPath, entry);
+        }
+    }
+
     private async Task<string?> ExtractToTempAsync(string archivePath)
     {
         if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
@@ -374,7 +466,7 @@ public class ExtractionService : IExtractionService
             // never picked up by the bug-report service (bug #67537); the user already gets
             // a message box explaining the supported formats.
             _logger.Information(
-                $"Only 7z, ZIP, and RAR files are supported by this extraction method. File type: {extension}");
+                $"Only 7z, ZIP, RAR, tar.gz, tgz, tar.xz, and txz files are supported by this extraction method. File type: {extension}");
 
             // Notify user
             await _messageBoxLibrary.FileNeedToBeCompressedMessageBoxAsync();
@@ -410,7 +502,8 @@ public class ExtractionService : IExtractionService
 
             await Task.Run(() =>
             {
-                using var archive = ArchiveFactory.OpenArchive(archivePath);
+                using var openedArchive = OpenArchive(archivePath);
+                var archive = openedArchive.Archive;
 
                 // First, validate for path traversal before extracting
                 var fullTempDir = Path.GetFullPath(tempDirectory);
@@ -433,19 +526,31 @@ public class ExtractionService : IExtractionService
                     }
                 }
 
-                // If validation passes, extract the archive.
-                foreach (var entry in archive.Entries)
+                // If validation passes, extract the archive. Solid archives are read in a
+                // single forward pass (random access re-decompresses the solid block per entry).
+                if (archive.IsSolid)
                 {
-                    if (entry.IsDirectory) continue;
-
-                    if (entry.Key != null)
+                    using var reader = archive.ExtractAllEntries();
+                    while (reader.MoveToNextEntry())
                     {
+                        var entry = reader.Entry;
+                        if (entry.IsDirectory) continue;
+                        if (entry.Key == null) continue;
+
+                        var fullDestPath = Path.GetFullPath(
+                            Path.Combine(fullTempDir, NormalizeArchiveEntryName(entry.Key)));
+                        if (!fullDestPath.StartsWith(fullTempDir, ArchivePathComparison))
+                        {
+                            throw new SecurityException(
+                                $"Potential path traversal detected in archive entry: {entry.Key}");
+                        }
+
                         var destinationPath = Path.Combine(tempDirectory, NormalizeArchiveEntryName(entry.Key));
                         var directory = Path.GetDirectoryName(destinationPath);
                         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                             Directory.CreateDirectory(directory);
 
-                        using (var entryStream = entry.OpenEntryStream())
+                        using (var entryStream = reader.OpenEntryStream())
                         using (var fileStream = File.Create(destinationPath))
                         {
                             entryStream.CopyTo(fileStream);
@@ -454,6 +559,31 @@ public class ExtractionService : IExtractionService
                         // Preserve file time if available
                         if (entry.LastModifiedTime.HasValue)
                             File.SetLastWriteTime(destinationPath, entry.LastModifiedTime.Value);
+                    }
+                }
+                else
+                {
+                    foreach (var entry in archive.Entries)
+                    {
+                        if (entry.IsDirectory) continue;
+
+                        if (entry.Key != null)
+                        {
+                            var destinationPath = Path.Combine(tempDirectory, NormalizeArchiveEntryName(entry.Key));
+                            var directory = Path.GetDirectoryName(destinationPath);
+                            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                                Directory.CreateDirectory(directory);
+
+                            using (var entryStream = entry.OpenEntryStream())
+                            using (var fileStream = File.Create(destinationPath))
+                            {
+                                entryStream.CopyTo(fileStream);
+                            }
+
+                            // Preserve file time if available
+                            if (entry.LastModifiedTime.HasValue)
+                                File.SetLastWriteTime(destinationPath, entry.LastModifiedTime.Value);
+                        }
                     }
                 }
             });
@@ -505,15 +635,110 @@ public class ExtractionService : IExtractionService
 
     /// <summary>
     ///     Returns true when the path carries an archive extension this service can extract
-    ///     (7z, ZIP, RAR). Everything else — e.g. a Linux .AppImage emulator download — must
-    ///     not be routed through the extraction methods (bug #67537).
+    ///     (7z, ZIP, RAR, tar.gz/tgz, tar.xz/txz). Everything else — e.g. a Linux .AppImage
+    ///     emulator download — must not be routed through the extraction methods (bug #67537).
+    ///     The compressed Tar formats are required because the Linux Easy Mode manifest ships
+    ///     emulators in those formats (e.g. Redream as .tar.gz, DOSBox Staging as .tar.xz).
     /// </summary>
     internal static bool IsSupportedArchivePath(string path)
     {
         var extension = Path.GetExtension(path);
         return extension.Equals(".7z", StringComparison.OrdinalIgnoreCase) ||
                extension.Equals(".zip", StringComparison.OrdinalIgnoreCase) ||
-               extension.Equals(".rar", StringComparison.OrdinalIgnoreCase);
+               extension.Equals(".rar", StringComparison.OrdinalIgnoreCase) ||
+               IsTarGzArchivePath(path) ||
+               IsTarXzArchivePath(path);
+    }
+
+    /// <summary>
+    ///     Returns true for the compressed Tar formats (.tar.gz/.tgz) that
+    ///     <see cref="ArchiveFactory" /> cannot open from a path directly.
+    /// </summary>
+    internal static bool IsTarGzArchivePath(string path)
+    {
+        return path.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Returns true for the XZ-compressed Tar formats (.tar.xz/.txz) that
+    ///     <see cref="ArchiveFactory" /> cannot open from a path directly.
+    /// </summary>
+    internal static bool IsTarXzArchivePath(string path)
+    {
+        return path.EndsWith(".tar.xz", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".txz", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Opens an archive for reading. SharpCompress's ArchiveFactory cannot open a
+    ///     .tar.gz/.tgz/.tar.xz/.txz from its path (it detects the compression container but
+    ///     not the nested Tar), so the compressed layer is decompressed to a seekable
+    ///     temporary file first; the returned handle deletes that file when disposed.
+    /// </summary>
+    private static ArchiveHandle OpenArchive(string archivePath)
+    {
+        if (IsTarGzArchivePath(archivePath))
+        {
+            return OpenCompressedTarArchive(archivePath,
+                static input => new GZipStream(input, CompressionMode.Decompress));
+        }
+
+        if (IsTarXzArchivePath(archivePath))
+        {
+            return OpenCompressedTarArchive(archivePath, static input => new XZStream(input));
+        }
+
+        return new ArchiveHandle(ArchiveFactory.OpenArchive(archivePath), null);
+    }
+
+    private static ArchiveHandle OpenCompressedTarArchive(string archivePath, Func<Stream, Stream> decompressor)
+    {
+        var temporaryTarPath = Path.Combine(Path.GetTempPath(), $"sl-tar-{Guid.NewGuid():N}.tar");
+        try
+        {
+            using (var inputStream = File.OpenRead(archivePath))
+            using (var decompressedStream = decompressor(inputStream))
+            using (var outputStream = File.Create(temporaryTarPath))
+            {
+                decompressedStream.CopyTo(outputStream);
+            }
+
+            return new ArchiveHandle(TarArchive.OpenArchive(temporaryTarPath), temporaryTarPath);
+        }
+        catch
+        {
+            DeleteTemporaryTarFile(temporaryTarPath);
+            throw;
+        }
+    }
+
+    private static void DeleteTemporaryTarFile(string temporaryTarPath)
+    {
+        try
+        {
+            if (File.Exists(temporaryTarPath)) File.Delete(temporaryTarPath);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"[ExtractionService] Could not delete temporary tar file {temporaryTarPath}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Wraps an open <see cref="IArchive" /> together with the temporary decompressed tar
+    ///     file (if any) created for .tar.gz/.tgz archives, deleting it on dispose.
+    /// </summary>
+    private sealed class ArchiveHandle(IArchive archive, string? temporaryTarPath) : IDisposable
+    {
+        public IArchive Archive { get; } = archive;
+
+        public void Dispose()
+        {
+            Archive.Dispose();
+
+            if (temporaryTarPath != null) DeleteTemporaryTarFile(temporaryTarPath);
+        }
     }
 
     /// <summary>
@@ -534,10 +759,12 @@ public class ExtractionService : IExtractionService
     ///     Adds the execute bits to a file on Unix (best effort): git stores the bundled 7zz
     ///     as 100644 and only release packaging restores it, so Debug/dotnet-run builds would
     ///     fail with EACCES — swallowed at Debug level, leaving only a generic extraction
-    ///     error (LB-15).
+    ///     error (LB-15). Public so the Easy Mode install flow can also fix the execute bits
+    ///     of an emulator binary extracted from an archive that does not carry Unix modes
+    ///     (zip), which would otherwise fail to launch with EACCES (LB-18 family).
     /// </summary>
     [UnsupportedOSPlatform("windows")]
-    internal static void EnsureExecuteBits(string exePath)
+    public static void EnsureExecuteBits(string exePath)
     {
         const UnixFileMode executeBits =
             UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;

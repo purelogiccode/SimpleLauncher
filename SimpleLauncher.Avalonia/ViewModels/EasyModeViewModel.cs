@@ -9,6 +9,7 @@ using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.DownloadService;
 using SimpleLauncher.Core.Services.EasyMode;
+using SimpleLauncher.Core.Services.ExtractFiles;
 using SimpleLauncher.Core.Services.PlaySound;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
@@ -583,6 +584,12 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                         $"{componentName} {_localization.GetString("hasbeensuccessfullydownloadedandinstalled", "has been successfully downloaded and installed.")}";
                     CanStopDownload = false;
 
+                    // Archives (zip/7z/tar) do not reliably carry the Unix execute bits into
+                    // extraction; without this the launcher fails with EACCES for emulators
+                    // installed from a zip (OpenMSX, Cemu, shadPS4) or a mode-less archive.
+                    if (string.Equals(type, EasyModeManager.DownloadType.Emulator, StringComparison.Ordinal))
+                        EnsureEmulatorIsExecutable(emulatorConfig);
+
                     await _messageBox.DownloadAndExtractionWereSuccessfulMessageBoxAsync();
 
                     SetDownloadState(type, DownloadButtonState.Downloaded);
@@ -696,6 +703,31 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
         {
             EndOperation();
             _logger.Error(ex, "Error in DownloadComponentAsync");
+        }
+    }
+
+    /// <summary>
+    ///     Ensures the installed emulator binary is executable on Unix. Archives (zip/7z/tar)
+    ///     do not reliably carry the execute permission into extraction, so without this the
+    ///     launcher fails with EACCES for emulators such as OpenMSX, Cemu or shadPS4.
+    /// </summary>
+    private void EnsureEmulatorIsExecutable(EmulatorConfig? emulatorConfig)
+    {
+        if (OperatingSystem.IsWindows() || emulatorConfig == null) return;
+
+        var emulatorLocation = emulatorConfig.EmulatorLocation;
+        if (string.IsNullOrEmpty(emulatorLocation)) return;
+
+        var resolvedPath = PathHelper.ResolveRelativeToAppDirectory(emulatorLocation);
+        if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath)) return;
+
+        try
+        {
+            ExtractionService.EnsureExecuteBits(resolvedPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug("[EasyMode] Could not set the execute bits on {Path}: {Message}", resolvedPath, ex.Message);
         }
     }
 

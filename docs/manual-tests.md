@@ -23,6 +23,14 @@ RetroAchievements → a download → a store-game scan covers most of this check
 Wayland session, app rendered through Xwayland. `unzip` restored the executable bits from the ZIP; the first-run
 "Welcome" dialog and the main window rendered correctly and the app produced no stdout/stderr errors (2026-09-24).
 
+On **Linux Mint 22.3 (X11)** in the Hyper-V `LinuxMint` VM the Easy Mode download path was verified end-to-end on
+2026-09-26: PPSSPP (AppImage) and Redream (tar.gz, after fixing BUG-03) were downloaded and installed through Easy
+Mode, real PSP/Dreamcast ROMs launched with the downloaded emulators and play history was recorded; the PSP image
+pack (601 covers) rendered in the grid. A follow-up sweep exercised **every distinct emulator download and the
+shared RetroArch core** in the Linux manifest (15/15 emulators + 1/1 core install correctly, after fixing BUG-04
+zip execute bits, BUG-05 `.tar.xz` support and BUG-06 solid-7z extraction performance). Details in `ManualTests.md`
+→ "Easy Mode real-install session" and "Easy Mode emulator/core install sweep".
+
 ---
 
 ## 1. Startup & app lifecycle
@@ -71,7 +79,7 @@ Wayland session, app rendered through Xwayland. `unzip` restored the executable 
 - [X] With zero systems configured → welcome prompt opens Easy Mode; system dropdown sorted, only systems with download links listed.
 - [X] Selecting a system enables emulator/core/image-pack buttons only when a download link exists; "Add System" stays disabled until the required emulator/core is downloaded or already on disk.
 - [ ] Start each download → progress bar + status text; **Stop** mid-download → "Download canceled", button re-enables; closing the window during a download cancels cleanly (no crash, temp cleanup).
-- [ ] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk.
+- [X] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk. (Verified 2026-09-26 with the default folder: Easy Mode installed PPSSPP and Redream, created `roms/<System>` and `images/<System>` and the DB rows; the custom folder picker itself was not exercised.)
 - [ ] Kill the network mid-download → per-component error dialog, button resets to Failed; emergency return button releases a stuck overlay.
 - [ ] **[Integration] Download manager** (`DownloadManager`) — progress %/size updates; start a download with <5 GB free → "Insufficient disk space" error; drop the network mid-download → "Download error. Retrying (1/3)…" then success or failure; cancel → partial file removed, clean state.
 
@@ -104,7 +112,7 @@ Common flow for **each** emulator:
 - [ ] Add a real ROM + point the launcher at a real emulator install; launch with "Show settings before launch" **off** → the emulator's own config file is rewritten with SimpleLauncher's settings and the game boots.
 - [ ] Launch with "Show settings before launch" **on** → the injection dialog appears; "Run" launches, "Cancel" does not launch.
 - [ ] Wrong/missing emulator path → the game still attempts launch without crashing; check the Debug log for injection errors.
-- [ ] **Linux/macOS (Avalonia)** — the handlers are not registered and the "Inject emulator config" menu is hidden: launching any game writes no Windows-style config and opens no injection dialog (LB-08); check that no files appear under `~/Documents` or next to the emulator binary.
+- [X] **Linux/macOS (Avalonia)** — the handlers are not registered and the "Inject emulator config" menu is hidden: launching any game writes no Windows-style config and opens no injection dialog (LB-08); check that no files appear under `~/Documents` or next to the emulator binary. (Verified 2026-09-26: launched real PSP/PPSSPP and Dreamcast/Redream games; no injection dialog, no Windows-style config next to the emulator binaries.)
 
 Per-emulator specifics:
 - [ ] **Ares** — config applied; dialog cancel aborts.

@@ -1531,14 +1531,14 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
     /// <summary>
-    ///     Displays a warning that the selected file must be a compressed archive (7z, zip, or rar) for extraction.
+    ///     Displays a warning that the selected file must be a compressed archive (7z, zip, rar, tar.gz, or tgz) for extraction.
     /// </summary>
     public Task FileNeedToBeCompressedMessageBoxAsync()
     {
         var theselectedfilecannotbe =
             _resourceProvider.GetString("Theselectedfilecannotbe", "The selected file cannot be extracted.");
         var toextractafileitneedstobe = _resourceProvider.GetString("Toextractafileitneedstobe",
-            "To extract a file, it needs to be a 7z, zip, or rar file.");
+            "To extract a file, it needs to be a 7z, zip, rar, tar.gz, tgz, tar.xz, or txz file.");
         var pleasefixthatintheEditwindow =
             _resourceProvider.GetString("PleasefixthatintheEditwindow", "Please fix that in the Edit window.");
         var warning = _resourceProvider.GetString("Warning", "Warning");

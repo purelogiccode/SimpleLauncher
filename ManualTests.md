@@ -392,6 +392,9 @@ Last full run 2026-09-26 (`scripts\gui-test-harness\reports\run-20260926-052045.
 PASS** on the Hyper-V `LinuxMint` VM (Linux Mint 22.3, Avalonia `linux-x64` publish), covering the
 Linux-applicable checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture.
 
+After the Easy Mode `tar.gz` install fix (BUG-03, §8) a subset re-run on the rebuilt payload
+(`reports\run-20260926-104312.md`): EASY-01, EASY-02, MENU-00, SYS-01 **PASS**.
+
 | Id | Covers | Fixture | Status (2026-09-26) | Notes |
 |---|---|---|---|---|
 | EASY-01 | Welcome -> Easy Mode; dropdown populated + sorted; Add/Download disabled | empty | PASS | waits for the config-loading overlay to clear |
@@ -426,35 +429,144 @@ Linux-applicable checklist (sections 1-13 of `docs/manual-tests.md`) with the se
 | DEBUG-01 | `-debug` opens the Debug Window (title "Debugger") with live log lines | seeded + `-debug` | PASS | reads the "Debug log" text box |
 | ROMHIST-01 | Open ROM History on a non-MAME game -> no-history message | seeded | PASS | |
 
+### Easy Mode real-install session (2026-09-26, ad-hoc)
+
+Driven through the AT-SPI harness on the same VM (seeded fixture, then systems added through Easy
+Mode; evidence in `scripts\gui-test-harness\shots\`). Real downloads / real ROMs stay manual by
+design, so this was an ad-hoc session, not suite scenarios:
+
+- **EASY-PSP (PPSSPP, single-file AppImage):** Easy Mode -> "Sony PSP" -> **Download Emulator**
+  downloaded `PPSSPP-v1.20.4-anylinux-x86_64.AppImage` (48 MB) to `~/SimpleLauncher/emulators/PPSSPP/`,
+  set the execute bits, showed the success dialog and enabled **Add System**. Add System created the
+  system folders (`roms/Sony PSP`, `images/Sony PSP`) and the DB row.
+- **IMGPACK-PSP:** Easy Mode -> **Download Image Pack 1** downloaded `sonypsp.zip` (195 MB) and
+  extracted **601 covers** into `images/Sony PSP/`, including one matching the real ISO
+  (`007 - From Russia with Love (USA).png`).
+- **GRID-PSP:** copied the real `007 - From Russia with Love (USA).iso` (732 MB) from `D:\Samples`
+  plus 12 dummy `.iso` files named after real pack covers; the grid rendered **13/13 covers**
+  (vision PASS, `shots\EASY-PSP-grid13.png`), pagination "1 to 13 out of 13".
+- **LAUNCH-PSP:** Launch Game started PPSSPP with the ISO; the game rendered its EA copyright boot
+  screen (vision PASS, `shots\EASY-PSP-boot150.png`); play history recorded
+  (`TimesPlayed=1`, `TotalPlayTime=214` s).
+- **EASY-DC (Redream, tar.gz archive):** the first attempt failed with "The selected file cannot be
+  extracted. To extract a file, it needs to be a 7z, zip, or rar file." -> **BUG-03**, fixed the
+  same day (§8). After deploying the fix, Download Emulator extracted `emulators/Redream/redream`
+  with execute bits and Add System worked.
+- **LAUNCH-DC:** copied the real `18 Wheeler - American Pro Trucker (USA)` cue/bins; Launch Game
+  started Redream (window + game tile rendered, vision-confirmed `shots\EASY-DC-redream2.png`).
+  Redream exits with code 1 without a Dreamcast BIOS, so the app showed its error + AI-suggestion
+  dialogs; after dismissing them the play history recorded (`TimesPlayed=1`, `TotalPlayTime=75` s).
+- Not exercised: **Stop** mid-download, network loss mid-download, custom ROM folder picker, the
+  separate Options -> Download Image Pack window.
+
+### Easy Mode emulator/core install sweep (2026-09-26, ad-hoc)
+
+Every distinct emulator download and the shared RetroArch core in the Linux Easy Mode manifest were
+exercised through the UI (select system -> **Download Emulator/Core** -> wait for the dialog ->
+verify the installed path and its execute bit). After the three fixes below: **15/15 emulators and
+1/1 core install correctly**.
+
+| System used | Emulator | Format | Result | Notes |
+|---|---|---|---|---|
+| Microsoft Xbox | Xemu | AppImage | PASS | |
+| Nintendo 3DS | Azahar | AppImage | PASS | |
+| Sony PlayStation Vita | Vita3K | AppImage | PASS | |
+| Sony PSP | PPSSPP | AppImage | PASS | also launched a real ISO (above) |
+| Sony PlayStation 3 | RPCS3 | AppImage | PASS | |
+| Sony PlayStation 2 | PCSX2 | AppImage | PASS | |
+| Sony PlayStation 1 | DuckStation | AppImage | PASS | |
+| Sega Model 3 | Supermodel | tar.gz | PASS | BUG-03 fix |
+| Sega Dreamcast | Redream | tar.gz | PASS | BUG-03 fix; real game launched (above) |
+| Microsoft MSX | OpenMSX | zip | PASS | BUG-04 fix (exec bits after archive install) |
+| Nintendo WiiU | Cemu | zip | PASS | BUG-04 fix |
+| Sony PlayStation 4 | shadPS4 | zip | PASS | BUG-04 fix |
+| Microsoft DOS | DOSBox Staging | tar.xz | PASS | BUG-05 fix (XZ support) |
+| Sega Saturn | Ymir | tar.xz | PASS | BUG-05 fix |
+| Amstrad CPC (57 systems share it) | RetroArch | 7z (solid) | PASS | BUG-06 fix; 118.7 s for the 392 MB download + 1 GB / 19,797-file extraction |
+| Amstrad CPC | RetroArch core | 7z (solid) | PASS | 110.9 s for 261 MB / 1.65 GB; 199 `_libretro.so` extracted to the manifest's `.AppImage.home/.config/retroarch/cores` path |
+
+Not exercised in the sweep: launching each installed emulator with a real ROM (only PPSSPP and
+Redream were launched - the other systems have no sample ROMs/BIOS on this machine), `Stop`
+mid-download, and network-loss handling.
+
 ### Open items for the next session
 
 1. **Full pass**: re-run `pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1` (31 scenarios,
    ~20-40 min with vision) after any app change; keep this runbook and `docs/manual-tests.md` in sync.
-2. **AT-SPI registration flakiness (environment)**: after a rapid app restart the app occasionally
+   Pending after the BUG-03..BUG-06 fixes: only a subset (EASY-01/02, MENU-00, SYS-01) was re-run on
+   the first rebuilt payload; the final payload (solid-archive + tar.xz + exec-bit fixes) has **not**
+   had a suite run yet. The fixes themselves are covered by `ExtractionServiceTests` (Avalonia suite
+   677/677).
+2. **WPF suite re-run**: `dotnet test SimpleLauncher.Tests\SimpleLauncher.Tests.csproj` after the
+   Core `ExtractionService` changes. The last run (before the solid/tar.xz fixes) was 2103 pass with
+   19 environment-only failures (missing `E:\`/`F:\`/`J:\` sample drives for the mount integration
+   tests, and one transient DNS miss for `downloads.scummvm.org`).
+3. **AT-SPI registration flakiness (environment)**: after a rapid app restart the app occasionally
    fails to register with the a11y bus (empty tree while the window still renders). `Start-VmApp` now
    waits up to 60 s for the frame and retries the launch (up to 3 starts). **Do not kill
    `at-spi-bus-launcher` / `at-spi2-registryd`**: that leaves a stale `AT_SPI_BUS` guid on the X root
    window and every new app then fails to register; recover with a VM reboot.
-3. **Coverage gap (manual/integration by design)**: store scanners, emulator downloads, config
-   injection, RA API/login, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater,
-   Commander Genius - keep as manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already
-   verified by code/tests).
+4. **Coverage gap (manual/integration by design)**: store scanners, config injection, RA API/login,
+   gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius - keep as
+   manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already verified by code/tests).
+   Emulator/core downloads are now swept (15/15 + 1/1, above). Still unexercised: `Stop`
+   mid-download, network loss mid-download, custom ROM folder picker, separate Options -> Download
+   Image Pack window, and launching the newly installed emulators with real ROMs/BIOS.
 
 ### Resume checklist (next session)
+
+**Guest state left by the 2026-09-26 session** (all of this survives a host/VM reboot unless noted):
+
+- VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP was
+  `192.168.65.34` at stop time - always re-check (the Default Switch subnet changed from `172.31.x`
+  during this session; `lib.ps1` was updated once already).
+- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, latest payload deployed
+  (`SimpleLauncher.Core.dll` md5 `e08e367ee6ddface57727d085f1a0daf`, `SimpleLauncher.Avalonia.dll`
+  md5 `4d423f5660fdf7f2c2c9ff57f46230cf`) with the BUG-03..BUG-06 fixes; running with the seeded
+  fixture (3 systems).
+- Installed under `~/SimpleLauncher/emulators/`: all 15 Easy Mode emulators + the RetroArch bundle
+  with 199 cores (about 3.5 GB). `~/SimpleLauncher/roms/` still has the real PSP ISO, the Dreamcast
+  cue/bins and the 12 dummy PSP ISOs; `~/SimpleLauncher/images/Sony PSP/` has the 601 image-pack
+  covers. `settings.dat` was re-seeded (systems only), so Favorites/PlayHistory were cleared.
+- Guest screensaver lock was disabled (`gsettings set org.cinnamon.desktop.screensaver lock-enabled
+  false` + `idle-activation-enabled false`; persists in dconf) and `xset s off -dpms` was applied
+  (does **not** persist across reboot). Without this the physical `:0` console locks and hides the
+  desktop from `vmconnect`/screenshots.
+- The vmconnect console window may still be open on the host; if it shows the "Connect to LinuxMint"
+  display dialog, click **Connect**; if the guest shows the lock screen, log in `vm`/`vm`. The
+  enhanced session (xrdp) login fails on this guest - stay on the basic session.
+
+**Steps:**
 
 1. Start the VM (`Start-VM LinuxMint`, elevated); re-check the DHCP IP with
    `Get-NetNeighbor -InterfaceAlias 'vEthernet (Default Switch)'` and update
    `$script:VmHostAddress` in `scripts\gui-test-harness\lib.ps1` if it changed (currently
-   `172.31.176.191`).
-2. After a guest reboot re-apply 1080p:
-   `DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080`
-   (the `xrandr-1080p` autostart normally does this already).
+   `192.168.65.34`).
+2. After a guest reboot re-apply 1080p and re-disable the screensaver:
+   `DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080` and
+   `gsettings set org.cinnamon.desktop.screensaver lock-enabled false; gsettings set
+   org.cinnamon.desktop.screensaver idle-activation-enabled false; xset s off -dpms`
+   (the `xrandr-1080p` autostart normally does the resolution already).
 3. If every new app start leaves the AT-SPI tree empty (and the `Start-VmApp` retries keep failing),
-   reboot the VM - do not restart the a11y bus (see open item 2).
-4. Run subsets while iterating and finally the full suite; on failures read the newest
+   reboot the VM - do not restart the a11y bus (see open item 3).
+4. Health check: `. scripts\gui-test-harness\lib.ps1; Deploy-VmNav; Test-VmNavHealth` (must be True).
+5. **If the app must be rebuilt** (source changed since the DLLs above):
+   `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
+   linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
+   `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
+6. Remaining work (see open items): full 31-scenario suite pass, WPF suite re-run, optional real-ROM
+   launches for the newly installed emulators, `Stop` mid-download / network-loss / custom ROM
+   folder picker / separate Download Image Pack window.
+7. Run subsets while iterating and finally the full suite; on failures read the newest
    `reports\run-*.md` first (deterministic JSON + vision answer).
-5. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
+8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
+9. **Uncommitted work at stop time** (do not lose it): `ExtractionService.cs` (solid reader, tar.xz,
+   public `EnsureExecuteBits`), `EasyModeViewModel.cs` (exec bits after archive install),
+   `ExtractionServiceTests.cs` (+4 tests), `strings.en.json` + both `MessageBoxLibraryService`
+   fallbacks (message wording), `ManualTests.md`, `docs/manual-tests.md`, `docs/gui-test-harness.md`,
+   `scripts/gui-test-harness/lib.ps1` (IP). `ChdMountStrategy.cs` also shows a pre-existing
+   formatting diff that predates this session.
 
 ## 7. Cost
 
@@ -483,6 +595,47 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   AT-SPI server holds a stale peer/root when the visual tree is rebuilt on dialog close
   (`X11AtSpiAccessibility` / peer re-registration). Restarting the app restores the tree, so scenarios
   that need main-content exposure must run before any modal is dismissed. Worth reporting upstream.
+- **BUG-03 - Easy Mode Linux: Sega Dreamcast (Redream) `.tar.gz` install failed. FIXED 2026-09-26.**
+  The Linux Easy Mode manifest ships `redream.x86_64-linux-v1.5.0.tar.gz` (and Supermodel as a
+  `.tar.gz`), but `ExtractionService.IsSupportedArchivePath` accepted only 7z/ZIP/RAR: the download
+  succeeded (`/tmp/SimpleLauncher/redream...tar.gz`) and the install failed with the Warning "The
+  selected file cannot be extracted. To extract a file, it needs to be a 7z, zip, or rar file.",
+  leaving **Add System** disabled. `ArchiveFactory` also cannot open a `.tar.gz` from its path (it
+  detects the GZip container but not the nested Tar), so the fix decompresses the GZip layer to a
+  seekable temporary `.tar` and opens it with `TarArchive`, and restores the tar Unix permission bits
+  (Redream's `redream`, mode 0755) so the emulator is executable. The English message and the Core log
+  now list `tar.gz`/`tgz`. Regression tests:
+  `ExtractionServiceTests.ExtractToFolderAsync_ExtractsTarGzAndRestoresUnixExecuteBits` plus the
+  extended `IsSupportedArchivePath` theory (673 Avalonia tests pass). Verified end-to-end on the VM
+  (install, Add System, Redream launch, play history - see the session above).
+- **BUG-04 - Easy Mode Linux: zip-based emulators installed without execute bits. FIXED 2026-09-26.**
+  OpenMSX (MSX), Cemu (WiiU) and shadPS4 (PS4) are shipped as `.zip`; the archive extracts correctly
+  but SharpCompress writes files without Unix modes and those zips carry no modes either (7-Zip shows
+  `.....` attributes), so the emulator binary landed non-executable and would fail to launch with
+  EACCES. Fix: after a successful **Emulator** install the Easy Mode ViewModel resolves the manifest's
+  `EmulatorLocation` and calls `ExtractionService.EnsureExecuteBits` (now public) on non-Windows.
+  Verified on the VM: all three re-installed and are executable. No dedicated unit test (ViewModel
+  level); the utility itself is covered by `EnsureExecuteBits_AddsTheExecuteBitsOnUnix`.
+- **BUG-05 - Easy Mode Linux: `.tar.xz` emulators were rejected as unsupported. FIXED 2026-09-26.**
+  DOSBox Staging and Ymir are shipped as `.tar.xz`; `IsSupportedArchivePath` accepted only
+  7z/ZIP/RAR/tar.gz/tgz, so the download succeeded and the install failed with the unsupported-format
+  Warning. Fix: accept `.tar.xz`/`.txz` and decompress the XZ layer (`SharpCompress.Compressors.Xz.
+  XZStream`) to a seekable temporary `.tar` opened with `TarArchive` (same pattern as tar.gz), plus the
+  tar permission restore. Message/log wording updated. Regression test:
+  `ExtractToFolderAsync_ExtractsTarXzAndRestoresUnixExecuteBits` (builds a real tar.xz with the bundled
+  7-Zip). Verified on the VM: both re-installed and executable.
+- **BUG-06 - Easy Mode Linux: RetroArch (57 systems) install took hours (solid 7z). FIXED 2026-09-26.**
+  `RetroArch_Linux_x64.7z` (392 MB, **19,797 files**, 1 GB uncompressed, solid) and
+  `RetroArch_cores.7z` (261 MB, 199 files, 1.65 GB, solid) downloaded fine, but SharpCompress random
+  access (`entry.OpenEntryStreamAsync()` per entry) re-decompresses the solid block from the start for
+  every entry (O(n²)): measured 24.8 s for just the first 100 files, ~700 files in 25 minutes. Fix:
+  `ExtractionService` now detects `archive.IsSolid` and extracts in a single forward pass via
+  `archive.ExtractAllEntries()` (same per-entry path-traversal validation, file-time and mode
+  handling), in both `ExtractToFolderAsync` and `ExtractToTempAsync`. Benchmark: the reader pass
+  extracted all 19,797 files to `Stream.Null` in 21 s. Regression test:
+  `ExtractToFolderAsync_ExtractsSolidSevenZipWithAllEntries` (builds a solid 7z with `-ms=on`).
+  Verified on the VM: emulator install 118.7 s (download + extraction), core install 110.9 s, 199
+  `_libretro.so` present at the manifest's `.AppImage.home/.config/retroarch/cores` path.
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:

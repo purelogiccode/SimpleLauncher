@@ -426,10 +426,19 @@ dead-zone, Edit Links, Sound Configuration, About/Update History, Support valida
 add/remove, Play History, ZIP extraction + temp cleanup, file watcher, Debug window + live log
 lines, ROM History message, Broken System error dialog, menu structure (Windows-only items hidden).
 
-Manual/integration by design: emulator downloads and `Stop` mid-download, store scanners, config
-injection (Windows-only), RetroAchievements login/hashing, gamepad hardware, CHD/ISO/XISO mounting,
-external tools, updater, Commander Genius, and anything needing real network/emulators. Update
-`docs/manual-tests.md` checkboxes only for items the suite actually verified.
+Manual/integration by design: store scanners, config injection (Windows-only), RetroAchievements
+login/hashing, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius,
+and anything needing real network/emulators. Easy Mode downloads were swept manually on 2026-09-26:
+**15/15 distinct emulator downloads and the shared RetroArch core install correctly** (after fixing
+BUG-03 `.tar.gz`, BUG-04 zip execute bits, BUG-05 `.tar.xz` and BUG-06 solid-7z extraction
+performance) — see `ManualTests.md` §6 "Easy Mode emulator/core install sweep" and §8. `Stop`
+mid-download and network-loss handling are still unexercised. Update `docs/manual-tests.md`
+checkboxes only for items the suite actually verified.
+
+**To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
+the VM/app state left behind, the console/screensaver recovery steps, how to rebuild+deploy the
+Avalonia payload, the remaining work (full 31-scenario pass, WPF suite re-run, real-ROM launches for
+the newly installed emulators) and the uncommitted files from the session.
 
 ---
 

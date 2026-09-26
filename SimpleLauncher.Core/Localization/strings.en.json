@@ -2222,7 +2222,7 @@
   "Toast.SelectSystemFirst": "Please select a system first.",
   "ToDate": "To:",
   "ToDatePickerTooltip": "Select end date",
-  "Toextractafileitneedstobe": "To extract a file, it needs to be a 7z, zip, or rar file.",
+  "Toextractafileitneedstobe": "To extract a file, it needs to be a 7z, zip, rar, tar.gz, tgz, tar.xz, or txz file.",
   "ToggleButtonAspectRatio": "Toggle Button Aspect Ratio",
   "ToggleViewMode": "Toggle View Mode",
   "TogglingAnnotationStripping": "Toggling annotation stripping...",

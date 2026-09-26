@@ -1,6 +1,10 @@
+using System.Diagnostics;
+using System.Formats.Tar;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Text;
 using SimpleLauncher.Core.Services.ExtractFiles;
+using Xunit.Sdk;
 
 namespace SimpleLauncher.Avalonia.Tests;
 
@@ -27,14 +31,73 @@ public class ExtractionServiceTests
     [InlineData("GAME.ZIP", true)]
     [InlineData("game.7z", true)]
     [InlineData("game.rar", true)]
+    [InlineData("redream.x86_64-linux-v1.5.0.tar.gz", true)]
+    [InlineData("REDREAM.TAR.GZ", true)]
+    [InlineData("redream.tgz", true)]
+    [InlineData("dosbox-staging-linux-x86_64-v0.83.0.tar.xz", true)]
+    [InlineData("ymir-linux-x86_64-AVX2-v0.3.3.tar.xz", true)]
+    [InlineData("ymir.txz", true)]
     [InlineData("azahar.AppImage", false)]
-    [InlineData("dosbox-staging-linux-x86_64-v0.83.0.tar.xz", false)]
     [InlineData("retroarch", false)]
     public void IsSupportedArchivePath_ClassifiesArchiveExtensions(string fileName, bool expected)
     {
         // Bug #67537: non-archive downloads (Linux AppImages) must not be routed into
-        // the extraction methods.
+        // the extraction methods. The Linux Easy Mode manifest ships some emulators as
+        // .tar.gz (Redream) and .tar.xz (DOSBox Staging, Ymir), so both must be accepted.
         Assert.Equal(expected, ExtractionService.IsSupportedArchivePath(fileName));
+    }
+
+    [Fact]
+    public async Task ExtractToFolderAsync_ExtractsTarGzAndRestoresUnixExecuteBits()
+    {
+        var folder = Directory.CreateTempSubdirectory("sl-extract-targz-");
+        try
+        {
+            // The Linux Easy Mode manifest ships Redream as a tar.gz whose single entry
+            // (`redream`, mode 0755) must be installed executable, or the launcher fails
+            // with EACCES when it tries to start it.
+            var tarGzPath = Path.Combine(folder.FullName, "redream.x86_64-linux-v1.5.0.tar.gz");
+            await using (var fileStream = File.Create(tarGzPath))
+            await using (var gzip = new GZipStream(fileStream, CompressionLevel.SmallestSize))
+            await using (var writer = new TarWriter(gzip, TarEntryFormat.Pax))
+            {
+                var entry = new PaxTarEntry(TarEntryType.RegularFile, "redream")
+                {
+                    DataStream = new MemoryStream(Encoding.UTF8.GetBytes("#!/bin/sh\n"))
+                };
+                if (!OperatingSystem.IsWindows())
+                {
+                    entry.Mode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                                 UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                                 UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
+                }
+
+                writer.WriteEntry(entry);
+            }
+
+            var service = new ExtractionService(
+                TestDependencies.MessageBox().Object, TestDependencies.Logger().Object);
+
+            var destination = Path.Combine(folder.FullName, "out");
+            var success = await service.ExtractToFolderAsync(tarGzPath, destination);
+
+            Assert.True(success);
+            var extracted = Path.Combine(destination, "redream");
+            Assert.True(File.Exists(extracted));
+            Assert.Equal("#!/bin/sh\n", await File.ReadAllTextAsync(extracted));
+
+            if (!OperatingSystem.IsWindows())
+            {
+                var mode = File.GetUnixFileMode(extracted);
+                Assert.True(mode.HasFlag(UnixFileMode.UserExecute));
+                Assert.True(mode.HasFlag(UnixFileMode.GroupExecute));
+                Assert.True(mode.HasFlag(UnixFileMode.OtherExecute));
+            }
+        }
+        finally
+        {
+            Directory.Delete(folder.FullName, true);
+        }
     }
 
     [Fact]
@@ -176,6 +239,128 @@ public class ExtractionServiceTests
         {
             File.Delete(file);
         }
+    }
+
+    [Fact]
+    public async Task ExtractToFolderAsync_ExtractsTarXzAndRestoresUnixExecuteBits()
+    {
+        var sevenZip = FindBundledSevenZip();
+        if (sevenZip is null) throw SkipException.ForSkip("Bundled 7-Zip tool not found.");
+        EnsureExecutable(sevenZip);
+
+        var folder = Directory.CreateTempSubdirectory("sl-extract-tarxz-");
+        try
+        {
+            // The Linux Easy Mode manifest ships DOSBox Staging and Ymir as .tar.xz; both
+            // must install with the binary executable (the tar carries Unix modes).
+            var source = Path.Combine(folder.FullName, "source");
+            Directory.CreateDirectory(source);
+            var payload = Path.Combine(source, "ymir-sdl3");
+            await File.WriteAllTextAsync(payload, "#!/bin/sh\n");
+            if (!OperatingSystem.IsWindows())
+            {
+                File.SetUnixFileMode(payload, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                                              UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                                              UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+            }
+
+            var archivePath = Path.Combine(folder.FullName, "ymir-linux-x86_64-AVX2-v0.3.3.tar.xz");
+            // 7-Zip's -txz alone compresses a single file into a raw xz stream; a real
+            // tar.xz needs the tar container first, then xz compression of that tar.
+            var tarPath = Path.Combine(folder.FullName, "fixture.tar");
+            Assert.True(await RunSevenZipAsync(sevenZip, source, "a", "-ttar", tarPath, "ymir-sdl3"),
+                "7-Zip could not create the tar fixture.");
+            Assert.True(await RunSevenZipAsync(sevenZip, folder.FullName, "a", "-txz", archivePath, "fixture.tar"),
+                "7-Zip could not create the tar.xz fixture.");
+
+            var service = new ExtractionService(
+                TestDependencies.MessageBox().Object, TestDependencies.Logger().Object);
+            var destination = Path.Combine(folder.FullName, "out");
+
+            Assert.True(await service.ExtractToFolderAsync(archivePath, destination));
+            var extracted = Path.Combine(destination, "ymir-sdl3");
+            Assert.True(File.Exists(extracted));
+            Assert.Equal("#!/bin/sh\n", await File.ReadAllTextAsync(extracted));
+            if (!OperatingSystem.IsWindows())
+                Assert.True(File.GetUnixFileMode(extracted).HasFlag(UnixFileMode.UserExecute));
+        }
+        finally
+        {
+            Directory.Delete(folder.FullName, true);
+        }
+    }
+
+    [Fact]
+    public async Task ExtractToFolderAsync_ExtractsSolidSevenZipWithAllEntries()
+    {
+        var sevenZip = FindBundledSevenZip();
+        if (sevenZip is null) throw SkipException.ForSkip("Bundled 7-Zip tool not found.");
+        EnsureExecutable(sevenZip);
+
+        var folder = Directory.CreateTempSubdirectory("sl-extract-solid-");
+        try
+        {
+            // Solid archives must be read in one forward pass: random access re-decompresses
+            // the solid block per entry, which made the 19,797-file RetroArch bundle take
+            // hours instead of seconds.
+            var source = Path.Combine(folder.FullName, "source");
+            Directory.CreateDirectory(source);
+            for (var i = 1; i <= 5; i++)
+                await File.WriteAllTextAsync(Path.Combine(source, $"file{i}.txt"), new string((char)('a' + i), 4096));
+
+            var archivePath = Path.Combine(folder.FullName, "solid.7z");
+            Assert.True(await RunSevenZipAsync(sevenZip, source, "a", "-t7z", "-ms=on", archivePath, "."),
+                "7-Zip could not create the solid 7z fixture.");
+
+            var service = new ExtractionService(
+                TestDependencies.MessageBox().Object, TestDependencies.Logger().Object);
+            var destination = Path.Combine(folder.FullName, "out");
+
+            Assert.True(await service.ExtractToFolderAsync(archivePath, destination));
+            for (var i = 1; i <= 5; i++)
+            {
+                var extracted = Path.Combine(destination, $"file{i}.txt");
+                Assert.True(File.Exists(extracted), $"Missing {extracted}");
+                Assert.Equal(new string((char)('a' + i), 4096), await File.ReadAllTextAsync(extracted));
+            }
+        }
+        finally
+        {
+            Directory.Delete(folder.FullName, true);
+        }
+    }
+
+    private static string? FindBundledSevenZip()
+    {
+        var name = ExtractionService.GetSevenZipExecutableName(RuntimeInformation.ProcessArchitecture,
+            OperatingSystem.IsWindows());
+        var path = Path.Combine(AppContext.BaseDirectory, "tools", "SevenZip", name);
+        return File.Exists(path) ? path : null;
+    }
+
+    private static void EnsureExecutable(string path)
+    {
+        if (!OperatingSystem.IsWindows()) ExtractionService.EnsureExecuteBits(path);
+    }
+
+    private static async Task<bool> RunSevenZipAsync(string sevenZipPath, string workingDirectory,
+        params string[] arguments)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = sevenZipPath,
+            WorkingDirectory = workingDirectory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+
+        using var process = Process.Start(startInfo);
+        if (process is null) return false;
+        await process.WaitForExitAsync();
+        return process.ExitCode == 0;
     }
 }
 
