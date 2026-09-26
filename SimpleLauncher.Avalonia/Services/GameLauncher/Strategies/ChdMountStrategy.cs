@@ -247,7 +247,8 @@ public class ChdMountStrategy : ILaunchStrategy
     ///     so everything sharing the conversion's unique base name is removed (LB-19).
     /// </summary>
     internal void CleanupConvertedFiles(string convertedPath)
-    {        try
+    {
+        try
         {
             var directory = Path.GetDirectoryName(convertedPath);
             if (string.IsNullOrEmpty(directory))
