@@ -102,6 +102,7 @@ public partial class App : IDisposable
     private bool _isFirstInstance;
 
     private Mutex _singleInstanceMutex = null!;
+    private FileStream? _singleInstanceLock;
 
     /// <summary>
     ///     Gets the application's dependency injection service provider.
@@ -115,6 +116,7 @@ public partial class App : IDisposable
     {
         _instanceSignal?.Dispose();
         _singleInstanceMutex?.Dispose();
+        _singleInstanceLock?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -582,26 +584,27 @@ public partial class App : IDisposable
             Log.Error(ex, "Failed to resolve the background folder cleanup service");
         }
 
-        if (!isRestarting) // Only perform the mutex check if NOT restarting
+        if (!isRestarting) // Only perform the single-instance check if NOT restarting
         {
+            // Cross-platform guard: a lock file held open for the process lifetime. On Unix,
+            // .NET named mutexes are scoped to the login session, so an instance started from
+            // another session (or detached with setsid) would not see the first.
+            _singleInstanceLock = SingleInstance.TryAcquireLockFile(SingleInstance.GetLockFilePath());
+            _isFirstInstance = _singleInstanceLock is not null;
+
             try
             {
-                // Try to create or open the mutex
-                // The 'out _isFirstInstance' parameter will be true if the mutex was created (first instance)
-                // and false if it already existed (another instance is running).
-                _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out _isFirstInstance);
+                // The named mutex also guards against the Avalonia app (which shares it).
+                _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
+                if (!mutexCreatedNew) _isFirstInstance = false;
             }
             catch (AbandonedMutexException)
             {
                 // The mutex was abandoned by a previous instance (e.g., due to a crash).
-                // This means we successfully acquired it, and we are now the first instance.
-                // The 'out _isFirstInstance' parameter would already be true in this case,
-                // but we explicitly set it for clarity and to ensure the flow continues as a first instance.
-                _isFirstInstance = true;
+                // We successfully acquired it; the lock-file verdict still decides whether
+                // this is the first instance.
                 Log.Logger.Debug(
-                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance");
-                // No need to call ILogger.LogErrorAsync here, as it's not a critical error preventing startup,
-                // but rather an informational event about a previous abnormal shutdown.
+                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance");
             }
             catch (UnauthorizedAccessException ex)
             {

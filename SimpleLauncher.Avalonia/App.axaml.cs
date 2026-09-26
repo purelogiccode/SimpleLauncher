@@ -87,6 +87,7 @@ public class App : Application, IDisposable
     private bool _isFirstInstance;
 
     private Mutex? _singleInstanceMutex;
+    private FileStream? _singleInstanceLock;
 
     /// <summary>
     ///     Gets the application's dependency injection service provider.
@@ -158,6 +159,7 @@ public class App : Application, IDisposable
 
         _singleInstanceMutex?.Dispose();
         _instanceSignal?.Dispose();
+        _singleInstanceLock?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -196,25 +198,36 @@ public class App : Application, IDisposable
             startupArgs.Any(static arg => arg.Equals("--restarting", StringComparison.OrdinalIgnoreCase));
         if (!isRestarting)
         {
-            try
-            {
-                _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out _isFirstInstance);
-            }
-            catch (AbandonedMutexException)
-            {
-                // The mutex was abandoned by a previous instance (e.g., due to a crash).
-                // This means we successfully acquired it, and we are now the first instance.
-                // The 'out _isFirstInstance' parameter would already be true in this case,
-                // but we explicitly set it for clarity and to ensure the flow continues as a first instance.
-                _isFirstInstance = true;
-                Log.Debug(
-                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance. Proceeding as first instance");
-            }
+            // Cross-platform guard: a lock file held open for the process lifetime. On Unix,
+            // .NET named mutexes are scoped to the login session, so an instance started from
+            // another session (or detached with setsid) would not see the first.
+            _singleInstanceLock = SingleInstance.TryAcquireLockFile(SingleInstance.GetLockFilePath());
+            _isFirstInstance = _singleInstanceLock is not null;
 
-            // Named EventWaitHandle is Windows-only; on Linux the named Mutex still enforces
-            // single-instance, only the "bring first instance to foreground" signal is lost.
             if (OperatingSystem.IsWindows())
+            {
+                // The named mutex still guards against the WPF app (which shares it); the named
+                // event lets a second launch bring the running instance to the foreground.
+                try
+                {
+                    _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
+                    if (!mutexCreatedNew) _isFirstInstance = false;
+                }
+                catch (AbandonedMutexException)
+                {
+                    // The mutex was abandoned by a previous instance (e.g., due to a crash).
+                    // We successfully acquired it; the lock-file verdict still decides whether
+                    // this is the first instance.
+                    Log.Debug(
+                        "Mutex was abandoned by a previous instance, but successfully acquired by this instance");
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Failed to create or acquire the single-instance mutex");
+                }
+
                 _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SingleInstance.EventName);
+            }
 
             if (!_isFirstInstance)
             {
