@@ -526,6 +526,49 @@ HEAD (`f68f6c91` + `7ddc6599`); screenshots in `scripts\gui-test-harness\shots\`
   with the system dropdown, selecting Atari 5200 shows the "Image Pack 1" button, and the download
   completed with the success dialog - the window's download path works end-to-end.
 
+### Linux GUI continuation session (2026-09-26, ad-hoc + fixes)
+
+Second ad-hoc pass on the same VM (payload rebuilt from HEAD after each fix), covering checklist items
+the 31 scenarios do not reach. Deterministic checks unless noted; screenshots in `shots\`.
+
+- **Global Search (new coverage, 12 checks PASS):** default AND (`alpha zzz` -> 0), explicit AND,
+  OR (`alpha or sonic` -> 2), quoted phrase, empty term -> "Please enter a search term.",
+  operators-only -> validation box, recursive search on/off (a subfolder ROM is found only when on),
+  Folder Name checkbox (folder-name search on -> 4 hits), system filter (Second System: `sonic` -> 1,
+  `alpha` -> 0). Counts came from the Debug window log line
+  `Global search for '<term>' returned N result(s)` (the results grid cells are not exposed by AT-SPI).
+  **Launch Selected Game** works (row select enables it; "Sonic launched with Dummy Emulator"; the
+  dummy emulator log records the ROM). A temporary system with no emulator showed "No Default
+  Emulator" in the results (vision) and its launch showed the error box (log:
+  `selectedEmulatorManager is null`) instead of launching.
+- **Global Search cancel (BUG-11, FIXED):** with a 10,000-ROM bulk system, navigating away during a
+  search left it enumerating (it completed and logged a count). Re-verified after the fix: leaving
+  mid-search produced no completion line.
+- **View/Display options:** Set Button Size (300->500 px), Set Button Aspect Ratio (Square->Taller),
+  Set Number of Games Per Page and Show Games update the checkmarks and `settings.dat`
+  (`ThumbnailSize`, `ButtonAspectRatio`, `GamesPerPage`, `ShowGames`); checkmarks are restored after a
+  restart (500 px/Taller/ShowAll verified, then restored to defaults).
+- **Show Games filter (BUG-09, FIXED):** verified live Without Cover -> 2, With Cover -> 3,
+  ShowAll -> 5 games across systems.
+- **Filename Preferences:** "Display Clean Up Filenames" strips annotations ("Captain Nemo (USA)" ->
+  "Captain Nemo", vision PASS); original mode restored.
+- **Favorites extras:** launch via double-click, the "Launch the selected favorite game" button and
+  Enter all start the game (dummy emulator log) and record play history; Delete removes the selected
+  row without confirmation; launching a favorite whose ROM was deleted shows the "Game Not Available"
+  prompt and Yes removes the favorite.
+- **Play History extras:** the three sort buttons do not change the data (no crash); launching via
+  Enter refreshes the row (+1 play, `TimesPlayed` 1 -> 2) and keeps the page open; Delete removes the
+  selected row; "Remove all from history" shows the confirmation (No keeps / Yes clears).
+- **Context menu:** Delete Cover Image asks confirmation, deletes the PNG, shows the "Deleted" box and
+  refreshes the list (the card falls back to the placeholder after the dialog is dismissed); Delete
+  Game asks confirmation and removes the ROM, dropping the count. Video/info link opening was not
+  exercised (depends on the desktop's default browser).
+- **Corrupt cover:** overwriting a cover PNG with garbage shows the placeholder for that card, no
+  crash, other covers unaffected (vision PASS).
+- **File watcher:** adding a ROM to a non-selected system's folder does not change the current view;
+  switching to that system and deleting the file refreshes its count (2 -> 1) - the selected system is
+  watched.
+
 ### Open items for the next session
 
 1. **Full pass - DONE 2026-09-26**: `reports\run-20260926-143336.md` **31/31 PASS in a single run** on
@@ -547,12 +590,15 @@ HEAD (`f68f6c91` + `7ddc6599`); screenshots in `scripts\gui-test-harness\shots\`
 4. **Coverage gap (manual/integration by design)**: store scanners, config injection, RA API/login,
    gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius - keep as
    manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already verified by code/tests).
-   Emulator/core downloads are now swept (15/15 + 1/1, above) and the Easy Mode edge cases were
-   exercised on 2026-09-26 (`Stop` mid-download, network loss at start and mid-body, custom ROM
-   folder picker, separate Download Image Pack window - previous section), which surfaced BUG-07 and
-   BUG-08. Still unexercised: the `<5 GB free` disk-space error, the final failure after all retries,
-   closing the window during a download, and launching the newly installed emulators with real
-   ROMs/BIOS.
+   Emulator/core downloads are swept (15/15 + 1/1) and the Easy Mode edge cases plus the continuation
+   session were exercised on 2026-09-26 (see the two sections above), which surfaced and fixed
+   BUG-07..BUG-11. Still unexercised: the `<5 GB free` disk-space error, the final failure after all
+   retries, closing a window during a download, real-ROM launches for the other emulators, Edit System
+   save/validation and the AI fix flow, Support valid submit, Image viewer, DOSBox file selection,
+   System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone Save+Revert,
+   About offline update checks, log files and the bug-report sink, MAME data service, config-persistence
+   failure paths, ROM History with a real MAME entry, gamepad on this VM, and video/info context-menu
+   links.
 
 ### Resume checklist (next session)
 
@@ -561,11 +607,12 @@ HEAD (`f68f6c91` + `7ddc6599`); screenshots in `scripts\gui-test-harness\shots\`
 - VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
   reboot; `lib.ps1` updated accordingly) - always re-check after a VM boot.
-- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD and deployed
-  (`SimpleLauncher.Core.dll` md5 `43b3c0068b66fce8fbd222b2903c7076`, `SimpleLauncher.Avalonia.dll`
-  md5 `b25b8f7f2e1285641f8278a8f2ec0d72`, includes the BUG-03..BUG-06 fixes); running with the seeded
-  fixture (3 systems). The 31/31 GUI suite ran on this payload; the WPF (2122/2122) and Avalonia
-  (677/677) suites ran on the current working tree, which has newer uncommitted source edits (item 9).
+- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-11
+  fixes and deployed (`SimpleLauncher.Core.dll` md5 `d087578dbc76f01900195316c3390d5a`,
+  `SimpleLauncher.Avalonia.dll` md5 `1faaf2fdd49f6af0749321ca0ddb2487`); running with the seeded
+  fixture (3 systems), no `-debug`. The GUI continuation session ran on this payload; the Avalonia
+  (682/682) and WPF (2122/2122) suites are green on the current working tree, which has the BUG-07..11
+  fixes uncommitted (item 9).
 - Installed under `~/SimpleLauncher/emulators/`: **only PPSSPP** (re-installed 2026-09-26 during the
   edge-case session). The 15 emulators + RetroArch bundle (about 3.5 GB) and the real PSP
   ISO/Dreamcast cue/bins from the earlier session are **gone** - the folder and the ROMs were
@@ -606,15 +653,15 @@ HEAD (`f68f6c91` + `7ddc6599`); screenshots in `scripts\gui-test-harness\shots\`
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Uncommitted work at stop time** (do not lose it): `scripts/gui-test-harness/lib.ps1` (IP ->
-   `172.31.176.191`), `scripts/gui-test-harness/run-suite.ps1` (post-restart `Test-VmNavHealth` guard
-   with one retry and a clear abort), `ManualTests.md` (this runbook) and `docs/gui-test-harness.md`.
-   The BUG-03..BUG-06 code/tests/docs from the previous session were committed as `f68f6c91` and the
-   `ChdMountStrategy.cs` formatting as `7ddc6599`. Five further source files appeared modified in the
-   working tree during this session (not from the harness work, still uncommitted): both
-   `WindowScreenshot.cs` + `SimpleLauncher/App.xaml.cs` (logger fallback + `Initialize(Log.Logger)`),
-   `RetroAchievementsSystemMatcher.cs` (`MAME0143u7`, duplicate `"Aucun système sélectionné"`) and
-   `ExtractionService.cs` (`ArchiveHandle` readonly field).
+9. **Uncommitted work at stop time** (do not lose it): the BUG-07..BUG-11 fixes -
+   `SimpleLauncher.Core/Services/DownloadService/DownloadManager.cs` (cancel cleanup + `StallTimeout`),
+   `SimpleLauncher.Avalonia/Services/GameFilter/AvaloniaGameFilterService.cs` (real-cover check),
+   `SimpleLauncher.Avalonia/MainWindow.axaml` + `MainWindow.axaml.cs` (handledEventsToo Enter handlers,
+   Global Search cancel on leave/emergency) - plus the tests
+   (`SimpleLauncher.Avalonia.Tests/AvaloniaGameFilterServiceTests.cs` and the two new
+   `DownloadManagerTests` cases) and the docs (`ManualTests.md`, `docs/manual-tests.md`,
+   `docs/gui-test-harness.md`). The previous session's harness/docs/formatting work was committed as
+   `f65f109f` + `26821ec2`.
 
 ## 7. Cost
 
@@ -684,7 +731,7 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   `ExtractToFolderAsync_ExtractsSolidSevenZipWithAllEntries` (builds a solid 7z with `-ms=on`).
   Verified on the VM: emulator install 118.7 s (download + extraction), core install 110.9 s, 199
   `_libretro.so` present at the manifest's `.AppImage.home/.config/retroarch/cores` path.
-- **BUG-07 - Easy Mode cancel leaves the partial download in the temp folder (open, 2026-09-26).**
+- **BUG-07 - Easy Mode cancel leaves the partial download in the temp folder (FIXED 2026-09-26).**
   Clicking **Stop Download** during an Easy Mode image-pack download cancels correctly in the UI
   (`Download of Image Pack 1 was canceled.`, Stop disabled, pack button re-enabled) but the partial
   archive stays in `/tmp/SimpleLauncher` (`arcade.zip`, 29 MB). In
@@ -693,8 +740,11 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   cleanup only runs before a retry or when the file is locked. Successful downloads also leave the
   archive in temp (removed at the next app start), but the documented checklist expectation for
   cancel is "partial file removed, clean state". Shared Core service, so the WPF app behaves the
-  same. No unit test covers cancel cleanup.
-- **BUG-08 - Mid-body network loss stalls the download with no retry or timeout (open, 2026-09-26).**
+  same. No unit test covers cancel cleanup. **Fix:** the user-cancel path in `DownloadFileAsync` now
+  calls `DeleteFiles.TryDeleteFileAsync(downloadFilePath)` before returning; regression test
+  `DownloadFileAsync_UserCancelDeletesThePartialFile`; re-verified live (Stop left `/tmp/SimpleLauncher`
+  empty).
+- **BUG-08 - Mid-body network loss stalls the download with no retry or timeout (FIXED 2026-09-26).**
   Dropping the network while the response body is streaming (iptables REJECT on the asset IPs)
   produces neither `Download error. Retrying (1/3)...` nor an error dialog: the status stays at the
   last progress, the connection stays ESTAB with zero data for >6 minutes, and the download resumes
@@ -704,7 +754,27 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   `HttpCompletionOption.ResponseHeadersRead` the body is read after the pipeline completed). If the
   network never returns the download hangs indefinitely; the user can still click Stop. Only a
   connection failure before the body starts (host unreachable/DNS) triggers the retry path, which
-  was verified working (`Retrying (1/3)` -> success after unblocking).
+  was verified working (`Retrying (1/3)` -> success after unblocking). **Fix:** `DownloadWithProgressAsync`
+  now resets an idle timer before every read (`DownloadManager.StallTimeout`, 30 s) and converts the
+  timeout into an `IOException`, so the existing retry loop restarts the download; regression test
+  `DownloadFileAsync_StalledBodyFailsAfterRetriesAndCleansUp`; re-verified live (blocked mid-download ->
+  `Retrying (1/3)` within ~30 s, partial file removed, success after unblocking).
+- **BUG-09 - "Show Games" cover filter never filtered on Linux (FIXED 2026-09-26).**
+  "Show Only Games Without Cover" always showed 0 games and "Show Only Games With Cover" showed all:
+  `GameCardViewModel.HasCover` was `File.Exists(coverPath)` and `FindCoverImagePath` always falls back
+  to `images\default.png`, so every card counted as covered. `AvaloniaGameFilterService` now treats a
+  resolved default.png (or a missing path) as "without cover", mirroring the WPF `GameFilterService`.
+  Verified live (Without Cover -> 2, With Cover -> 3, ShowAll -> 5 across systems); regression tests:
+  `AvaloniaGameFilterServiceTests`.
+- **BUG-10 - Enter did not launch from the Favorites / Play History DataGrids (FIXED 2026-09-26).**
+  Avalonia's DataGrid marks Enter as handled (cell/row navigation), so the XAML `KeyDown` wiring never
+  saw it and only Delete worked. Both grids now subscribe to `KeyDownEvent` in code with
+  `handledEventsToo: true`; re-verified live (Enter launches from both grids, Delete still removes).
+- **BUG-11 - Leaving Global Search did not cancel an in-flight search (FIXED 2026-09-26).**
+  The WPF page cancels on `Unloaded`; the Avalonia port never called `GlobalSearchSection.CancelSearch()`,
+  so a search kept enumerating folders after navigating away (with a 10,000-ROM system it completed and
+  logged a result count after leaving). `ShowSectionAsync` now cancels when leaving the section and the
+  emergency overlay release also cancels; re-verified (no completion log line after leaving mid-search).
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:

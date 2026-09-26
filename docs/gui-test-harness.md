@@ -437,8 +437,13 @@ performance) — see `ManualTests.md` §6 "Easy Mode emulator/core install sweep
 edge cases were exercised ad-hoc on 2026-09-26 (same §6): `Stop` mid-download, network loss at
 download start and mid-body, the custom ROM folder picker and the separate Download Image Pack
 window - the session surfaced BUG-07 (cancel leaves the partial file) and BUG-08 (mid-body network
-loss stalls with no retry/timeout). Update `docs/manual-tests.md` checkboxes only for items the
-suite actually verified.
+loss stalls with no retry/timeout). A continuation session the same day covered Global Search
+(queries, filters, launch, no-emulator rows), View/Display options + persistence, Filename
+Preferences, Favorites/Play History extras (launch, Delete, sorting, missing-file prompt), the
+context-menu delete cover/game and missing-file flows, corrupt covers and the file watcher, and
+fixed BUG-09 (Show Games filter never filtered), BUG-10 (Enter did not launch from the
+Favorites/Play History grids) and BUG-11 (leaving Global Search did not cancel an in-flight search).
+Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
 the VM/app state left behind, the console/screensaver recovery steps, how to rebuild+deploy the
