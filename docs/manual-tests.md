@@ -33,7 +33,7 @@ Wayland session, app rendered through Xwayland. `unzip` restored the executable 
 - [X] **Quit** (`QuitSimpleLauncher`) — menu quit exits;
 - [ ] **Reinstall / Updater** (`ReinstallSimpleLauncher`) — with and without a local `Updater.exe`, with and without network, and with access denied (error 5): correct message box in each case; app closes after the updater launches; no zombie processes.
 - [X] **Update flow** (`ShutdownForUpdateAsync`) — with GitHub reachable, a fresh `Updater.exe` is downloaded and launched with the current PID, app exits; with GitHub unreachable, graceful failure.
-- [ ] **System information display** (`DisplaySystemInformation`) — select a system with a bad ROM folder → red "System Folder" line + "path is not valid" dialog; bad emulator exe → red emulator line; all valid → no dialog; the error list shows every problem.
+- [X] **System information display** (`DisplaySystemInformation`) — select a system with a bad ROM folder → red "System Folder" line + "path is not valid" dialog; bad emulator exe → red emulator line; all valid → no dialog; the error list shows every problem.
 - [X] **System config load** (`SystemConfigurationService`) — edit `system.xml` adding a valid system → it appears after restart; malformed XML → error dialog + logs, app continues.
 
 ## 2. Main window UI
@@ -42,8 +42,8 @@ Wayland session, app rendered through Xwayland. `unzip` restored the executable 
 - [X] **Language menu** (`LanguageMenuService`) — switch language → notification sound, status "Changing language...", app restarts into that language; checkmark shows current language.
 - [ ] **View/Display menu options** — change thumbnail size, games-per-page, show-games, aspect ratio, filename display, font sizes, view mode → the grid re-renders accordingly; restart → checkmarks restored from settings.
 - [ ] **Menu actions** (`MenuActionHandlerService`) — every menu item opens the right window / performs the right action with status-bar feedback: Easy/Expert mode, Download Image Pack, Scan for store games, Edit links, Gamepad toggle, Dead zone, fuzzy matching toggle/threshold, annotation stripping, Support, Donate. Rapid clicking → no double handling.
-- [ ] **Platform-specific menus & data (Avalonia)** — on Windows the Tools menu (11 bundled tools), Options → Inject Emulator Config (21 emulators) and Edit System → "Scan for Microsoft Windows games" are present; on Linux/macOS all three are hidden (Windows executables / registry-based features) and the first-run flow skips the "Scanning for Windows games..." overlay. About → Open AppData Path opens the folder that actually holds `settings.dat`: `%LocalAppData%\SimpleLauncher` on Windows, `~/.local/share/SimpleLauncher` (XDG) on Linux/macOS, where `settings.dat` (+ `-wal`/`-shm`), logs, window bounds and legacy `.bak` files live.
-- [ ] **Filter bar** (`FilterMenu`) — A–Z / # / All letters filter the game list with button highlight; "All" resets; keyboard arrows/Home/End navigate the letter buttons; notification sound on click.
+- [X] **Platform-specific menus & data (Avalonia)** — on Windows the Tools menu (11 bundled tools), Options → Inject Emulator Config (21 emulators) and Edit System → "Scan for Microsoft Windows games" are present; on Linux/macOS all three are hidden (Windows executables / registry-based features) and the first-run flow skips the "Scanning for Windows games..." overlay. About → Open AppData Path opens the folder that actually holds `settings.dat`: `%LocalAppData%\SimpleLauncher` on Windows, `~/.local/share/SimpleLauncher` (XDG) on Linux/macOS, where `settings.dat` (+ `-wal`/`-shm`), logs, window bounds and legacy `.bak` files live.
+- [X] **Filter bar** (`FilterMenu`) — A–Z / # / All letters filter the game list with button highlight; "All" resets; keyboard arrows/Home/End navigate the letter buttons; notification sound on click.
 - [X] **Status bar** — actions (sorting, launching, saving) show status text that auto-clears after the timeout.
 - [X] **Gamepad navigation** — see section 10.
 
@@ -68,8 +68,8 @@ Wayland session, app rendered through Xwayland. `unzip` restored the executable 
 ## 5. Easy Mode & Edit System
 
 ### Easy Mode wizard (`EasyModeWindow`)
-- [ ] With zero systems configured → welcome prompt opens Easy Mode; system dropdown sorted, only systems with download links listed.
-- [ ] Selecting a system enables emulator/core/image-pack buttons only when a download link exists; "Add System" stays disabled until the required emulator/core is downloaded or already on disk.
+- [X] With zero systems configured → welcome prompt opens Easy Mode; system dropdown sorted, only systems with download links listed.
+- [X] Selecting a system enables emulator/core/image-pack buttons only when a download link exists; "Add System" stays disabled until the required emulator/core is downloaded or already on disk.
 - [ ] Start each download → progress bar + status text; **Stop** mid-download → "Download canceled", button re-enables; closing the window during a download cancels cleanly (no crash, temp cleanup).
 - [ ] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk.
 - [ ] Kill the network mid-download → per-component error dialog, button resets to Failed; emergency return button releases a stuck overlay.
@@ -85,14 +85,14 @@ Wayland session, app rendered through Xwayland. `unzip` restored the executable 
 - [ ] **AI fix after failed launch** (`AskAiToFixParameters`) — force an emulator launch failure, accept AI help → suggestion dialog; apply → parameters updated in config, system list reloads, relaunch uses the new params; decline → nothing saved; offline/API error → graceful message.
 
 ### Other dialogs
-- [ ] **Set Fuzzy Matching** (`SetFuzzyMatchingWindow` + VM) — slider snaps to 5% ticks (70–95%), shows percentage; Cancel doesn't save; Save persists; restart → value retained and matching behaves accordingly.
+- [X] **Set Fuzzy Matching** (`SetFuzzyMatchingWindow` + VM) — slider snaps to 5% ticks (70–95%), shows percentage; Cancel doesn't save; Save persists; restart → value retained and matching behaves accordingly.
 - [ ] **Set Gamepad Dead Zone** (`SetGamepadDeadZoneWindow` + VM) — X/Y sliders; Save → confirmation box; Revert → defaults restored and window closes; with a gamepad connected, verify stick drift is filtered per the new dead zone.
 - [ ] **Set Links** (`SetLinksWindow` + VM) — blank URLs fall back to defaults on save; custom template used from the context menu; Revert restores appsettings defaults.
 - [ ] **Sound Configuration** (`SoundConfigurationWindow` + VM) — toggle enable → controls enable/disable; Choose File copies an MP3 into `audio\`; Play previews it; Play with sounds disabled → info box; Reset → `click.mp3`; Save persists; a notification (e.g. game launch) then uses the configured sound.
-- [ ] **About / Update History / Update Log** (`AboutWindow`, `UpdateHistoryWindow`, `UpdateLogWindow` + VMs) — About shows the correct version; "Check for Updates" disables while running, offline → friendly error, button re-enables; Update History renders `WhatsNew.md` markdown with clickable links; with `WhatsNew.md` deleted → "not found" message; during an update install the log window appends timestamped lines live without freezing.
+- [X] **About / Update History / Update Log** (`AboutWindow`, `UpdateHistoryWindow`, `UpdateLogWindow` + VMs) — About shows the correct version; "Check for Updates" disables while running, offline → friendly error, button re-enables; Update History renders `WhatsNew.md` markdown with clickable links; with `WhatsNew.md` deleted → "not found" message; during an update install the log window appends timestamped lines live without freezing.
 - [ ] **Support window** (`SupportWindow` + VM) — empty form → per-field validation; valid form → overlay "Sending support request...", form clears on success; emergency return button on the overlay works; closing mid-send doesn't crash; failure → error box + log entries.
 - [ ] **Image viewer** (`ImageViewerWindow` + VM) — each artwork context-menu item renders; missing/corrupt file → error box, empty window, no crash; remote URL (RA badge) renders; unreachable URL → blank window, no hang.
-- [ ] **ROM History window** (`RomHistoryWindow` + VM) — MAME game with a `history.dat`/`history.xml` entry shows text with clickable URLs; no entry → "No ROM history found…" + Yes/No prompt; Yes opens a Google search; both files deleted → friendly "no history file found" message.
+- [X] **ROM History window** (`RomHistoryWindow` + VM) — MAME game with a `history.dat`/`history.xml` entry shows text with clickable URLs; no entry → "No ROM history found…" + Yes/No prompt; Yes opens a Google search; both files deleted → friendly "no history file found" message.
 - [ ] **DOSBox file selection** (`DosBoxFileSelectionWindow` + VM) — a DOS game folder with several `.conf/.bat/.exe/.com` files shows the picker with relative subfolder labels; single-click + Launch and double-click both launch the chosen file; Cancel/X → launch aborted silently; files in the base folder show no subfolder text.
 - [ ] **System selection** (`SystemSelectionWindow`) — appears when a game's system can't be auto-matched; current guess pre-selected; confirm with no selection does nothing; Cancel returns false.
 - [ ] **File pickers** (`AvaloniaFilePickerService`) — on Linux the emulator picker shows all files (no `*.exe` restriction) while Windows still offers "Executable Files"; a picker filter with a specific entry plus "All files" (e.g. Sound Configuration MP3) still shows the specific entry (LB-10); opening a picker from a child window (RA settings, Edit System) makes the dialog modal to that window, not the MainWindow (LB-21, noticeable on Wayland/GNOME).
@@ -171,7 +171,7 @@ Shared flow per emulator (sample 3–4 in depth, then spot-check the rest):
 
 These checks cover the watcher's behavior through the running app (end to end):
 
-- [ ] **Auto-refresh on external changes** (`GameFileWatcherService`) — with a system selected, add/delete/rename a ROM in its folder → the game list refreshes once ~500 ms after the change (not per file during a batch copy/extract).
+- [X] **Auto-refresh on external changes** (`GameFileWatcherService`) — with a system selected, add/delete/rename a ROM in its folder → the game list refreshes once ~500 ms after the change (not per file during a batch copy/extract).
 - [ ] Changes in a **non-selected** system's folder are ignored.
 - [ ] Watching starts/stops when switching systems; closing the app unsubscribes all watchers (no exceptions in the debug log).
 
@@ -209,13 +209,13 @@ Run "Scan for store games" after installing 1–2 real games per store. Verify p
 
 ## 12. Debug window & logging
 
-- [ ] **Debug window** (`DebugWindow`, `DebugWindowSink`) — opening it twice focuses the same window (no duplicate); new log lines auto-scroll; clicking X hides it but logging continues; reopen → buffered history flushed, live entries continue; `-debug` command-line flag opens it alongside the main window; app exit → no leak errors.
+- [X] **Debug window** (`DebugWindow`, `DebugWindowSink`) — opening it twice focuses the same window (no duplicate); new log lines auto-scroll; clicking X hides it but logging continues; reopen → buffered history flushed, live entries continue; `-debug` command-line flag opens it alongside the main window; app exit → no leak errors.
 - [ ] **Log files** — a rolling daily file sink in the local app data folder (7 days retained) is written; trigger an error → `error.log` contains environment/exception details.
 - [ ] **Bug report sink** (`BugReportApiSink`) — with the API reachable, logs are deleted after a successful submit; unreachable → `critical_error.log` written; a burst of warnings doesn't grow unbounded (100-cap).
 
 ## 13. Misc services
 
-- [ ] **Help text** (`HelpUserService`, `HelpUserManager`) — Edit System help pane for e.g. "SNES", "Mame", "PSX1": text, bold/headings, clickable links; unknown system → "No details available"; delete `parameters.md` → "file is missing" dialog; empty → "empty" dialog; no `##` headers → "no valid systems" dialog.
+- [X] **Help text** (`HelpUserService`, `HelpUserManager`) — Edit System help pane for e.g. "SNES", "Mame", "PSX1": text, bold/headings, clickable links; unknown system → "No details available"; delete `parameters.md` → "file is missing" dialog; empty → "empty" dialog; no `##` headers → "no valid systems" dialog.
 - [ ] **Config persistence (failure paths)** — read-only `system.xml` → 3 retries then "failed to save" logged; no `.tmp` file left behind; concurrent saves from two windows don't corrupt the file.
 - [ ] **MAME data** (`MameDataService`) — with a valid `mame.dat`, MAME games show descriptions; deleted `mame.dat` → startup dialog, app still runs; corrupt/0-byte file → graceful failure.
 - [ ] **Dialog services / file pickers / dispatcher** (`WpfMessageDialogService`, `WpfFilePickerService`, `WpfDispatcherService`, `WpfResourceProvider`, `WpfWindowContext`) — browse-for-folder/exe dialogs populate fields; cancel returns null cleanly; dialogs show correct icon/buttons and Yes/No/OK return values; language switch resolves all strings (missing key → key text, no deadlock); no cross-thread exceptions during downloads.

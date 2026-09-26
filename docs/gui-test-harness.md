@@ -161,18 +161,21 @@ SSH shell never matches itself.
    DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority python3 -c "import pyatspi; print(pyatspi.Registry.getDesktop(0).childCount)"
    ```
 3. App deployed (see §2) and executable.
-4. Console resolution: after every guest reboot re-apply 1080p (card coordinates assume it):
+4. Console resolution: card coordinates assume 1080p. The reference VM re-applies it with an
+   `xrandr-1080p` autostart; after a manual change use:
    ```bash
    DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080
    ```
-   On Hyper-V this can be made persistent with
+   On Hyper-V this can also be made persistent with
    `Set-VMVideo -VMName LinuxMint -HorizontalResolution 1920 -VerticalResolution 1080`.
 5. Deploy the harness helpers (also done automatically at every suite start):
    ```powershell
    . scripts\gui-test-harness\lib.ps1
-   Deploy-VmNav
-   Test-VmNavHealth        # -> True when the frame + menu bar are visible
+   Deploy-VmNav             # creates /home/vm/vision and SCPs the helper scripts
+   Test-VmNavHealth         # -> True when the app frame is in the AT-SPI tree
    ```
+6. Run the app once before the first fixture seed: `fixture.py` writes `settings.dat`, which the app
+   creates on its first run. `Set-VmFixture` warns when the DB is missing; run `Restart-VmApp` once.
 
 ---
 
@@ -284,7 +287,8 @@ Rules of thumb:
 - Prefer **deterministic** tree assertions (`STATE_ENABLED`, item sets, labels, DB, files) over
   vision; use vision only for visual claims (rendering, palettes, legibility).
 - Start every scenario with `n.activate_window(); n.maximize_window(); n.close_dialogs()`.
-- Use `n.open_system("Test System")` — it handles the system-selection screen and the browser.
+- Use `n.open_system("Test System")` — it returns to the card screen (Escape) and clicks the card,
+  so it works from the browser, Favorites and Play History alike.
 - Grid scenarios must call `n.ensure_grid_view()` (view mode persists in the DB).
 - Search triggers on **Return**, not the Search button.
 - Leave the UI in the state the screenshot should show; close dialogs in the *next* scenario.
@@ -334,7 +338,7 @@ All handles are re-resolved on every call (cached AT-SPI peers go stale after la
 | `click(entry)` | Native action (`click`/`select`) else xdotool click at live extents |
 | `right_click(entry)` / `double_click(entry)` / `click_at(x,y,button=,repeat=)` | Mouse-only interactions (context menus, cards) |
 | `click_card(label)` | System-selection card: finds the label, clicks the button containing it |
-| `open_system(label)` | Selection screen → click card; browser → no-op; waits for grid/list |
+| `open_system(label)` | Escape back to the card screen, click the card; works from any main page; waits for grid/list + scan settle |
 | `ensure_grid_view()` / `browser_open()` | Toggle back to grid when the persisted mode is list |
 | `filter_letter(letter)` | Click a letter button in the filter bar (`All`, `#`, `A`..`Z`) |
 | `pagination_count()` / `status_left()` | Parse `PaginationLabel` total / read `StatusLeft` |
@@ -379,17 +383,18 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
   xdotool at live extents.
 - **Two-click submenus**: `Edit Links` and `Sound Configuration` are flyout parents whose child
   repeats the name — click the parent, then the rightmost match.
-- **Escape in the browser** returns to the system-selection screen; `open_system()` handles both.
-  The `All` filter means "All Games" across systems, and a system's games appear only after that
-  system was opened once in the session.
+- **System switching**: the status bar (`System:` label) is the authoritative loaded system; the
+  `SystemComboBox` can lag behind it. `open_system()` escapes back to the card screen and clicks the
+  card. The `All` filter means "All Games" across systems, and a system's games appear only after
+  that system was opened once in the session.
 - **Persistence**: theme and view mode persist in `settings.dat`; scenarios must not assume the
   default. `ensure_grid_view()` fixes the view mode.
 - **Play history** needs >5 s of play time; the dummy emulator sleeps 7 s.
 - **Mint Update / `apt` running** starves the app and degrades AT-SPI: wait for `apt`/`dpkg` to
   finish and restart the app before trusting a red run.
-- **Unnamed controls found**: system-selection cards (code-created buttons, AT-SPI name
-  `Avalonia.Controls.StackPanel`) and the Edit System Help button (only a `? Help` label) — the
-  harness clicks via extents/labels.
+- **Control naming**: system-selection cards are code-created buttons (AT-SPI name
+  `Avalonia.Controls.StackPanel`), so the harness clicks the card's name label; the Edit System Help
+  button is named "Open the parameters wiki" with a `? Help` content label (find it via the label).
 - **One assertion per scenario**, tree assertions first, vision for visuals only.
 - Keep every screenshot; the report references it.
 
@@ -403,8 +408,10 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 | All checks `null` / 0.1 s runs | Python syntax error or SSH failure; run the scenario body via `Invoke-VmPython` and read the raw output |
 | Screenshots at 1024x768 | Guest rebooted; re-apply `xrandr ... 1920x1080` (card coordinates assume 1080p) |
 | Menus/dialogs ignore clicks | A modal is open; start with `n.close_dialogs()`, or restart the app |
-| Vision says "empty content" | Raise `--max-tokens` (`Invoke-VisionCheck -MaxTokens`), or re-run |
+| Vision says "empty content" / provider 5xx | `Invoke-VisionCheck` retries 3× automatically; raise `--max-tokens` if the model returns nothing |
+| AT-SPI tree empty for new app starts | Known registration flake; `Start-VmApp` waits up to 60 s and retries (3 starts). Never kill `at-spi-bus-launcher`/`at-spi2-registryd` (leaves a stale `AT_SPI_BUS` guid); reboot the VM if it persists |
 | Fixture changes not visible | The app must be **stopped** while `fixture.py` writes the DB; use `Restart-VmApp -Fixture` |
+| `fixture.py` warning about the DB | Brand-new VM: run the app once so it creates `settings.dat` |
 | Report says `exception` | Read `extra.exception` in the report; usually a stale selector or a modal |
 | Posh-SSH session drops | `Close-VmSession`; `Invoke-VmShell` retries once automatically |
 
@@ -412,12 +419,12 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 
 ## 13. Coverage map (what is automated vs manual)
 
-Automated by the 31 scenarios: startup/load, system selection, grid/list rendering, covers,
-filter bar, search + empty state, view-mode menu checkmarks, theme menu + persistence, Edit System
-window/help pane, Easy Mode selection state, fuzzy threshold, dead-zone, Edit Links, Sound
-Configuration, About/Update History, Support validation, Favorites add/remove, Play History,
-ZIP extraction + temp cleanup, file watcher, Debug window + log files, ROM History message,
-Broken System error dialog, menu structure (Windows-only items hidden).
+Automated by the 31 scenarios (**31/31 PASS, 2026-09-26**): startup/load, system selection,
+grid/list rendering, covers, filter bar, search + empty state, view-mode menu checkmarks, theme
+menu + persistence, Edit System window/help pane, Easy Mode selection state, fuzzy threshold,
+dead-zone, Edit Links, Sound Configuration, About/Update History, Support validation, Favorites
+add/remove, Play History, ZIP extraction + temp cleanup, file watcher, Debug window + live log
+lines, ROM History message, Broken System error dialog, menu structure (Windows-only items hidden).
 
 Manual/integration by design: emulator downloads and `Stop` mid-download, store scanners, config
 injection (Windows-only), RetroAchievements login/hashing, gamepad hardware, CHD/ISO/XISO mounting,
@@ -651,13 +658,13 @@ if __name__ == "__main__":
 | `Invoke-VmShell -Command -TimeoutSec` | Run a shell command; returns `{Output, ExitStatus}` |
 | `Invoke-VmXdo -Script -TimeoutSec` | Same but exports `$script:VmEnv` first |
 | `Invoke-VmPython -Script -TimeoutSec` | `python3 -u -` heredoc with `timeout -k 5`; output combined |
-| `Deploy-VmNav` | SCP `atspi_nav.py` + `fixture.py` to `/home/vm/vision` |
-| `Stop-VmApp` / `Start-VmApp -Arguments -SettleSeconds` | Kill by exact exe path; `setsid` start; wait for the window |
-| `Set-VmFixture -Name seed\|seeded\|empty\|clean-state\|dump` | Run `fixture.py` on the guest |
+| `Deploy-VmNav` | Creates `/home/vm/vision` and SCPs `atspi_nav.py` + `fixture.py` |
+| `Stop-VmApp` / `Start-VmApp -Arguments -SettleSeconds` | Kill **all** instances by exact exe path; `setsid` start; `Start-VmApp` waits for the AT-SPI frame and retries (3 starts) |
+| `Set-VmFixture -Name seed\|seeded\|empty\|clean-state\|dump` | Run `fixture.py` on the guest (warns when the DB is missing) |
 | `Restart-VmApp -SettleSeconds -Fixture -Arguments` | Stop → fixture → start |
-| `Test-VmNavHealth` | True when the app frame + menu bar are in the AT-SPI tree |
+| `Test-VmAtspiReady` / `Test-VmNavHealth` | True when the app frame is in the AT-SPI tree |
 | `Save-VmShot -Name` | `gnome-screenshot` in the guest, SCP to `shots\`; returns host path |
-| `Invoke-VisionCheck -Image -Prompt -Model -MaxTokens` | Runs `ask_vision.py` (key from user env) |
+| `Invoke-VisionCheck -Image -Prompt -Model -MaxTokens` | Runs `ask_vision.py` (key from user env); retries provider 5xx/timeouts 3× |
 | `Get-VmWindowList` | `xwininfo` top-level window list (debugging) |
 | `Get-SuiteVerdict -Text` / `Get-AtspiResult -Output` | Parse `VERDICT:` and `SL_RESULT:` |
 

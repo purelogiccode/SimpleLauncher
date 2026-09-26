@@ -249,6 +249,11 @@ class Nav:
                     self.click(buttons[0])
                     time.sleep(1.0)
                     return buttons[0]
+                # Fallback: the card button peer may be stale while the label is
+                # exposed; clicking the label's own extents still hits the card.
+                self.click(targets[0])
+                time.sleep(1.0)
+                return targets[0]
             time.sleep(POLL_INTERVAL)
         raise RuntimeError(f"system card {label!r} not found")
 
@@ -263,18 +268,124 @@ class Nav:
         return (self.find(id="GameGridView") is not None
                 or self.find(id="GameDataGrid") is not None)
 
+    def current_system(self):
+        """Loaded system name from the status bar (the combo can lag behind)."""
+        anchor = self.find(name="System:", role="label")
+        if anchor and anchor.extents:
+            ax, ay, aw, ah = anchor.extents
+            for e in self.find_all(role="label"):
+                if (e.name and e.extents and e.extents[0] >= ax + aw
+                        and abs(e.extents[1] - ay) <= 8):
+                    return e.name
+        return None
+
+    def _in_popup(self, entry):
+        """True when the entry lives inside a PopupRoot (combo/context popup)."""
+        try:
+            acc = entry.acc
+            for _ in range(16):
+                acc = acc.parent
+                if acc is None:
+                    return False
+                if _safe(acc.getRoleName) == "frame" and _safe(lambda: acc.name) == "PopupRoot":
+                    return True
+        except Exception:
+            return False
+        return False
+
+    def _combo_popup_items(self, deadline):
+        """Open the SystemComboBox popup if needed; return its list items."""
+        last_toggle = 0.0
+        while time.time() < deadline:
+            combo = self.find(id="SystemComboBox")
+            if combo is None or not combo.extents:
+                return []
+            cx, cy, cw, ch = combo.extents
+            items = []
+            for e in self.snapshot():
+                if e.role != "list item" or not e.name or not e.extents:
+                    continue
+                if e.extents[1] <= cy + ch - 5:
+                    continue
+                if not (cx - 5 <= e.extents[0] <= cx + cw):
+                    continue
+                if not self._in_popup(e):
+                    continue
+                items.append(e)
+            if items:
+                items.sort(key=lambda e: (e.extents[0], e.extents[1]))
+                return items
+            if time.time() - last_toggle > 1.5:
+                self.expand(combo)
+                last_toggle = time.time()
+            time.sleep(POLL_INTERVAL)
+        return []
+
+    def _click_combo_name(self, name, items):
+        for e in items:
+            if e.name == name:
+                self.click(e)
+                time.sleep(1.2)
+                return True
+        return False
+
+    def _combo_label(self, combo):
+        """System name shown inside the SystemComboBox (may lag the loaded system)."""
+        if not combo.extents:
+            return None
+        x, y, w, h = combo.extents
+        for e in self.find_all(role="label"):
+            if (e.name and e.extents and e.extents[0] >= x
+                    and y <= e.extents[1] and e.extents[1] + e.extents[3] <= y + h):
+                return e.name
+        return None
+
+    def _settle_games(self, deadline, settle_seconds=12):
+        """Let the game scan of the newly loaded system settle."""
+        settle_deadline = min(deadline, time.time() + settle_seconds)
+        last, stable = None, 0
+        while time.time() < settle_deadline:
+            count = self.pagination_count()
+            if count is not None and count == last:
+                stable += 1
+                if stable >= 2:
+                    break
+            else:
+                stable = 0
+            last = count
+            time.sleep(0.7)
+        time.sleep(0.8)
+
     def open_system(self, label, timeout=DEFAULT_TIMEOUT):
-        """Select a system: from the card screen when present, else assume it is
-        already loaded. Waits for the game grid/list afterwards."""
-        if not self.browser_open():
-            self.click_card(label, timeout=timeout)
+        """Select a system and wait for its game browser. Returns to the card
+        screen (Escape until the SystemComboBox disappears) and clicks the
+        requested card, which works from the game browser, Favorites, Play
+        History and the other main pages."""
         deadline = time.time() + timeout
+        if self.browser_open():
+            combo = self.find(id="SystemComboBox")
+            if (combo is not None and self.current_system() == label
+                    and self._combo_label(combo) == label):
+                return True
+        # Wait for the accessibility tree to register (the app may have just restarted).
+        while time.time() < deadline:
+            if self.find(name=self.window_title, role="frame") is not None:
+                break
+            time.sleep(0.5)
+        while time.time() < deadline:
+            if self.find(id="SystemComboBox") is None:
+                break
+            self.press("Escape")
+            time.sleep(1.2)
+        if self.find(id="SystemComboBox") is not None:
+            raise RuntimeError(f"could not reach the system-selection screen for {label!r}")
+        self.click_card(label, timeout=max(5, min(20, deadline - time.time())))
         while time.time() < deadline:
             if self.browser_open():
-                time.sleep(1.0)
+                self._settle_games(deadline)
                 return True
             time.sleep(0.5)
-        raise RuntimeError(f"game browser did not appear for system {label!r}")
+        raise RuntimeError(f"could not open system {label!r}")
 
     def state_names(self, entry):
         try:

@@ -136,6 +136,7 @@ def write_emulator():
 
 
 def connect():
+    os.makedirs(APPDATA, exist_ok=True)
     connection = sqlite3.connect(DB)
     connection.execute("PRAGMA busy_timeout = 5000")
     return connection

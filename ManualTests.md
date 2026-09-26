@@ -239,10 +239,10 @@ prerequisites, harness file inventory, configuration values to adapt, the fixtur
 
 | Item | Value |
 |---|---|
-| VM | Hyper-V `LinuxMint` (Gen 2, 4 vCPU, 8 GB RAM, 80 GB VHDX on `D:`) |
+| VM | Hyper-V `LinuxMint` (Gen 2, 8 vCPU, 8 GB RAM, 80 GB VHDX on `D:`) |
 | Guest OS | Linux Mint 22.3 Cinnamon (X11, LightDM **autologin** as `vm`) |
 | Login | user `vm`, password `vm` (sudo password `vm`) |
-| Guest IP | DHCP (was `172.24.166.133`) — re-check after VM reboot |
+| Guest IP | DHCP `172.31.176.191` on the Default Switch (host `172.31.176.1/20`) — re-check after VM reboot |
 | App | `~/SimpleLauncher/SimpleLauncher.Avalonia` (self-contained `linux-x64` publish) |
 | Fixture | `fixture.py` seeds `~/.local/share/SimpleLauncher/settings.dat` (SQLite): systems Test System / Second System / Broken System, ROMs in `~/roms/<System>`, covers in `~/images/<System>` |
 | Dummy emulator | `/home/vm/dummy-emulator.sh` (logs its args to `/tmp/dummy-emulator.log`, sleeps 7 s — play history needs >5 s) |
@@ -388,57 +388,54 @@ tree are authoritative and layout-independent — prefer them.
 
 ## 6. Scenario inventory and current status
 
-Last runs 2026-09-25 (subsets, `scripts\gui-test-harness\reports\run-<timestamp>.md`): the original 7
-scenarios were green; the suite was then extended to **31 scenarios** covering the Linux-applicable
-checklist (sections 1-13 of `docs/manual-tests.md`) using the seeded fixture. Current status:
+Last full run 2026-09-26 (`scripts\gui-test-harness\reports\run-20260926-052045.md`): **31/31 scenarios
+PASS** on the Hyper-V `LinuxMint` VM (Linux Mint 22.3, Avalonia `linux-x64` publish), covering the
+Linux-applicable checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture.
 
-| Id | Covers | Fixture | Status (2026-09-25) | Notes |
+| Id | Covers | Fixture | Status (2026-09-26) | Notes |
 |---|---|---|---|---|
-| EASY-01 | Welcome -> Easy Mode; dropdown populated + sorted; Add/Download disabled | empty | PASS (7/7 run) | re-verify in the full pass |
+| EASY-01 | Welcome -> Easy Mode; dropdown populated + sorted; Add/Download disabled | empty | PASS | waits for the config-loading overlay to clear |
 | EASY-02 | Selecting "Atari 2600" enables Download Emulator/Core; Add System stays disabled | seeded | PASS | |
-| MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | seeded | PASS (7/7 run) | re-verify in the full pass |
-| MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | seeded | PASS (7/7 run) | re-verify in the full pass |
-| MENU-02 | About menu exact 4 items | seeded | PASS (7/7 run) | re-verify in the full pass |
-| DIALOG-01 | Options > About opens the About window with a version string | seeded | PASS (7/7 run) | re-verify in the full pass |
-| DIALOG-02 | Options > Sound Configuration > flyout > window | seeded | PASS (7/7 run) | two-click submenu sequence |
-| DIALOG-03 | Edit System menu exact set; Add New System opens Easy Mode | seeded | PASS (7/7 run) | re-verify in the full pass |
+| MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | seeded | PASS | |
+| MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | seeded | PASS | |
+| MENU-02 | About menu exact 4 items | seeded | PASS | |
+| DIALOG-01 | Options > About opens the About window with a version string | seeded | PASS | |
+| DIALOG-02 | Options > Sound Configuration > flyout > window | seeded | PASS | two-click submenu sequence |
+| DIALOG-03 | Edit System menu exact set; Add New System opens Easy Mode | seeded | PASS | |
 | SYS-01 | 3 systems load; grid shows 4 Test System games; covers/placeholders | seeded | PASS | vision checks covers and "1 to 4 out of 4" |
-| SYS-02 | Broken System -> "Errors" dialog with invalid folder/image paths | seeded | not run yet | |
+| SYS-02 | Broken System -> "Errors" dialog with invalid folder/image paths | seeded | PASS | |
 | FILTER-01 | All shows all; "B" filters to Beta Blaster; status "Filtering by B" | seeded | PASS | |
 | SEARCH-01 | "Alpha" -> 1; "zzz" -> "No Games Found" + 0 total; clear restores | seeded | PASS | search triggers on Return |
-| VIEW-01 | Toggle grid -> list (GameDataGrid) | seeded | det PASS | vision prompt fixed (was expecting Sonic); re-run |
+| VIEW-01 | Toggle grid -> list (GameDataGrid) | seeded | PASS | |
 | VIEW-02 | View Mode menu checkmarks track selection; grid restored | seeded | PASS | |
 | THEME-01 | Base Theme checkmark; switch to Dark; value persisted in settings.dat | seeded | PASS | |
 | THEME-02 | Dark persists across restart; switch back to Adaptive | seeded + Restart | PASS | |
-| EDIT-01 | Edit System window opens with the selected system loaded | seeded | OPEN | Help control lookup + vision prompt |
-| HELP-01 | Edit System help pane shows content ("No information available..." for Test System) | seeded | OPEN | Help control lookup |
+| EDIT-01 | Edit System window opens with the selected system loaded | seeded | PASS | Help found via the `? Help` label; prompt expects only the visible fields |
+| HELP-01 | Edit System help pane shows content ("No information available..." for Test System) | seeded | PASS | asserts the Developer Suggestion pane (the `? Help` button opens the wiki, not a pane) |
 | DIALOG-04 | Threshold slider 80 -> 90 persisted, restored to 80 | seeded | PASS | |
 | DIALOG-05 | Gamepad dead zone dialog: two sliders + Cancel | seeded | PASS | |
 | DIALOG-06 | Edit Links window: 2 URL fields + Save/Revert/Cancel | seeded | PASS | |
 | SOUND-01 | Enable toggle disables Choose file/Play, re-enable works | seeded | PASS | |
-| ABOUT-02 | About version string + Update History renders WhatsNew.md | seeded | not run yet | |
-| SUPPORT-01 | Empty Send shows the "enter the details" validation | seeded | not run yet | |
-| FAV-01 | Add To Favorites via context menu; Favorites page lists Alpha Quest | seeded | not run yet | |
-| FAV-02 | Remove From Favorites via context menu; DB empty | seeded | not run yet | |
-| HIST-01 | Launch (>5 s) records PlayHistory; Play History page shows it | seeded | not run yet | |
-| ZIP-01 | ZIP launch extracts to `/tmp/SimpleLauncher`; temp cleaned after exit | seeded | not run yet | |
-| WATCH-01 | File watcher refreshes the count on external add/remove | seeded | not run yet | |
-| DEBUG-01 | `-debug` opens the Debug Window; daily log files exist | seeded + `-debug` | not run yet | |
-| ROMHIST-01 | Open ROM History on a non-MAME game -> no-history message | seeded | not run yet | |
+| ABOUT-02 | About version string + Update History renders WhatsNew.md | seeded | PASS | |
+| SUPPORT-01 | Empty Send shows the field validation | seeded | PASS | first missing field -> "Please enter the name." |
+| FAV-01 | Add To Favorites via context menu; Favorites page lists Alpha Quest | seeded | PASS | preview cover may be blank until the row is selected |
+| FAV-02 | Remove From Favorites via context menu; DB empty | seeded | PASS | |
+| HIST-01 | Launch (>5 s) records PlayHistory; Play History page shows it | seeded | PASS | DB stores the full ROM path (check uses the basename) |
+| ZIP-01 | ZIP launch extracts to `/tmp/SimpleLauncher`; temp cleaned after exit | seeded | PASS | the base temp folder may remain as long as it is empty |
+| WATCH-01 | File watcher refreshes the count on external add/remove | seeded | PASS | |
+| DEBUG-01 | `-debug` opens the Debug Window (title "Debugger") with live log lines | seeded + `-debug` | PASS | reads the "Debug log" text box |
+| ROMHIST-01 | Open ROM History on a non-MAME game -> no-history message | seeded | PASS | |
 
 ### Open items for the next session
 
-1. **EDIT-01 / HELP-01**: the Help control is an unnamed button with a `? Help` label (AT-SPI shows
-   the label only). Change both scenarios to find the label (`find(name="Help", contains=True)`, any
-   role) and click its extents. Also relax EDIT-01: the Edit System window shows no System Image text
-   field (only "Choose Image...") and no emulator section - update the vision prompt/checks to what is
-   actually visible (System Name, System Folder, buttons, help pane).
-2. **VIEW-01**: re-run with the fixed vision prompt (expects the 4 Test System games, not Sonic).
-3. **First runs**: SYS-02, ABOUT-02, SUPPORT-01, FAV-01, FAV-02, HIST-01, ZIP-01, WATCH-01, DEBUG-01,
-   ROMHIST-01 - iterate until green.
-4. **Full pass**: `pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1` (31 scenarios, ~40-60 min
-   with vision), then update the `docs/manual-tests.md` checkboxes only for items the suite verified.
-5. **Coverage gap (manual/integration by design)**: store scanners, emulator downloads, config
+1. **Full pass**: re-run `pwsh -NoProfile -File scripts\gui-test-harness\run-suite.ps1` (31 scenarios,
+   ~20-40 min with vision) after any app change; keep this runbook and `docs/manual-tests.md` in sync.
+2. **AT-SPI registration flakiness (environment)**: after a rapid app restart the app occasionally
+   fails to register with the a11y bus (empty tree while the window still renders). `Start-VmApp` now
+   waits up to 60 s for the frame and retries the launch (up to 3 starts). **Do not kill
+   `at-spi-bus-launcher` / `at-spi2-registryd`**: that leaves a stale `AT_SPI_BUS` guid on the X root
+   window and every new app then fails to register; recover with a VM reboot.
+3. **Coverage gap (manual/integration by design)**: store scanners, emulator downloads, config
    injection, RA API/login, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater,
    Commander Genius - keep as manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already
    verified by code/tests).
@@ -447,11 +444,16 @@ checklist (sections 1-13 of `docs/manual-tests.md`) using the seeded fixture. Cu
 
 1. Start the VM (`Start-VM LinuxMint`, elevated); re-check the DHCP IP with
    `Get-NetNeighbor -InterfaceAlias 'vEthernet (Default Switch)'` and update
-   `$script:VmHostAddress` in `scripts\gui-test-harness\lib.ps1` if it changed.
+   `$script:VmHostAddress` in `scripts\gui-test-harness\lib.ps1` if it changed (currently
+   `172.31.176.191`).
 2. After a guest reboot re-apply 1080p:
-   `DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080`.
-3. Fix the open items above, then run subsets while iterating and finally the full suite.
-4. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
+   `DISPLAY=:0 XAUTHORITY=/home/vm/.Xauthority xrandr --output Virtual-1 --mode 1920x1080`
+   (the `xrandr-1080p` autostart normally does this already).
+3. If every new app start leaves the AT-SPI tree empty (and the `Start-VmApp` retries keep failing),
+   reboot the VM - do not restart the a11y bus (see open item 2).
+4. Run subsets while iterating and finally the full suite; on failures read the newest
+   `reports\run-*.md` first (deterministic JSON + vision answer).
+5. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
 
 ## 7. Cost
@@ -503,13 +505,27 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
 - **Context menus** open as a `PopupRoot` frame whose `menu item`s ARE exposed; right-click must be
   done with xdotool at live extents (`Nav.right_click`). "Edit Links" and "Sound Configuration" need
   the two-click submenu sequence (parent opens a flyout with the same name).
-- **Escape in the browser** returns to the system-selection screen; `Nav.open_system()` handles both
-  states. The filter button "All" means "All Games" across systems, and a system's games only appear
-  after that system was opened once in the session.
+- **`Nav.open_system()` (rewritten 2026-09-26)** returns to the card screen (Escape until the
+  `SystemComboBox` disappears) and clicks the requested card, so it works from the game browser,
+  Favorites and Play History pages alike. The status bar (`System:` label) is the authoritative
+  "loaded system"; the combo can lag behind it. The filter button "All" means "All Games" across
+  systems, and a system's games only appear after that system was opened once in the session.
 - **Search triggers on Return** (not the Search button); the no-match state shows "No Games Found"
   and pagination "0 to 0 out of 0". The filter status text is `Filtering by B` (not just `B`).
-- **Accessibility gaps found (not fixed yet):** the system-selection cards are code-created buttons
-  with a `StackPanel` content and no `AutomationProperties.Name` (AT-SPI name is
-  `Avalonia.Controls.StackPanel`), and the Edit System Help button is unnamed (only a `? Help` label
-  is exposed). `AvaloniaAccessibilityTests` scans XAML only, so code-created controls would need a
-  separate guardrail if these are fixed.
+- **Single-instance enforcement on Linux (FIXED 2026-09-26).** .NET named mutexes are scoped to the
+  login session on Unix (`/tmp/.dotnet/shm/sessionNNNN`), so two instances started from different
+  sessions - exactly what `setsid` does in the harness - both saw `createdNew=true` and ran. Both apps
+  now also take a per-user lock file (`SingleInstance.TryAcquireLockFile`, `FileShare.None`,
+  `~/.local/share/SimpleLauncher/single-instance.lock`), which is enforced across processes and
+  sessions; the named mutex/event remain for the Windows focus signal. `Stop-VmApp` now kills every
+  matching instance (including launches with `-debug`).
+- **AT-SPI registration flakiness (environment).** After a rapid app restart the app occasionally
+  never registers with the a11y bus (empty tree; the X window still renders). `Start-VmApp` waits up
+  to 60 s for the frame and retries the launch (up to 3 starts); the 2026-09-26 full run needed 2
+  transparent retries. Never kill `at-spi-bus-launcher`/`at-spi2-registryd` as a "fix": the X root
+  `AT_SPI_BUS` property keeps a stale guid and then no new app can register - reboot the VM instead.
+- **Accessibility gaps:** the system-selection cards are code-created buttons with a `StackPanel`
+  content and no `AutomationProperties.Name` (AT-SPI name is `Avalonia.Controls.StackPanel`), so the
+  harness clicks the card's name label; the Edit System Help button is named "Open the parameters
+  wiki" with a `? Help` content label (find it via the label). `AvaloniaAccessibilityTests` scans
+  XAML only, so code-created controls would need a separate guardrail if these are fixed.

@@ -1,4 +1,4 @@
-$script:VmHostAddress = '172.24.166.133'
+$script:VmHostAddress = '172.31.176.191'
 $script:VmUserName = 'vm'
 $script:VmPassword = 'vm'
 $script:HarnessRoot = $PSScriptRoot
@@ -61,6 +61,7 @@ function Invoke-VmXdo {
 }
 
 function Deploy-VmNav {
+    Invoke-VmShell -Command 'mkdir -p /home/vm/vision' -TimeoutSec 30 | Out-Null
     Set-SCPItem -ComputerName $script:VmHostAddress -Credential (Get-VmCredential) -Path $script:NavScript `
         -Destination '/home/vm/vision' -AcceptKey -Force -ErrorAction Stop | Out-Null
     Set-SCPItem -ComputerName $script:VmHostAddress -Credential (Get-VmCredential) -Path $script:FixtureScript `
@@ -78,14 +79,29 @@ function Invoke-VmPython {
 
 function Stop-VmApp {
     $kill = @'
-p=$(pgrep -f "/home/vm/SimpleLauncher/SimpleLauncher.Avalonia$")
-if [ -n "$p" ]; then
+for p in $(pgrep -f "^/home/vm/SimpleLauncher/SimpleLauncher.Avalonia( |$)"); do
   exe=$(readlink /proc/$p/exe 2>/dev/null)
   [ "$exe" = "/home/vm/SimpleLauncher/SimpleLauncher.Avalonia" ] && kill -9 $p
-fi
+done
 sleep 1
 '@
     Invoke-VmXdo -Script $kill -TimeoutSec 60 | Out-Null
+}
+
+function Test-VmAtspiReady {
+    $check = @'
+import sys, json
+sys.path.insert(0, "/home/vm/vision")
+from atspi_nav import Nav
+n = Nav()
+entries = n.snapshot()
+print("SL_READY: " + json.dumps({"nodes": len(entries),
+      "frame": any(e.role == "frame" and e.name == "Simple Launcher" for e in entries)}))
+'@
+    $result = Invoke-VmPython -Script $check -TimeoutSec 60
+    $json = $result.Output | Select-String -Pattern '\{"nodes".*\}' | ForEach-Object { $_.Matches[0].Value } | Select-Object -Last 1
+    if (-not $json) { return $false }
+    ($json | ConvertFrom-Json).frame
 }
 
 function Start-VmApp {
@@ -96,12 +112,31 @@ for i in $(seq 1 40); do xdotool search --name "^Simple Launcher$" >/dev/null 2>
 '@ -replace '__ARGS__', $Arguments
     Invoke-VmXdo -Script $start -TimeoutSec 90 | Out-Null
     Start-Sleep -Seconds $SettleSeconds
+    # The app occasionally needs a while to register with the AT-SPI bus after a
+    # rapid restart; wait patiently for the frame, then retry once with a pause.
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        $deadline = (Get-Date).AddSeconds(60)
+        while ((Get-Date) -lt $deadline) {
+            if (Test-VmAtspiReady) { return }
+            Start-Sleep -Seconds 2
+        }
+        Write-Host "AT-SPI tree not ready (attempt $attempt); restarting the app"
+        Stop-VmApp
+        Start-Sleep -Seconds 5
+        Invoke-VmXdo -Script $start -TimeoutSec 90 | Out-Null
+        Start-Sleep -Seconds $SettleSeconds
+    }
 }
 
 function Set-VmFixture {
     param([Parameter(Mandatory)][ValidateSet('seed', 'seeded', 'empty', 'clean-state', 'dump')][string]$Name)
     $command = if ($Name -eq 'seeded') { 'seed' } else { $Name }
-    (Invoke-VmShell -Command "python3 /home/vm/vision/fixture.py $command" -TimeoutSec 60).Output
+    $result = Invoke-VmShell -Command "python3 /home/vm/vision/fixture.py $command" -TimeoutSec 60
+    if ($result.ExitStatus -ne 0) {
+        # On a brand-new VM the DB does not exist until the app has run once.
+        Write-Warning "fixture.py $command failed (run the app once to create settings.dat): $($result.Output)"
+    }
+    $result.Output
 }
 
 function Restart-VmApp {
@@ -119,7 +154,7 @@ from atspi_nav import Nav
 n = Nav()
 entries = n.snapshot()
 frame = any(e.role == "frame" and e.name == "Simple Launcher" for e in entries)
-tops = [e.name for e in entries if e.role == "menu item" and e.extents and e.extents[1] < 120]
+tops = sorted({e.name for e in entries if e.role == "menu item" and e.name})
 ok = frame and "Options" in tops and "About" in tops
 print("SL_HEALTH: " + json.dumps({"ok": ok, "nodes": len(entries), "tops": tops}))
 '@
@@ -149,8 +184,16 @@ function Invoke-VisionCheck {
     )
     $env:OPENROUTER_API_KEY = [Environment]::GetEnvironmentVariable('OPENROUTER_API_KEY', 'User')
     if (-not $env:OPENROUTER_API_KEY) { throw 'OPENROUTER_API_KEY is not set in user environment variables' }
-    $output = & python $script:AskScript $Image $Prompt --model $Model --max-tokens $MaxTokens 2>&1
-    ($output -join "`n")
+    # The vision provider occasionally returns 5xx/timeout errors; retry a couple
+    # of times before treating the answer as unusable.
+    $text = ''
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        $output = & python $script:AskScript $Image $Prompt --model $Model --max-tokens $MaxTokens 2>&1
+        $text = ($output -join "`n")
+        if ($text -match '(?im)^\s*\**VERDICT\s*:\s*(PASS|FAIL)') { return $text }
+        if ($attempt -lt 3) { Start-Sleep -Seconds 3 }
+    }
+    $text
 }
 
 function Get-VmWindowList {
