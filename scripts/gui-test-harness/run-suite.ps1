@@ -968,6 +968,93 @@ Expected: a dialog or prompt stating that no ROM history was found (possibly off
 First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
 Then report what is visible. Be brief.
 '@
+    },
+    @{
+        Id      = 'MAME-01'
+        Name    = 'Arcade system with real MAME ROMs shows machine descriptions and the sort toggle'
+        Fixture = 'arcade'
+        Py      = $pyCommon + @'
+    n.activate_window(); n.maximize_window(); n.close_dialogs(); time.sleep(0.5)
+    checks["arcade_open"] = n.open_system("Arcade", timeout=40)
+    n._settle_games(time.time() + 25)
+    count = n.pagination_count()
+    extra["pagination"] = count
+    checks["seven_games"] = count == 7
+    if n.find(id="GameGridView") is not None:
+        n.click(n.find(id="NavToggleViewModeButton")); time.sleep(2.0)
+    checks["list_view"] = n.wait_for(id="GameDataGrid", timeout=15) is not None
+    n.filter_letter("All"); time.sleep(2.0)
+    known = ("Pac-Man (Midway)", "Galaga (Namco rev. B)", "Donkey Kong (US set 1)",
+             "Ms. Pac-Man", "Neo-Geo MV-6F", "3DO BIOS", "Amiga 1200 Keyboard Rev B")
+    labels = [e.name for e in n.find_all(role="label") if e.name]
+    extra["descriptions"] = [x for x in labels if x in known]
+    checks["mame_descriptions"] = len(extra["descriptions"]) >= 5
+    btn = n.find(name="Toggle sorting between file name and machine description")
+    checks["sort_button"] = btn is not None
+    if btn:
+        n.click(btn); time.sleep(2.0)
+        labels = [e.name for e in n.find_all(role="label") if e.name]
+        checks["sorted_by_description"] = any("Sorted by machine description" in x for x in labels)
+        n.click(btn); time.sleep(1.5)
+        labels = [e.name for e in n.find_all(role="label") if e.name]
+        checks["sorted_back_to_filename"] = any("Sorted by file name" in x for x in labels)
+    # List view is left on screen: the runner's screenshot must show the
+    # Machine Description column.
+'@ + $pyTail
+        Shot    = 'MAME-01-list'
+        Prompt  = @'
+Simple Launcher (Avalonia, Linux) should show the "Arcade" system in list view with real MAME ROMs.
+Expected: a "Machine Description" column with real MAME machine descriptions, e.g. "Pac-Man (Midway)", "Galaga (Namco rev. B)", "Donkey Kong (US set 1)", "Ms. Pac-Man", "Neo-Geo MV-6F"; the Folder Path column mixes /home/vm/roms/Arcade and /home/vm/roms/Arcade BIOS; the status bar bottom-left shows "Sorted by file name" (the scenario toggles the MAME sort button back at the end).
+First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
+Then report the descriptions visible and any mismatch. Be brief.
+'@
+    },
+    @{
+        Id      = 'MAME-02'
+        Name    = 'ROM History shows the real MAME entry and machine description'
+        Fixture = 'arcade'
+        Py      = $pyCommon + @'
+    n.activate_window(); n.maximize_window(); n.close_dialogs(); time.sleep(0.5)
+    n.open_system("Arcade", timeout=40)
+    n._settle_games(time.time() + 25)
+    if n.find(id="GameGridView") is not None:
+        n.click(n.find(id="NavToggleViewModeButton")); time.sleep(2.0)
+    n.wait_for(id="GameDataGrid", timeout=15)
+    n.filter_letter("All"); time.sleep(2.0)
+    # Sort by machine description so the last row is deterministic (Pac-Man is
+    # alphabetically last), then open ROM History on it.
+    sort_btn = n.find(name="Toggle sorting between file name and machine description")
+    if sort_btn:
+        n.click(sort_btn); time.sleep(2.0)
+    labels = [e.name for e in n.find_all(role="label") if e.name]
+    checks["sorted_by_description"] = any("Sorted by machine description" in x for x in labels)
+    n.click_at(250, 397, button=3); time.sleep(1.5)
+    n.click_context_item("Open ROM History", timeout=10)
+    time.sleep(3.5)
+    frame = n.wait_for(name="Rom History", role="frame", timeout=15)
+    checks["history_window"] = frame is not None
+    window_labels = []
+    if frame and frame.extents:
+        fx, fy, fw, fh = frame.extents
+        window_labels = [e.name for e in n.find_all(role="label") if e.name and e.extents
+                         and fx <= e.extents[0] and e.extents[0] + e.extents[2] <= fx + fw
+                         and fy <= e.extents[1] and e.extents[1] + e.extents[3] <= fy + fh]
+    extra["window_labels"] = window_labels[:8]
+    checks["description_title"] = any("Pac-Man (Midway)" in x for x in window_labels)
+    texts = [n.read_text(e) for e in n.find_all(role="entry")]
+    history = max((t for t in texts if t), key=len, default="")
+    extra["history_len"] = len(history)
+    extra["history_head"] = history[:120]
+    checks["real_history_text"] = len(history) > 200
+    # The Rom History window stays open: the runner's screenshot must show it.
+'@ + $pyTail
+        Shot    = 'MAME-02-history'
+        Prompt  = @'
+Simple Launcher (Avalonia, Linux) should show the "Rom History" window for a real MAME game from the Arcade system.
+Expected: the window title area shows the ROM name and a real MAME machine description such as "Pac-Man (Midway)" or "Galaga (Namco rev. B)", and the body shows real arcade-history text (several lines of prose, e.g. a year, publisher, TRIVIA or CONTRIBUTE sections) - not an empty pane and not a "no history found" message.
+First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
+Then report the title and a couple of visible history lines. Be brief.
+'@
     }
 )
 

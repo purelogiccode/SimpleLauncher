@@ -3,6 +3,7 @@
 
 Usage: fixture.py <command>
   seed         Create systems/ROMs/images/dummy emulator in the unified DB
+  arcade       seed + an 'Arcade' system backed by real MAME ROMs (two folders)
   empty        Remove all systems (first-run state)
   clean-state  Clear favorites/play history/temp artifacts (keep systems)
   dump         Print Systems/Favorites/PlayHistory/AppSettings rows as JSON
@@ -24,6 +25,25 @@ ROMS = "/home/vm/roms"
 IMAGES = "/home/vm/images"
 EMULATOR = "/home/vm/dummy-emulator.sh"
 EMULATOR_LOG = "/tmp/dummy-emulator.log"
+
+ARCADE_SYSTEM = {
+    "SystemName": "Arcade",
+    "SystemFolders": [f"{ROMS}/Arcade", f"{ROMS}/Arcade BIOS"],
+    "SystemImageFolder": f"{IMAGES}/Arcade",
+    "FileFormatsToSearch": [".zip"],
+    "FileFormatsToLaunch": [".zip"],
+    "ExtractFileBeforeLaunch": False,
+    "GroupByFolder": False,
+    "DisableRecursiveSearch": False,
+    "Emulators": [
+        {
+            "EmulatorName": "MAME",
+            "EmulatorLocation": EMULATOR,
+            "EmulatorParameters": '"%ROM%"',
+            "ReceiveANotificationOnEmulatorError": True,
+        }
+    ],
+}
 
 SYSTEMS = [
     {
@@ -163,6 +183,28 @@ def seed():
     print(json.dumps({"seeded": [s["SystemName"] for s in SYSTEMS]}))
 
 
+def arcade():
+    """Standard fixture plus an 'Arcade' system backed by real MAME ROMs.
+
+    The ROM zips (pacman, galaga, dkong, mspacman in /home/vm/roms/Arcade and
+    neogeo, 3dobios, a1200kbd_rb in /home/vm/roms/Arcade BIOS) are copied to the
+    VM separately; this only seeds the system configuration.
+    """
+    seed()
+    os.makedirs(f"{IMAGES}/Arcade", exist_ok=True)
+    for name, rgb in (("pacman", (240, 200, 40)), ("galaga", (40, 90, 220)),
+                      ("neogeo", (220, 40, 60))):
+        make_png(f"{IMAGES}/Arcade/{name}.png", rgb)
+    connection = connect()
+    with connection:
+        connection.execute(
+            "INSERT OR REPLACE INTO Systems (SystemName, ConfigJson) VALUES (?, ?)",
+            (ARCADE_SYSTEM["SystemName"], json.dumps(ARCADE_SYSTEM)),
+        )
+    connection.close()
+    print(json.dumps({"seeded": [s["SystemName"] for s in SYSTEMS] + [ARCADE_SYSTEM["SystemName"]]}))
+
+
 def empty():
     connection = connect()
     with connection:
@@ -199,4 +241,4 @@ def dump():
 
 if __name__ == "__main__":
     command = sys.argv[1] if len(sys.argv) > 1 else "dump"
-    {"seed": seed, "empty": empty, "clean-state": clean_state, "dump": dump}[command]()
+    {"seed": seed, "arcade": arcade, "empty": empty, "clean-state": clean_state, "dump": dump}[command]()

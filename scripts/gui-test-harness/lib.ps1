@@ -129,7 +129,7 @@ for i in $(seq 1 40); do xdotool search --name "^Simple Launcher$" >/dev/null 2>
 }
 
 function Set-VmFixture {
-    param([Parameter(Mandatory)][ValidateSet('seed', 'seeded', 'empty', 'clean-state', 'dump')][string]$Name)
+    param([Parameter(Mandatory)][ValidateSet('seed', 'seeded', 'arcade', 'empty', 'clean-state', 'dump')][string]$Name)
     $command = if ($Name -eq 'seeded') { 'seed' } else { $Name }
     $result = Invoke-VmShell -Command "python3 /home/vm/vision/fixture.py $command" -TimeoutSec 60
     if ($result.ExitStatus -ne 0) {
