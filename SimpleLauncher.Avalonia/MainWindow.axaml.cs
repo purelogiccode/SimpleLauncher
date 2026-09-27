@@ -162,9 +162,9 @@ public partial class MainWindow : Window, IPaginationHost
         // XAML KeyDown wiring never saw it and Enter did not launch from these grids.
         // Subscribe with handledEventsToo so Delete (remove) and Enter (launch) both work.
         FavoritesDataGrid.AddHandler(KeyDownEvent,
-            (_, e) => _ = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
+            (o, e) => o = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
         PlayHistoryDataGrid.AddHandler(KeyDownEvent,
-            (_, e) => _ = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
+            (o, e) => o = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
 
         // Populate system data from system.xml (sidebar + top System ComboBox)
         PopulateSidebarFromSystemXml();
