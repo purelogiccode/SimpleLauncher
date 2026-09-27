@@ -441,7 +441,11 @@ Debug window + live log lines, ROM History message, Broken System error dialog, 
 
 Manual/integration by design: store scanners, config injection (Windows-only), RetroAchievements
 login/hashing, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius,
-and anything needing real network/emulators. Easy Mode downloads were swept manually on 2026-09-26:
+and anything needing real network/emulators. The emulator sweep session on 2026-09-27 replaced the
+"real-ROM launches" gap with a full matrix: 36 systems seeded from the Easy Mode manifest, 29
+distinct emulators/cores launched through the UI with real ROMs, and the RetroAchievements settings
+login, profile page, per-game window and local CLI hashing verified live (see section 15 and the
+session notes in `ManualTests.md`). Easy Mode downloads were swept manually on 2026-09-26:
 **15/15 distinct emulator downloads and the shared RetroArch core install correctly** (after fixing
 BUG-03 `.tar.gz`, BUG-04 zip execute bits, BUG-05 `.tar.xz` and BUG-06 solid-7z extraction
 performance) — see `ManualTests.md` §6 "Easy Mode emulator/core install sweep" and §8. The Easy Mode
@@ -476,6 +480,36 @@ the newly installed emulators) and the uncommitted files from the session.
 - Ad-hoc screenshots via `Save-VmShot -Name <name>`.
 - Guest app log: `/tmp/simplelauncher.log`; daily logs under
   `~/.local/share/SimpleLauncher/` (also checked by DEBUG-01).
+
+---
+
+## 15. Emulator matrix fixture (real-ROM launch sweep)
+
+`scripts\gui-test-harness\vm-systems.json` holds 36 system configs generated from the Linux Easy Mode
+manifest (`https://assets.purelogiccode.com/.../easymode_linux_x64.xml`, `%BASEFOLDER%` ->
+`/home/vm/SimpleLauncher`, formats normalized to arrays). `seed-batch.py <names...>` keeps the four
+base systems plus only the requested batch, so the system-selection screen shows every card (its
+AT-SPI card labels go missing when many systems are loaded - keep batches under ~19 systems).
+
+Guest prerequisites (see the 2026-09-27 sweep in `ManualTests.md` for the full recipe):
+
+- RetroArch 1.22.2 + all cores extracted to
+  `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/` (AppImage + `.home` layout).
+- Real ROMs under `~/roms/<System>/` and an existing image folder per system (`~/images/<System>/`);
+  opening a system whose image folder is missing shows "System Image Folder path is not valid or
+  does not exist".
+- `chmod +x` the bundled Linux tools after an SCP deploy (`tools/SevenZip/7zz`,
+  `tools/RetroAchievementsSharp/RetroAchievementsSharp`) - SCP does not preserve the exec bits that
+  `package-release-linux.ps1` sets in the release zip.
+
+Launch pattern (UI, deterministic): `open_system` -> `ensure_grid_view` -> `filter_letter("All")`
+(the grid only renders after a letter filter) -> `click_at(195, 330, button=3)` -> context menu
+`Launch Game` -> poll `pgrep -f "RetroArch-Linux-x86_64.AppImage|bin/openmsx"` -> read the window
+title via `wmctrl` -> `pkill` -> check the `PlayHistory` row. 29 distinct emulators/cores were
+exercised this way on 2026-09-27.
+
+RetroAchievements on the VM needs the user's RA username/password/Web API key in the settings
+window; the local hasher CLI then resolves the game ID and the per-game window loads live data.
 
 ---
 

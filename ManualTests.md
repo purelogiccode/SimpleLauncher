@@ -633,6 +633,78 @@ screenshots in `shots\` (`mame-*`, `MAME-01-list.png`, `MAME-02-history.png`).
   (GroupByFolder warning), 110 (ROM History - now with a real MAME entry) and 235 (MAME data) are
   verified; the remaining unexercised items are unchanged (see open item 4).
 
+### Emulator sweep session (2026-09-27, ad-hoc + RetroAchievements)
+
+Goal: exercise the real emulator launch pipeline with the user's ROM collection (host `G:\`) and test
+RetroAchievements with real credentials (username/password + Web API key supplied by the user; **not
+stored in the repo**).
+
+**Setup (reusable):**
+- RetroArch 1.22.2 (`RetroArch_Linux_x64.7z` + `RetroArch_cores.7z` from the manifest links) extracted
+  into `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/` (the AppImage + `.home` layout
+  the Easy Mode manifest expects; `chmod +x` the AppImage). 491 core files.
+- OpenMSX 21.0 (`openmsx-21.0-linux-x86_64-bin.zip`) extracted to
+  `~/SimpleLauncher/emulators/OpenMSX/` (`bin/openmsx`).
+- 50 real ROMs (873 MB) copied from `G:\` for 36 systems; system configs generated from the Linux
+  Easy Mode manifest (`vm-systems.json`) and seeded with `seed-batch.py` (new harness helper). Image
+  folders must exist (`~/images/<system>`) or opening the system shows "System Image Folder path is
+  not valid or does not exist".
+- Harness helpers added: `scripts/gui-test-harness/seed-batch.py` (keep base systems + a batch) and
+  `vm-systems.json` (36 manifest-derived configs).
+
+**Launch sweep (all through the UI: system card -> letter "All" -> right-click -> Launch Game):**
+36/36 systems opened with correct game counts; **29 distinct emulators/cores** started with real ROMs:
+
+| Systems | Emulator/core (window title) |
+|---|---|
+| NES, FDS | RetroArch Mesen 0.9.9 (FDS ROM needs `disksys.rom`, emulator showed Error) |
+| SNES, Satellaview | RetroArch Snes9x 1.63 |
+| GB, GBC | RetroArch Gambatte v0.5.0 |
+| GBA | RetroArch mGBA 0.11-dev |
+| N64 | RetroArch Mupen64Plus-Next 2.8-Vulkan |
+| NDS | RetroArch melonDS 0.9.3 |
+| Genesis, SMS, GG, SG-1000 | RetroArch PicoDrive 2.05 / Genesis Plus GX v1.7.4 |
+| 32X | RetroArch PicoDrive 2.05 |
+| PC Engine, SuperGrafx, Virtual Boy, NGP, NGPC, WonderSwan | Beetle PCE / SuperGrafx / VB / NeoPop / WonderSwan |
+| Atari 2600/5200/7800/8-Bit/ST/Lynx/Jaguar | Stella 8.0_pre / a5200 / ProSystem / Atari800 / Hatari / Handy / Virtual Jaguar |
+| Colecovision, Intellivision, Odyssey 2, C64, Amiga | blueMSX / FreeIntv / O2EM / VICE x64sc 3.9 / PUAE 5.3.0 |
+| ZX Spectrum | Fuse 1.6.0 |
+| Arcade RA | MAME core started; pacman/dkong need device ROMs from a full MAME set (emulator Error) |
+| ScummVM | scummvm core started; zip game data not verified visually |
+| MSX | OpenMSX started; MSX BIOS ROMs are not bundled (emulator Error) |
+
+Every launch recorded a PlayHistory row (TimesPlayed=1, ~8 s play time) and the app stayed alive;
+closing the emulator re-enabled the UI. MAME/OpenMSX/FDS errors are emulator data gaps (missing
+device/BIOS ROMs), not app bugs.
+
+**RetroAchievements (live):**
+- Settings window (Options -> Retro Achievements Settings): username `petersonfernandes`, password
+  and Web API key saved; reopen pre-fills; the RA profile page loads live data (Points 38, True
+  Points 46, Member Since 2025-09-30, User ID 1437505, Currently Playing).
+- Per-game flow on Atari 2600 *Adventure*: context menu "View Achievements" -> "Calculating Game
+  Hash..." -> window with cover, Casual/Hardcore progress bars, 12 achievements (points, true ratio,
+  rarity "55.6% hardcore", Locked, "Not Earned", author) - the bundled
+  `tools/RetroAchievementsSharp/RetroAchievementsSharp` CLI computed the hash locally.
+- Missing API key -> "You need to add RetroAchievement login information to use this feature." (no
+  crash); hasher failure -> "'Simple Launcher' could not calculate the hash value... Do you want to
+  open the global RetroAchievements window?" (graceful).
+- Credential storage on Linux: `RaPassword`/`RaApiKey` are Base64 (portable fallback, DPAPI is
+  Windows-only) - by design, but effectively obfuscation, not encryption (documented limitation).
+
+**Findings:**
+- **BUG-13 (FIXED 2026-09-27):** the DPAPI-unavailable message was logged at `Warning`, so the
+  bug-report sink filed it as a bug on every Linux RA credential save
+  (`error_user.log`: "DPAPI is not available on this platform..."). Now `Information`
+  (`WindowsCredentialProtector.WarnPortableFallback`); verified on the VM (no new entry after the
+  fixed Core was deployed, md5 `ec5896c77f5e49784c99d886a16bcab1`).
+- Harness gotchas (not app bugs): SCP deployment strips the exec bits of the bundled Linux tools
+  (`7zz`, `RetroAchievementsSharp`) - `chmod +x` after deploy (the release zip sets 0755 via
+  `package-release-linux.ps1`); a single-element `FileFormatsToSearch` array serialized as a JSON
+  string makes the app's strict `SystemConfigStore` deserializer silently skip the whole system
+  (seed scripts now normalize to arrays); a system needs its image folder to exist before it opens.
+- Grid cards only render after a letter filter (`filter_letter("All")`) - the right-click launch
+  sweep silently did nothing without it.
+
 ### Open items for the next session
 
 1. **Full pass - DONE 2026-09-26**: `reports\run-20260926-143336.md` **31/31 PASS in a single run** on
@@ -658,12 +730,18 @@ screenshots in `shots\` (`mame-*`, `MAME-01-list.png`, `MAME-02-history.png`).
    session were exercised on 2026-09-26 (see the two sections above), which surfaced and fixed
    BUG-07..BUG-11; the MAME data session on 2026-09-27 covered MAME descriptions, sort, search,
    Favorites/Play History columns, ROM History, the `mame.dat` failure paths and the GroupByFolder
-   warning. Still unexercised: the `<5 GB free` disk-space error, the final failure after all retries,
-   closing a window during a download, real-ROM launches for the other emulators, the successful Edit
-   System save path and the AI fix flow, Support valid submit, Image viewer, DOSBox file selection,
-   System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone Save+Revert,
-   About offline update checks, log files and the bug-report sink, config-persistence failure paths,
-   gamepad on this VM, and video/info context-menu links.
+   warning; the emulator sweep session on 2026-09-27 launched real ROMs through **29 distinct
+   emulators/cores** (see that section) and verified the RetroAchievements settings login, profile
+   page, per-game window and local hashing with real credentials. Still unexercised: the `<5 GB free`
+   disk-space error, the final failure after all retries, closing a window during a download, the
+   successful Edit System save path and the AI fix flow, Support valid submit, Image viewer, DOSBox
+   file selection, System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone
+   Save+Revert, About offline update checks, log files and the bug-report sink, config-persistence
+   failure paths, gamepad on this VM, video/info context-menu links, the RA per-game window's other
+   tabs (Game Info/Ranking/My Profile/Unlocks/User Progress), RA login/API error paths and the
+   hashing variants (NES header-strip, system picker, zipped PS1, RVZ, unsupported system), and
+   real-ROM launches for the remaining standalone emulators (DuckStation/PCSX2/RPCS3/Redream/
+   Supermodel/Ymir/Cemu/Azahar/shadPS4/Vita3K - no ROMs for those systems on the host).
 5. **MAME startup notifications - FIXED 2026-09-27 (BUG-12)**: the corrupt `mame.dat` case was
    silent and the Avalonia required-files dialog claimed a shutdown without quitting. `MameDataService`
    now records the load failure and the startup initialization reports it once the window exists;
@@ -678,14 +756,26 @@ screenshots in `shots\` (`mame-*`, `MAME-01-list.png`, `MAME-02-history.png`).
 - VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
   reboot; `lib.ps1` updated accordingly) - always re-check after a VM boot.
-- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-12
-  fixes and deployed (`SimpleLauncher.Core.dll` md5 `fb53cfd8eae668e6c129747d65627007`,
-  `SimpleLauncher.Avalonia.dll` md5 `68d6f222edcfd0375dcf0ee18ca1bbec`); after the MAME session the app
-  runs the **arcade** fixture (4 systems: Test/Second/Broken + Arcade with 7 real MAME ROMs), no
-  `-debug`, list view. The continuation session ran on the earlier payload; the Avalonia (686/686) and
-  WPF (2122/2122) suites are green on the current working tree, which has the BUG-07..11 fixes
-  committed (`aa87e469`..`0db577a7`), the stall inner-exception fix (`eb533939`) and the KeyDown style
-  commit (`7c407d23`); the harness/docs changes and the BUG-12 fix are uncommitted (item 9).
+- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-13
+  fixes and deployed (`SimpleLauncher.Core.dll` md5 `ec5896c77f5e49784c99d886a16bcab1` after the
+  BUG-13 deploy, previously `fb53cfd8eae668e6c129747d65627007`; `SimpleLauncher.Avalonia.dll` md5
+  `68d6f222edcfd0375dcf0ee18ca1bbec`); after the emulator sweep session the app runs the **batch 3**
+  fixture (base 4 + Game Boy, Game Boy Color, WonderSwan, FDS, SG-1000, 32X, Neo Geo Pocket Color),
+  no `-debug`, list view. The Avalonia (686/686) and WPF (2122/2122; one transient live-URL flake
+  passed on re-run) suites are green on the current working tree, which has the BUG-07..12 work
+  committed (`aa87e469`..`693d7c68`); the BUG-13 fix, the new harness helpers and the docs of the
+  sweep session are uncommitted at stop time (item 9).
+- Emulator sweep session artifacts on the guest: RetroArch 1.22.2 + 491 cores under
+  `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/`, OpenMSX 21.0 under
+  `~/SimpleLauncher/emulators/OpenMSX/`, real ROMs for 36 systems under `~/roms/` (873 MB from
+  `G:\`), per-system image folders under `~/images/`, `vm-systems.json` + `seed-batch.py` in
+  `/home/vm/vision/`. Bundled Linux tools (`tools/SevenZip/7zz`,
+  `tools/RetroAchievementsSharp/RetroAchievementsSharp`) were `chmod +x`-ed after SCP deploy.
+  `settings.dat` has the RA username/API key/password configured (`petersonfernandes`) - the API key
+  is **not** in this repo; re-enter it if the settings are wiped.
+- RetroAchievements: the account is the user's `petersonfernandes` (password + Web API key supplied
+  by the user in chat; **not stored in this repo**). The VM's `settings.dat` currently holds them;
+  ask the user again if the settings are wiped.
 - MAME session artifacts on the guest: real ROMs in `~/roms/Arcade` (pacman/galaga/dkong/mspacman)
   and `~/roms/Arcade BIOS` (neogeo/3dobios/a1200kbd_rb), covers in `~/images/Arcade/`, a backup of
   the restored `mame.dat` at `/home/vm/mame.dat.bak` (md5 `50050360caa58888836c6bacc9a3045c`).
@@ -730,17 +820,13 @@ screenshots in `shots\` (`mame-*`, `MAME-01-list.png`, `MAME-02-history.png`).
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Uncommitted work at stop time** (do not lose it): the MAME-session harness/docs changes
-   (`scripts/gui-test-harness/fixture.py`, `lib.ps1`, `run-suite.ps1`, `ManualTests.md`,
-   `docs/manual-tests.md`, `docs/gui-test-harness.md`) plus the **BUG-12 fix**:
-   `SimpleLauncher.Core/Services/MameManager/MameManagerService.cs` (notifyUser + failure out),
-   `SimpleLauncher.Core/Services/MameData/MameDataService.cs` + new `MameDataLoadFailure.cs`,
-   `SimpleLauncher.Core/Interfaces/IMameDataService.cs`,
-   `SimpleLauncher.Avalonia/Services/AvaloniaStartupInitializationService.cs` +
-   `AvaloniaApplicationLifecycleService.cs` + `AvaloniaServices/MessageBoxLibraryService.cs`,
-   `SimpleLauncher/Services/StartupInitialization/StartupInitializationService.cs` and the new
-   `SimpleLauncher.Avalonia.Tests/MameDataServiceTests.cs`. The BUG-07..BUG-11 fixes, the
-   inner-exception change and the KeyDown style commit are already pushed (`eb533939`, `7c407d23`).
+9. **Uncommitted work at stop time** (do not lose it): the **BUG-13 fix**
+   (`SimpleLauncher.Core/Services/WpfServices/WindowsCredentialProtector.cs`, the portable-fallback
+   message is now `Information`), the new harness helpers
+   (`scripts/gui-test-harness/seed-batch.py`, `scripts/gui-test-harness/vm-systems.json`) and the
+   docs of the emulator sweep session (`ManualTests.md`, `docs/manual-tests.md`,
+   `docs/gui-test-harness.md`). Everything through the MAME session + BUG-12 is pushed
+   (`aa87e469`..`693d7c68`).
 
 ## 7. Cost
 
@@ -865,6 +951,14 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   (corrupt -> Yes/No auto-reinstall dialog, No quits); `HandleMissingRequiredFilesMessageBoxAsync` was
   ported to the WPF Yes/No + reinstall/quit flow. Live-verified on the rebuilt payload; regression tests
   in `SimpleLauncher.Avalonia.Tests/MameDataServiceTests.cs` (4 tests; Avalonia 686/686, WPF 2122/2122).
+- **BUG-13 - the portable credential fallback was logged at Warning, so Linux users filed bug reports (FIXED 2026-09-27).**
+  `WindowsCredentialProtector.WarnPortableFallback` logged "DPAPI is not available on this platform;
+  RetroAchievements credentials are stored obfuscated (Base64) instead of encrypted" at Warning level.
+  DPAPI is Windows-only, so on Linux this fires on the first RA credential save/load and the
+  `BugReportApiSink` (Warning+ events) reported it as a bug - it even landed in `error_user.log`.
+  Now logged at `Information` (expected platform condition per AGENTS.md); verified on the VM (no new
+  entry after the fixed Core was deployed). Note: the credentials really are only Base64-obfuscated on
+  Linux (portable fallback, by design) - documented as a limitation, not changed.
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:
