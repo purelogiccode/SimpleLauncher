@@ -834,7 +834,7 @@ up with official firmware; the **AI Parameter Suggestion** feature stays out of 
 
 ### Resume checklist (next session)
 
-**Guest state left by the 2026-09-26 session** (all of this survives a host/VM reboot unless noted):
+**Guest state left by the 2026-09-27 standalone session** (all of this survives a host/VM reboot unless noted):
 
 - VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
@@ -844,18 +844,20 @@ up with official firmware; the **AI Parameter Suggestion** feature stays out of 
   `SimpleLauncher.Avalonia.dll` md5 `68d6f222edcfd0375dcf0ee18ca1bbec`); after the standalone session
   the app runs the **batch B** fixture (base 4 + PS1, PS2, PS3, Dreamcast, Saturn, WiiU, 3DS, PSP,
   Xbox, DOS, Model 3, FDS, Atari ST), no `-debug`, list view, window maximized by the harness. The
-  BUG-14/15 fixes are in the working tree but **not deployed to the VM** (rebuild+redeploy if they
-  need live verification). The Avalonia (686/686) and WPF (2122/2122) suites are green on the
-  current working tree; everything through the MAME session is pushed (`aa87e469`..`693d7c68`), the
-  BUG-13..15 fixes, the harness helpers and the session docs are uncommitted at stop time (item 9).
+  BUG-14/15 fixes are committed but **not deployed to the VM** (rebuild+redeploy if they need live
+  verification; the DOSBox item accessible name and the batch-exit log level were verified from the
+  source/suites, not re-run on the VM). The Avalonia (686/686) and WPF (2122/2122) suites are green
+  on the current working tree and everything is pushed through `d1818050` (item 9).
 - Emulator sweep session artifacts on the guest: RetroArch 1.22.2 + 491 cores under
   `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/`, OpenMSX 21.0 under
-  `~/SimpleLauncher/emulators/OpenMSX/`, real ROMs for 36 systems under `~/roms/` (873 MB from
-  `G:\`), per-system image folders under `~/images/`, `vm-systems.json` + `seed-batch.py` in
-  `/home/vm/vision/`. Bundled Linux tools (`tools/SevenZip/7zz`,
-  `tools/RetroAchievementsSharp/RetroAchievementsSharp`) were `chmod +x`-ed after SCP deploy.
-  `settings.dat` has the RA username/API key/password configured (`petersonfernandes`) - the API key
-  is **not** in this repo; re-enter it if the settings are wiped.
+  `~/SimpleLauncher/emulators/OpenMSX/`, real ROMs for 64 systems under `~/roms/` (~3.9 GB from
+  `G:\` + `E:/F:/I:/J:`), per-system image folders under `~/images/`, and in `/home/vm/vision/`:
+  `vm-systems.json` + `seed-batch.py` (first sweep) and `vm-systems2.json` + `seed-batch2.py` +
+  `fix-arrays.py` + `launch-one.py` (standalone session). Bundled Linux tools
+  (`tools/SevenZip/7zz`, `tools/RetroAchievementsSharp/RetroAchievementsSharp`) were `chmod +x`-ed
+  after SCP deploy. `settings.dat` has the RA username/API key/password configured
+  (`petersonfernandes`) - the API key is **not** in this repo; re-enter it if the settings are
+  wiped.
 - RetroAchievements: the account is the user's `petersonfernandes` (password + Web API key supplied
   by the user in chat; **not stored in this repo**). The VM's `settings.dat` currently holds them;
   ask the user again if the settings are wiped.
@@ -904,21 +906,18 @@ up with official firmware; the **AI Parameter Suggestion** feature stays out of 
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
 6. Remaining work (see open items): the full 33-scenario pass (31/31 on 2026-09-26 + MAME-01/02
-   verified individually 2026-09-27), real-ROM launches for the other emulators, the successful Edit
-   System save path, and the other unexercised items in open item 4. The WPF and Avalonia suites are
-   green as of 2026-09-27.
+   verified individually 2026-09-27; not re-run since), the successful Edit System save path, the
+   unexercised items in open item 4, and the two live-verifications for BUG-14/15 after redeploying
+   the payload. Real-ROM launches are done for 14 systems with 10 booting games; PS3/Vita/64DD/FDS/
+   X68000/Model 3 are blocked by image/format/data issues (see the standalone session section).
+   The WPF and Avalonia suites are green as of 2026-09-27.
 7. Run subsets while iterating and finally the full suite; on failures read the newest
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Uncommitted work at stop time** (do not lose it): the **BUG-14 fix** (batch/exec exit logging
-   now `Information` in `SimpleLauncher.Avalonia/Services/GameLauncher/LauncherService.cs` and
-   `SimpleLauncher/Services/GameLauncher/GameLauncherService.cs`), the **BUG-15 fix**
-   (`SimpleLauncher.Core/Models/DosBoxFileItem.cs` `ToString()`), the new harness helpers
-   (`scripts/gui-test-harness/seed-batch2.py`, `fix-arrays.py`, `vm-systems2.json`,
-   `launch-one.py`) and the session docs (`ManualTests.md`, `docs/manual-tests.md`,
-   `docs/gui-test-harness.md`). Everything through the emulator-matrix session is pushed
-   (`aa87e469`..`b9f9d157`, including the BUG-13 fix in `35f0c8b0`).
+9. **Nothing is uncommitted at stop time.** Everything is pushed through `d1818050`: BUG-07..15
+   (`aa87e469`..`a22d4d32`), the two emulator fixtures and their session docs (`b9f9d157`,
+   `d1818050`). Working tree clean; `dotnet test` green for both suites.
 
 ## 7. Cost
 

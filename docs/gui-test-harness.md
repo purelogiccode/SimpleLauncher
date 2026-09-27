@@ -113,6 +113,9 @@ tar -czf D:\payload\payload-annot.tar.gz -C D:\payload\linux-x64-annot .
 | `atspi_nav.py` | AT-SPI navigation library (deployed to `/home/vm/vision/`); `Nav` class + `Entry`; also a CLI (`tree`, `ready`, `dump`, `selftest`) | ~23 KB |
 | `fixture.py` | Seeds/clears the guest unified DB and files (deployed to `/home/vm/vision/`); commands `seed`, `arcade`, `empty`, `clean-state`, `dump` | ~8 KB |
 | `ask_vision.py` | One-shot OpenRouter vision call: `python ask_vision.py <png> "<prompt>" [--model M] [--max-tokens N] [--temperature T]`; reads `OPENROUTER_API_KEY`; prints the model text plus a `--- usage ---` JSON line | ~3 KB |
+| `vm-systems.json` + `seed-batch.py` | First emulator-matrix fixture (36 Easy-Mode systems, manifest emulator configs); `seed-batch.py <names...>` keeps the base systems + the requested batch | ~30 KB |
+| `vm-systems2.json` + `seed-batch2.py` | Standalone/CD fixture (25 manifest systems: PS1/PS2/PS3/DC/Saturn/WiiU/3DS/PSP/Xbox/DOS/Model 3/...); same batch semantics, adds `fix-arrays.py` to normalize scalar format strings the strict deserializer skips | ~20 KB |
+| `launch-one.py` | App-driven single-system launch (`launch-one.py <System> "<Game>" [wait]`): maximize, open system, letter bar, AT-SPI card right-click (coordinates fallback), DOSBox picker handling, window/process evidence, screenshot, cleanup — run one system per fresh app start | ~4 KB |
 
 The scripts resolve their own locations from `$PSScriptRoot`, so the checkout can live anywhere.
 Only the guest-side paths (§4) and the VM IP/credentials need adapting. `shots\` and `reports\` are
@@ -444,8 +447,13 @@ login/hashing, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater,
 and anything needing real network/emulators. The emulator sweep session on 2026-09-27 replaced the
 "real-ROM launches" gap with a full matrix: 36 systems seeded from the Easy Mode manifest, 29
 distinct emulators/cores launched through the UI with real ROMs, and the RetroAchievements settings
-login, profile page, per-game window and local CLI hashing verified live (see section 15 and the
-session notes in `ManualTests.md`). Easy Mode downloads were swept manually on 2026-09-26:
+login, profile page, per-game window and local CLI hashing verified live. A follow-up session the
+same day seeded 25 more systems from the user's `E:/F:/G:/I:/J:` collections and launched the
+standalone emulators: PS1/DuckStation, PS2/PCSX2, Dreamcast/Redream, Saturn/Ymir, WiiU/Cemu,
+3DS/Azahar, PSP/PPSSPP, Xbox/xemu, DOS/DOSBox Staging and Atari ST/Hatari booted real games, the
+DOSBox file picker was exercised, and the app's CHD→ISO conversion proved byte-identical to
+`chdman extractdvd`; PS3/RPCS3, FDS/mesen, N64DD/mupen64plus-next and X68000/px68k are blocked by
+image/format/data issues (see section 15 and the session notes in `ManualTests.md`). Easy Mode downloads were swept manually on 2026-09-26:
 **15/15 distinct emulator downloads and the shared RetroArch core install correctly** (after fixing
 BUG-03 `.tar.gz`, BUG-04 zip execute bits, BUG-05 `.tar.xz` and BUG-06 solid-7z extraction
 performance) — see `ManualTests.md` §6 "Easy Mode emulator/core install sweep" and §8. The Easy Mode
@@ -463,12 +471,19 @@ machine-description surfaces (list view, Game Details, Global Search "MAME Descr
 Favorites/Play History columns), the MAME sort toggle, a real `history.dat` entry, the `mame.dat`
 missing/corrupt paths and the GroupByFolder warning; MAME-01/MAME-02 automate the descriptions/sort
 and the real history entry, the rest stays ad-hoc (findings in `ManualTests.md` §6 open items).
-Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
+Two further sessions on 2026-09-27 used the user's ROM collections: an emulator sweep (`G:\`, 36
+systems, 29 RetroArch cores/emulators with real ROMs) and a standalone/BIOS session (`E:/F:/G:/I:/J:`,
+25 systems seeded; PS1/PS2/Dreamcast/Saturn/WiiU/3DS/PSP/Xbox/DOS/Atari ST launched with real games,
+Cemu/xemu/PCSX2 requiring their own data-dir fixes, RPCS3 rejecting the collection's ISO9660 images,
+and the DOSBox file picker exercised — see `ManualTests.md` and §15). BUG-13..15 were found and
+fixed. Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
-the VM/app state left behind, the console/screensaver recovery steps, how to rebuild+deploy the
-Avalonia payload, the remaining work (full 31-scenario pass, WPF suite re-run, real-ROM launches for
-the newly installed emulators) and the uncommitted files from the session.
+the VM/app state left behind (app on the batch-B fixture, all standalone emulators + BIOS/keys
+installed), the console/screensaver recovery steps, how to rebuild+deploy the Avalonia payload, the
+remaining work (full 33-scenario pass, the two BUG-14/15 live re-verifications after redeploy, the
+still-unexercised manual items) and confirms the working tree is clean (everything pushed through
+`d1818050`).
 
 ---
 
