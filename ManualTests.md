@@ -391,7 +391,9 @@ tree are authoritative and layout-independent — prefer them.
 Last full run 2026-09-26 (`scripts\gui-test-harness\reports\run-20260926-143336.md`): **31/31 scenarios
 PASS in a single run** on the payload rebuilt from HEAD (`f68f6c91` + `7ddc6599`) - Hyper-V `LinuxMint`
 VM (Linux Mint 22.3, Avalonia `linux-x64` self-contained publish), covering the Linux-applicable
-checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture.
+checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture. MAME-01/MAME-02 were
+added 2026-09-27 and pass in isolation (`reports\run-20260927-014857.md`,
+`reports\run-20260927-014646.md`); a full 33-scenario pass is pending.
 
 A first pass the same day (`reports\run-20260926-133836.md`) hit the known AT-SPI registration flake
 during THEME-02's forced restart: 15 scenarios passed, then 16 failed with
@@ -434,6 +436,8 @@ tree is still missing, instead of recording a block of false failures.
 | WATCH-01 | File watcher refreshes the count on external add/remove | seeded | PASS | |
 | DEBUG-01 | `-debug` opens the Debug Window (title "Debugger") with live log lines | seeded + `-debug` | PASS | reads the "Debug log" text box |
 | ROMHIST-01 | Open ROM History on a non-MAME game -> no-history message | seeded | PASS | |
+| MAME-01 | Arcade system (real MAME ROMs) shows machine descriptions and the sort toggle | arcade | PASS | added 2026-09-27; `run-20260927-014857.md` |
+| MAME-02 | ROM History shows the real MAME entry and machine description | arcade | PASS | added 2026-09-27; `run-20260927-014646.md` |
 
 ### Easy Mode real-install session (2026-09-26, ad-hoc)
 
@@ -569,6 +573,66 @@ the 31 scenarios do not reach. Deterministic checks unless noted; screenshots in
   switching to that system and deleting the file refreshes its count (2 -> 1) - the selected system is
   watched.
 
+### MAME data session (2026-09-27, ad-hoc + 2 new scenarios)
+
+Third ad-hoc pass on the same VM, driven by real MAME ROMs copied from the host (`G:\MAME\MAME Roms`,
+`G:\MAME\MAME Bios Devices`): `pacman.zip`, `galaga.zip`, `dkong.zip`, `mspacman.zip` into
+`~/roms/Arcade` and `neogeo.zip`, `3dobios.zip`, `a1200kbd_rb.zip` into `~/roms/Arcade BIOS`. The new
+`arcade` fixture (`fixture.py arcade` = standard seed + a two-folder "Arcade" system with a MAME
+emulator and three covers) backs the new **MAME-01/MAME-02** scenarios; the app runs the same payload
+as the continuation session (md5s in the resume checklist). Deterministic checks unless noted;
+screenshots in `shots\` (`mame-*`, `MAME-01-list.png`, `MAME-02-history.png`).
+
+- **Multi-folder listing:** the Arcade system lists 7 games; the list-view Folder Path column shows
+  4 from `/home/vm/roms/Arcade` and 3 from `/home/vm/roms/Arcade BIOS`; pagination "1 to 7 out of 7".
+- **Machine Description column (MAME-01):** real `mame.dat` descriptions render in list view -
+  `Pac-Man (Midway)`, `Galaga (Namco rev. B)`, `Donkey Kong (US set 1)`, `Ms. Pac-Man`,
+  `Neo-Geo MV-6F`, `3DO BIOS`, `Amiga 1200 Keyboard Rev B` (vision PASS).
+- **MAME sort toggle (MAME-01):** clicking the sort-az toolbar button shows "Sorted by machine
+  description" and re-orders alphabetically by description; clicking again restores "Sorted by file
+  name".
+- **Game Details:** context menu -> Show Details on `neogeo` shows the Description "Neo-Geo MV-6F"
+  (the system name contains "Arcade" so the description path applies).
+- **Global Search MAME description:** `Midway` with the default checkboxes (Filename + MAME
+  Description) returns exactly 1 result - `pacman.zip`, "Pac-Man (Midway)", MAME, Arcade; unchecking
+  MAME Description returns "No results found." with 0 rows.
+- **Favorites / Play History description columns:** `pacman.zip` added to Favorites shows
+  "Pac-Man (Midway)" under "Machine Description (for MAME files)"; launching it records Play History
+  with the same description, 1 play, 0m 7s.
+- **ROM History real entry (MAME-02):** context menu -> Open ROM History on `pacman` shows the real
+  `history.dat` entry (MSX cart entry with TRIVIA/CONTRIBUTE sections) and the machine description as
+  the subtitle; window frame + >200-char history text + title all asserted, vision PASS.
+- **`mame.dat` failure paths:** deleted -> the "Missing Required Files" startup dialog (OK), a Warning
+  in `error_user*.log`, and the app continues with all 7 games but empty descriptions (graceful);
+  4 KB of random bytes -> an Error + MessagePack exception in the log, **no dialog**, same graceful
+  empty-description state. The file was restored afterwards (md5 `50050360caa58888836c6bacc9a3045c`,
+  backup left at `/home/vm/mame.dat.bak`).
+- **GroupByFolder warning (Edit System):** Second System (Dummy Emulator) + Group By Folder = true +
+  Save shows the "Configuration Warning" Yes/No box; No aborts the save (DB still `false`). Note: the
+  Test System fixture (`Extract File Before Launch = true` with `.nes, .zip`) is rejected by the
+  unrelated "must include zip/7z/rar" validation before the warning, by design.
+- **Findings -> BUG-12 (FIXED 2026-09-27):** the intended Yes/No reinstall dialogs never appeared at
+  startup because the message-box owner is still null while `MameDataService` loads (the missing case
+  was covered by the required-files dialog, the corrupt case was silent), and the Avalonia
+  "Missing Required Files" dialog showed the "will shutdown" text without shutting down (the WPF
+  version offers a reinstall and quits). Fixed and live-verified on the rebuilt payload:
+  - `MameDataService` no longer notifies from its constructor; it records
+    `MameDataLoadFailure` (None/MissingFile/CorruptedFile, `MameManagerService.LoadFromDat` gained a
+    `notifyUser` seam) and both apps' startup initialization call
+    `NotifyLoadFailureIfNeededAsync()` after the window exists. A corrupt `mame.dat` now shows
+    "'Simple Launcher' could not load the file 'mame.dat' or it is corrupted. Do you want to
+    automatically reinstall 'Simple Launcher' to fix it?" (Yes/No); No quits the app.
+  - `HandleMissingRequiredFilesMessageBoxAsync` was ported to the WPF flow: "The following required
+    file(s) are missing: <paths> Do you want to reinstall 'Simple Launcher' to fix the issue?"
+    (Yes -> auto reinstall + shutdown; No -> "Please reinstall manually... will shutdown." then quit).
+  - Live checks: corrupt -> dialog + No quits; missing -> file-list Yes/No, No -> error box -> OK
+    quits; restored file (md5 `50050360caa58888836c6bacc9a3045c`) -> healthy startup with descriptions.
+  - Regression tests: `SimpleLauncher.Avalonia.Tests/MameDataServiceTests.cs` (4 tests). Avalonia
+    suite 686/686, WPF suite 2122/2122, builds 0 warnings.
+- **Coverage delta:** `docs/manual-tests.md` lines 68 (list rendering / Machine Description), 97
+  (GroupByFolder warning), 110 (ROM History - now with a real MAME entry) and 235 (MAME data) are
+  verified; the remaining unexercised items are unchanged (see open item 4).
+
 ### Open items for the next session
 
 1. **Full pass - DONE 2026-09-26**: `reports\run-20260926-143336.md` **31/31 PASS in a single run** on
@@ -592,13 +656,20 @@ the 31 scenarios do not reach. Deterministic checks unless noted; screenshots in
    manual (Linux hides most of them anyway; LB-08/LB-14/LB-22 already verified by code/tests).
    Emulator/core downloads are swept (15/15 + 1/1) and the Easy Mode edge cases plus the continuation
    session were exercised on 2026-09-26 (see the two sections above), which surfaced and fixed
-   BUG-07..BUG-11. Still unexercised: the `<5 GB free` disk-space error, the final failure after all
-   retries, closing a window during a download, real-ROM launches for the other emulators, Edit System
-   save/validation and the AI fix flow, Support valid submit, Image viewer, DOSBox file selection,
+   BUG-07..BUG-11; the MAME data session on 2026-09-27 covered MAME descriptions, sort, search,
+   Favorites/Play History columns, ROM History, the `mame.dat` failure paths and the GroupByFolder
+   warning. Still unexercised: the `<5 GB free` disk-space error, the final failure after all retries,
+   closing a window during a download, real-ROM launches for the other emulators, the successful Edit
+   System save path and the AI fix flow, Support valid submit, Image viewer, DOSBox file selection,
    System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone Save+Revert,
-   About offline update checks, log files and the bug-report sink, MAME data service, config-persistence
-   failure paths, ROM History with a real MAME entry, gamepad on this VM, and video/info context-menu
-   links.
+   About offline update checks, log files and the bug-report sink, config-persistence failure paths,
+   gamepad on this VM, and video/info context-menu links.
+5. **MAME startup notifications - FIXED 2026-09-27 (BUG-12)**: the corrupt `mame.dat` case was
+   silent and the Avalonia required-files dialog claimed a shutdown without quitting. `MameDataService`
+   now records the load failure and the startup initialization reports it once the window exists;
+   the required-files dialog was ported to the WPF Yes/No + reinstall/quit flow. Live-verified on the
+   rebuilt payload (corrupt -> dialog + No quits; missing -> file-list Yes/No -> No -> error -> OK
+   quits; restored file -> healthy). See the MAME session section and §8 for details.
 
 ### Resume checklist (next session)
 
@@ -607,12 +678,17 @@ the 31 scenarios do not reach. Deterministic checks unless noted; screenshots in
 - VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
   reboot; `lib.ps1` updated accordingly) - always re-check after a VM boot.
-- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-11
-  fixes and deployed (`SimpleLauncher.Core.dll` md5 `d087578dbc76f01900195316c3390d5a`,
-  `SimpleLauncher.Avalonia.dll` md5 `1faaf2fdd49f6af0749321ca0ddb2487`); running with the seeded
-  fixture (3 systems), no `-debug`. The GUI continuation session ran on this payload; the Avalonia
-  (682/682) and WPF (2122/2122) suites are green on the current working tree, which has the BUG-07..11
-  fixes uncommitted (item 9).
+- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-12
+  fixes and deployed (`SimpleLauncher.Core.dll` md5 `fb53cfd8eae668e6c129747d65627007`,
+  `SimpleLauncher.Avalonia.dll` md5 `68d6f222edcfd0375dcf0ee18ca1bbec`); after the MAME session the app
+  runs the **arcade** fixture (4 systems: Test/Second/Broken + Arcade with 7 real MAME ROMs), no
+  `-debug`, list view. The continuation session ran on the earlier payload; the Avalonia (686/686) and
+  WPF (2122/2122) suites are green on the current working tree, which has the BUG-07..11 fixes
+  committed (`aa87e469`..`0db577a7`), the stall inner-exception fix (`eb533939`) and the KeyDown style
+  commit (`7c407d23`); the harness/docs changes and the BUG-12 fix are uncommitted (item 9).
+- MAME session artifacts on the guest: real ROMs in `~/roms/Arcade` (pacman/galaga/dkong/mspacman)
+  and `~/roms/Arcade BIOS` (neogeo/3dobios/a1200kbd_rb), covers in `~/images/Arcade/`, a backup of
+  the restored `mame.dat` at `/home/vm/mame.dat.bak` (md5 `50050360caa58888836c6bacc9a3045c`).
 - Installed under `~/SimpleLauncher/emulators/`: **only PPSSPP** (re-installed 2026-09-26 during the
   edge-case session). The 15 emulators + RetroArch bundle (about 3.5 GB) and the real PSP
   ISO/Dreamcast cue/bins from the earlier session are **gone** - the folder and the ROMs were
@@ -646,22 +722,25 @@ the 31 scenarios do not reach. Deterministic checks unless noted; screenshots in
    `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
-6. Remaining work (see open items): optional real-ROM launches for the newly installed emulators,
-   `Stop` mid-download / network-loss / custom ROM folder picker / separate Download Image Pack
-   window. The full 31-scenario pass, WPF suite and Avalonia suite are all green as of 2026-09-26.
+6. Remaining work (see open items): the full 33-scenario pass (31/31 on 2026-09-26 + MAME-01/02
+   verified individually 2026-09-27), real-ROM launches for the other emulators, the successful Edit
+   System save path, and the other unexercised items in open item 4. The WPF and Avalonia suites are
+   green as of 2026-09-27.
 7. Run subsets while iterating and finally the full suite; on failures read the newest
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Uncommitted work at stop time** (do not lose it): the BUG-07..BUG-11 fixes -
-   `SimpleLauncher.Core/Services/DownloadService/DownloadManager.cs` (cancel cleanup + `StallTimeout`),
-   `SimpleLauncher.Avalonia/Services/GameFilter/AvaloniaGameFilterService.cs` (real-cover check),
-   `SimpleLauncher.Avalonia/MainWindow.axaml` + `MainWindow.axaml.cs` (handledEventsToo Enter handlers,
-   Global Search cancel on leave/emergency) - plus the tests
-   (`SimpleLauncher.Avalonia.Tests/AvaloniaGameFilterServiceTests.cs` and the two new
-   `DownloadManagerTests` cases) and the docs (`ManualTests.md`, `docs/manual-tests.md`,
-   `docs/gui-test-harness.md`). The previous session's harness/docs/formatting work was committed as
-   `f65f109f` + `26821ec2`.
+9. **Uncommitted work at stop time** (do not lose it): the MAME-session harness/docs changes
+   (`scripts/gui-test-harness/fixture.py`, `lib.ps1`, `run-suite.ps1`, `ManualTests.md`,
+   `docs/manual-tests.md`, `docs/gui-test-harness.md`) plus the **BUG-12 fix**:
+   `SimpleLauncher.Core/Services/MameManager/MameManagerService.cs` (notifyUser + failure out),
+   `SimpleLauncher.Core/Services/MameData/MameDataService.cs` + new `MameDataLoadFailure.cs`,
+   `SimpleLauncher.Core/Interfaces/IMameDataService.cs`,
+   `SimpleLauncher.Avalonia/Services/AvaloniaStartupInitializationService.cs` +
+   `AvaloniaApplicationLifecycleService.cs` + `AvaloniaServices/MessageBoxLibraryService.cs`,
+   `SimpleLauncher/Services/StartupInitialization/StartupInitializationService.cs` and the new
+   `SimpleLauncher.Avalonia.Tests/MameDataServiceTests.cs`. The BUG-07..BUG-11 fixes, the
+   inner-exception change and the KeyDown style commit are already pushed (`eb533939`, `7c407d23`).
 
 ## 7. Cost
 
@@ -775,6 +854,17 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   so a search kept enumerating folders after navigating away (with a 10,000-ROM system it completed and
   logged a result count after leaving). `ShowSectionAsync` now cancels when leaving the section and the
   emergency overlay release also cancels; re-verified (no completion log line after leaving mid-search).
+- **BUG-12 - `mame.dat` startup notifications were skipped and the required-files dialog lied (FIXED 2026-09-27).**
+  `MameDataService` was constructed before the main window existed, so `MessageBoxLibraryService.O`
+  (`AvaloniaWindowContext.PlatformWindow`) was null and the missing/corrupted dialogs were silently
+  skipped (a corrupt `mame.dat` failed with only a log Error). The Avalonia required-files dialog also
+  showed the "Please reinstall... The application will shutdown." text with an OK button and never
+  quit, while the WPF version offers a reinstall and quits. Fix: `MameManagerService.LoadFromDat` gained
+  a `notifyUser` seam and reports a `MameDataLoadFailure`; `MameDataService` records the failure and
+  both apps' startup initialization call `NotifyLoadFailureIfNeededAsync()` once the window exists
+  (corrupt -> Yes/No auto-reinstall dialog, No quits); `HandleMissingRequiredFilesMessageBoxAsync` was
+  ported to the WPF Yes/No + reinstall/quit flow. Live-verified on the rebuilt payload; regression tests
+  in `SimpleLauncher.Avalonia.Tests/MameDataServiceTests.cs` (4 tests; Avalonia 686/686, WPF 2122/2122).
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:
