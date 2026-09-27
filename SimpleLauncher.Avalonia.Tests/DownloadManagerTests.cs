@@ -31,7 +31,8 @@ public class DownloadManagerTests
             new AvaloniaDispatcherService());
     }
 
-    private static DownloadManager CreateStreamingManager(Func<HttpContent> contentFactory)
+    private static DownloadManager CreateStreamingManager(Func<HttpContent> contentFactory,
+        out Mock<ILogger> logger)
     {
         HeadlessAvalonia.EnsureInitialized();
 
@@ -40,10 +41,11 @@ public class DownloadManagerTests
             Content = contentFactory()
         });
 
+        logger = TestDependencies.Logger();
         return new DownloadManager(
             TestDependencies.HttpFactory(httpClient).Object,
             new Mock<IExtractionService>().Object,
-            TestDependencies.Logger().Object,
+            logger.Object,
             TestDependencies.ResourceProvider().Object,
             new AvaloniaDispatcherService());
     }
@@ -174,7 +176,7 @@ public class DownloadManagerTests
     public async Task DownloadFileAsync_UserCancelDeletesThePartialFile()
     {
         var stream = new StallingStream(prefixBytes: 4096);
-        using var manager = CreateStreamingManager(() => new RawStreamContent(stream));
+        using var manager = CreateStreamingManager(() => new RawStreamContent(stream), out _);
         var tempFile = Path.Combine(manager.TempFolder, "cancel-me.zip");
         try
         {
@@ -198,7 +200,7 @@ public class DownloadManagerTests
     public async Task DownloadFileAsync_StalledBodyFailsAfterRetriesAndCleansUp()
     {
         using var manager = CreateStreamingManager(
-            () => new RawStreamContent(new StallingStream(prefixBytes: 4096)));
+            () => new RawStreamContent(new StallingStream(prefixBytes: 4096)), out var logger);
         manager.StallTimeout = TimeSpan.FromMilliseconds(150);
         var tempFile = Path.Combine(manager.TempFolder, "stalled.zip");
         try
@@ -207,6 +209,15 @@ public class DownloadManagerTests
 
             Assert.Null(result);
             Assert.False(File.Exists(tempFile), "a stalled download must clean up its partial file (BUG-08)");
+
+            // The stall is reported as an IOException that keeps the canceled read as its
+            // InnerException, so the failure log preserves the original cause. (Serilog 4.x
+            // exposes Information as a default interface method, which Moq intercepts directly.)
+            logger.Verify(l => l.Information(
+                    It.Is<Exception>(ex => ex is IOException
+                                           && ex.InnerException is OperationCanceledException),
+                    It.IsAny<string>()),
+                Times.AtLeastOnce);
         }
         finally
         {
@@ -224,6 +235,7 @@ public class DownloadManagerTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private int _position;
+        private readonly int _prefixBytes = prefixBytes;
 
         public Task WaitUntilStalledAsync()
         {
@@ -233,9 +245,9 @@ public class DownloadManagerTests
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
             CancellationToken cancellationToken = default)
         {
-            if (_position < prefixBytes)
+            if (_position < _prefixBytes)
             {
-                var count = Math.Min(buffer.Length, prefixBytes - _position);
+                var count = Math.Min(buffer.Length, _prefixBytes - _position);
                 buffer.Span[..count].Fill(0x41);
                 _position += count;
                 return count;
@@ -283,9 +295,11 @@ public class DownloadManagerTests
 
     private sealed class RawStreamContent(Stream stream) : HttpContent
     {
+        private readonly Stream _stream = stream;
+
         protected override Task<Stream> CreateContentReadStreamAsync()
         {
-            return Task.FromResult(stream);
+            return Task.FromResult(_stream);
         }
 
         protected override Task SerializeToStreamAsync(Stream target, TransportContext? context)

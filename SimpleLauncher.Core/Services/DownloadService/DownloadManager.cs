@@ -622,10 +622,11 @@ public class DownloadManager : IDisposable
             {
                 bytesRead = await contentStream.ReadAsync(buffer, stallCts.Token);
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
             {
                 throw new IOException(
-                    $"Download stalled: no data received for {StallTimeout.TotalSeconds:0.#} seconds.");
+                    $"Download stalled: no data received for {StallTimeout.TotalSeconds:0.#} seconds.",
+                    ex);
             }
 
             if (bytesRead <= 0) break;
