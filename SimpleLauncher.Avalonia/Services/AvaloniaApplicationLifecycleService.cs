@@ -54,6 +54,7 @@ public class AvaloniaApplicationLifecycleService
         _startupInitializationService.ResetPaginationDefaults();
         _startupInitializationService.InitializeGamePad();
         await _startupInitializationService.CheckRequiredFilesAsync();
+        await _startupInitializationService.NotifyMameDataLoadFailureAsync();
     }
 
     /// <summary>

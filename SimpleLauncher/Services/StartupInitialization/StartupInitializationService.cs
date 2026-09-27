@@ -25,6 +25,7 @@ public class StartupInitializationService
     private readonly GamePadController _gamePadController;
     private readonly LanguageMenuService _languageMenuService;
     private readonly ILogger _logger;
+    private readonly IMameDataService _mameDataService;
     private readonly IMessageBoxLibraryService _messageBoxLibrary;
     private readonly RequiredFiles _requiredFiles;
     private readonly Settings _settings;
@@ -44,7 +45,8 @@ public class StartupInitializationService
         IMessageBoxLibraryService messageBoxLibrary,
         IApplicationLifetime applicationLifetime,
         ILogger logger,
-        IToastNotificationService toastNotificationService)
+        IToastNotificationService toastNotificationService,
+        IMameDataService mameDataService)
     {
         _configuration = configuration;
         _settings = settings;
@@ -56,6 +58,7 @@ public class StartupInitializationService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _toastNotificationService = toastNotificationService ??
                                     throw new ArgumentNullException(nameof(toastNotificationService));
+        _mameDataService = mameDataService;
         _requiredFiles = new RequiredFiles(messageBoxLibrary);
     }
 
@@ -73,6 +76,7 @@ public class StartupInitializationService
         InitializePagination();
         InitializeTrayIcon();
         await CheckRequiredFilesAsync();
+        await NotifyMameDataLoadFailureAsync();
         InitializeOverlayButtons();
         InitializeGamePad();
     }
@@ -153,6 +157,23 @@ public class StartupInitializationService
         catch (Exception ex)
         {
             _logger.Error(ex, "Error in the method CheckRequiredFilesAsync");
+        }
+    }
+
+    /// <summary>
+    ///     Reports a mame.dat load failure that could not be shown when the MAME data service was
+    ///     constructed (before the main window existed). A corrupt file is not covered by the
+    ///     required-files check, so it would otherwise fail silently.
+    /// </summary>
+    private async Task NotifyMameDataLoadFailureAsync()
+    {
+        try
+        {
+            await _mameDataService.NotifyLoadFailureIfNeededAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error notifying the MAME data load failure");
         }
     }
 

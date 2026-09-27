@@ -1668,15 +1668,36 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
 
-    public Task HandleMissingRequiredFilesMessageBoxAsync(string fileList)
+    public async Task HandleMissingRequiredFilesMessageBoxAsync(string fileList)
     {
-        if (O == null) return Task.CompletedTask;
-        return ShowAsync(O,
-            _localization.GetString("PleasereinstallSimpleLauncher",
-                "Please reinstall 'Simple Launcher' manually to fix the issue.") + "\n\n" +
-            _localization.GetString("Theapplicationwillshutdown", "The application will shutdown."),
-            _localization.GetString("MissingRequiredFiles", "Missing Required Files"), MessageButtons.Ok,
-            MessageIcon.Error);
+        if (O == null) return;
+
+        var thefollowingrequiredfilesaremissing = _localization.GetString(
+            "Thefollowingrequiredfilesaremissing", "The following required file(s) are missing:");
+        var missingRequiredFiles = _localization.GetString("MissingRequiredFiles", "Missing Required Files");
+        var doyouwanttoreinstallSimpleLauncher = _localization.GetString(
+            "DoyouwanttoreinstallSimpleLauncher", "Do you want to reinstall 'Simple Launcher' to fix the issue?");
+
+        var result = await ShowAsync(O,
+            $"{thefollowingrequiredfilesaremissing}\n" +
+            $"{fileList}\n\n" +
+            $"{doyouwanttoreinstallSimpleLauncher}",
+            missingRequiredFiles, MessageButtons.YesNo, MessageIcon.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _ = App.ServiceProvider.GetRequiredService<AvaloniaCheckForUpdatesService>().ReinstallAndShutdownAsync();
+        }
+        else
+        {
+            var pleasereinstallSimpleLauncher = _localization.GetString("PleasereinstallSimpleLauncher",
+                "Please reinstall 'Simple Launcher' manually to fix the issue.");
+            var theapplicationwillshutdown = _localization.GetString("Theapplicationwillshutdown",
+                "The application will shutdown.");
+            await ShowAsync(O, $"{pleasereinstallSimpleLauncher}\n\n{theapplicationwillshutdown}",
+                missingRequiredFiles, MessageButtons.Ok, MessageIcon.Error);
+            App.ServiceProvider.GetRequiredService<AvaloniaQuitSimpleLauncher>().SimpleQuitApplication();
+        }
     }
 
 

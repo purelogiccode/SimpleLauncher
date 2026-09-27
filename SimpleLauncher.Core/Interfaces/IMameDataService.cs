@@ -1,3 +1,4 @@
+using SimpleLauncher.Core.Services.MameData;
 using SimpleLauncher.Core.Services.MameManager;
 
 namespace SimpleLauncher.Core.Interfaces;
@@ -16,4 +17,15 @@ public interface IMameDataService
     ///     Gets the lookup dictionary mapping machine names to their descriptions.
     /// </summary>
     IDictionary<string, string> Lookup { get; }
+
+    /// <summary>
+    ///     Gets why loading mame.dat failed, or <see cref="MameDataLoadFailure.None" /> when it loaded.
+    /// </summary>
+    MameDataLoadFailure LoadFailure { get; }
+
+    /// <summary>
+    ///     Reports a load failure that could not be shown during startup (no window owner yet).
+    ///     Safe to call more than once - the dialog is shown only on the first call.
+    /// </summary>
+    Task NotifyLoadFailureIfNeededAsync();
 }
