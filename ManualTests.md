@@ -705,6 +705,87 @@ device/BIOS ROMs), not app bugs.
 - Grid cards only render after a letter filter (`filter_letter("All")`) - the right-click launch
   sweep silently did nothing without it.
 
+### Standalone emulator + BIOS session (2026-09-27, E:/F:/G:/I:/J: collections)
+
+Goal: exercise the remaining standalone emulators (PS1/PS2/PS3/Dreamcast/Saturn/WiiU/3DS/PSP/Xbox/
+DOS/Model 3) and the CD-based RetroArch cores with real ROMs, using the user's additional drives
+(`E:`, `F:`, `G:`, `I:`, `J:`). The user supplied the BIOS/firmware sources and asked to set PS3/Vita
+up with official firmware; the **AI Parameter Suggestion** feature stays out of scope.
+
+**Setup (reusable):**
+- BIOS: `D:\Emulators\RetroArch\system` is a complete RetroArch system dir (PS1 scph*, PS2, Dreamcast
+  `dc/`, Saturn `sega_101.bin`/`mpr-17933.bin`, PCE CD `syscard3.pce`, 3DO `panafz10.bin`, PC-FX
+  `pcfx.rom`, Sega CD `bios_CD_*.bin`, CD32 `kick40060.CD32*`, X68000 `keropi/`, N64DD
+  `Mupen64plus/IPL.n64`, CD-i `same_cdi/bios/cdimono1.zip`, Neo CD `neocd/`, MSX ROMs, `tos.img`,
+  `disksys.rom`, ...). `D:\Emulators\Xemu` has the Xbox BIOS/HDD (`mcpx_1.0.bin`,
+  `Complex_4627.bin`, `eeprom.bin`, `xbox_hdd.qcow2`). MAME-set BIOS (`G:\MAME\MAME Roms`) also
+  works (neocd.zip, cdimono1.zip, pcfx.zip, 3dobios.zip, n64dd.zip, x68000.zip, megacd/segacd,
+  cd32.zip, jaguarcd.zip).
+- Standalone Linux emulators installed per the Easy Mode manifest into
+  `~/SimpleLauncher/emulators/<Name>/` (DuckStation, PCSX2, RPCS3, Redream, Ymir, Azahar, Cemu,
+  Xemu, Supermodel, DOSBox Staging; PPSSPP was already there). `chmod +x` every binary after SCP.
+- Per-emulator data dirs on Linux (learned the hard way):
+  - DuckStation: portable mode via `portable.txt` next to the AppImage; BIOS in `<dir>/bios/`.
+  - PCSX2: data dir `~/.config/PCSX2` (BIOS files go in `~/.config/PCSX2/bios/`; the `inis/PCSX2.ini`
+    `[Filenames] BIOS` path alone did not satisfy the BIOS check).
+  - RPCS3: `~/.config/rpcs3` (dev_flash copied from the user's Windows install works).
+  - Redream: `redream.cfg` + `dc_boot.bin`/`dc_flash.bin` next to the binary.
+  - Ymir: `Ymir.toml` + `saturn_bios.bin` in the emulator dir (IPL override path patched).
+  - Cemu: portable mode = a `portable` dir next to `Cemu`; **keys.txt and settings.xml go inside
+    `portable/`** (mlc01 too). Title keys: the user's per-game `.key` zips can be hex-encoded into
+    keys.txt (one 32-hex key per line).
+  - xemu: config is `~/.local/share/xemu/xemu/xemu.toml` (not `~/.config`!), data files in the same
+    dir (mcpx/flashrom/eeprom/hdd).
+  - Supermodel: `~/.supermodel/{Config,ROMs,Saves,NVRAM,Assets}` (sample `Supermodel.ini` from the
+    app's `samples/`).
+  - openMSX: `~/.openMSX/share` must resolve to the install's `share` (symlink it) or openMSX cannot
+    find `machines/C-BIOS_MSX2+.xml`; BIOS ROMs in `share/systemroms`.
+- ROMs staged from the drives (~3 GB, 27 files) and seeded with `seed-batch2.py` +
+  `vm-systems2.json` (new harness helpers; `fix-arrays.py` normalizes scalar format strings).
+
+**Coverage (all through the UI, app-driven, play history recorded):**
+
+| System | Emulator | Result |
+|---|---|---|
+| Sony PlayStation 1 | DuckStation | **launched** (Raiden Project) |
+| Sony PlayStation 2 | PCSX2 | **game boots** (Nami/Natsume intro) after placing the BIOS in `~/.config/PCSX2/bios` |
+| Sony PlayStation 3 | RPCS3 | app launches RPCS3 with the CHD converted to ISO; RPCS3 rejects the collection's ISO9660 "PS3VOLUME" images ("Invalid file or folder"); first-run welcome wizard also appears |
+| Sega Dreamcast | Redream | **launched** (18 Wheeler) |
+| Sega Saturn | Ymir | **launched** (3D Baseball, title bar shows the game) |
+| Nintendo WiiU | Cemu | **game boots** (Funky Barn) after adding the title keys to `portable/keys.txt`; first-run "Getting started" wizard must be dismissed once |
+| Nintendo 3DS | Azahar | **launched** (Puzzler Mind Gym 3D) |
+| Sony PSP | PPSSPP | **launched** (NHL 07) |
+| Microsoft Xbox | xemu | **game boots** (007: Agent Under Fire EA logo) after fixing the xemu.toml path |
+| Microsoft DOS | DOSBox Staging | **game boots** (Wolfenstein 3D) via the app's file-selection dialog |
+| Sega Model 3 | Supermodel | the app **ran the .bat** and reported exit code 1; Supermodel rejected the split ROM set (incomplete) |
+| Nintendo FDS | RetroArch mesen | still fails: the collection's image is `.qd` (Quick Disk), unsupported by mesen; `disksys.rom` is now in place |
+| Atari ST | RetroArch hatari | **launched** with `tos.img` in the system dir |
+| GameCube / Wii / N64DD / 3DO / Neo Geo CD / CD-i / PC-FX / Sega CD / CD32 / Jaguar CD / PCE CD / X68000 | RetroArch cores | from the earlier sweep; **N64DD** fails because mupen64plus-next cannot load a standalone `.ndd`, and **X68000** fails because px68k cannot load the zipped split `.raw` disks (extracted `.raw` loads fine) |
+
+**Fixes:**
+- **BUG-14 (FIXED 2026-09-27):** a failing batch file/executable logged at `Warning`/`Error`
+  (Avalonia `LauncherService`, WPF `GameLauncherService`) so the bug-report sink filed expected
+  user conditions (e.g. an incomplete Supermodel ROM set) as bugs. Now `Information`; the user
+  still gets the toast/status/message box.
+- **BUG-15 (FIXED 2026-09-27):** the DOSBox file-selection list items exposed the CLR type name
+  (`SimpleLauncher.Core.Models.DosBoxFileItem`) as their accessible name because
+  `DosBoxFileItem` had no `ToString()`; screen readers read garbage. Fixed with a `ToString()`
+  override returning `DisplayName`.
+- Conversion check: the app's managed CHD→ISO conversion (DiscConverter/CHDSharp) is
+  **byte-identical** to `chdman extractdvd` for the PS3 CHD (verified with `cmp`), so the RPCS3
+  rejection is the image format, not the conversion.
+
+**Observations:**
+- The app's "AI Parameter Suggestion" window appeared during an emulator failure (excluded from
+  testing; closed without interaction).
+- `.bat` launches work on Linux (`UseShellExecute`) - the Model 3 flow ran the script and surfaced
+  its exit code.
+- The AT-SPI tree can become truncated after heavy sessions (nodes: 0 while the window is fine);
+  app restarts did not clear it, a **guest reboot** did. The reliable pattern is: one system per
+  app start, `ensure_ready` (maximize) first, verify the letter bar before right-clicking.
+- Stale AT-SPI peers survive the return to the card screen, so card/browser detection must use
+  markers that only the real screen has (base-system card labels, letter bar).
+
 ### Open items for the next session
 
 1. **Full pass - DONE 2026-09-26**: `reports\run-20260926-143336.md` **31/31 PASS in a single run** on
@@ -732,16 +813,18 @@ device/BIOS ROMs), not app bugs.
    Favorites/Play History columns, ROM History, the `mame.dat` failure paths and the GroupByFolder
    warning; the emulator sweep session on 2026-09-27 launched real ROMs through **29 distinct
    emulators/cores** (see that section) and verified the RetroAchievements settings login, profile
-   page, per-game window and local hashing with real credentials. Still unexercised: the `<5 GB free`
-   disk-space error, the final failure after all retries, closing a window during a download, the
-   successful Edit System save path and the AI fix flow, Support valid submit, Image viewer, DOSBox
-   file selection, System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone
+   page, per-game window and local hashing with real credentials. The standalone emulator + BIOS
+   session on 2026-09-27 then launched PS1/PS2/Dreamcast/Saturn/WiiU/3DS/PSP/Xbox/DOS/Atari ST with
+   real games and exercised the DOSBox file selection (see that section). Still unexercised: the
+   `<5 GB free` disk-space error, the final failure after all retries, closing a window during a
+   download, the successful Edit System save path and the AI fix flow, Support valid submit, Image
+   viewer, System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone
    Save+Revert, About offline update checks, log files and the bug-report sink, config-persistence
    failure paths, gamepad on this VM, video/info context-menu links, the RA per-game window's other
    tabs (Game Info/Ranking/My Profile/Unlocks/User Progress), RA login/API error paths and the
-   hashing variants (NES header-strip, system picker, zipped PS1, RVZ, unsupported system), and
-   real-ROM launches for the remaining standalone emulators (DuckStation/PCSX2/RPCS3/Redream/
-   Supermodel/Ymir/Cemu/Azahar/shadPS4/Vita3K - no ROMs for those systems on the host).
+   hashing variants (NES header-strip, system picker, zipped PS1, RVZ, unsupported system), the
+   PS3 boot (RPCS3 rejects this collection's ISO9660 images; the conversion is chdman-identical)
+   and the Vita (the collection is `.pkg`-based, no `.vpk` to launch).
 5. **MAME startup notifications - FIXED 2026-09-27 (BUG-12)**: the corrupt `mame.dat` case was
    silent and the Avalonia required-files dialog claimed a shutdown without quitting. `MameDataService`
    now records the load failure and the startup initialization reports it once the window exists;
@@ -757,14 +840,14 @@ device/BIOS ROMs), not app bugs.
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
   reboot; `lib.ps1` updated accordingly) - always re-check after a VM boot.
 - App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-13
-  fixes and deployed (`SimpleLauncher.Core.dll` md5 `ec5896c77f5e49784c99d886a16bcab1` after the
-  BUG-13 deploy, previously `fb53cfd8eae668e6c129747d65627007`; `SimpleLauncher.Avalonia.dll` md5
-  `68d6f222edcfd0375dcf0ee18ca1bbec`); after the emulator sweep session the app runs the **batch 3**
-  fixture (base 4 + Game Boy, Game Boy Color, WonderSwan, FDS, SG-1000, 32X, Neo Geo Pocket Color),
-  no `-debug`, list view. The Avalonia (686/686) and WPF (2122/2122; one transient live-URL flake
-  passed on re-run) suites are green on the current working tree, which has the BUG-07..12 work
-  committed (`aa87e469`..`693d7c68`); the BUG-13 fix, the new harness helpers and the docs of the
-  sweep session are uncommitted at stop time (item 9).
+  fixes and deployed (`SimpleLauncher.Core.dll` md5 `ec5896c77f5e49784c99d886a16bcab1`;
+  `SimpleLauncher.Avalonia.dll` md5 `68d6f222edcfd0375dcf0ee18ca1bbec`); after the standalone session
+  the app runs the **batch B** fixture (base 4 + PS1, PS2, PS3, Dreamcast, Saturn, WiiU, 3DS, PSP,
+  Xbox, DOS, Model 3, FDS, Atari ST), no `-debug`, list view, window maximized by the harness. The
+  BUG-14/15 fixes are in the working tree but **not deployed to the VM** (rebuild+redeploy if they
+  need live verification). The Avalonia (686/686) and WPF (2122/2122) suites are green on the
+  current working tree; everything through the MAME session is pushed (`aa87e469`..`693d7c68`), the
+  BUG-13..15 fixes, the harness helpers and the session docs are uncommitted at stop time (item 9).
 - Emulator sweep session artifacts on the guest: RetroArch 1.22.2 + 491 cores under
   `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/`, OpenMSX 21.0 under
   `~/SimpleLauncher/emulators/OpenMSX/`, real ROMs for 36 systems under `~/roms/` (873 MB from
@@ -779,13 +862,21 @@ device/BIOS ROMs), not app bugs.
 - MAME session artifacts on the guest: real ROMs in `~/roms/Arcade` (pacman/galaga/dkong/mspacman)
   and `~/roms/Arcade BIOS` (neogeo/3dobios/a1200kbd_rb), covers in `~/images/Arcade/`, a backup of
   the restored `mame.dat` at `/home/vm/mame.dat.bak` (md5 `50050360caa58888836c6bacc9a3045c`).
-- Installed under `~/SimpleLauncher/emulators/`: **only PPSSPP** (re-installed 2026-09-26 during the
-  edge-case session). The 15 emulators + RetroArch bundle (about 3.5 GB) and the real PSP
-  ISO/Dreamcast cue/bins from the earlier session are **gone** - the folder and the ROMs were
-  removed outside the harness session, so do not assume them. `~/SimpleLauncher/images/` now has the
-  Atari 2600 (2400 covers) and Atari 5200 (191 covers) packs plus an empty `Sony PSP` folder created
-  by the Add System test; the 601-cover PSP pack is gone too. `settings.dat` was re-seeded after the
-  edge cases (systems only, 3 fixture systems), so Favorites/PlayHistory were cleared.
+- Installed under `~/SimpleLauncher/emulators/`: RetroArch 1.22.2 + 491 cores, OpenMSX 21.0,
+  PPSSPP 1.20.4, DuckStation, PCSX2 2.8.2, RPCS3 0.0.42 (+ `~/.config/rpcs3/dev_flash`), Redream
+  1.5.0, Ymir 0.3.3, Azahar 2126.1.2, Cemu 2.6 (portable mode: `Cemu_2.6/portable/` holds
+  `keys.txt` - the user's per-game `.key` files hex-encoded - `settings.xml` and `mlc01`), Xemu
+  0.8.136 (`~/.local/share/xemu/xemu/` holds the BIOS/HDD and `xemu.toml`), Supermodel 0.3a
+  (`~/.supermodel/` layout), DOSBox Staging 0.83.0, Vita3K (firmware extracted at `/tmp/vita-fw`,
+  not installed - the collection has no `.vpk`). All binaries `chmod +x`-ed after SCP.
+- BIOS/system files staged for the standalone session: the RetroArch system dir has the PS1/PS2/
+  Dreamcast/Saturn/PCE-CD/3DO/PC-FX/Sega-CD/CD32/X68000/N64DD/CD-i/Neo-CD/MSX/`tos.img`/
+  `disksys.rom` set (from `D:\Emulators\RetroArch\system`), `~/.config/PCSX2/bios` has the PS2 BIOS,
+  DuckStation has `portable.txt` + `bios/` + `settings.ini`, Redream/Ymir have their BIOS/config in
+  the emulator dirs, and `~/.openMSX/share` is a symlink to the OpenMSX install share.
+- `~/roms/` now has 64 system folders (~3.9 GB) including the new standalone systems; `~/images/`
+  has a folder per system. The new systems were seeded with `seed-batch2.py` + `vm-systems2.json`
+  (in `/home/vm/vision/`), then `fix-arrays.py` normalized the scalar format strings.
 - Guest screensaver lock was disabled (`gsettings set org.cinnamon.desktop.screensaver lock-enabled
   false` + `idle-activation-enabled false`; persists in dconf) and `xset s off -dpms` was applied
   (does **not** persist across reboot). Without this the physical `:0` console locks and hides the
@@ -820,13 +911,14 @@ device/BIOS ROMs), not app bugs.
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Uncommitted work at stop time** (do not lose it): the **BUG-13 fix**
-   (`SimpleLauncher.Core/Services/WpfServices/WindowsCredentialProtector.cs`, the portable-fallback
-   message is now `Information`), the new harness helpers
-   (`scripts/gui-test-harness/seed-batch.py`, `scripts/gui-test-harness/vm-systems.json`) and the
-   docs of the emulator sweep session (`ManualTests.md`, `docs/manual-tests.md`,
-   `docs/gui-test-harness.md`). Everything through the MAME session + BUG-12 is pushed
-   (`aa87e469`..`693d7c68`).
+9. **Uncommitted work at stop time** (do not lose it): the **BUG-14 fix** (batch/exec exit logging
+   now `Information` in `SimpleLauncher.Avalonia/Services/GameLauncher/LauncherService.cs` and
+   `SimpleLauncher/Services/GameLauncher/GameLauncherService.cs`), the **BUG-15 fix**
+   (`SimpleLauncher.Core/Models/DosBoxFileItem.cs` `ToString()`), the new harness helpers
+   (`scripts/gui-test-harness/seed-batch2.py`, `fix-arrays.py`, `vm-systems2.json`,
+   `launch-one.py`) and the session docs (`ManualTests.md`, `docs/manual-tests.md`,
+   `docs/gui-test-harness.md`). Everything through the emulator-matrix session is pushed
+   (`aa87e469`..`b9f9d157`, including the BUG-13 fix in `35f0c8b0`).
 
 ## 7. Cost
 
@@ -959,6 +1051,17 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   Now logged at `Information` (expected platform condition per AGENTS.md); verified on the VM (no new
   entry after the fixed Core was deployed). Note: the credentials really are only Base64-obfuscated on
   Linux (portable fallback, by design) - documented as a limitation, not changed.
+- **BUG-14 - failing batch files/executables were logged at Warning/Error, so users filed bug reports (FIXED 2026-09-27).**
+  When a launched `.bat` (Sega Model 3) or direct executable exits non-zero - e.g. the emulator
+  rejects an incomplete ROM set - the Avalonia `LauncherService` logged `Warning` ("Batch file exited
+  with code 1"/"Executable exited with code") and the WPF `GameLauncherService` logged `Error`. Both
+  are expected user conditions (the user's data/emulator failed) and reached the `BugReportApiSink`.
+  Now `Information`; the user-facing toast/status/message box is unchanged.
+- **BUG-15 - DOSBox file-selection list items exposed the CLR type name to screen readers (FIXED 2026-09-27).**
+  `DosBoxFileItem` had no `ToString()`, so the Avalonia ListBox items' accessible name (and any
+  fallback rendering) was `SimpleLauncher.Core.Models.DosBoxFileItem`. Added a `ToString()` override
+  returning `DisplayName`; the dialog's file list now reads the real file names (verified live via
+  AT-SPI: the items were `DosBoxFileItem` before, and the DOSBox launch itself worked).
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:

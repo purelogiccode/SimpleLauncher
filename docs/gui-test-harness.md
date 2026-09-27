@@ -511,6 +511,38 @@ exercised this way on 2026-09-27.
 RetroAchievements on the VM needs the user's RA username/password/Web API key in the settings
 window; the local hasher CLI then resolves the game ID and the per-game window loads live data.
 
+**Standalone emulators (2026-09-27 session).** `seed-batch2.py` + `vm-systems2.json` seed the 25
+manifest-derived standalone/CD systems (and `fix-arrays.py` repairs scalar format strings that the
+strict deserializer silently skips). `launch-one.py <System> "<Game>" [wait]` drives one app-launch
+of a system: it maximizes the window, opens the system, clicks the letter bar, right-clicks the game
+card (AT-SPI, falling back to card coordinates), handles the DOSBox file-selection dialog, waits for
+a new window, records the emulator process/args and screenshots, then kills the emulator. Run it
+**once per fresh app start** - the AT-SPI tree accumulates stale browser peers after a launch/exit
+cycle, so card clicks silently miss (restart the app per system; if the tree becomes truncated
+(`snapshot()` returns 0 nodes while the window is fine), app restarts do not clear it and a **guest
+reboot** is the recovery).
+
+Per-emulator Linux data locations used by the session (create these before launching):
+
+| Emulator | Config / BIOS / keys |
+|---|---|
+| DuckStation | `portable.txt` next to the AppImage; BIOS in `<dir>/bios/`; `settings.ini` from the app samples |
+| PCSX2 | BIOS files in `~/.config/PCSX2/bios/` (the ini BIOS path alone is not enough); config in `~/.config/PCSX2/inis/PCSX2.ini` |
+| RPCS3 | `~/.config/rpcs3/{config.yml,dev_flash}` (the Windows `dev_flash` copy works); first run shows the Welcome wizard |
+| Redream | `redream.cfg` + `dc_boot.bin`/`dc_flash.bin` next to the binary |
+| Ymir | `Ymir.toml` (IPL override = absolute `saturn_bios.bin` path) + `saturn_bios.bin` in the emulator dir |
+| Azahar | `~/.config/azahar/qt-config.ini`, `~/.local/share/azahar` |
+| Cemu | `portable/` dir next to `Cemu`; `portable/keys.txt` (32-hex key per line - hex-encode the per-game `.key` files), `portable/settings.xml`, `portable/mlc01` |
+| xemu | `~/.local/share/xemu/xemu/{xemu.toml,mcpx_1.0.bin,Complex_4627.bin,eeprom.bin,xbox_hdd.qcow2}` (config is NOT under `~/.config`) |
+| Supermodel | `~/.supermodel/{Config/Supermodel.ini,ROMs,Assets,NVRAM,Saves}`; the app runs the `.bat` via `UseShellExecute` (works on Linux) |
+| DOSBox Staging | the app extracts the game zip, shows the file picker and writes `_simplelauncher_dosbox.conf` into the temp dir |
+| openMSX | `~/.openMSX/share` must resolve to the install's `share` (symlink it) or the machine XMLs are not found |
+| Vita3K | firmware installable, but the tested collection is `.pkg`-based (no `.vpk`) so the app cannot launch a game |
+
+The app's managed CHD→ISO conversion (DiscConverter/CHDSharp) was verified **byte-identical** to
+`chdman extractdvd` on the PS3 CHD; RPCS3 rejects this collection's ISO9660 "PS3VOLUME" images
+regardless, so that is an image-format limitation, not a conversion bug.
+
 ---
 
 ## Appendix A — `fixture.py` (full source)
