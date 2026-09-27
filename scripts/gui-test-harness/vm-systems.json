@@ -1,0 +1,797 @@
+[
+  {
+    "SystemName": "Nintendo NES",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo NES"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo NES",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mesen",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mesen_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo SNES",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo SNES"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo SNES",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": [
+      "smc",
+      "sfc",
+      "swc",
+      "fig",
+      "bs",
+      "st"
+    ],
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch snes9x",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/snes9x_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Game Boy",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Game Boy"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Game Boy",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch gambatte",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/gambatte_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Game Boy Color",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Game Boy Color"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Game Boy Color",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch gambatte",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/gambatte_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Game Boy Advance",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Game Boy Advance"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Game Boy Advance",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mgba",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mgba_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo 64",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo 64"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo 64",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mupen64plus_next",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mupen64plus_next_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo DS",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo DS"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo DS",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": [
+      "nds",
+      "bin"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch melonds",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/melonds_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Genesis",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Genesis"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Genesis",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch picodrive",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/picodrive_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Master System",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Master System"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Master System",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch genesis_plus_gx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/genesis_plus_gx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Game Gear",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Game Gear"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Game Gear",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch genesis_plus_gx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/genesis_plus_gx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Genesis 32X",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Genesis 32X"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Genesis 32X",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch picodrive",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/picodrive_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "NEC PC Engine",
+    "SystemFolders": [
+      "/home/vm/roms/NEC PC Engine"
+    ],
+    "SystemImageFolder": "/home/vm/images/NEC PC Engine",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_pce",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_pce_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "NEC SuperGrafx",
+    "SystemFolders": [
+      "/home/vm/roms/NEC SuperGrafx"
+    ],
+    "SystemImageFolder": "/home/vm/images/NEC SuperGrafx",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_supergrafx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_supergrafx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Virtual Boy",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Virtual Boy"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Virtual Boy",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_vb",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_vb_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "SNK Neo Geo Pocket",
+    "SystemFolders": [
+      "/home/vm/roms/SNK Neo Geo Pocket"
+    ],
+    "SystemImageFolder": "/home/vm/images/SNK Neo Geo Pocket",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_ngp",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_ngp_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "SNK Neo Geo Pocket Color",
+    "SystemFolders": [
+      "/home/vm/roms/SNK Neo Geo Pocket Color"
+    ],
+    "SystemImageFolder": "/home/vm/images/SNK Neo Geo Pocket Color",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_ngp",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_ngp_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Bandai WonderSwan",
+    "SystemFolders": [
+      "/home/vm/roms/Bandai WonderSwan"
+    ],
+    "SystemImageFolder": "/home/vm/images/Bandai WonderSwan",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_wswan",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_wswan_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari 2600",
+    "SystemFolders": [
+      "/home/vm/roms/Atari 2600"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari 2600",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch stella",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/stella_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari 5200",
+    "SystemFolders": [
+      "/home/vm/roms/Atari 5200"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari 5200",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch a5200",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/a5200_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari 7800",
+    "SystemFolders": [
+      "/home/vm/roms/Atari 7800"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari 7800",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch prosystem",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/prosystem_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari Lynx",
+    "SystemFolders": [
+      "/home/vm/roms/Atari Lynx"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari Lynx",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch handy",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/handy_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari Jaguar",
+    "SystemFolders": [
+      "/home/vm/roms/Atari Jaguar"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari Jaguar",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch virtualjaguar",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/virtualjaguar_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari 8-Bit",
+    "SystemFolders": [
+      "/home/vm/roms/Atari 8-Bit"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari 8-Bit",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch atari800",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/atari800_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari ST",
+    "SystemFolders": [
+      "/home/vm/roms/Atari ST"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari ST",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch hatari",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/hatari_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Colecovision",
+    "SystemFolders": [
+      "/home/vm/roms/ColecoVision"
+    ],
+    "SystemImageFolder": "/home/vm/images/ColecoVision",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": [
+      "col",
+      "cv",
+      "bin",
+      "rom"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch bluemsx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/bluemsx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Mattel Intellivision",
+    "SystemFolders": [
+      "/home/vm/roms/Mattel Intellivision"
+    ],
+    "SystemImageFolder": "/home/vm/images/Mattel Intellivision",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch freeintv",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/freeintv_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Magnavox Odyssey 2",
+    "SystemFolders": [
+      "/home/vm/roms/Magnavox Odyssey 2"
+    ],
+    "SystemImageFolder": "/home/vm/images/Magnavox Odyssey 2",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": "bin",
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch o2em",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/o2em_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Commodore 64",
+    "SystemFolders": [
+      "/home/vm/roms/Commodore 64"
+    ],
+    "SystemImageFolder": "/home/vm/images/Commodore 64",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch vice_x64sc",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/vice_x64sc_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Commodore Amiga",
+    "SystemFolders": [
+      "/home/vm/roms/Commodore Amiga"
+    ],
+    "SystemImageFolder": "/home/vm/images/Commodore Amiga",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch puae",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/puae_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Microsoft MSX",
+    "SystemFolders": [
+      "/home/vm/roms/Microsoft MSX"
+    ],
+    "SystemImageFolder": "/home/vm/images/Microsoft MSX",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": [
+      "rom",
+      "r1",
+      "mx1",
+      "mx2",
+      "col",
+      "dsk",
+      "cas",
+      "sg",
+      "sc",
+      "m3u"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "OpenMSX",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/OpenMSX/bin/openmsx",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sinclair ZX Spectrum",
+    "SystemFolders": [
+      "/home/vm/roms/Sinclair ZX Spectrum"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sinclair ZX Spectrum",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch fuse",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/fuse_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Family Computer Disk System",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Family Computer Disk System"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Family Computer Disk System",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mesen",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mesen_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Satellaview",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Satellaview"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Satellaview",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch snes9x",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/snes9x_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega SG-1000",
+    "SystemFolders": [
+      "/home/vm/roms/Sega SG-1000 SC-3000"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega SG-1000 SC-3000",
+    "FileFormatsToSearch": "zip",
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch genesis_plus_gx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/genesis_plus_gx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "ScummVM",
+    "SystemFolders": [
+      "/home/vm/roms/ScummVM"
+    ],
+    "SystemImageFolder": "/home/vm/images/ScummVM",
+    "FileFormatsToSearch": [
+      "zip"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch scummvm",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/scummvm_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Arcade RA",
+    "SystemFolders": [
+      "/home/vm/roms/Arcade"
+    ],
+    "SystemImageFolder": "/home/vm/images/Arcade",
+    "FileFormatsToSearch": [
+      "zip"
+    ],
+    "FileFormatsToLaunch": [],
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mame",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mame_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  }
+]
