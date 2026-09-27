@@ -19,4 +19,13 @@ public class DosBoxFileItem
     ///     Gets the path relative to the base directory.
     /// </summary>
     public string RelativePath { get; init; } = "";
+
+    /// <summary>
+    ///     Returns the display name so accessibility trees and any fallback rendering never
+    ///     expose the type name (the DOSBox file-selection list items use this as their name).
+    /// </summary>
+    public override string ToString()
+    {
+        return DisplayName;
+    }
 }

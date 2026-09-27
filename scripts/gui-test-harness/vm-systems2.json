@@ -1,0 +1,638 @@
+[
+  {
+    "SystemName": "Sony PlayStation 1",
+    "SystemFolders": [
+      "/home/vm/roms/Sony PlayStation 1"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sony PlayStation 1",
+    "FileFormatsToSearch": [
+      "chd",
+      "cue",
+      "bin",
+      "img",
+      "mds",
+      "mdf",
+      "pbp"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "DuckStation",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/DuckStation/DuckStation-x64.AppImage",
+        "EmulatorParameters": "-fullscreen",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sony PlayStation 2",
+    "SystemFolders": [
+      "/home/vm/roms/Sony PlayStation 2"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sony PlayStation 2",
+    "FileFormatsToSearch": [
+      "chd",
+      "bin",
+      "iso",
+      "mdf",
+      "cso",
+      "zso",
+      "gz"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "PCSX2",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/PCSX2/pcsx2-v2.8.2-linux-appimage-x64-Qt.AppImage",
+        "EmulatorParameters": "-fullscreen",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sony PlayStation 3",
+    "SystemFolders": [
+      "/home/vm/roms/Sony PlayStation 3"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sony PlayStation 3",
+    "FileFormatsToSearch": [
+      "iso",
+      "bat",
+      "chd"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "RPCS3",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RPCS3/rpcs3-v0.0.42-20028-accfecd2_linux64.AppImage",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Dreamcast",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Dreamcast"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Dreamcast",
+    "FileFormatsToSearch": [
+      "chd",
+      "gdi",
+      "cue",
+      "bin",
+      "cdi"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Redream",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/Redream/redream",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Saturn",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Saturn"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Saturn",
+    "FileFormatsToSearch": [
+      "chd",
+      "cue",
+      "toc",
+      "m3u",
+      "ccd"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Ymir",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/Ymir/ymir-sdl3",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo GameCube",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo GameCube"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo GameCube",
+    "FileFormatsToSearch": [
+      "rvz"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch dolphin",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/dolphin_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo Wii",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo Wii"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo Wii",
+    "FileFormatsToSearch": [
+      "rvz"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch dolphin",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/dolphin_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo WiiU",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo WiiU"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo WiiU",
+    "FileFormatsToSearch": [
+      "wua"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Cemu",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/Cemu/Cemu_2.6/Cemu",
+        "EmulatorParameters": "-f -g",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo 3DS",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo 3DS"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo 3DS",
+    "FileFormatsToSearch": [
+      "3ds",
+      "cci",
+      "3dsx",
+      "elf",
+      "axf",
+      "cxi",
+      "app"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Azahar",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/Azahar/azahar.AppImage",
+        "EmulatorParameters": "-f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sony PSP",
+    "SystemFolders": [
+      "/home/vm/roms/Sony PSP"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sony PSP",
+    "FileFormatsToSearch": [
+      "iso",
+      "cso",
+      "chd",
+      "pbp",
+      "elf",
+      "prx"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "PPSSPP",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/PPSSPP/PPSSPP-v1.20.4-anylinux-x86_64.AppImage",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Microsoft Xbox",
+    "SystemFolders": [
+      "/home/vm/roms/Microsoft Xbox"
+    ],
+    "SystemImageFolder": "/home/vm/images/Microsoft Xbox",
+    "FileFormatsToSearch": [
+      "iso",
+      "chd"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Xemu",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/Xemu/xemu-0.8.136-x86_64.AppImage",
+        "EmulatorParameters": "-full-screen -dvd_path",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Panasonic 3DO",
+    "SystemFolders": [
+      "/home/vm/roms/Panasonic 3DO"
+    ],
+    "SystemImageFolder": "/home/vm/images/Panasonic 3DO",
+    "FileFormatsToSearch": [
+      "chd",
+      "iso",
+      "bin",
+      "cue"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch opera",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/opera_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "SNK Neo Geo CD",
+    "SystemFolders": [
+      "/home/vm/roms/SNK Neo Geo CD"
+    ],
+    "SystemImageFolder": "/home/vm/images/SNK Neo Geo CD",
+    "FileFormatsToSearch": [
+      "chd",
+      "cue"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch neocd",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/neocd_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Philips CD-i",
+    "SystemFolders": [
+      "/home/vm/roms/Philips CD-i"
+    ],
+    "SystemImageFolder": "/home/vm/images/Philips CD-i",
+    "FileFormatsToSearch": [
+      "chd",
+      "iso"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch same_cdi",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/same_cdi_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "NEC PC-FX",
+    "SystemFolders": [
+      "/home/vm/roms/NEC PC-FX"
+    ],
+    "SystemImageFolder": "/home/vm/images/NEC PC-FX",
+    "FileFormatsToSearch": [
+      "chd",
+      "cue",
+      "ccd",
+      "toc"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_pcfx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_pcfx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Genesis CD",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Genesis CD"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Genesis CD",
+    "FileFormatsToSearch": [
+      "chd",
+      "bin",
+      "cue",
+      "iso"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch genesis_plus_gx",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/genesis_plus_gx_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sharp x68000",
+    "SystemFolders": [
+      "/home/vm/roms/Sharp x68000"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sharp x68000",
+    "FileFormatsToSearch": [
+      "zip"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch px68k",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/px68k_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Atari Jaguar CD",
+    "SystemFolders": [
+      "/home/vm/roms/Atari Jaguar CD"
+    ],
+    "SystemImageFolder": "/home/vm/images/Atari Jaguar CD",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": [
+      "cue",
+      "cdi"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch virtualjaguar",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/virtualjaguar_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Commodore Amiga CD32",
+    "SystemFolders": [
+      "/home/vm/roms/Commodore Amiga CD32"
+    ],
+    "SystemImageFolder": "/home/vm/images/Commodore Amiga CD32",
+    "FileFormatsToSearch": [
+      "chd"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch puae",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/puae_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Nintendo 64DD",
+    "SystemFolders": [
+      "/home/vm/roms/Nintendo 64DD"
+    ],
+    "SystemImageFolder": "/home/vm/images/Nintendo 64DD",
+    "FileFormatsToSearch": [
+      "zip"
+    ],
+    "FileFormatsToLaunch": [
+      "n64",
+      "v64",
+      "z64",
+      "bin",
+      "u1",
+      "ndd",
+      "gb"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mupen64plus_next",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mupen64plus_next_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Microsoft DOS",
+    "SystemFolders": [
+      "/home/vm/roms/Microsoft DOS"
+    ],
+    "SystemImageFolder": "/home/vm/images/Microsoft DOS",
+    "FileFormatsToSearch": [
+      "zip"
+    ],
+    "FileFormatsToLaunch": "bat",
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "DOSBox Staging",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/DOSBox Staging/dosbox-staging-linux-x86_64-0.83.0-7b400/dosbox",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Sega Model 3",
+    "SystemFolders": [
+      "/home/vm/roms/Sega Model 3"
+    ],
+    "SystemImageFolder": "/home/vm/images/Sega Model 3",
+    "FileFormatsToSearch": [
+      "bat"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Supermodel",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/Supermodel/supermodel-0.3a-20260726-git-24d2ffc/supermodel",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Microsoft MSX",
+    "SystemFolders": [
+      "/home/vm/roms/Microsoft MSX"
+    ],
+    "SystemImageFolder": "/home/vm/images/Microsoft MSX",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": [
+      "rom",
+      "r1",
+      "mx1",
+      "mx2",
+      "col",
+      "dsk",
+      "cas",
+      "sg",
+      "sc",
+      "m3u"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "OpenMSX",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/OpenMSX/bin/openmsx",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "Microsoft MSX2",
+    "SystemFolders": [
+      "/home/vm/roms/Microsoft MSX2"
+    ],
+    "SystemImageFolder": "/home/vm/images/Microsoft MSX2",
+    "FileFormatsToSearch": [
+      "zip",
+      "7z"
+    ],
+    "FileFormatsToLaunch": [
+      "rom",
+      "r1",
+      "mx1",
+      "mx2",
+      "col",
+      "dsk",
+      "cas",
+      "sg",
+      "sc",
+      "m3u"
+    ],
+    "ExtractFileBeforeLaunch": true,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "OpenMSX",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/OpenMSX/bin/openmsx",
+        "EmulatorParameters": "",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  },
+  {
+    "SystemName": "NEC PC Engine CD",
+    "SystemFolders": [
+      "/home/vm/roms/NEC PC Engine CD"
+    ],
+    "SystemImageFolder": "/home/vm/images/NEC PC Engine CD",
+    "FileFormatsToSearch": [
+      "chd",
+      "pce",
+      "cue",
+      "ccd",
+      "iso",
+      "img"
+    ],
+    "FileFormatsToLaunch": null,
+    "ExtractFileBeforeLaunch": false,
+    "GroupByFolder": false,
+    "DisableRecursiveSearch": false,
+    "Emulators": [
+      {
+        "EmulatorName": "Retroarch mednafen_pce",
+        "EmulatorLocation": "/home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage",
+        "EmulatorParameters": "-L \"%BASEFOLDER%/emulators/RetroArch/RetroArch-Linux-x86_64/RetroArch-Linux-x86_64.AppImage.home/.config/retroarch/cores/mednafen_pce_libretro.so\" -f",
+        "ReceiveANotificationOnEmulatorError": true
+      }
+    ]
+  }
+]

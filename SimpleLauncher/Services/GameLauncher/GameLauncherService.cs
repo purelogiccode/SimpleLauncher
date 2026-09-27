@@ -185,8 +185,10 @@ public partial class GameLauncherService : ILauncherService
                 var userNotified = selectedEmulatorManager.ReceiveANotificationOnEmulatorError
                     ? "User was notified."
                     : "User was not notified.";
-                _logger.Error(new InvalidOperationException($"Batch file exited with code {process.ExitCode}"),
-                    $"{errorDetail}\n{userNotified}");
+                // Expected user condition (the batch file's emulator/tool failed, e.g. an
+                // incomplete ROM set) — Information level so it is never reported as a bug.
+                // The user still gets the message box/toast below.
+                _logger.Information($"{errorDetail}\n{userNotified}");
 
                 LogBatchFileContentsOnError(resolvedFilePath);
 

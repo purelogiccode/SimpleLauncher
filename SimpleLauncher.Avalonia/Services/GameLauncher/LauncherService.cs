@@ -1081,7 +1081,10 @@ public class LauncherService : ILauncherService
 
                 if (process.ExitCode != 0 && !IsInEmulatorsToSkipList(selectedEmulatorManager.EmulatorName))
                 {
-                    Log.Warning("Batch file exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
+                    // Expected user condition (the batch file's emulator/tool failed, e.g. an
+                    // incomplete ROM set) — Information level so it is never reported as a bug.
+                    // The user still gets the error toast/status below.
+                    Log.Information("Batch file exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
                     LogBatchFileContentsOnError(resolvedFilePath);
                     launchFeedback?.ShowToast("Simple Launcher", $"Error: {batchShortName} failed");
                     launchFeedback?.SetStatusText($"Error: {batchShortName} failed");
@@ -1292,7 +1295,9 @@ public class LauncherService : ILauncherService
                 process.WaitForExit();
 
                 if (process.ExitCode != 0 && !IsInEmulatorsToSkipList(selectedEmulatorManager.EmulatorName))
-                    Log.Warning("Executable exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
+                    // Expected user condition (the launched executable failed) — Information level
+                    // so it is never reported as a bug.
+                    Log.Information("Executable exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
             }
             catch (Exception ex)
             {
