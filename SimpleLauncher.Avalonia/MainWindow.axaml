@@ -125,37 +125,37 @@
                     <MenuItem.Icon>
                         <Image Source="avares://SimpleLauncher.Avalonia/images/buttonsize.png" Width="16" Height="16" />
                     </MenuItem.Icon>
-                    <MenuItem Header="{ext:Translate 50pixels}" Tag="50" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 50pixels}" Tag="50" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 100pixels}" Tag="100" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 100pixels}" Tag="100" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 150pixels}" Tag="150" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 150pixels}" Tag="150" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 200pixels}" Tag="200" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 200pixels}" Tag="200" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 250pixels}" Tag="250" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 250pixels}" Tag="250" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 300pixels}" Tag="300" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 300pixels}" Tag="300" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 350pixels}" Tag="350" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 350pixels}" Tag="350" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 400pixels}" Tag="400" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 400pixels}" Tag="400" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 450pixels}" Tag="450" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 450pixels}" Tag="450" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 500pixels}" Tag="500" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 500pixels}" Tag="500" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 550pixels}" Tag="550" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 550pixels}" Tag="550" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 600pixels}" Tag="600" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 600pixels}" Tag="600" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 650pixels}" Tag="650" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 650pixels}" Tag="650" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 700pixels}" Tag="700" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 700pixels}" Tag="700" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 750pixels}" Tag="750" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 750pixels}" Tag="750" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
-                    <MenuItem Header="{ext:Translate 800pixels}" Tag="800" Click="ButtonSizeClickAsync"
+                    <MenuItem Header="{ext:Translate 800pixels}" Tag="800" Click="ButtonSizeClick"
                               ToggleType="CheckBox" GroupName="ButtonSizeGroup" />
                 </MenuItem>
                 <MenuItem x:Name="AspectRatioMenu" Header="{ext:Translate SetButtonAspectRatio}"

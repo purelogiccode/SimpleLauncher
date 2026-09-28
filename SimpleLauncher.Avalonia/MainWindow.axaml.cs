@@ -2081,7 +2081,7 @@ public partial class MainWindow : Window, IPaginationHost
 
     // ── Button size ──
 
-    private async void ButtonSizeClickAsync(object? sender, RoutedEventArgs e)
+    private void ButtonSizeClick(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -2099,7 +2099,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error in the method ButtonSizeClickAsync");
+            Log.Error(ex, "Error in the method ButtonSizeClick");
         }
     }
 
