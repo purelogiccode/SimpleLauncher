@@ -915,7 +915,7 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
   testing when this block was written: the app runs the **Atari 2600** grid (776 files) with the
   overlay buttons enabled, notification sound on, aspect ratio last set by the freeze repro. The
   Avalonia (696/696) and WPF (2122/2122) suites are green on the current working tree; everything
-  (EASY-02 rewrite + BUG-16..19 fixes + docs) is **committed and pushed through `73d589e7`** - the
+  (EASY-02 rewrite + BUG-16..19 fixes + docs) is **committed and pushed through `a5a9b3e9`** - the
   tree was clean at stop time. The developer was **mid manual test** of the four fixes (see item 6);
   two Nemo file-manager windows (`roms`, `Atari2600`) may still be open on the guest - they pollute
   desktop-wide AT-SPI walks but not `Nav` (which is scoped to `SimpleLauncher.Avalonia`); close them
@@ -1008,16 +1008,16 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
 9. **Working tree at session end (2026-09-28):** **clean, everything committed and pushed** through
-   `73d589e7` on `origin/master`:
+   `a5a9b3e9` on `origin/master`:
    - `c263dcc9` dialog owner fix (BUG-16), `2c933066` card overlay buttons + button-size sync
-     (BUG-17/18), `4115bffe` background audio thread (BUG-19) + regression test, `73d589e7` docs
-     (full-suite pass, EASY-02 rewrite, BUG-16..19). Earlier: BUG-07..15 in `aa87e469`..`a22d4d32`
-     and the emulator fixtures in `b9f9d157`, `d1818050`, docs through `9f684574`.
+     (BUG-17/18), `4115bffe` background audio thread (BUG-19) + regression test, `73d589e7` +
+     `a5a9b3e9` docs (full-suite pass, EASY-02 rewrite, BUG-16..19, resume state). Earlier:
+     BUG-07..15 in `aa87e469`..`a22d4d32` and the emulator fixtures in `b9f9d157`, `d1818050`,
+     docs through `9f684574`.
    - `dotnet test` green: Avalonia **696/696**, WPF **2122/2122** (2026-09-28, Windows host).
    - No pending source changes; the guest payload was rebuilt from this tree.
-   - The resume docs were refreshed **after** that push to record this state: `AGENTS.md` is
-     gitignored (local-only), while this file, `docs/manual-tests.md` and `docs/gui-test-harness.md`
-     are uncommitted - commit them before starting the next session (or ask the agent to).
+   - `AGENTS.md` is gitignored (local-only, updated with the resume state); everything tracked is
+     committed - nothing to commit before starting the next session.
 
 ## 7. Cost
 

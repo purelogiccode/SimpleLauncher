@@ -488,7 +488,7 @@ mounted from the host share; all standalone emulators + BIOS/keys installed), th
 recovery steps, how to rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised
 manual items and the **full 33-scenario pass on the rebuilt payload** - the BUG-16..19 fixes changed
 `SimpleLauncher.Avalonia.dll`/`SimpleLauncher.Core.dll` after the 33/33 report) and the working-tree
-state (clean, everything committed and pushed through `73d589e7`). The deployed payload is
+state (clean, everything committed and pushed through `a5a9b3e9`). The deployed payload is
 `SimpleLauncher.Core.dll` md5 `2d7eff75dee0bc6be36ecbf3af976135` +
 `SimpleLauncher.Avalonia.dll` md5 `ac3b2f7961b44fa197d930df4d4bf824`.
 
