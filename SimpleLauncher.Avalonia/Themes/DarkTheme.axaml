@@ -431,6 +431,37 @@
         <Setter Property="BoxShadow" Value="0 0 0 2 #66D12733, 0 2 6 0 #4D000000" />
     </Style>
 
+    <!-- ── CARD OVERLAY BUTTONS (WPF GameButtonFactory overlay icons parity) ──
+         Small icon buttons on the card art: dark translucent chip, lightening on hover. -->
+    <Style Selector="Button.overlay-button">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Padding" Value="3" />
+        <Setter Property="Background" Value="#99000000" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate TargetType="Button">
+                <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.overlay-button:pointerover">
+        <Setter Property="Background" Value="#CC000000" />
+    </Style>
+    <Style Selector="Button.overlay-button:pressed">
+        <Setter Property="Background" Value="#E6000000" />
+    </Style>
+
     <!-- ── SEARCH TEXTBOX (bordered WPF-style field) ── -->
     <Style Selector="TextBox.search-textbox">
         <Setter Property="Background" Value="{DynamicResource BgQuaternaryBrush}" />

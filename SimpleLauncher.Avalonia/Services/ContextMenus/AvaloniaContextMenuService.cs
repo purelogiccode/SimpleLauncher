@@ -260,6 +260,33 @@ public class AvaloniaContextMenuService
         contextMenu.Open(placementTarget);
     }
 
+    /// <summary>
+    ///     Opens the RetroAchievements window for the given game. Used by the card overlay
+    ///     button, mirroring the right-click menu entry (WPF trophy overlay parity).
+    /// </summary>
+    public void OpenRetroAchievementsWindow(AvaloniaRightClickContext context)
+    {
+        _ = SafeAsync(() => _functions.OpenRetroAchievementsWindowAsync(context));
+    }
+
+    /// <summary>
+    ///     Opens the video search link for the given game. Used by the card overlay button,
+    ///     mirroring the right-click menu entry (WPF video overlay parity).
+    /// </summary>
+    public void OpenVideoLink(AvaloniaRightClickContext context)
+    {
+        _ = SafeAsync(() => _functions.OpenVideoLinkAsync(context));
+    }
+
+    /// <summary>
+    ///     Opens the info search link for the given game. Used by the card overlay button,
+    ///     mirroring the right-click menu entry (WPF info overlay parity).
+    /// </summary>
+    public void OpenInfoLink(AvaloniaRightClickContext context)
+    {
+        _ = SafeAsync(() => _functions.OpenInfoLinkAsync(context));
+    }
+
     private void AddItem(ContextMenu contextMenu, string resourceKey, string fallback, string iconFile, Action click)
     {
         var header =

@@ -443,6 +443,51 @@ public class MainViewModelQuickActionsTests : IDisposable
         Assert.Equal(50, (int)_viewModel.CardWidth);
     }
 
+    // ── Button size: menu-grid snapping (WPF HandleButtonSizeAsync parity) ──
+
+    [Fact]
+    public void ApplyButtonSize_SnapsToMenuOptionsAndPersists()
+    {
+        Assert.Equal(200, _viewModel.ApplyButtonSize(213));
+        Assert.Equal(200, (int)_viewModel.CardWidth);
+        Assert.Equal(200, _settings.ThumbnailSize);
+
+        Assert.Equal(800, _viewModel.ApplyButtonSize(1000));
+        Assert.Equal(800, _settings.ThumbnailSize);
+
+        Assert.Equal(50, _viewModel.ApplyButtonSize(0));
+        Assert.Equal(50, _settings.ThumbnailSize);
+    }
+
+    [Fact]
+    public void ApplyButtonSize_RoundsToNearestMenuOption()
+    {
+        Assert.Equal(250, _viewModel.ApplyButtonSize(225));
+        Assert.Equal(200, _viewModel.ApplyButtonSize(224));
+    }
+
+    [Fact]
+    public void ZoomIn_FromOffGridSize_LandsOnMenuOption()
+    {
+        _viewModel.CardWidth = 168; // legacy Avalonia default, not a Button Size option
+
+        _viewModel.ZoomIn();
+
+        Assert.Equal(200, (int)_viewModel.CardWidth);
+        Assert.Equal(200, _settings.ThumbnailSize);
+    }
+
+    [Fact]
+    public void ZoomOut_FromOffGridSize_LandsOnMenuOption()
+    {
+        _viewModel.CardWidth = 168;
+
+        _viewModel.ZoomOut();
+
+        Assert.Equal(100, (int)_viewModel.CardWidth);
+        Assert.Equal(100, _settings.ThumbnailSize);
+    }
+
     // ── Filename preferences (no full-library reload on toggle) ──
 
     [Fact]

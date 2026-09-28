@@ -66,6 +66,27 @@ public partial class GameCardViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsRaSupported { get; set; }
 
+    /// <summary>
+    ///     Whether the RetroAchievements overlay button is shown on the card
+    ///     (menu setting on and RA-supported system, WPF GameButtonFactory parity).
+    /// </summary>
+    [ObservableProperty]
+    public partial bool ShowRetroAchievementOverlay { get; set; }
+
+    /// <summary>
+    ///     Whether the video-link overlay button is shown on the card
+    ///     (menu setting driven, WPF GameButtonFactory parity).
+    /// </summary>
+    [ObservableProperty]
+    public partial bool ShowVideoOverlay { get; set; }
+
+    /// <summary>
+    ///     Whether the info-link overlay button is shown on the card
+    ///     (menu setting driven, WPF GameButtonFactory parity).
+    /// </summary>
+    [ObservableProperty]
+    public partial bool ShowInfoOverlay { get; set; }
+
     [ObservableProperty] public partial string? LastPlayed { get; set; }
 
     [ObservableProperty] public partial string MachineDescription { get; set; } = "";

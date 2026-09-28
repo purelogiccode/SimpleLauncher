@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -285,6 +286,12 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Set initial check marks from the saved settings (settings.xml)
         UpdateMenuCheckMarks();
+
+        // Slider twin of the Button Size menu (WPF CardSizeSlider parity): sync the handle
+        // to the applied size, then wire ValueChanged. The handler is attached after the
+        // initial sync so startup programmatic changes can never persist a bogus size.
+        CardSizeSlider.Value = _viewModel.CardWidth;
+        CardSizeSlider.ValueChanged += CardSizeSlider_ValueChanged;
 
         // Wire the pagination service to the status-bar controls and apply the saved
         // Games Per Page preference (mirrors the WPF app, which paginates the game
@@ -1196,11 +1203,13 @@ public partial class MainWindow : Window, IPaginationHost
                 case > 0:
                     Log.Debug("Ctrl+MouseWheel: zooming the card size in");
                     _viewModel.ZoomIn();
+                    SyncButtonSizeUi();
                     e.Handled = true;
                     break;
                 case < 0:
                     Log.Debug("Ctrl+MouseWheel: zooming the card size out");
                     _viewModel.ZoomOut();
+                    SyncButtonSizeUi();
                     e.Handled = true;
                     break;
             }
@@ -1445,6 +1454,7 @@ public partial class MainWindow : Window, IPaginationHost
     private void NavZoomInButton_Click(object? sender, RoutedEventArgs e)
     {
         _viewModel.ZoomIn();
+        SyncButtonSizeUi();
         _playSound.PlayNotificationSound();
     }
 
@@ -1452,6 +1462,7 @@ public partial class MainWindow : Window, IPaginationHost
     private void NavZoomOutButton_Click(object? sender, RoutedEventArgs e)
     {
         _viewModel.ZoomOut();
+        SyncButtonSizeUi();
         _playSound.PlayNotificationSound();
     }
 
@@ -1490,6 +1501,41 @@ public partial class MainWindow : Window, IPaginationHost
     {
         var context = BuildRightClickContext(game.FilePath, game.SystemName, game);
         _contextMenuService.ShowContextMenu(context, placementTarget, BuildExtraCallbacks());
+    }
+
+    /// <summary>Card overlay button: opens the RetroAchievements window (WPF trophy overlay parity).</summary>
+    private void OverlayRetroAchievementButton_Click(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // do not launch the game
+        if (sender is not Control { DataContext: GameCardViewModel game }) return;
+
+        _playSound.PlayNotificationSound();
+        var context = BuildRightClickContext(game.FilePath, game.SystemName, game);
+        _contextMenuService.OpenRetroAchievementsWindow(context);
+    }
+
+    /// <summary>Card overlay button: opens the video search link (WPF video overlay parity).</summary>
+    private void OverlayVideoButton_Click(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // do not launch the game
+        if (sender is not Control { DataContext: GameCardViewModel game }) return;
+
+        _playSound.PlayNotificationSound();
+        var context = BuildRightClickContext(game.FilePath, game.SystemName, game);
+        _viewModel.StatusText = _localization.GetString("OpeningVideoLink", "Opening video link...");
+        _contextMenuService.OpenVideoLink(context);
+    }
+
+    /// <summary>Card overlay button: opens the info search link (WPF info overlay parity).</summary>
+    private void OverlayInfoButton_Click(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // do not launch the game
+        if (sender is not Control { DataContext: GameCardViewModel game }) return;
+
+        _playSound.PlayNotificationSound();
+        var context = BuildRightClickContext(game.FilePath, game.SystemName, game);
+        _viewModel.StatusText = _localization.GetString("OpeningInfoLink", "Opening info link...");
+        _contextMenuService.OpenInfoLink(context);
     }
 
     /// <summary>
@@ -2045,19 +2091,57 @@ public partial class MainWindow : Window, IPaginationHost
                 return;
             }
 
-            _settings.ThumbnailSize = size;
-            await _settings.SaveAsync();
-            _viewModel.CardWidth = size;
-            UpdateThumbnailSizeCheckMarks(size);
-            Log.Information("Thumbnail size changed to {Size}", size);
+            var applied = ApplyButtonSizeUi(size);
+            Log.Information("Thumbnail size changed to {Size}", applied);
             _playSound.PlayNotificationSound();
             ShowToast(_localization.GetString("ButtonSizeIcon", "Button Size"),
-                $"{size} {_localization.GetString("Px", "px")}");
+                $"{applied} {_localization.GetString("Px", "px")}");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error in the method ButtonSizeClickAsync");
         }
+    }
+
+    /// <summary>
+    ///     Slider twin of the "Set Button Size" menu (WPF ButtonSizeSliderValueChanged
+    ///     parity): applies the size snapped to the menu's 50-px options and keeps the
+    ///     persisted setting, the menu check mark and the slider handle in sync.
+    /// </summary>
+    private void CardSizeSlider_ValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        try
+        {
+            ApplyButtonSizeUi((int)Math.Round(e.NewValue));
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in the method CardSizeSlider_ValueChanged");
+        }
+    }
+
+    /// <summary>
+    ///     Applies a requested button size through the view model (snapped to the menu's
+    ///     50-px options), then syncs the Button Size menu check mark and the slider handle.
+    ///     Returns the applied size.
+    /// </summary>
+    private int ApplyButtonSizeUi(int requestedSize)
+    {
+        var applied = _viewModel.ApplyButtonSize(requestedSize);
+        UpdateThumbnailSizeCheckMarks(applied);
+        if (Math.Abs(CardSizeSlider.Value - applied) > 0.5) CardSizeSlider.Value = applied;
+        return applied;
+    }
+
+    /// <summary>
+    ///     Re-syncs the Button Size menu check mark and slider handle after a zoom action
+    ///     (nav buttons, Ctrl+wheel) changed the card size.
+    /// </summary>
+    private void SyncButtonSizeUi()
+    {
+        var size = (int)_viewModel.CardWidth;
+        UpdateThumbnailSizeCheckMarks(size);
+        if (Math.Abs(CardSizeSlider.Value - size) > 0.5) CardSizeSlider.Value = size;
     }
 
     // ── Button aspect ratio ──
@@ -2492,6 +2576,9 @@ public partial class MainWindow : Window, IPaginationHost
                 _settings.OverlayOpenInfoButton = isChecked;
 
             await _settings.SaveAsync();
+            // Update the loaded cards in place (no full library reload: the toggle only
+            // affects per-card overlay visibility and must not reset the open system).
+            _viewModel.RefreshOverlayButtons();
             _playSound.PlayNotificationSound();
             var header = item.Header?.ToString() ?? _localization.GetString("Overlaybutton", "Overlay button");
             Log.Information("Overlay button '{OverlayButton}' {State}", header,

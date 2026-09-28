@@ -875,7 +875,6 @@
                                     Width="80" Minimum="50" Maximum="800"
                                     IsSnapToTickEnabled="True"
                                     TickFrequency="50"
-                                    Value="{Binding CardWidth}"
                                     AutomationProperties.Name="Card size"
                                     AutomationProperties.HelpText="Adjusts how large game cards are shown"
                                     Margin="4,0" VerticalAlignment="Center" />
@@ -1004,11 +1003,11 @@
                                                             IsVisible="{Binding HasCover}"
                                                             RenderOptions.BitmapInterpolationMode="HighQuality" />
 
-                                                        <!-- Favorite heart -->
+                                                        <!-- Favorite heart (WPF favorite-star position: top-left) -->
                                                         <Border Background="#99000000"
-                                                                CornerRadius="0,0,8,0"
+                                                                CornerRadius="0,0,0,8"
                                                                 IsVisible="{Binding IsFavorite}"
-                                                                HorizontalAlignment="Right"
+                                                                HorizontalAlignment="Left"
                                                                 VerticalAlignment="Top"
                                                                 Padding="4">
                                                             <TextBlock Text="♥"
@@ -1017,17 +1016,37 @@
                                                                        AutomationProperties.Name="{Binding IsFavorite, Converter={StaticResource FavoriteStatusConverter}}" />
                                                         </Border>
 
-                                                        <!-- RA trophy badge -->
-                                                        <Border Background="#99000000"
-                                                                CornerRadius="8,0,0,0"
-                                                                IsVisible="{Binding IsRaSupported}"
-                                                                HorizontalAlignment="Left"
-                                                                VerticalAlignment="Bottom"
-                                                                Padding="4,2">
-                                                            <TextBlock Text="🏆"
-                                                                       FontSize="12"
-                                                                       ToolTip.Tip="{ext:Translate ViewAchievements}" />
-                                                        </Border>
+                                                        <!-- Overlay buttons (WPF GameButtonFactory parity: RA / video / info
+                                                             stacked top-right, visibility driven by the Options menu settings) -->
+                                                        <StackPanel HorizontalAlignment="Right"
+                                                                    VerticalAlignment="Top"
+                                                                    Spacing="5"
+                                                                    Margin="5">
+                                                            <Button Classes="overlay-button"
+                                                                    IsVisible="{Binding ShowRetroAchievementOverlay}"
+                                                                    AutomationProperties.Name="{ext:Translate ViewAchievements}"
+                                                                    ToolTip.Tip="{ext:Translate ViewAchievements}"
+                                                                    Click="OverlayRetroAchievementButton_Click">
+                                                                <Image Source="avares://SimpleLauncher.Avalonia/images/trophy.png"
+                                                                       Stretch="Uniform" />
+                                                            </Button>
+                                                            <Button Classes="overlay-button"
+                                                                    IsVisible="{Binding ShowVideoOverlay}"
+                                                                    AutomationProperties.Name="{ext:Translate ViewVideo}"
+                                                                    ToolTip.Tip="{ext:Translate ViewVideo}"
+                                                                    Click="OverlayVideoButton_Click">
+                                                                <Image Source="avares://SimpleLauncher.Avalonia/images/video.png"
+                                                                       Stretch="Uniform" />
+                                                            </Button>
+                                                            <Button Classes="overlay-button"
+                                                                    IsVisible="{Binding ShowInfoOverlay}"
+                                                                    AutomationProperties.Name="{ext:Translate ViewInfo}"
+                                                                    ToolTip.Tip="{ext:Translate ViewInfo}"
+                                                                    Click="OverlayInfoButton_Click">
+                                                                <Image Source="avares://SimpleLauncher.Avalonia/images/info.png"
+                                                                       Stretch="Uniform" />
+                                                            </Button>
+                                                        </StackPanel>
                                                     </Grid>
                                                 </Border>
 

@@ -318,6 +318,30 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     /// <summary>
+    ///     Re-applies the overlay-button menu settings (RetroAchievements / video / info)
+    ///     to the loaded cards in place. Called after the menu toggle instead of a full
+    ///     library reload: the settings only affect per-card button visibility, so there
+    ///     is no disk work to redo and the open system, letter filter, page and scroll
+    ///     position stay untouched (WPF reloads the list; this is the Avalonia equivalent
+    ///     that does not kick the user out of the open system).
+    /// </summary>
+    public void RefreshOverlayButtons()
+    {
+        if (_currentBaseGames.Count == 0) return;
+
+        Log.Debug("Refreshing overlay buttons (RA={RaEnabled}, Video={VideoEnabled}, Info={InfoEnabled})",
+            _settings.OverlayRetroAchievementButton, _settings.OverlayOpenVideoButton,
+            _settings.OverlayOpenInfoButton);
+
+        foreach (var game in _currentBaseGames)
+        {
+            game.ShowRetroAchievementOverlay = _settings.OverlayRetroAchievementButton && game.IsRaSupported;
+            game.ShowVideoOverlay = _settings.OverlayOpenVideoButton;
+            game.ShowInfoOverlay = _settings.OverlayOpenInfoButton;
+        }
+    }
+
+    /// <summary>
     ///     Reloads the system snapshot and game counts after the system configuration
     ///     changes (system added/edited/deleted in Easy Mode or Edit System).
     ///     Without this, navigation keeps filtering the stale snapshot: a newly added
@@ -655,16 +679,50 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
     private void AdjustZoomStep(int direction)
     {
-        var newSize = Math.Clamp((int)CardWidth + (direction * ZoomStep), MinThumbnailSize, MaxThumbnailSize);
-        if (newSize == (int)CardWidth) return;
+        // Step from the menu-grid size so the result always matches a Button Size option
+        // (WPF HandleZoomInAsync/HandleZoomOutAsync parity; an off-grid current size would
+        // otherwise drift away from every menu entry).
+        var newSize = SnapThumbnailSize((int)CardWidth + (direction * ZoomStep));
+        if (newSize == (int)CardWidth && newSize == _settings.ThumbnailSize) return;
 
-        CardWidth = newSize;
-        _settings.ThumbnailSize = newSize;
-        _ = _settings.SaveAsync();
-        Log.Debug("Thumbnail size adjusted to {Size}", newSize);
+        ApplyButtonSize(newSize);
         StatusText = direction > 0
             ? $"{_localization.GetString("ZoomingIn", "Zooming in...")} {newSize}{_localization.GetString("Px", "px")}"
             : $"{_localization.GetString("ZoomingOut", "Zooming out...")} {newSize}{_localization.GetString("Px", "px")}";
+    }
+
+    /// <summary>
+    ///     Snaps a requested thumbnail size to the Button Size menu's 50-px option grid and
+    ///     clamps it to the 50..800 range. The settings whitelist only accepts the menu
+    ///     values, so an off-grid size (e.g. straight from a slider drag) would silently
+    ///     reset to the default on the next launch (WPF HandleButtonSizeAsync parity).
+    /// </summary>
+    public static int SnapThumbnailSize(int requestedSize)
+    {
+        return Math.Clamp(
+            (int)Math.Round(requestedSize / (double)ZoomStep, MidpointRounding.AwayFromZero) * ZoomStep,
+            MinThumbnailSize, MaxThumbnailSize);
+    }
+
+    /// <summary>
+    ///     Applies a button size from any UI path (Button Size menu, card-size slider, zoom
+    ///     buttons, Ctrl+wheel): snaps it to the menu grid, updates the card width and
+    ///     persists the preference. Returns the applied size so callers can sync the menu
+    ///     check mark and the slider handle (WPF HandleButtonSizeAsync parity).
+    /// </summary>
+    public int ApplyButtonSize(int requestedSize)
+    {
+        var size = SnapThumbnailSize(requestedSize);
+        if (size == (int)CardWidth && size == _settings.ThumbnailSize) return size;
+
+        CardWidth = size;
+        _settings.ThumbnailSize = size;
+        _ = _settings.SaveAsync();
+        Log.Debug("Button size applied: {Size}", size);
+        StatusText = $"{_localization.GetString("AdjustingButtonSize", "Adjusting button size...")} " +
+                     $"{size}{_localization.GetString("Px", "px")}";
+
+        return size;
     }
 
     /// <summary>
@@ -1537,7 +1595,13 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                     // Show art only when the file actually exists (the service falls back
                     // to default.png, which may itself be missing → placeholder instead)
                     HasCover = File.Exists(coverPath),
-                    IsRaSupported = GameCardViewModel.IsSystemRaSupported(system.SystemName)
+                    IsRaSupported = GameCardViewModel.IsSystemRaSupported(system.SystemName),
+                    // Overlay buttons follow the Options menu settings (WPF parity: RA also
+                    // requires a supported system, video/info are setting-only).
+                    ShowRetroAchievementOverlay = _settings.OverlayRetroAchievementButton &&
+                                                  GameCardViewModel.IsSystemRaSupported(system.SystemName),
+                    ShowVideoOverlay = _settings.OverlayOpenVideoButton,
+                    ShowInfoOverlay = _settings.OverlayOpenInfoButton
                 });
             }
         }
