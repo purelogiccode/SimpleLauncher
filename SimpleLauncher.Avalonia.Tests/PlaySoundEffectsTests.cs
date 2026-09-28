@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using NAudio.SoundFile;
@@ -42,6 +43,62 @@ public class PlaySoundEffectsTests
         finally
         {
             player.Dispose();
+        }
+    }
+
+    /// <summary>
+    ///     Regression guard for the UI freeze: a wedged audio backend (Stop() blocking, as
+    ///     the PipeWire ALSA plugin does under a rapid click storm) must never block the
+    ///     calling thread — playback lifecycle calls belong to the background audio thread.
+    /// </summary>
+    [Fact]
+    public async Task PlaySound_WhenAudioStopBlocks_DoesNotBlockCallerOrDispose()
+    {
+        var settings = new SettingsManagerService(
+            new ConfigurationBuilder().Build(),
+            new Mock<ILogger>().Object,
+            new Mock<ICredentialProtector>().Object);
+        settings.EnableNotificationSound = true;
+
+        using var stopEntered = new ManualResetEventSlim(false);
+        using var stopRelease = new ManualResetEventSlim(false);
+
+        var blockingPlayer = new Mock<IWavePlayer>();
+        blockingPlayer.Setup(p => p.Stop()).Callback(() =>
+        {
+            stopEntered.Set();
+            stopRelease.Wait(TimeSpan.FromSeconds(20));
+        });
+
+        var player = new PlaySoundEffects(settings, new Mock<ILogger>().Object);
+        player.PlayerFactory = () => blockingPlayer.Object;
+
+        try
+        {
+            // First sound: the worker starts playback through the fake player.
+            player.PlayNotificationSound();
+            await Task.Delay(300);
+
+            // Second, different sound: the worker now stops the previous player, which
+            // wedges inside Stop() exactly like the real ALSA/PipeWire backend.
+            player.PlayShutterSound();
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (!stopEntered.IsSet && DateTime.UtcNow < deadline) await Task.Delay(20);
+            Assert.True(stopEntered.IsSet, "audio worker never reached the blocking Stop()");
+
+            // The caller keeps working and shutdown never joins the wedged worker.
+            var sw = Stopwatch.StartNew();
+            player.PlayNotificationSound();
+            player.PlayConfiguredSound("trash.mp3");
+            player.Dispose();
+            sw.Stop();
+
+            Assert.True(sw.ElapsedMilliseconds < 1000,
+                $"caller blocked for {sw.ElapsedMilliseconds}ms on a wedged audio stop");
+        }
+        finally
+        {
+            stopRelease.Set();
         }
     }
 

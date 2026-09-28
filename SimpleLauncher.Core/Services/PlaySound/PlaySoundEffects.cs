@@ -18,6 +18,12 @@ namespace SimpleLauncher.Core.Services.PlaySound;
 ///     Linux/macOS: managed WAV/MP3 decoders or libsndfile via NAudio.SoundFile, plus ALSA
 ///     via NAudio.Alsa), but the playback pipeline itself is a single cross-platform path
 ///     built on <see cref="IWavePlayer" />.
+///     Playback runs on a dedicated background thread: callers only validate and enqueue
+///     the request. A wedged audio backend (e.g. the PipeWire ALSA plugin blocking inside
+///     <c>snd_pcm_mmap_writei</c>) can therefore silence sound effects but can never freeze
+///     the UI or block shutdown. The previous design called <c>Stop()</c>/<c>Dispose()</c>
+///     (which join the playback thread) synchronously on the UI thread, so a single wedged
+///     stop froze the whole application (rapid aspect-ratio clicks reproduced it).
 /// </summary>
 public class PlaySoundEffects : IPlaySoundEffects, IDisposable
 {
@@ -25,12 +31,33 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     private const string ShutterSoundFile = "shutter.mp3";
     private const string TrashSoundFile = "trash.mp3";
 
-    private static readonly Lock Lock = new();
+    // Repeated requests for the same sound within this window are coalesced: a rapid
+    // click storm must not restart the ALSA stream dozens of times per second (that
+    // churn is what wedges the PipeWire backend in the first place).
+    private static readonly TimeSpan DuplicateSoundThrottle = TimeSpan.FromMilliseconds(250);
+
     private readonly ILogger _logger;
     private readonly SettingsManagerService _settingsManager;
 
+    // Playback state is owned exclusively by the audio thread; the request handoff is
+    // guarded by this lock. The newest pending request wins (bursts coalesce).
+    private readonly Lock _stateLock = new();
+    private readonly SemaphoreSlim _requestSignal = new(0, 1);
+    private Thread? _audioThread;
+    private string? _pendingSoundPath;
+    private string? _lastStartedSoundPath;
+    private DateTime _lastStartedUtc;
+    private volatile bool _disposed;
+
     private IWavePlayer? _player;
     private WaveStream? _reader;
+
+    /// <summary>
+    ///     Test seam: creates the output device. Production uses <see cref="CreatePlayer" />;
+    ///     tests substitute a fake whose Stop() blocks to prove that the playback lifecycle
+    ///     never runs on the caller's thread.
+    /// </summary>
+    internal Func<IWavePlayer> PlayerFactory { get; set; } = CreatePlayer;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="PlaySoundEffects" /> class.
@@ -42,13 +69,26 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     }
 
     /// <summary>
-    ///     Stops any current playback and releases audio resources.
+    ///     Stops playback and releases audio resources. Never joins the audio thread:
+    ///     a wedged audio backend must not block application shutdown (the thread is a
+    ///     background thread, so it cannot keep the process alive either).
     /// </summary>
     public void Dispose()
     {
-        lock (Lock)
+        lock (_stateLock)
         {
-            StopCurrentPlayback();
+            if (_disposed) return;
+            _disposed = true;
+        }
+
+        // Wake the audio thread so it can stop playback and exit.
+        try
+        {
+            _requestSignal.Release();
+        }
+        catch (SemaphoreFullException)
+        {
+            // A request is already pending; the wake-up is already guaranteed.
         }
 
         GC.SuppressFinalize(this);
@@ -87,7 +127,7 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     {
         if (string.IsNullOrWhiteSpace(soundFileName))
         {
-            lock (Lock)
+            lock (_stateLock)
             {
                 _logger.Error(
                     new ArgumentNullException(nameof(soundFileName),
@@ -107,7 +147,7 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
         {
             _logger.Error(
                 new ArgumentNullException(nameof(soundFileName), "Attempted to play sound with an empty filename."),
-                "Attempted to play sound with an empty filename");
+                "Attempted to play sound with an empty filename.");
             return;
         }
 
@@ -121,17 +161,96 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
             return;
         }
 
-        lock (Lock)
+        lock (_stateLock)
         {
-            StopCurrentPlayback();
+            if (_disposed) return;
+            _pendingSoundPath = soundPath;
+        }
+
+        EnsureAudioThread();
+
+        try
+        {
+            _requestSignal.Release();
+        }
+        catch (SemaphoreFullException)
+        {
+            // A request is already pending; the newest path wins.
+        }
+    }
+
+    private void EnsureAudioThread()
+    {
+        if (_audioThread is not null) return;
+
+        lock (_stateLock)
+        {
+            if (_audioThread is not null) return;
+
+            var thread = new Thread(AudioLoop)
+            {
+                IsBackground = true,
+                Name = "SimpleLauncher Audio"
+            };
+            _audioThread = thread;
+            thread.Start();
+        }
+    }
+
+    /// <summary>
+    ///     Audio worker: consumes the latest pending request, stops the previous playback
+    ///     and starts the new one. Every NAudio/ALSA call happens here — including the
+    ///     stop/dispose that joins the playback thread — so a wedged backend only stalls
+    ///     this background thread.
+    /// </summary>
+    private void AudioLoop()
+    {
+        while (true)
+        {
+            try
+            {
+                _requestSignal.Wait();
+            }
+            catch (ObjectDisposedException)
+            {
+                return;
+            }
+
+            bool disposed;
+            string? soundPath;
+            lock (_stateLock)
+            {
+                disposed = _disposed;
+                soundPath = _pendingSoundPath;
+                _pendingSoundPath = null;
+            }
+
+            if (disposed)
+            {
+                // Best effort: stop the current sound before the thread exits. If the
+                // backend is wedged this hangs only this background thread.
+                StopCurrentPlayback();
+                return;
+            }
+
+            if (soundPath is null) continue;
 
             try
             {
+                if (IsDuplicateWithinThrottle(soundPath)) continue;
+
+                StopCurrentPlayback();
+
                 _reader = CreateReader(soundPath);
-                _player = CreatePlayer();
-                _player.PlaybackStopped += OnPlaybackStopped;
+                _player = PlayerFactory();
                 _player.Init(_reader);
                 _player.Play();
+
+                lock (_stateLock)
+                {
+                    _lastStartedSoundPath = soundPath;
+                    _lastStartedUtc = DateTime.UtcNow;
+                }
             }
             catch (Exception ex)
             {
@@ -154,10 +273,19 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
         }
     }
 
+    private bool IsDuplicateWithinThrottle(string soundPath)
+    {
+        lock (_stateLock)
+        {
+            return string.Equals(_lastStartedSoundPath, soundPath, StringComparison.Ordinal) &&
+                   DateTime.UtcNow - _lastStartedUtc < DuplicateSoundThrottle;
+        }
+    }
+
     /// <summary>
     ///     Whether a sound playback failure is an expected environment/user condition rather
-    ///     than a defect: a missing native decoder/output library, no usable audio device, or
-    ///     an unsupported/corrupt sound file. Inner exceptions are inspected too, because
+    ///     than a defect: a missing native decoder/output library, no usable audio device, or an
+    ///     unsupported/corrupt sound file. Inner exceptions are inspected too, because
     ///     P/Invoke failures are often wrapped (e.g. <see cref="TypeInitializationException" />):
     ///     such a wrapper only counts when one of its inner exceptions does, so a genuine
     ///     static-initializer defect is still reported as a bug.
@@ -234,7 +362,6 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
         if (player != null)
         {
             _player = null;
-            player.PlaybackStopped -= OnPlaybackStopped;
             try
             {
                 player.Stop();
@@ -269,14 +396,6 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
             {
                 _logger.Debug($"[PlaySoundEffects] Error disposing player: {ex.Message}");
             }
-        }
-    }
-
-    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
-    {
-        lock (Lock)
-        {
-            if (_player == sender) StopCurrentPlayback();
         }
     }
 }
