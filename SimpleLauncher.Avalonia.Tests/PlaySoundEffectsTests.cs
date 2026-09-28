@@ -66,7 +66,9 @@ public class PlaySoundEffectsTests
         var blockingPlayer = new Mock<IWavePlayer>();
         blockingPlayer.Setup(p => p.Stop()).Callback(() =>
         {
+            // ReSharper disable once AccessToDisposedClosure
             stopEntered.Set();
+            // ReSharper disable once AccessToDisposedClosure
             stopRelease.Wait(TimeSpan.FromSeconds(20));
         });
 
