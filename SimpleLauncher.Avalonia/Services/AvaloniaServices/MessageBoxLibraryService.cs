@@ -1,8 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Avalonia.Models;
@@ -4433,6 +4436,23 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     {
         if (owner is null) return MessageBoxResult.Cancel;
 
-        return await MessageDialogWindow.ShowAsync(owner, message, caption, buttons, icon);
+        return await MessageDialogWindow.ShowAsync(GetDialogOwner(owner), message, caption, buttons, icon);
+    }
+
+    /// <summary>
+    ///     WPF parity: <c>MessageBox.Show</c> without an explicit owner uses the active window.
+    ///     Owning the dialog by the window that actually invoked it (Easy Mode, a config window)
+    ///     keeps it above that modal child; always owning it by the MainWindow leaves the dialog
+    ///     as a sibling transient on X11 and the window manager may stack it behind the child,
+    ///     so the caller's loading overlay never clears (user-reported "Add System stuck").
+    /// </summary>
+    private static Window GetDialogOwner(Window owner)
+    {
+        if (!Dispatcher.UIThread.CheckAccess()) return owner;
+
+        var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?
+            .Windows.FirstOrDefault(window => window.IsActive);
+
+        return active ?? owner;
     }
 }
