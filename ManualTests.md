@@ -388,12 +388,15 @@ tree are authoritative and layout-independent — prefer them.
 
 ## 6. Scenario inventory and current status
 
-Last full run 2026-09-26 (`scripts\gui-test-harness\reports\run-20260926-143336.md`): **31/31 scenarios
-PASS in a single run** on the payload rebuilt from HEAD (`f68f6c91` + `7ddc6599`) - Hyper-V `LinuxMint`
-VM (Linux Mint 22.3, Avalonia `linux-x64` self-contained publish), covering the Linux-applicable
-checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture. MAME-01/MAME-02 were
-added 2026-09-27 and pass in isolation (`reports\run-20260927-014857.md`,
-`reports\run-20260927-014646.md`); a full 33-scenario pass is pending.
+Last full run 2026-09-27 (`scripts\gui-test-harness\reports\run-20260927-232933.md`): **33/33 scenarios
+PASS in a single run** on the payload rebuilt from HEAD (`9f684574`, with the BUG-07..BUG-15 fixes) - Hyper-V
+`LinuxMint` VM (Linux Mint 22.3, Avalonia `linux-x64` self-contained publish), covering the Linux-applicable
+checklist (sections 1-13 of `docs/manual-tests.md`) with the seeded fixture. The same session live-verified
+BUG-14/15 on the redeployed payload (see the session notes below). MAME-01/MAME-02 were added 2026-09-27 and
+are included in the 33/33 pass; the earlier 31/31 pass is `reports\run-20260926-143336.md`.
+
+The 2026-09-26 full pass had 31 scenarios (`reports\run-20260926-143336.md`); MAME-01/MAME-02 were added
+2026-09-27 (`reports\run-20260927-014857.md`, `reports\run-20260927-014646.md`).
 
 A first pass the same day (`reports\run-20260926-133836.md`) hit the known AT-SPI registration flake
 during THEME-02's forced restart: 15 scenarios passed, then 16 failed with
@@ -403,10 +406,10 @@ healthy (`reports\run-20260926-135646.md`): **14/14 PASS**. `run-suite.ps1` now 
 `Test-VmNavHealth` after every restart, retries the restart once and aborts with a clear message if the
 tree is still missing, instead of recording a block of false failures.
 
-| Id | Covers | Fixture | Status (2026-09-26) | Notes |
+| Id | Covers | Fixture | Status (2026-09-27) | Notes |
 |---|---|---|---|---|
 | EASY-01 | Welcome -> Easy Mode; dropdown populated + sorted; Add/Download disabled | empty | PASS | waits for the config-loading overlay to clear |
-| EASY-02 | Selecting "Atari 2600" enables Download Emulator/Core; Add System stays disabled | seeded | PASS | |
+| EASY-02 | Missing emulator (Sony PlayStation 4/shadPS4) enables Download Emulator; Add System + Download Core disabled | seeded | PASS | rewritten 2026-09-27: the VM now has RetroArch and every other Easy Mode emulator installed, so the old Atari 2600 expectation no longer applied; the dropdown is wheel-scrolled to reach PS4 |
 | MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | seeded | PASS | |
 | MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | seeded | PASS | |
 | MENU-02 | About menu exact 4 items | seeded | PASS | |
@@ -786,11 +789,77 @@ up with official firmware; the **AI Parameter Suggestion** feature stays out of 
 - Stale AT-SPI peers survive the return to the card screen, so card/browser detection must use
   markers that only the real screen has (base-system card labels, letter bar).
 
+### Full-suite pass + BUG-14/15 live verification (2026-09-27, second session)
+
+Continuation session on the same VM, with the payload **rebuilt and redeployed from HEAD** `9f684574`
+(`SimpleLauncher.Core.dll` md5 `8e976d1af9ea74dbb8a04379b896c1b9`, `SimpleLauncher.Avalonia.dll` md5
+`d10b89b449784d80deebfa4420ed6fc7`), which brought the previously undeployed BUG-14/15 fixes to the VM.
+
+- **BUG-15 live verification (PASS):** app-driven launch of `Microsoft DOS` -> Wolfenstein 3D through the
+  AT-SPI harness (`launch-one.py`): the DOSBox file-selection list items now read `run.bat` / `WOLF3D.EXE`
+  (previously the CLR type name) and selecting the first entry + Launch booted DOSBox Staging
+  (window "WOLF3D.EXE - 3000 cycles/ms").
+- **BUG-14 live verification (PASS):** app started with `-debug`; launching `Sega Model 3`/`daytona2` ran the
+  `.bat` (exit code 1) and the Debug window shows
+  `2026-09-28 01:14:52.037 [Information] Batch file exited with code 1: "/home/vm/roms/Sega Model 3/daytona2.bat"`.
+  `error_user*.log` gained no new "Batch file exited" entry (the Warning+ file sink and the bug-report sink are
+  no longer hit) - the two pre-fix Warning entries from the standalone session remain as the only occurrences.
+- **EASY-02 rewritten (stale expectation, not an app bug):** the VM now has RetroArch (and every other Easy
+  Mode emulator except shadPS4) installed from the sweep sessions, so selecting Atari 2600 correctly shows
+  "Add System" enabled and the download buttons disabled. The scenario now selects **Sony PlayStation 4**
+  (shadPS4 still missing; the dropdown is wheel-scrolled to reach it) and asserts the missing-emulator state:
+  Download Emulator enabled, Add System and Download Core disabled (PS4 has no core download). Verified in
+  isolation (`reports\run-20260927-230050.md`) and in the full pass.
+- **Full 33-scenario pass: 33/33 PASS in a single run** (`reports\run-20260927-232933.md`) - the first
+  single-run pass including MAME-01/MAME-02. The known AT-SPI registration flakiness produced several
+  "AT-SPI tree not ready" retry episodes (EASY-01->02, THEME-02, ROMHIST-01) but every restart recovered; no
+  scenario failed for tree reasons.
+- `run-suite.ps1` carries the EASY-02 rewrite (uncommitted at session end).
+
+### User-reported fixes + freeze repro (2026-09-28, third session)
+
+Continuation session driven by the developer's manual testing of the Avalonia/Linux build. The
+payload was rebuilt from the working tree and redeployed incrementally (`SimpleLauncher.Avalonia.dll`,
+then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WPF **2122/2122**).
+
+- **BUG-16 - Easy Mode "Add System" appeared stuck on the loading overlay (FIXED 2026-09-28).**
+  Message dialogs were always owned by MainWindow (`AvaloniaWindowContext.OwnerWindow`), while Easy
+  Mode is a modal child of the same window; on X11 the WM could stack the success dialog behind it,
+  so the overlay never cleared. `MessageBoxLibraryService.GetDialogOwner` now prefers the active
+  window (WPF parity); verified with `WM_TRANSIENT_FOR` (MainWindow before, Easy Mode after) and a
+  full add (6->7 systems, folders created, list refreshed).
+- **BUG-17 - card overlay buttons ignored the Options menu settings (FIXED 2026-09-28).** The
+  Avalonia card only had a trophy badge hard-wired to `IsRaSupported`; video/info overlay buttons did
+  not exist and toggling did nothing. Cards now render the three WPF-parity overlay buttons
+  (RA/video/info, top-right stack; favorite heart moved to the WPF star position top-left), driven by
+  `OverlayRetroAchievementButton`/`OverlayOpenVideoButton`/`OverlayOpenInfoButton`; the menu toggle
+  refreshes the loaded cards in place (`MainViewModel.RefreshOverlayButtons`) and clicks run the same
+  actions as the context menu without launching the game. 5 new tests
+  (`MainViewModelOverlayButtonTests`); visible on the VM cards (`shots/after-storm.png`).
+- **BUG-18 - the card-size slider did not update the Button Size menu (FIXED 2026-09-28).** The
+  slider was bound straight to `CardWidth`, so it neither persisted the size nor moved the menu check
+  mark (and off-grid sizes could not match any menu option). All size paths (slider, menu, nav zoom,
+  Ctrl+wheel) now go through `MainViewModel.ApplyButtonSize`, which snaps to the 50-px menu options
+  (50..800) and persists; the menu check mark and slider handle stay in sync (WPF
+  `HandleButtonSizeAsync` parity). 4 new tests in `MainViewModelQuickActionsTests`.
+- **BUG-19 - rapid aspect-ratio clicks froze the app permanently (FIXED 2026-09-28).** Reproduced by
+  hammering the nav aspect-ratio button (300 clicks @15 ms): the app froze with the UI thread blocked
+  in a managed join while the ALSA Playback thread was wedged in `snd_pcm_mmap_writei` (gdb). Root
+  cause: `PlaySoundEffects.PlaySound` ran on the UI thread and synchronously called
+  `Stop()`/`Dispose()`, which join the playback thread - one wedged ALSA/PipeWire stop froze the whole
+  application. Playback now runs on a dedicated background thread ("SimpleLauncher Audio"): callers
+  only enqueue (newest wins), lifecycle calls happen on the worker, `Dispose` never joins, and
+  identical sounds within 250 ms are coalesced to stop the rapid open/stop churn that wedges
+  PipeWire. Regression test with a blocking fake player
+  (`PlaySound_WhenAudioStopBlocks_DoesNotBlockCallerOrDispose`). Re-verified live: the same 300-click
+  storm left the UI responsive (AT-SPI snapshot returned the full 456-node tree; the pre-fix run
+  returned 8 nodes and never recovered).
+
 ### Open items for the next session
 
-1. **Full pass - DONE 2026-09-26**: `reports\run-20260926-143336.md` **31/31 PASS in a single run** on
-   the payload built from HEAD (`f68f6c91` + `7ddc6599`), after rebuilding and redeploying the Core and
-   Avalonia DLLs to the VM. Keep this runbook and `docs/manual-tests.md` in sync after any app change.
+1. **Full pass - DONE 2026-09-27**: `reports\run-20260927-232933.md` **33/33 PASS in a single run** on the
+   payload built from HEAD (`9f684574`, BUG-07..BUG-15 fixes); the previous 31/31 run was 2026-09-26
+   (`reports\run-20260926-143336.md`). Keep this runbook and `docs/manual-tests.md` in sync after any app change.
 2. **WPF suite re-run - DONE 2026-09-26**: `dotnet test SimpleLauncher.Tests\SimpleLauncher.Tests.csproj`
    **2122/2122 pass, 0 failures** (the 19 environment-only failures from the previous run did not
    reproduce); Avalonia suite `SimpleLauncher.Avalonia.Tests` **677/677 pass**.
@@ -834,20 +903,19 @@ up with official firmware; the **AI Parameter Suggestion** feature stays out of 
 
 ### Resume checklist (next session)
 
-**Guest state left by the 2026-09-27 standalone session** (all of this survives a host/VM reboot unless noted):
+**Guest state left by the 2026-09-27 full-suite session** (all of this survives a host/VM reboot unless noted):
 
 - VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
   reboot; `lib.ps1` updated accordingly) - always re-check after a VM boot.
-- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from HEAD plus the BUG-07..BUG-13
-  fixes and deployed (`SimpleLauncher.Core.dll` md5 `ec5896c77f5e49784c99d886a16bcab1`;
-  `SimpleLauncher.Avalonia.dll` md5 `68d6f222edcfd0375dcf0ee18ca1bbec`); after the standalone session
-  the app runs the **batch B** fixture (base 4 + PS1, PS2, PS3, Dreamcast, Saturn, WiiU, 3DS, PSP,
-  Xbox, DOS, Model 3, FDS, Atari ST), no `-debug`, list view, window maximized by the harness. The
-  BUG-14/15 fixes are committed but **not deployed to the VM** (rebuild+redeploy if they need live
-  verification; the DOSBox item accessible name and the batch-exit log level were verified from the
-  source/suites, not re-run on the VM). The Avalonia (686/686) and WPF (2122/2122) suites are green
-  on the current working tree and everything is pushed through `d1818050` (item 9).
+- App: `~/SimpleLauncher/SimpleLauncher.Avalonia`, payload rebuilt from the working tree (all fixes
+  through BUG-19) and deployed (`SimpleLauncher.Core.dll` md5 `2d7eff75dee0bc6be36ecbf3af976135`;
+  `SimpleLauncher.Avalonia.dll` md5 `ac3b2f7961b44fa197d930df4d4bf824`). The developer was manually
+  testing when this block was written: the app runs the **Atari 2600** grid (776 files) with the
+  overlay buttons enabled, notification sound on, aspect ratio last set by the freeze repro. The
+  Avalonia (696/696) and WPF (2122/2122) suites are green on the current working tree; commits are
+  through `9f684574` (the EASY-02 rewrite in `run-suite.ps1` and the BUG-16..19 fixes were left
+  uncommitted - see item 9).
 - Emulator sweep session artifacts on the guest: RetroArch 1.22.2 + 491 cores under
   `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/`, OpenMSX 21.0 under
   `~/SimpleLauncher/emulators/OpenMSX/`, real ROMs for 64 systems under `~/roms/` (~3.9 GB from
@@ -905,19 +973,24 @@ up with official firmware; the **AI Parameter Suggestion** feature stays out of 
    `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
-6. Remaining work (see open items): the full 33-scenario pass (31/31 on 2026-09-26 + MAME-01/02
-   verified individually 2026-09-27; not re-run since), the successful Edit System save path, the
-   unexercised items in open item 4, and the two live-verifications for BUG-14/15 after redeploying
-   the payload. Real-ROM launches are done for 14 systems with 10 booting games; PS3/Vita/64DD/FDS/
-   X68000/Model 3 are blocked by image/format/data issues (see the standalone session section).
-   The WPF and Avalonia suites are green as of 2026-09-27.
+6. Remaining work (see open items): the successful Edit System save path and the unexercised items in
+   open item 4 (Easy Mode disk-space/final-failure/close-during-download paths, AI fix flow, Support
+   valid submit, Image viewer, System selection, file-picker nuances, Set Links / Sound Configuration
+   / dead-zone Save+Revert, About offline checks, log files and the bug-report sink, config-persistence
+   failure paths, gamepad on this VM, video/info context-menu links, the RA per-game tabs/error paths
+   and hashing variants). Real-ROM launches are done for 14 systems with 10 booting games;
+   PS3/Vita/64DD/FDS/X68000/Model 3 are blocked by image/format/data issues (see the standalone
+   session section). The WPF and Avalonia suites are green as of 2026-09-27; the full 33-scenario pass
+   and the BUG-14/15 live verifications are DONE (2026-09-27, `reports\run-20260927-232933.md`).
 7. Run subsets while iterating and finally the full suite; on failures read the newest
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Nothing is uncommitted at stop time.** Everything is pushed through `d1818050`: BUG-07..15
-   (`aa87e469`..`a22d4d32`), the two emulator fixtures and their session docs (`b9f9d157`,
-   `d1818050`). Working tree clean; `dotnet test` green for both suites.
+9. **Working tree at session end:** committed through `9f684574` (BUG-07..15 in `aa87e469`..`a22d4d32`,
+   the two emulator fixtures and their session docs in `b9f9d157`, `d1818050`); the EASY-02 rewrite in
+   `scripts\gui-test-harness\run-suite.ps1` plus this session's doc updates are **uncommitted** (the
+   user had not asked for a commit at stop time). `dotnet test` green for both suites; no app source
+   changed this session.
 
 ## 7. Cost
 
@@ -1061,6 +1134,21 @@ One check = one image (~2.1-2.2k prompt tokens) + up to 4k completion tokens; ob
   fallback rendering) was `SimpleLauncher.Core.Models.DosBoxFileItem`. Added a `ToString()` override
   returning `DisplayName`; the dialog's file list now reads the real file names (verified live via
   AT-SPI: the items were `DosBoxFileItem` before, and the DOSBox launch itself worked).
+- **BUG-16 - Easy Mode "Add System" appeared stuck on the loading overlay (FIXED 2026-09-28).**
+  Message dialogs were always owned by MainWindow while Easy Mode is a modal child of the same window,
+  so on X11 the success dialog could stack behind it and the overlay never cleared.
+  `MessageBoxLibraryService.GetDialogOwner` now prefers the active window; verified with
+  `WM_TRANSIENT_FOR` and a full add. See the third-session section for details.
+- **BUG-17 - card overlay buttons ignored the Options menu settings (FIXED 2026-09-28).** Cards now
+  render the three WPF-parity overlay buttons (RA/video/info) driven by the menu settings, with an
+  in-place refresh on toggle; clicks mirror the context menu without launching the game.
+- **BUG-18 - the card-size slider did not update the Button Size menu (FIXED 2026-09-28).** All size
+  paths now snap to the 50-px menu options and keep settings, menu check mark and slider in sync
+  (`MainViewModel.ApplyButtonSize`).
+- **BUG-19 - rapid aspect-ratio clicks froze the app permanently (FIXED 2026-09-28).**
+  `PlaySoundEffects` stopped/disposed the NAudio player synchronously on the UI thread; a wedged
+  PipeWire ALSA stop (reproduced with 300 clicks @15 ms) blocked the UI forever. Playback now runs on
+  a dedicated background thread with a blocking-stop regression test.
 - **Accessibility instrumentation (2026-09-25).** Interactive controls in both apps now carry
   `AutomationProperties.Name` (and WPF inputs/DataGrids an `AutomationId`), so screen readers and the
   AT-SPI harness see real labels instead of `Avalonia.Controls.Image`. Guardrails:

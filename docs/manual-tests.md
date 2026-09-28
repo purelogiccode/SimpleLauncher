@@ -32,11 +32,12 @@ zip execute bits, BUG-05 `.tar.xz` support and BUG-06 solid-7z extraction perfor
 → "Easy Mode real-install session" and "Easy Mode emulator/core install sweep".
 
 The automated AT-SPI/vision suite (`scripts\gui-test-harness\`) also ran the full Linux checklist on this VM:
-**31/31 scenarios PASS in a single run** (2026-09-26, `reports\run-20260926-143336.md`) on the payload built from
-HEAD `f68f6c91` + `7ddc6599`; the WPF suite passed 2122/2122 and the Avalonia suite 677/677 the same day. The
-Easy Mode edge cases were exercised ad-hoc on the same VM that day (Stop mid-download, network loss at download
-start and mid-body, custom ROM folder picker, separate Download Image Pack window), which surfaced BUG-07/BUG-08
-in `ManualTests.md` §8.
+**33/33 scenarios PASS in a single run** (2026-09-27, `reports\run-20260927-232933.md`) on the payload built from
+HEAD `9f684574` (including the BUG-07..BUG-15 fixes); the same session live-verified BUG-14 (a failing `.bat`
+exits at `Information`, no `error_user*.log` entry) and BUG-15 (DOSBox picker items now expose real file names).
+The 2026-09-26 run (31/31, `reports\run-20260926-143336.md`) and the Easy Mode edge-case session that surfaced
+BUG-07/BUG-08 are documented in `ManualTests.md` §6 and §8; the WPF suite passed 2122/2122 and the Avalonia
+suite 686/686 on the current tree.
 
 ---
 
@@ -108,7 +109,7 @@ in `ManualTests.md` §8.
 - [ ] **Support window** (`SupportWindow` + VM) — empty form → per-field validation; valid form → overlay "Sending support request...", form clears on success; emergency return button on the overlay works; closing mid-send doesn't crash; failure → error box + log entries.
 - [ ] **Image viewer** (`ImageViewerWindow` + VM) — each artwork context-menu item renders; missing/corrupt file → error box, empty window, no crash; remote URL (RA badge) renders; unreachable URL → blank window, no hang.
 - [X] **ROM History window** (`RomHistoryWindow` + VM) — MAME game with a `history.dat`/`history.xml` entry shows text with clickable URLs; no entry → "No ROM history found…" + Yes/No prompt; Yes opens a Google search; both files deleted → friendly "no history file found" message. (Verified 2026-09-27 with a real MAME entry: `pacman` showed the `history.dat` text - "MSX cart. published 42 years ago…", GAME ID, TRIVIA, CONTRIBUTE - with the machine description "Pac-Man (Midway)" as the subtitle; scenario MAME-02. The no-entry path was covered by ROMHIST-01 on 2026-09-26; the Yes->Google and both-files-deleted paths remain manual.)
-- [ ] **DOSBox file selection** (`DosBoxFileSelectionWindow` + VM) — a DOS game folder with several `.conf/.bat/.exe/.com` files shows the picker with relative subfolder labels; single-click + Launch and double-click both launch the chosen file; Cancel/X → launch aborted silently; files in the base folder show no subfolder text. (Partially verified 2026-09-27 on Linux Mint 22.3: launching the `Microsoft DOS` system with Wolfenstein 3D (`run.bat` + `WOLF3D.EXE`) showed the picker, selecting the first entry + Launch started DOSBox Staging with a generated `_simplelauncher_dosbox.conf` and the game booted. Double-click/Cancel/X were not exercised. The list items' accessible name was the CLR type name - **BUG-15**, fixed with a `DosBoxFileItem.ToString()` override; not yet re-verified on the VM.)
+- [ ] **DOSBox file selection** (`DosBoxFileSelectionWindow` + VM) — a DOS game folder with several `.conf/.bat/.exe/.com` files shows the picker with relative subfolder labels; single-click + Launch and double-click both launch the chosen file; Cancel/X → launch aborted silently; files in the base folder show no subfolder text. (Partially verified 2026-09-27 on Linux Mint 22.3: launching the `Microsoft DOS` system with Wolfenstein 3D (`run.bat` + `WOLF3D.EXE`) showed the picker, selecting the first entry + Launch started DOSBox Staging with a generated `_simplelauncher_dosbox.conf` and the game booted. Double-click/Cancel/X were not exercised. **BUG-15** - the list items' accessible name was the CLR type name - was fixed with a `DosBoxFileItem.ToString()` override and **re-verified live 2026-09-27**: the AT-SPI list items now read `run.bat` / `WOLF3D.EXE` and the same picker flow launched the game.)
 - [ ] **System selection** (`SystemSelectionWindow`) — appears when a game's system can't be auto-matched; current guess pre-selected; confirm with no selection does nothing; Cancel returns false.
 - [ ] **File pickers** (`AvaloniaFilePickerService`) — on Linux the emulator picker shows all files (no `*.exe` restriction) while Windows still offers "Executable Files"; a picker filter with a specific entry plus "All files" (e.g. Sound Configuration MP3) still shows the specific entry (LB-10); opening a picker from a child window (RA settings, Edit System) makes the dialog modal to that window, not the MainWindow (LB-21, noticeable on Wayland/GNOME).
 

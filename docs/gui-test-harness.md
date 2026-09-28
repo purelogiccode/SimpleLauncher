@@ -430,10 +430,10 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 
 ## 13. Coverage map (what is automated vs manual)
 
-Automated by the 33 scenarios (**31/31 PASS in a single run, 2026-09-26**,
-`reports\run-20260926-143336.md`, on the payload built from HEAD `f68f6c91` + `7ddc6599`; WPF suite
-2122/2122 and Avalonia suite 677/677 the same day; **MAME-01/MAME-02 added and passing 2026-09-27**,
-`reports\run-20260927-014857.md` / `run-20260927-014646.md`; a full 33-scenario pass is pending):
+Automated by the 33 scenarios (**33/33 PASS in a single run, 2026-09-27**,
+`reports\run-20260927-232933.md`, on the payload built from HEAD `9f684574` including the
+BUG-07..BUG-15 fixes; the previous 31/31 run was 2026-09-26, `reports\run-20260926-143336.md`; WPF
+suite 2122/2122 and Avalonia suite 686/686 on the current tree):
 startup/load, system selection, grid/list rendering, covers, filter bar, search + empty state,
 view-mode menu checkmarks, theme menu + persistence, Edit System window/help pane, Easy Mode
 selection state, fuzzy threshold, dead-zone, Edit Links, Sound Configuration, About/Update History,
@@ -479,11 +479,11 @@ and the DOSBox file picker exercised — see `ManualTests.md` and §15). BUG-13.
 fixed. Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
-the VM/app state left behind (app on the batch-B fixture, all standalone emulators + BIOS/keys
-installed), the console/screensaver recovery steps, how to rebuild+deploy the Avalonia payload, the
-remaining work (full 33-scenario pass, the two BUG-14/15 live re-verifications after redeploy, the
-still-unexercised manual items) and confirms the working tree is clean (everything pushed through
-`d1818050`).
+the VM/app state left behind (app on the arcade fixture, all standalone emulators + BIOS/keys
+installed, payload from HEAD `9f684574`), the console/screensaver recovery steps, how to
+rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised manual items - the
+full 33-scenario pass and the BUG-14/15 live re-verifications were completed 2026-09-27) and the
+working-tree state (the EASY-02 rewrite in `run-suite.ps1` uncommitted at session end).
 
 ---
 

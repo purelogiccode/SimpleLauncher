@@ -117,7 +117,7 @@ Then report: first five system names visible, whether the buttons look disabled,
     },
     @{
         Id      = 'EASY-02'
-        Name    = 'Easy Mode: selecting a system enables its download buttons'
+        Name    = 'Easy Mode: a system with a missing emulator enables Download Emulator'
         Fixture = 'seeded'
         Py      = $pyCommon + @'
     n.activate_window(); n.maximize_window(); n.close_dialogs(); time.sleep(0.5)
@@ -127,8 +127,19 @@ Then report: first five system names visible, whether the buttons look disabled,
     checks["combo_present"] = combo is not None
     if combo:
         n.expand(combo); time.sleep(1.5)
-        pick = [e for e in n.snapshot()
-                if e.name == "Atari 2600" and e.extents and e.extents[1] > 380]
+        # The dropdown renders only the first ~17 entries; scroll it until
+        # "Sony PlayStation 4" (the system whose shadPS4 emulator is not
+        # installed on this VM) becomes visible, then click it.
+        wx = combo.extents[0] + combo.extents[2] // 2
+        wy = combo.extents[1] + combo.extents[3] + 150
+        pick = None
+        deadline = time.time() + 30
+        while time.time() < deadline and not pick:
+            pick = [e for e in n.find_all(role="list item")
+                    if e.name == "Sony PlayStation 4" and e.extents]
+            if not pick:
+                xdo(f"xdotool mousemove {wx} {wy}; xdotool click --repeat 8 --delay 60 5")
+                time.sleep(0.8)
         checks["pick_found"] = bool(pick)
         if pick:
             n.click(pick[0]); time.sleep(2.5)
@@ -136,14 +147,17 @@ Then report: first five system names visible, whether the buttons look disabled,
                                 ("Add System", "Download Emulator", "Download Core")}
             checks["add_system_disabled"] = enabled("Add System") is False
             checks["download_emulator_enabled"] = enabled("Download Emulator") is True
-            checks["download_core_enabled"] = enabled("Download Core") is True
+            # shadPS4 is a standalone emulator: the manifest has no core download.
+            checks["download_core_disabled"] = enabled("Download Core") is False
 '@ + $pyTail
         Shot    = 'EASY-02-selected'
         Prompt  = @'
-The "Add New System" window of Simple Launcher (Avalonia, Linux) should be open with "Atari 2600" selected in the "Select a system to add" dropdown.
+The "Add New System" window of Simple Launcher (Avalonia, Linux) should be open with "Sony PlayStation 4" selected in the "Select a system to add" dropdown.
 Expected:
-- "Download Emulator" and "Download Core" buttons now look enabled (solid accent colour, high-contrast text).
+- "Download Emulator" button now looks enabled (solid accent colour, high-contrast text) because the shadPS4 emulator is not installed on this machine.
 - "Add System" still looks disabled (faded, low contrast) because the emulator is not downloaded yet.
+- "Download Core" looks disabled: PlayStation 4 has no core download.
+Note on disabled styling: this app renders disabled buttons with a pale, faded fill and faded label text (low contrast); enabled buttons use the solid accent colour with high-contrast text.
 First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
 Then report the button appearances and any mismatch. Be brief.
 '@
