@@ -814,7 +814,8 @@ Continuation session on the same VM, with the payload **rebuilt and redeployed f
   single-run pass including MAME-01/MAME-02. The known AT-SPI registration flakiness produced several
   "AT-SPI tree not ready" retry episodes (EASY-01->02, THEME-02, ROMHIST-01) but every restart recovered; no
   scenario failed for tree reasons.
-- `run-suite.ps1` carries the EASY-02 rewrite (uncommitted at session end).
+- `run-suite.ps1` carries the EASY-02 rewrite (uncommitted at this session's end; committed in
+  `73d589e7` on 2026-09-28).
 
 ### User-reported fixes + freeze repro (2026-09-28, third session)
 
@@ -903,7 +904,7 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
 
 ### Resume checklist (next session)
 
-**Guest state left by the 2026-09-27 full-suite session** (all of this survives a host/VM reboot unless noted):
+**Guest state left by the 2026-09-28 manual-testing session** (all of this survives a host/VM reboot unless noted):
 
 - VM `LinuxMint` running (or start it with `Start-VM LinuxMint`, elevated); guest IP is
   `172.31.176.191` (the Default Switch subnet reverted from `192.168.65.x` back to `172.31.x` at this
@@ -913,9 +914,19 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
   `SimpleLauncher.Avalonia.dll` md5 `ac3b2f7961b44fa197d930df4d4bf824`). The developer was manually
   testing when this block was written: the app runs the **Atari 2600** grid (776 files) with the
   overlay buttons enabled, notification sound on, aspect ratio last set by the freeze repro. The
-  Avalonia (696/696) and WPF (2122/2122) suites are green on the current working tree; commits are
-  through `9f684574` (the EASY-02 rewrite in `run-suite.ps1` and the BUG-16..19 fixes were left
-  uncommitted - see item 9).
+  Avalonia (696/696) and WPF (2122/2122) suites are green on the current working tree; everything
+  (EASY-02 rewrite + BUG-16..19 fixes + docs) is **committed and pushed through `73d589e7`** - the
+  tree was clean at stop time. The developer was **mid manual test** of the four fixes (see item 6);
+  two Nemo file-manager windows (`roms`, `Atari2600`) may still be open on the guest - they pollute
+  desktop-wide AT-SPI walks but not `Nav` (which is scoped to `SimpleLauncher.Avalonia`); close them
+  before ad-hoc desktop probes.
+- Host ROM share mounted on the guest (new 2026-09-28): `\\PETERSONPC\Atari2600` (`G:\Atari 2600`,
+  read-only, local user `vmshare`) is mounted at `/home/vm/Atari2600` via
+  `/home/vm/.smbcredentials` (root-only) with a `nofail,_netdev` fstab entry; 776 Atari 2600 ROMs
+  are visible there and the app's Atari 2600 system points at that folder. Host-side credential copy
+  (may be cleaned by temp cleanup): `C:\Users\HomePC\AppData\Local\Temp\opencode\vmshare-cred.txt`.
+  Undo: remove the fstab line + `sudo umount`, then on the host `Remove-SmbShare Atari2600` and
+  `Remove-LocalUser vmshare`.
 - Emulator sweep session artifacts on the guest: RetroArch 1.22.2 + 491 cores under
   `~/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64/`, OpenMSX 21.0 under
   `~/SimpleLauncher/emulators/OpenMSX/`, real ROMs for 64 systems under `~/roms/` (~3.9 GB from
@@ -973,24 +984,40 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
    `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
-6. Remaining work (see open items): the successful Edit System save path and the unexercised items in
-   open item 4 (Easy Mode disk-space/final-failure/close-during-download paths, AI fix flow, Support
-   valid submit, Image viewer, System selection, file-picker nuances, Set Links / Sound Configuration
-   / dead-zone Save+Revert, About offline checks, log files and the bug-report sink, config-persistence
-   failure paths, gamepad on this VM, video/info context-menu links, the RA per-game tabs/error paths
-   and hashing variants). Real-ROM launches are done for 14 systems with 10 booting games;
-   PS3/Vita/64DD/FDS/X68000/Model 3 are blocked by image/format/data issues (see the standalone
-   session section). The WPF and Avalonia suites are green as of 2026-09-27; the full 33-scenario pass
-   and the BUG-14/15 live verifications are DONE (2026-09-27, `reports\run-20260927-232933.md`).
+6. **Next work (where the 2026-09-28 session stopped):** the developer was manually testing the four
+   fixes from the third session (BUG-16 dialog ownership, BUG-17 overlay buttons, BUG-18 slider/menu
+   sync, BUG-19 audio freeze) on the running app. Resume by continuing that manual pass, then:
+   - **Re-run the full 33-scenario suite on the new payload** - the last full pass
+     (`reports\run-20260927-232933.md`, 33/33) was on `9f684574`; `SimpleLauncher.Avalonia.dll` and
+     `SimpleLauncher.Core.dll` have changed since (BUG-16..19), so a fresh report is required.
+   - Candidate new scenarios: the card overlay buttons (AT-SPI exposes them as push buttons named
+     `View Achievements`/`View Video`/`View Info`) and the button-size slider/menu sync.
+   - The freeze repro is reusable: 300 `xdotool` clicks @15 ms on the nav aspect-ratio button, then
+     an AT-SPI snapshot probe (see `docs\gui-test-harness.md` §12/§15); the pre-fix build froze
+     (8-node tree), the fixed build stays responsive (full tree).
+   - The successful Edit System save path, plus the unexercised items from open item 4 (Easy Mode
+     disk-space/final-failure/close-during-download paths, AI fix flow, Support valid submit, Image
+     viewer, System selection, file-picker nuances, Set Links / Sound Configuration / dead-zone
+     Save+Revert, About offline checks, log files and the bug-report sink, config-persistence
+     failure paths, gamepad on this VM, video/info context-menu links, the RA per-game tabs/error
+     paths and hashing variants). Real-ROM launches are done for 14 systems with 10 booting games;
+     PS3/Vita/64DD/FDS/X68000/Model 3 are blocked by image/format/data issues (see the standalone
+     session section).
 7. Run subsets while iterating and finally the full suite; on failures read the newest
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Working tree at session end:** committed through `9f684574` (BUG-07..15 in `aa87e469`..`a22d4d32`,
-   the two emulator fixtures and their session docs in `b9f9d157`, `d1818050`); the EASY-02 rewrite in
-   `scripts\gui-test-harness\run-suite.ps1` plus this session's doc updates are **uncommitted** (the
-   user had not asked for a commit at stop time). `dotnet test` green for both suites; no app source
-   changed this session.
+9. **Working tree at session end (2026-09-28):** **clean, everything committed and pushed** through
+   `73d589e7` on `origin/master`:
+   - `c263dcc9` dialog owner fix (BUG-16), `2c933066` card overlay buttons + button-size sync
+     (BUG-17/18), `4115bffe` background audio thread (BUG-19) + regression test, `73d589e7` docs
+     (full-suite pass, EASY-02 rewrite, BUG-16..19). Earlier: BUG-07..15 in `aa87e469`..`a22d4d32`
+     and the emulator fixtures in `b9f9d157`, `d1818050`, docs through `9f684574`.
+   - `dotnet test` green: Avalonia **696/696**, WPF **2122/2122** (2026-09-28, Windows host).
+   - No pending source changes; the guest payload was rebuilt from this tree.
+   - The resume docs were refreshed **after** that push to record this state: `AGENTS.md` is
+     gitignored (local-only), while this file, `docs/manual-tests.md` and `docs/gui-test-harness.md`
+     are uncommitted - commit them before starting the next session (or ask the agent to).
 
 ## 7. Cost
 

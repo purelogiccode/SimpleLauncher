@@ -421,6 +421,7 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 | Menus/dialogs ignore clicks | A modal is open; start with `n.close_dialogs()`, or restart the app |
 | Vision says "empty content" / provider 5xx | `Invoke-VisionCheck` retries 3× automatically; raise `--max-tokens` if the model returns nothing |
 | AT-SPI tree empty for new app starts | Known registration flake; `Start-VmApp` waits up to 60 s and retries (3 starts). After a restart `run-suite.ps1` also checks `Test-VmNavHealth`, retries once and aborts with `AT-SPI tree not ready before <Id>` rather than recording false failures - rerun, and reboot the VM if it keeps failing. Never kill `at-spi-bus-launcher`/`at-spi2-registryd` (leaves a stale `AT_SPI_BUS` guid) |
+| App window frozen / UI unresponsive | Triage: `ps -o stat,pcpu,wchan -p <pid>` (a blocked main thread sits in `futex_do_wait` at 0% CPU) and `sudo gdb -p <pid> -batch -ex "thread apply all bt 10"`; a `Nav().snapshot()` subprocess probe (25 s timeout) tells "slow" from "dead" (a dead UI returns a tiny/empty tree). Reusable repro: 300 `xdotool` clicks @15 ms on the nav aspect-ratio button. BUG-19 (2026-09-28) was exactly this - sound Stop/Dispose joined the playback thread on the UI thread; see `ManualTests.md` §8 |
 | Fixture changes not visible | The app must be **stopped** while `fixture.py` writes the DB; use `Restart-VmApp -Fixture` |
 | `fixture.py` warning about the DB | Brand-new VM: run the app once so it creates `settings.dat` |
 | Report says `exception` | Read `extra.exception` in the report; usually a stale selector or a modal |
@@ -433,7 +434,10 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 Automated by the 33 scenarios (**33/33 PASS in a single run, 2026-09-27**,
 `reports\run-20260927-232933.md`, on the payload built from HEAD `9f684574` including the
 BUG-07..BUG-15 fixes; the previous 31/31 run was 2026-09-26, `reports\run-20260926-143336.md`; WPF
-suite 2122/2122 and Avalonia suite 686/686 on the current tree):
+suite 2122/2122 and Avalonia suite 696/696 on the current tree, 2026-09-28). **The 33/33 report
+predates the 2026-09-28 fixes (BUG-16..19: dialog ownership, card overlay buttons, button-size
+slider sync, background sound playback), so the full suite needs a fresh run on the rebuilt
+payload** - see the resume pointer below):
 startup/load, system selection, grid/list rendering, covers, filter bar, search + empty state,
 view-mode menu checkmarks, theme menu + persistence, Edit System window/help pane, Easy Mode
 selection state, fuzzy threshold, dead-zone, Edit Links, Sound Configuration, About/Update History,
@@ -479,11 +483,14 @@ and the DOSBox file picker exercised — see `ManualTests.md` and §15). BUG-13.
 fixed. Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
-the VM/app state left behind (app on the arcade fixture, all standalone emulators + BIOS/keys
-installed, payload from HEAD `9f684574`), the console/screensaver recovery steps, how to
-rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised manual items - the
-full 33-scenario pass and the BUG-14/15 live re-verifications were completed 2026-09-27) and the
-working-tree state (the EASY-02 rewrite in `run-suite.ps1` uncommitted at session end).
+the VM/app state left behind (developer was manually testing on the **Atari 2600** system, 776 ROMs
+mounted from the host share; all standalone emulators + BIOS/keys installed), the console/screensaver
+recovery steps, how to rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised
+manual items and the **full 33-scenario pass on the rebuilt payload** - the BUG-16..19 fixes changed
+`SimpleLauncher.Avalonia.dll`/`SimpleLauncher.Core.dll` after the 33/33 report) and the working-tree
+state (clean, everything committed and pushed through `73d589e7`). The deployed payload is
+`SimpleLauncher.Core.dll` md5 `2d7eff75dee0bc6be36ecbf3af976135` +
+`SimpleLauncher.Avalonia.dll` md5 `ac3b2f7961b44fa197d930df4d4bf824`.
 
 ---
 
