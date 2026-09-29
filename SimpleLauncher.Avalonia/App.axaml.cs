@@ -696,6 +696,7 @@ public class App : Application, IDisposable
         services.AddSingleton<ILaunchStrategy, ChdToCueStrategy>();
         services.AddSingleton<ILaunchStrategy, DosBoxLaunchStrategy>();
         services.AddSingleton<ILaunchStrategy, XisoMountStrategy>();
+        services.AddSingleton<ILaunchStrategy, XemuMountStrategy>();
         services.AddSingleton<ILaunchStrategy, ZipMountStrategy>();
         services.AddSingleton<ILaunchStrategy, DefaultLaunchStrategy>();
         services.AddSingleton<AskAiToFixParameters>();

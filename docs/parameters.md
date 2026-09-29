@@ -1804,6 +1804,22 @@ You can download this emulator on the [Official Website](https://xemu.app/docs/d
 You can find a tool in the 'Simple Launcher' tools menu that can batch convert ISOs to XISO format. This will reduce the ISO filesize and optimize the Redump ISO for emulation.<br>
 You can download this emulator on the [Official Website](https://xemu.app/docs/download/).<br>
 
+**Option 3 - Use CSO or ZAR files**
+
+**System Folder (Example):** c:\Xbox<br>
+**Extension to Search in the System Folder:** cso, zar<br>
+**Extract File Before Launch?** false<br>
+**Extension to Launch After Extraction:** <br>
+**Group Files by Folder:** false<br>
+
+**Emulator Path (Example):** C:\Emulators\Xemu\xemu.exe<br>
+**Emulator Parameters (Example):** -full-screen -dvd_path<br>
+**Fullscreen Parameter:** -full-screen<br>
+
+You can compress an optimized XISO to CSO (`.cso`) or ZAR (`.zar`) with a tool such as Xbox ISO Studio.<br>
+'Simple Launcher' mounts the compressed image with SimpleXisoDrive using its virtual image.iso option and then loads `image.iso` with xemu. You need to install Dokan from [GitHub](https://github.com/dokan-dev/dokany) for the logic to work. This mount logic is Windows-only.<br>
+You can download this emulator on the [Official Website](https://xemu.app/docs/download/).<br>
+
 .
 
 **Emulator Name:** Cxbx-Reloaded<br>

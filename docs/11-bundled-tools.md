@@ -11,7 +11,7 @@ Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. Al
 |---|---|---|
 | `SevenZip` | `7za.exe`, `7za_arm64.exe` (Windows) / `7zz`, `7zz_arm64` (Linux, static 7-Zip 26.03 builds) + `License.txt` | Fallback 7z extraction (SharpCompress failure path) — `ExtractionService` picks the binary for the running OS/architecture and ensures its execute bits on Unix before launching (LB-15) |
 | `CHDMounter` | `CHDMounter.exe`, `_arm64.exe` (+ README) | Mounts CHD files as virtual drives for emulators without native CHD support |
-| `SimpleXisoDrive` | `SimpleXisoDrive.exe`, `_arm64.exe` | Mounts XISO images (Dokan) |
+| `SimpleXisoDrive` | `SimpleXisoDrive.exe`, `_arm64.exe` | Mounts XISO images (Dokan); 1.4.0+ also exposes a virtual `image.iso` inside the mount with `--image-iso` (CISO decompressed and ZAR trees synthesized on demand — no extraction) for xemu |
 | `SimpleZipDrive` | `SimpleZipDrive.exe`, `_arm64.exe` (+ ReadMe) | Mounts ZIP archives (Dokan) |
 | `BatchConvertToCHD` | `BatchConvertToCHD.exe`, `_arm64.exe`, `chdman.exe`, `chdman_arm64.exe`, 7za | Convert to CHD; `DiscConverter` extracts CHD→ISO/CUE with the managed **CHDSharp** decoder on every platform (Linux/macOS have no `chdman`) and falls back to the bundled `chdman` on Windows |
 | `BatchConvertToRVZ` | `BatchConvertToRVZ.exe`, `_arm64.exe`, `DolphinTool.exe`, `_arm64.exe`, 7za | Convert to RVZ; `DolphinTool` is used by `DiscConverter.ConvertToIsoAsync` |

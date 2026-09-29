@@ -24,8 +24,24 @@ public class MountXisoFiles : IMountXisoFiles
     /// <summary>
     ///     Mounts an XISO file and returns a disposable drive handle with the mounted default.xbe path.
     /// </summary>
-    public async Task<MountXisoDrive> MountAsync(string resolvedIsoFilePath, ILogger logErrors,
+    public Task<MountXisoDrive> MountAsync(string resolvedIsoFilePath, ILogger logErrors,
         IMessageBoxLibraryService messageBox)
+    {
+        return MountXisoFileAsync(resolvedIsoFilePath, "default.xbe", string.Empty, logErrors, messageBox);
+    }
+
+    /// <summary>
+    ///     Mounts an Xbox image (.cso/.zar) with SimpleXisoDrive's virtual image.iso option and
+    ///     returns a disposable drive handle with the mounted image.iso path.
+    /// </summary>
+    public Task<MountXisoDrive> MountImageIsoAsync(string resolvedFilePath, ILogger logErrors,
+        IMessageBoxLibraryService messageBox)
+    {
+        return MountXisoFileAsync(resolvedFilePath, "image.iso", " --image-iso", logErrors, messageBox);
+    }
+
+    private async Task<MountXisoDrive> MountXisoFileAsync(string resolvedIsoFilePath, string expectedFileName,
+        string extraArguments, ILogger logErrors, IMessageBoxLibraryService messageBox)
     {
         _logger.Debug($"[MountXisoFiles.MountAsync] Starting to mount ISO: {resolvedIsoFilePath}");
 
@@ -74,13 +90,13 @@ public class MountXisoFiles : IMountXisoFiles
         }
 
         var driveLetterOnly = $"{driveLetter.Value}:";
-        var defaultXbePath = $"{driveLetter.Value}:\\default.xbe";
+        var expectedPath = $"{driveLetter.Value}:\\{expectedFileName}";
         var driveRoot = $"{driveLetter.Value}:\\";
 
         var psiMount = new ProcessStartInfo
         {
             FileName = resolvedToolPath,
-            Arguments = $"\"{resolvedIsoFilePath}\" \"{driveLetterOnly}\"",
+            Arguments = $"\"{resolvedIsoFilePath}\" \"{driveLetterOnly}\"{extraArguments}",
             WindowStyle = ProcessWindowStyle.Normal,
             UseShellExecute = false,
             CreateNoWindow = false,
@@ -101,7 +117,7 @@ public class MountXisoFiles : IMountXisoFiles
 
             _logger.Debug($"[MountXisoFiles.MountAsync] {toolName} process started (ID: {mountProcess.Id}).");
 
-            var mountSuccessful = await WaitForDriveMountAsync(defaultXbePath, driveRoot, mountProcess, toolName,
+            var mountSuccessful = await WaitForDriveMountAsync(expectedPath, driveRoot, mountProcess, toolName,
                 mountProcess.Id, logErrors);
 
             if (!mountSuccessful)
@@ -113,8 +129,8 @@ public class MountXisoFiles : IMountXisoFiles
                 return new MountXisoDrive(logErrors, _logger);
             }
 
-            _logger.Debug($"[MountXisoFiles.MountAsync] ISO mounted successfully. Path: {defaultXbePath}");
-            return new MountXisoDrive(mountProcess, defaultXbePath, logErrors, _logger);
+            _logger.Debug($"[MountXisoFiles.MountAsync] ISO mounted successfully. Path: {expectedPath}");
+            return new MountXisoDrive(mountProcess, expectedPath, logErrors, _logger);
         }
         catch (Exception ex)
         {

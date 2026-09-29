@@ -45,4 +45,22 @@ public class MountPlatformGuardTests
         logger.Verify(l => l.Warning(It.IsAny<string>()), Times.Never);
         logger.Verify(l => l.Information("Mounting XISO is not supported on this platform."), Times.Once);
     }
+
+    [Fact]
+    public async Task MountXisoFiles_MountImageIsoAsync_OnUnix_ReportsPlatformSupportInsteadOfMissingTool()
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        var logger = TestDependencies.Logger();
+        var messageBox = TestDependencies.MessageBox();
+
+        var mount = new MountXisoFiles(logger.Object);
+        await using var drive = await mount.MountImageIsoAsync("game.cso", logger.Object, messageBox.Object);
+
+        Assert.False(drive.IsMounted);
+        messageBox.Verify(m => m.DokanDriverNotInstalledMessageBoxAsync(), Times.Once);
+        messageBox.Verify(m => m.ThereWasAnErrorMountingTheFileMessageBoxAsync(It.IsAny<int?>()), Times.Never);
+        logger.Verify(l => l.Warning(It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Information("Mounting XISO is not supported on this platform."), Times.Once);
+    }
 }

@@ -863,6 +863,8 @@
         <FileFormatsToSearch>
             <FormatToSearch>iso</FormatToSearch>
             <FormatToSearch>chd</FormatToSearch>
+            <FormatToSearch>cso</FormatToSearch>
+            <FormatToSearch>zar</FormatToSearch>
         </FileFormatsToSearch>
         <FileFormatsToLaunch />
         <Emulators>

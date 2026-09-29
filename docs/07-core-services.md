@@ -38,10 +38,11 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 |---|---|
 | `GameLauncher\Strategies\DefaultLaunchStrategy` | Fallback strategy (priority 999): bat/lnk/exe/regular emulator launch |
 | `GameLauncher\Strategies\XisoMountStrategy` | Cxbx + `.iso` → mount → `default.xbe` |
+| `GameLauncher\Strategies\XemuMountStrategy` | Xemu + `.cso/.zar` (Windows-only): SimpleXisoDrive `MountImageIsoAsync` (`--image-iso`) → xemu `-dvd_path <drive>\image.iso` |
 | `GameLauncher\Strategies\ZipMountStrategy` | RPCS3/ScummVM/XBLA archive mounting (Windows: SimpleZipDrive; Linux/macOS: temp extraction) |
 | `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (platform check first → Linux/macOS get "not supported" at Information level, then Dokan check, console alias, poll 120 s, kill+20 s unmount; unknown architectures fall back to the x64 tool name instead of throwing) |
 | `GameLauncher\MountFiles\MountIsoFiles` | PowerShell `Mount-DiskImage` / `Dismount-DiskImage`, EBOOT.BIN discovery |
-| `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll; platform check first (Linux/macOS → Information "not supported") |
+| `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll; `MountImageIsoAsync` uses `--image-iso` and polls `image.iso`; platform check first (Linux/macOS → Information "not supported") |
 | `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (Windows: zip to virtual drive; Linux/macOS: extract to a temp directory and launch from there) |
 | `GameLauncher\MountFiles\Iso9660ImageReader` | Lists the files of a cooked ISO9660 image (chdman/CHDSharp `extractcd` data track, DVD ISO) — primary 8.3 names, used by the DOSBox CHD fallback on Linux/macOS |
 | `GameLauncher\MountFiles\FindEbootBin`, `FindDefaultXbe`, `FindDefaultXex`, `FindImageIso`, `FindBinFile`, `FindCueFile`, `FileFinderService` | Launch-file discovery inside mounted volumes |

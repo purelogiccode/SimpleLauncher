@@ -111,6 +111,35 @@ public class LaunchStrategyTests
         Assert.False(strategy.IsMatch(Context(@"C:\games\game.iso", "RPCS3")));
     }
 
+    // ── XemuMountStrategy ──
+
+    [Fact]
+    public void XemuMount_MatchesCsoAndZarWithXemu()
+    {
+        var strategy = new XemuMountStrategy(
+            TestDependencies.Logger().Object, TestDependencies.MessageBox().Object,
+            new Mock<IMountXisoFiles>().Object);
+
+        Assert.True(strategy.IsMatch(Context(@"C:\games\game.cso", "Xemu")));
+        Assert.True(strategy.IsMatch(Context(@"C:\games\game.zar", "xemu")));
+        Assert.True(strategy.IsMatch(Context(@"C:\games\game.CSO", "XEMU")));
+        Assert.True(strategy.IsMatch(Context(@"C:\games\game.ZAR", "Xemu 0.8.136")));
+    }
+
+    [Fact]
+    public void XemuMount_DoesNotMatchOtherEmulatorsOrFormats()
+    {
+        var strategy = new XemuMountStrategy(
+            TestDependencies.Logger().Object, TestDependencies.MessageBox().Object,
+            new Mock<IMountXisoFiles>().Object);
+
+        Assert.False(strategy.IsMatch(Context(@"C:\games\game.cso", "PPSSPP")));
+        Assert.False(strategy.IsMatch(Context(@"C:\games\game.zar", "Cxbx-Reloaded")));
+        Assert.False(strategy.IsMatch(Context(@"C:\games\game.iso", "Xemu")));
+        Assert.False(strategy.IsMatch(Context(@"C:\games\game.chd", "Xemu")));
+        Assert.False(strategy.IsMatch(Context(@"C:\games\game.cso", "")));
+    }
+
     // ── DosBoxLaunchStrategy ──
 
     [Fact]
@@ -224,6 +253,7 @@ public class LaunchStrategyTests
             new DefaultLaunchStrategy(), // 999
             new ZipMountStrategy(config, logger, messageBox, new Mock<IMountZipFiles>().Object), // 30
             new XisoMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object), // 20
+            new XemuMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object), // 20
             new ChdMountStrategy(config, messageBox, chd, converter, logger), // 10
             new PbpToCueStrategy(messageBox, logger, converter, config), // 15
             new CommanderGeniusLaunchStrategy(extraction, config, messageBox, logger), // 20
@@ -233,15 +263,16 @@ public class LaunchStrategyTests
 
         var ordered = strategies.OrderBy(s => s.Priority).ToList();
 
-        Assert.Equal(8, ordered.Count);
+        Assert.Equal(9, ordered.Count);
         Assert.IsType<ChdMountStrategy>(ordered[0]);
         Assert.IsType<PbpToCueStrategy>(ordered[1]);
         Assert.IsType<XisoMountStrategy>(ordered[2]);
-        Assert.IsType<CommanderGeniusLaunchStrategy>(ordered[3]);
-        Assert.IsType<ChdToCueStrategy>(ordered[4]); // 25, stable with DosBox
-        Assert.IsType<DosBoxLaunchStrategy>(ordered[5]);
-        Assert.IsType<ZipMountStrategy>(ordered[6]);
-        Assert.IsType<DefaultLaunchStrategy>(ordered[7]);
+        Assert.IsType<XemuMountStrategy>(ordered[3]);
+        Assert.IsType<CommanderGeniusLaunchStrategy>(ordered[4]);
+        Assert.IsType<ChdToCueStrategy>(ordered[5]); // 25, stable with DosBox
+        Assert.IsType<DosBoxLaunchStrategy>(ordered[6]);
+        Assert.IsType<ZipMountStrategy>(ordered[7]);
+        Assert.IsType<DefaultLaunchStrategy>(ordered[8]);
         Assert.Equal(999, ordered[^1].Priority);
     }
 
@@ -261,6 +292,7 @@ public class LaunchStrategyTests
             new DefaultLaunchStrategy(),
             new ZipMountStrategy(config, logger, messageBox, new Mock<IMountZipFiles>().Object),
             new XisoMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object),
+            new XemuMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object),
             new ChdMountStrategy(config, messageBox, chd, converter, logger),
             new PbpToCueStrategy(messageBox, logger, converter, config),
             new CommanderGeniusLaunchStrategy(extraction, config, messageBox, logger),
@@ -284,6 +316,13 @@ public class LaunchStrategyTests
             s.IsMatch(Context(@"C:\g.zip", "RetroArch", systemName: "ScummVM"))));
         // .iso + Cxbx → XisoMount (20)
         Assert.IsType<XisoMountStrategy>(strategies.First(s => s.IsMatch(Context(@"C:\g.iso", "Cxbx-Reloaded"))));
+        // .cso/.zar + xemu → XemuMount (20; image.iso mount on Windows)
+        Assert.IsType<XemuMountStrategy>(strategies.First(s => s.IsMatch(Context(@"C:\g.cso", "Xemu"))));
+        Assert.IsType<XemuMountStrategy>(strategies.First(s => s.IsMatch(Context(@"C:\g.zar", "Xemu"))));
+        // .iso + xemu → Default (xemu reads ISO natively)
+        Assert.IsType<DefaultLaunchStrategy>(strategies.First(s => s.IsMatch(Context(@"C:\g.iso", "Xemu"))));
+        // .cso + PPSSPP → Default (the mount strategy is xemu-only)
+        Assert.IsType<DefaultLaunchStrategy>(strategies.First(s => s.IsMatch(Context(@"C:\g.cso", "PPSSPP"))));
         // .cue + DuckStation → Default (no strategy matches)
         Assert.IsType<DefaultLaunchStrategy>(strategies.First(s => s.IsMatch(Context(@"C:\g.cue", "DuckStation"))));
     }

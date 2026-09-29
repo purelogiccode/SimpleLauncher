@@ -40,10 +40,10 @@
   - Ares, Azahar, Blastem, Cemu, Daphne, Dolphin, DuckStation, Flycast, MAME, Mednafen, Mesen, PCSX2, Raine, Redream, RetroArch, RPCS3, Sega Model 2, Stella, Supermodel, Xenia, Yumir
 * **Universal CHD Support:** Built-in **CHDMounter** utility brings CHD support to emulators without native support:
   - RPCS3, Xemu, Xenia, Cxbx-Reloaded, Mednafen, PCSX Redux, 4DO, Gens, Blastem, Yabause, Mesen, FinalBurn Neo, FinalBurn Alpha, Raine, CD-i Emulator, Tsugaru
-* **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration (Windows); on Linux/macOS the Avalonia app extracts archives to a temp folder, converts CHD images on the fly, and mounts ISOs inside DOSBox — no Dokan needed
+* **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration (Windows); Xemu also boots compressed Xbox images (`.cso`, `.zar`) through **SimpleXisoDrive**'s virtual `image.iso` mount. On Linux/macOS the Avalonia app extracts archives to a temp folder, converts CHD images on the fly, and mounts ISOs inside DOSBox — no Dokan needed
 * **Expert Mode:** Granular control over launch parameters, multiple ROM paths per system, and custom environment variables
 * **Format Conversion:** Built-in converters for CHD, RVZ, XISO, 7z/Zip with integrity verification
-* **File Mounting Strategies:** Advanced strategies for XISO, CHD, ZIP, PBP-to-CUE, and CHD-to-CUE conversions
+* **File Mounting Strategies:** Advanced strategies for XISO, CHD, ZIP, CSO/ZAR-to-image.iso (Xemu), PBP-to-CUE, and CHD-to-CUE conversions
 
 ### 🏆 RetroAchievements (RA) Integration
 * **Rich User Profiles:** View RA stats, recently played games, and global rankings directly in UI

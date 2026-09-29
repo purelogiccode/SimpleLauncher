@@ -524,6 +524,7 @@ public partial class App : IDisposable
         serviceCollection.AddSingleton<ILaunchStrategy, ChdMountStrategy>();
         serviceCollection.AddSingleton<ILaunchStrategy, PbpToCueStrategy>();
         serviceCollection.AddSingleton<ILaunchStrategy, XisoMountStrategy>();
+        serviceCollection.AddSingleton<ILaunchStrategy, XemuMountStrategy>();
         serviceCollection.AddSingleton<ILaunchStrategy, ZipMountStrategy>();
         serviceCollection.AddSingleton<ILaunchStrategy, CommanderGeniusLaunchStrategy>();
         serviceCollection.AddSingleton<ILaunchStrategy, DosBoxLaunchStrategy>();
