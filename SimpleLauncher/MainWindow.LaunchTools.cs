@@ -69,18 +69,18 @@ public partial class MainWindow
         }
     }
 
-    private async void BatchConvertToRVZ_ClickAsync(object sender, RoutedEventArgs e)
+    private async void RvzStudio_ClickAsync(object sender, RoutedEventArgs e)
     {
         try
         {
             UpdateStatusBarService.UpdateContent((string)Application.Current.TryFindResource("LaunchingTool") ??
                                                  "Launching tool...");
             _audioInput.PlayNotificationSound();
-            await _externalToolLauncher.BatchConvertToRvzAsync();
+            await _externalToolLauncher.LaunchRvzStudioAsync();
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method BatchConvertToRVZ_ClickAsync");
+            _logger.Error(ex, "Error in the method RvzStudio_ClickAsync");
         }
     }
 

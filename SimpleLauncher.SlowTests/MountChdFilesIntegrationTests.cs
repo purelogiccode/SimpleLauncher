@@ -59,8 +59,8 @@ public sealed class MountChdFilesIntegrationTests
 #pragma warning restore CA1416
             throw SkipException.ForSkip("Dokan driver is not installed. CHD cannot be mounted.");
 
-        var chdMounterExePath =
-            Path.Combine(AppContext.BaseDirectory, "tools", "CHDMounter", GetChdMounterExecutableName());
+        var chdMounterExePath = Path.Combine(AppContext.BaseDirectory, "tools", "CHDMounter",
+            GetChdMounterPayloadFolder(), GetChdMounterExecutableName());
         if (!File.Exists(chdMounterExePath))
             throw SkipException.ForSkip($"CHDMounter executable not found: {chdMounterExePath}");
 
@@ -120,6 +120,14 @@ public sealed class MountChdFilesIntegrationTests
         }
 
         Assert.False(Directory.Exists(driveRoot), $"Drive {driveRoot} still exists after unmount.");
+    }
+
+    private static string GetChdMounterPayloadFolder()
+    {
+        return RuntimeInformation.ProcessArchitecture ==
+               Architecture.Arm64
+            ? "win-arm64"
+            : "win-x64";
     }
 
     private static string GetChdMounterExecutableName()

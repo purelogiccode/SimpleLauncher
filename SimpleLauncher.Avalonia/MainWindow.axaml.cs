@@ -129,15 +129,16 @@ public partial class MainWindow : Window, IPaginationHost
 
         InitializeComponent();
 
-        // Windows ships the full external-tool set. Linux only ships XISOStudio and CHDStudio (one
-        // payload per OS/architecture each); the other tools are Windows executables, so the menu
-        // keeps just those entries there. macOS has no bundled payloads, so it stays hidden.
+        // Windows ships the full external-tool set. Linux only ships XISOStudio, CHDStudio and
+        // RVZStudio (one payload per OS/architecture each); the other tools are Windows
+        // executables, so the menu keeps just those entries there. macOS has no bundled payloads,
+        // so it stays hidden.
         var isWindows = OperatingSystem.IsWindows();
         ToolsMenuItem.IsVisible = isWindows || OperatingSystem.IsLinux();
         if (!isWindows)
         {
             foreach (var toolItem in ToolsMenuItem.Items.OfType<MenuItem>())
-                toolItem.IsVisible = toolItem.Tag is "XISOStudio" or "CHDStudio";
+                toolItem.IsVisible = toolItem.Tag is "XISOStudio" or "CHDStudio" or "RVZStudio";
         }
 
         // Storefront scanning reads the Windows registry and store databases; it is a
@@ -3114,8 +3115,8 @@ public partial class MainWindow : Window, IPaginationHost
         {
             if (sender is not MenuItem { Tag: string toolTag }) return;
 
-            // XISOStudio and CHDStudio ship for Windows and Linux; every other tool is a Windows executable.
-            if (!OperatingSystem.IsWindows() && toolTag is not ("XISOStudio" or "CHDStudio")) return;
+            // XISOStudio, CHDStudio and RVZStudio ship for Windows and Linux; the rest are Windows executables.
+            if (!OperatingSystem.IsWindows() && toolTag is not ("XISOStudio" or "CHDStudio" or "RVZStudio")) return;
 
             tool = toolTag;
 
@@ -3142,8 +3143,8 @@ public partial class MainWindow : Window, IPaginationHost
                     case "BatchConvertToCompressedFile":
                         await _externalToolLauncher.BatchConvertToCompressedFileAsync();
                         break;
-                    case "BatchConvertToRVZ":
-                        await _externalToolLauncher.BatchConvertToRvzAsync();
+                    case "RVZStudio":
+                        await _externalToolLauncher.LaunchRvzStudioAsync();
                         break;
                     case "CreateBatchFilesForPS3Games":
                         await _externalToolLauncher.CreateBatchFilesForPs3GamesAsync();

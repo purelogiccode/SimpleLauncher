@@ -584,7 +584,7 @@
                         <Image Source="avares://SimpleLauncher.Avalonia/images/tools.png" Width="16" Height="16" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="{ext:Translate BatchConvertToRVZ}" Tag="BatchConvertToRVZ" Click="LaunchTool_Click"
+                <MenuItem Header="{ext:Translate RVZStudio}" Tag="RVZStudio" Click="LaunchTool_Click"
                           ToolTip.Tip="{ext:Translate TooltipToolsMenu}">
                     <MenuItem.Icon>
                         <Image Source="avares://SimpleLauncher.Avalonia/images/rvz.png" Width="16" Height="16" />

@@ -134,6 +134,33 @@ public class MountChdDrive : IAsyncDisposable
             }
         }
 
+        // Unix (FUSE) mounts use a mount-point directory the launcher created: once the process
+        // exit tears the FUSE session down, the now-empty directory is removed. Retry briefly
+        // while the teardown completes.
+        if (string.IsNullOrEmpty(MountedDriveLetter) && !string.IsNullOrEmpty(MountedPath))
+        {
+            for (var attempt = 0; attempt < 10 && Directory.Exists(MountedPath); attempt++)
+            {
+                try
+                {
+                    Directory.Delete(MountedPath);
+                    _logger.Debug(
+                        $"[MountChdDrive.DisposeAsync] Removed the temporary mount point '{MountedPath}'.");
+                    break;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    await Task.Delay(500);
+                }
+            }
+
+            if (Directory.Exists(MountedPath))
+            {
+                _logger.Debug(
+                    $"[MountChdDrive.DisposeAsync] WARNING: Mount point '{MountedPath}' still exists after attempting to unmount.");
+            }
+        }
+
         GC.SuppressFinalize(this);
     }
 }

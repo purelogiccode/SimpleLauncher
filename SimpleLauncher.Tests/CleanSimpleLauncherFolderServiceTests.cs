@@ -173,7 +173,9 @@ public class CleanSimpleLauncherFolderServiceTests
         string[] converterFolders =
         [
             Path.Combine("tools", "XISOStudio"),
-            Path.Combine("tools", "CHDStudio")
+            Path.Combine("tools", "CHDStudio"),
+            Path.Combine("tools", "RVZStudio"),
+            Path.Combine("tools", "CHDMounter")
         ];
 
         Assert.DoesNotContain(
@@ -189,12 +191,12 @@ public class CleanSimpleLauncherFolderServiceTests
     /// <summary>
     ///     Verifies that the architecture-specific cleanup removes only the other architecture's
     ///     payload folder for the tools that ship one payload per OS/architecture
-    ///     (tools\XISOStudio and tools\CHDStudio).
+    ///     (tools\XISOStudio, tools\CHDStudio, tools\RVZStudio and tools\CHDMounter).
     /// </summary>
     [Fact]
     public void ArchitectureSpecificFolderCleanupRemovesOtherArchitectureToolPayloads()
     {
-        string[] tools = ["XISOStudio", "CHDStudio"];
+        string[] tools = ["XISOStudio", "CHDStudio", "RVZStudio", "CHDMounter"];
 
         foreach (var tool in tools)
         {

@@ -30,8 +30,9 @@ The other architecture's bundled tools are pruned from the payload:
   win-arm64 : drops *_x64 files, tools/FindRomCover/x64, and the unsuffixed
               executables that have an _arm64 sibling (7z.dll is kept)
 Both RIDs drop the Linux-only extension-less RetroAchievementsSharp and 7-Zip (7zz) binaries.
-tools/XISOStudio and tools/CHDStudio ship one payload per OS/architecture (win-x64, win-arm64,
-linux-x64, linux-arm64), so both RIDs keep only the matching subfolder.
+tools/XISOStudio, tools/CHDStudio, tools/RVZStudio and tools/CHDMounter ship one payload per
+OS/architecture (win-x64, win-arm64, linux-x64, linux-arm64), so both RIDs keep only the
+matching subfolder.
 
 Debug symbol files (*.pdb) are pruned from the payload: they are never needed at runtime
 and the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
@@ -275,8 +276,8 @@ function Remove-OtherArchitectureFiles {
             }
         }
 
-        # XISOStudio/CHDStudio ship one payload per OS/architecture; keep only this RID's subfolder.
-        if (-not $remove -and $relative -match '^tools/(?:XISOStudio|CHDStudio)/([^/]+)/') {
+        # XISOStudio/CHDStudio/RVZStudio/CHDMounter ship one payload per OS/architecture; keep only this RID's subfolder.
+        if (-not $remove -and $relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter)/([^/]+)/') {
             if ($Matches[1] -ne $Rid) { $remove = $true }
         }
 

@@ -293,10 +293,10 @@ public class LauncherService : ILauncherService
                 {
                     // Mirror of the WPF ChdMountStrategy: only emulators that cannot read
                     // .chd natively get the image mounted; RetroArch and the rest receive
-                    // the raw .chd path. Mounting needs CHDMounter + Dokan, so it is
-                    // Windows-only: on Linux/macOS the ChdMountStrategy converts the CHD
-                    // with chdman before this inline fallback can be reached, and the raw
-                    // path is passed through for the emulators that read CHD natively.
+                    // the raw .chd path. This inline fallback is Windows-only (Dokan/WinFsp):
+                    // on Linux the ChdMountStrategy mounts through FUSE (or converts the CHD
+                    // with the managed CHDSharp decoder) before this fallback can be reached,
+                    // and the raw path is passed through for the emulators that read CHD natively.
                     var chdKind = GetChdGameFileKind(emulatorName, emulatorLocation);
                     if (chdKind != ChdGameFileKind.None && OperatingSystem.IsWindows())
                     {

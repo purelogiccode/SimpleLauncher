@@ -173,7 +173,7 @@ public partial class PreferencesWindow : Window
         // being populated and the name-generated NavList field is not assigned yet. The XAML
         // already defines the matching panel visibility (GeneralPanel visible, rest hidden),
         // so the early event is safely ignored.
-        if (NavList is null || NavList.SelectedItem is not ListBoxItem item) return;
+        if (NavList?.SelectedItem is not ListBoxItem item) return;
 
         var tag = item.Tag as string ?? "general";
 

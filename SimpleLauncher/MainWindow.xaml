@@ -712,8 +712,8 @@
                                    AutomationProperties.Name="{DynamicResource ToolsIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Click="BatchConvertToRVZ_ClickAsync"
-                              Header="Batch Convert To RVZ" ToolTip="{DynamicResource TooltipToolsMenu}">
+                    <MenuItem Click="RvzStudio_ClickAsync"
+                              Header="RVZStudio" ToolTip="{DynamicResource TooltipToolsMenu}">
                         <MenuItem.Icon>
                             <Image Source="pack://application:,,,/images/rvz.png" Width="16" Height="16"
                                    AutomationProperties.Name="{DynamicResource ToolsIcon}" />

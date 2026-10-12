@@ -431,7 +431,8 @@
     <!-- Files sourced from the original SimpleLauncher project (outside this project dir)
          must use Include + Link — Update only modifies already-included items. -->
     <ItemGroup>
-        <None Include="..\SimpleLauncher\tools\CHDMounter\*" Link="tools\CHDMounter\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\CHDMounter\**\*"
+              Link="tools\CHDMounter\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\SimpleLauncher\tools\RetroAchievementsSharp\*"
@@ -492,8 +493,8 @@
               Link="tools\BatchConvertToCompressedFile\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\BatchConvertToRVZ\*"
-              Link="tools\BatchConvertToRVZ\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\RVZStudio\**\*"
+              Link="tools\RVZStudio\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\SimpleLauncher\tools\CreateBatchFilesForPS3Games\*"

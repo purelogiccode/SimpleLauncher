@@ -27,8 +27,9 @@ public static class ConvertDiscImageToIso
         {
             var arch = RuntimeInformation.ProcessArchitecture;
             var exeName = arch == Architecture.Arm64 ? "DolphinTool_arm64.exe" : "DolphinTool.exe";
+            var payloadFolder = arch == Architecture.Arm64 ? "win-arm64" : "win-x64";
             var dolphinToolPath =
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "BatchConvertToRVZ", exeName);
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "RVZStudio", payloadFolder, exeName);
 
             if (!File.Exists(dolphinToolPath))
             {

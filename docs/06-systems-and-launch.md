@@ -79,7 +79,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 | `XemuMountStrategy` | 20 | Xemu + `.cso/.zar` | Windows-only mount logic: SimpleXisoDrive mounts the image with the virtual `image.iso` option (`MountImageIsoAsync`, `--image-iso`), then xemu is launched with `-dvd_path <drive>\image.iso`; unmounted when xemu exits |
 | `CommanderGeniusLaunchStrategy` | 20 | Commander Genius + archive | resolve CG data path (Windows: Documents\Commander Genius; Linux/macOS: `~/.CommanderGenius` - LB-11), extract to `games\<zipname>`, `dir="games/<zipname>"` |
 | `PbpToCueStrategy` | 15 | `.pbp` + Mednafen | `ConvertPbpToCueBinAsync` → launch `.cue` → clean temp |
-| `ChdMountStrategy` | 10 | `.chd` (not RetroArch/DOSBox) + 19-emulator list | mount via CHDMounter, find launch file per emulator (EBOOT.BIN/default.xex/image.iso/default.xbe/`.bin`/`.cue`), regular launch |
+| `ChdMountStrategy` | 10 | `.chd` (not RetroArch/DOSBox) + 19-emulator list | mount via CHDMounter (Windows Dokan/WinFsp, Linux FUSE 3), find launch file per emulator (EBOOT.BIN/default.xex/image.iso/default.xbe/`.bin`/`.cue`), regular launch; Linux falls back to the managed CHDSharp conversion when the mount is unavailable |
 
 ## Extraction (`ExtractionService`)
 
@@ -96,7 +96,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 
 | Service | Backend | Details |
 |---|---|---|
-| `MountChdFiles` / `MountChdDrive` | `tools\CHDMounter\CHDMounter.exe` (+`_arm64`) | Platform check first (Linux/macOS → Information "not supported", no missing-tool Warning — LB-14); Dokan check (`DokanValidation.IsDokanInstalled()`); args `/a "<chd>" /s:<consoleAlias>`; CHDMounter auto-picks drive; mount poll 240×500 ms (120 s max, `:724-773`); console alias per system/emulator (`:567-718`); unmount = kill + 20 s wait (`:300-317`); `DisposeAsync` verifies release (`MountChdDrive:117-129`) |
+| `MountChdFiles` / `MountChdDrive` | `tools\CHDMounter\{win,linux}-{x64,arm64}\CHDMounter(.exe)` | Windows: Dokan check (`DokanValidation.IsDokanInstalled()`), args `/a "<chd>" /s:<consoleAlias>`, auto-picked drive, poll 240×500 ms (120 s max); Linux: FUSE check (`FuseValidation.IsFuseAvailable()`), explicit mount point under the temp folder, args `/s:<alias> "<chd>" "<mountPoint>"`, readiness poll 60×500 ms (30 s max), silent Information-level fallback to the managed conversion; console alias per system/emulator; unmount = kill + wait, then the mount point directory is removed; `DisposeAsync` verifies the release |
 | `MountIsoFiles` | PowerShell `Mount-DiskImage` | drive letter from `Get-Volume` output (`:193-258`); 30 s PS timeout (`:225`); polls 10 s for mount (`:74`); finds `EBOOT.BIN` (`:95`); dismount in finally (`:317-342`); execution-policy detection (`:412+`) |
 | `MountXisoFiles` / `MountXisoDrive` | `tools\SimpleXisoDrive\SimpleXisoDrive.exe` (+`_arm64`) | Platform check first (Linux/macOS → Information "not supported" — LB-14); Dokan validation (`:80-87`); **drive letter Z→D** selection (`:33-57`); args `"<iso>" "Z:"`; polls for `default.xbe` 240×500 ms (`:172-209`); kill + 20 s wait on dispose (`:67`, `:91`). `MountImageIsoAsync` adds `--image-iso` and polls for `image.iso` instead (Xemu + `.cso/.zar`, launcher tool 1.4.0+) |
 | `MountZipFiles` | `tools\SimpleZipDrive\SimpleZipDrive.exe` (+`_arm64`) on Windows; temp extraction on Linux/macOS | Path-traversal validation always runs (platform-neutral simulated root, backslash entries normalized); Windows mounts a drive and polls 1 min; Unix extracts to `%TEMP%/SimpleLauncher/ZipLaunch/<guid>` (separator-normalized, containment-checked), finds `EBOOT.BIN` / nested `000D0000` file / ScummVM folder, then deletes the temp directory when the emulator exits |
@@ -111,7 +111,7 @@ Ordered by `Priority`; first `IsMatch` wins:
 | `ConvertChdToIsoAsync` | CHDSharp (NuGet) first, `tools\CHDStudio\win-x64\chdman.exe` / `win-arm64\chdman_arm64.exe` fallback on Windows | managed DVD extraction (`ExtractToDirectory`); chdman `extractdvd -i -o` |
 | `ConvertChdToCueBinAsync` | CHDSharp (NuGet) first, chdman fallback on Windows | managed CD extraction to CUE/BIN (`cooked: true`); chdman `extractcd -i -o` |
 | `ConvertPbpToCueBinAsync` (`:211`) | PBPSharp (NuGet package) | `PbpFile.Open` → disc 1 → `ExtractToBinCue` |
-| `ConvertToIsoAsync` (`:317`) | `tools\BatchConvertToRVZ\DolphinTool.exe` (+arm64) | `convert --format=iso --input --output` |
+| `ConvertToIsoAsync` (`:317`) | `tools\RVZStudio\win-x64\DolphinTool.exe` / `win-arm64\DolphinTool_arm64.exe` | `convert --format=iso --input --output` |
 
 ## Emulator config handlers (21) & Core configuration services
 

@@ -417,10 +417,40 @@
         <None Update="tools\BatchConvertToCompressedFile\BatchConvertToCompressedFile.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertToRVZ\BatchConvertToRVZ.exe">
+        <None Update="tools\RVZStudio\win-x64\RVZStudio.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertToRVZ\DolphinTool.exe">
+        <None Update="tools\RVZStudio\win-x64\DolphinTool.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-x64\7za.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-x64\LICENSE-7zip.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-x64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-x64\ReadMe.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-arm64\RVZStudio.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-arm64\DolphinTool_arm64.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-arm64\7za_arm64.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-arm64\LICENSE-7zip.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-arm64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RVZStudio\win-arm64\ReadMe.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\CreateBatchFilesForPS3Games\CreateBatchFilesForPS3Games.exe">
@@ -436,12 +466,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCompressedFile\BatchConvertToCompressedFile_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToRVZ\BatchConvertToRVZ_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToRVZ\DolphinTool_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\CreateBatchFilesForPS3Games\CreateBatchFilesForPS3Games_arm64.exe">
@@ -579,7 +603,22 @@
         <None Update="samples\Redream\redream.cfg">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\CHDMounter\CHDMounter.exe">
+        <None Update="tools\CHDMounter\win-x64\CHDMounter.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDMounter\win-x64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDMounter\win-x64\README.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDMounter\win-arm64\CHDMounter.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDMounter\win-arm64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDMounter\win-arm64\README.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\FM Towns.png">
@@ -658,18 +697,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\arm64\audio\click.mp3">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToRVZ\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToRVZ\7za_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDMounter\CHDMounter_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDMounter\README.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleZipDrive\ReadMe.md">

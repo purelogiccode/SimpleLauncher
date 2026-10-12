@@ -139,11 +139,11 @@ public class ExternalToolLauncherService : IExternalToolLauncher
     }
 
     /// <summary>
-    ///     Launches the external tool for batch converting files to RVZ format.
+    ///     Launches RVZStudio (the GameCube/Wii disc-image utility that replaces BatchConvertToRVZ).
     /// </summary>
-    public async Task BatchConvertToRvzAsync()
+    public async Task LaunchRvzStudioAsync()
     {
-        var toolPath = await GetToolExecutablePathAsync("BatchConvertToRVZ", "BatchConvertToRVZ");
+        var toolPath = await GetPlatformToolExecutablePathAsync("RVZStudio", "RVZStudio");
         if (toolPath == null) return;
 
         await LaunchExternalToolAsync(toolPath);

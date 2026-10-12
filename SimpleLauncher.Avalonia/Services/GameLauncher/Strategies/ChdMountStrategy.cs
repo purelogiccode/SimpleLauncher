@@ -106,15 +106,6 @@ public class ChdMountStrategy : ILaunchStrategy
     /// <inheritdoc />
     public async Task ExecuteAsync(LaunchContext context, ILauncherService launcher)
     {
-        // CHDMounter + Dokan are Windows-only. On Linux/macOS the image is converted with
-        // the bundled chdman instead and the emulator runs on the converted file.
-        if (!OperatingSystem.IsWindows())
-        {
-            await ExecuteWithChdmanConversionAsync(context, launcher);
-            return;
-        }
-
-        string? gameFilePath;
         ResolveEmulatorFlags(context);
 
         var logPath = PathHelper.ResolveLogFilePath(_configuration);
@@ -123,74 +114,95 @@ public class ChdMountStrategy : ILaunchStrategy
         var consoleAlias = _mountChdFiles.GetConsoleAliasFromSystemName(context.SystemName, context.EmulatorName,
             context.EmulatorManager?.EmulatorLocation, _logger);
 
+        // Windows mounts through Dokan/WinFsp, Linux through FUSE 3. On Linux the managed CHDSharp
+        // conversion is the fallback when FUSE or the CHDMounter runtime is unavailable.
         await using var mountedDrive =
             await _mountChdFiles.MountAsync(context.ResolvedFilePath, consoleAlias, _logger, _messageBox);
 
-        if (!mountedDrive.IsMounted)
+        if (mountedDrive.IsMounted)
+        {
+            var gameFilePath = FindGameFileForEmulator(mountedDrive.MountedPath);
+
+            if (string.IsNullOrEmpty(gameFilePath))
+            {
+                _logger.Debug(
+                    $"[ChdMountStrategy] No suitable game file found in mounted CHD at {mountedDrive.MountedPath}");
+                // Expected condition (unsupported input; user already gets UI feedback): not a bug,
+                // keep it out of the bug report service.
+                _logger.Information($"No game file found in mounted CHD for emulator '{context.EmulatorName}'");
+                await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(logPath);
+                return; // no launch strategy runs after this one
+            }
+
+            // Launch the emulator with the found game file
+            // Pass the original CHD file path for display in notifications
+            await launcher.LaunchRegularEmulatorAsync(
+                gameFilePath,
+                context.EmulatorName,
+                context.SystemManagerService!,
+                context.EmulatorManager!,
+                context.Parameters,
+                context.WindowContext!,
+                context.LoadingState,
+                context.ResolvedFilePath);
+            return;
+        }
+
+        if (OperatingSystem.IsWindows())
         {
             // Mount failed - error message already shown by MountChdFiles
             return;
         }
 
+        // Linux/macOS: no CHDMounter/FUSE mount available - convert the image with the managed
+        // CHDSharp decoder and launch the emulator on the converted file.
+        await ExecuteWithChdmanConversionAsync(context, launcher);
+    }
+
+    /// <summary>
+    ///     Finds the emulator-specific launch file inside a mounted CHD (EBOOT.BIN, default.xex,
+    ///     image.iso, default.xbe, a .bin or a .cue file).
+    /// </summary>
+    private string? FindGameFileForEmulator(string mountedPath)
+    {
         if (_isRpcs3)
         {
             // RPCS3 needs the path to EBOOT.BIN
-            gameFilePath = FindEbootBin.FindEbootBinRecursive(mountedDrive.MountedPath, _logger, _logger);
+            return FindEbootBin.FindEbootBinRecursive(mountedPath, _logger, _logger);
         }
-        else if (_isXenia)
+
+        if (_isXenia)
         {
             // Xenia needs the path to default.xex
-            gameFilePath = FindDefaultXex.Find(mountedDrive.MountedPath, _logger);
+            return FindDefaultXex.Find(mountedPath, _logger);
         }
-        else if (_isXemu)
+
+        if (_isXemu)
         {
             // Xemu needs the path to image.iso
-            gameFilePath = FindImageIso.Find(mountedDrive.MountedPath, _logger);
+            return FindImageIso.Find(mountedPath, _logger);
         }
-        else if (_isCxbxReloaded)
+
+        if (_isCxbxReloaded)
         {
             // Cxbx-Reloaded needs the path to default.xbe
-            gameFilePath = FindDefaultXbe.Find(mountedDrive.MountedPath, _logger);
+            return FindDefaultXbe.Find(mountedPath, _logger);
         }
-        else if (_isGens || _cDiEmu || _isKegaFusion)
+
+        if (_isGens || _cDiEmu || _isKegaFusion)
         {
             // Path to a .bin file
-            gameFilePath = FindBinFile.Find(mountedDrive.MountedPath, _logger);
+            return FindBinFile.Find(mountedPath, _logger);
         }
-        else if (_isGenesisPlusGx || _is4Do || _isBlastem || _isFinalBurnAlpha || _isFinalBurnNeo || _isMednafen ||
-                 _isMesen || _isNebula ||
-                 _isPcsxRedux || _isPicoDrive || _isRaine || _isTsugaru || _isYabause)
+
+        if (_isGenesisPlusGx || _is4Do || _isBlastem || _isFinalBurnAlpha || _isFinalBurnNeo || _isMednafen ||
+            _isMesen || _isNebula || _isPcsxRedux || _isPicoDrive || _isRaine || _isTsugaru || _isYabause)
         {
             // Path to a .cue file
-            gameFilePath = FindCueFile.Find(mountedDrive.MountedPath, _logger);
-        }
-        else
-        {
-            gameFilePath = null; // no emulator-specific file finder applies
+            return FindCueFile.Find(mountedPath, _logger);
         }
 
-        if (string.IsNullOrEmpty(gameFilePath))
-        {
-            _logger.Debug(
-                $"[ChdMountStrategy] No suitable game file found in mounted CHD at {mountedDrive.MountedPath}");
-            // Expected condition (unsupported input; user already gets UI feedback): not a bug,
-            // keep it out of the bug report service.
-            _logger.Information($"No game file found in mounted CHD for emulator '{context.EmulatorName}'");
-            await _messageBox.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(logPath);
-            return; // no launch strategy runs after this one
-        }
-
-        // Launch the emulator with the found game file
-        // Pass the original CHD file path for display in notifications
-        await launcher.LaunchRegularEmulatorAsync(
-            gameFilePath,
-            context.EmulatorName,
-            context.SystemManagerService!,
-            context.EmulatorManager!,
-            context.Parameters,
-            context.WindowContext!,
-            context.LoadingState,
-            context.ResolvedFilePath);
+        return null; // no emulator-specific file finder applies
     }
 
     /// <summary>

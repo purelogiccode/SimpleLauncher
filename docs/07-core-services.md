@@ -40,7 +40,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `GameLauncher\Strategies\XisoMountStrategy` | Cxbx + `.iso` → mount → `default.xbe` |
 | `GameLauncher\Strategies\XemuMountStrategy` | Xemu + `.cso/.zar` (Windows-only): SimpleXisoDrive `MountImageIsoAsync` (`--image-iso`) → xemu `-dvd_path <drive>\image.iso` |
 | `GameLauncher\Strategies\ZipMountStrategy` | RPCS3/ScummVM/XBLA archive mounting (Windows: SimpleZipDrive; Linux/macOS: temp extraction) |
-| `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (platform check first → Linux/macOS get "not supported" at Information level, then Dokan check, console alias, poll 120 s, kill+20 s unmount; unknown architectures fall back to the x64 tool name instead of throwing) |
+| `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (Windows: Dokan check, `/a` auto-picked drive, poll 120 s, kill+20 s unmount; Linux: FUSE check, explicit mount point, readiness poll 30 s, silent Information-level fallback to the managed CHDSharp conversion, mount-point cleanup on dispose; unknown architectures fall back to the x64 tool name instead of throwing) |
 | `GameLauncher\MountFiles\MountIsoFiles` | PowerShell `Mount-DiskImage` / `Dismount-DiskImage`, EBOOT.BIN discovery |
 | `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll; `MountImageIsoAsync` uses `--image-iso` and polls `image.iso`; platform check first (Linux/macOS → Information "not supported") |
 | `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (Windows: zip to virtual drive; Linux/macOS: extract to a temp directory and launch from there) |

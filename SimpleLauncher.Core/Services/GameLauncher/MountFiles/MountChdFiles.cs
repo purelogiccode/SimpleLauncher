@@ -9,7 +9,8 @@ using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 
 /// <summary>
-///     Mounts CHD (Compressed Hunks of Data) disc images using CHDMounter and the Dokan filesystem driver.
+///     Mounts CHD (Compressed Hunks of Data) disc images using CHDMounter — Dokan/WinFsp on
+///     Windows, FUSE on Linux.
 /// </summary>
 public class MountChdFiles : IMountChdFiles
 {
@@ -25,7 +26,7 @@ public class MountChdFiles : IMountChdFiles
         _logger = logger;
     }
 
-    private static string ChdMounterRelativePath => GetArchitectureSpecificExecutableRelativePath();
+    private static string ChdMounterRelativePath => GetPlatformExecutableRelativePath();
 
     /// <summary>
     ///     Mounts a CHD file and returns a disposable drive handle with the mounted path and drive letter.
@@ -36,17 +37,11 @@ public class MountChdFiles : IMountChdFiles
         _logger.Debug(
             $"[MountChdFiles.MountAsync] Starting to mount CHD: {resolvedChdFilePath} (ConsoleAlias: {consoleAlias ?? "default"})");
 
-        // CHDMounter and Dokan are Windows-only and the Linux/macOS release package prunes
-        // the Windows tools; check the platform before the tool path so Linux gets the
-        // graceful path instead of a "CHDMounter not found" Warning (LB-14).
+        // Windows mounts through Dokan/WinFsp; Linux mounts through FUSE 3. The caller
+        // (ChdMountStrategy) falls back to the managed CHDSharp conversion when this returns an
+        // unmounted drive, so the Unix path logs at Information level and shows no message box.
         if (!OperatingSystem.IsWindows())
-        {
-            const string errorMessage = "Mounting CHD is not supported on this platform.";
-            _logger.Debug($"[MountChdFiles.MountAsync] {errorMessage}");
-            logErrors.Information(errorMessage);
-            await messageBox.DokanDriverNotInstalledMessageBoxAsync();
-            return new MountChdDrive(logErrors, _logger);
-        }
+            return await MountWithFuseAsync(resolvedChdFilePath, consoleAlias, logErrors);
 
         if (!DokanValidation.IsDokanInstalled())
         {
@@ -845,17 +840,18 @@ public class MountChdFiles : IMountChdFiles
     }
 
     /// <summary>
-    ///     Determines the CHDMounter executable relative path based on the current process architecture.
-    ///     Only x64/arm64 builds of the Windows tool exist; anything else falls back to the x64
-    ///     name so DI construction stays inert and the tool check reports the problem (LB-14).
+    ///     Determines the CHDMounter executable relative path for the running OS/architecture.
+    ///     The tool ships one payload per OS/architecture under tools\CHDMounter\<rid>\; anything
+    ///     else falls back to the x64 name so DI construction stays inert and the tool check
+    ///     reports the problem (LB-14).
     /// </summary>
-    private static string GetArchitectureSpecificExecutableRelativePath()
+    private static string GetPlatformExecutableRelativePath()
     {
-        var executableName = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-            ? "CHDMounter_arm64.exe"
-            : "CHDMounter.exe";
+        var operatingSystem = OperatingSystem.IsWindows() ? "win" : "linux";
+        var architecture = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "arm64" : "x64";
+        var executableName = OperatingSystem.IsWindows() ? "CHDMounter.exe" : "CHDMounter";
 
-        return Path.Combine(ChdMounterRelativeDirectory, executableName);
+        return Path.Combine(ChdMounterRelativeDirectory, $"{operatingSystem}-{architecture}", executableName);
     }
 
     private static HashSet<char> GetCurrentDriveLetters()
@@ -928,6 +924,198 @@ public class MountChdFiles : IMountChdFiles
         // keep it out of the bug report service.
         logErrors.Information(timeoutContextMessage);
         return (false, null, null);
+    }
+
+    /// <summary>
+    ///     Linux mount path: the CHDMounter Linux build mounts through FUSE 3. The auto-selected
+    ///     mount point cannot be discovered from outside the tool, so the launcher passes an
+    ///     explicit one (a directory it owns) and removes it once the FUSE session ends. Failures
+    ///     are expected user-environment conditions (no FUSE, no .NET runtime, missing payload);
+    ///     they are logged at Information level without message boxes because the caller falls
+    ///     back to the managed CHDSharp conversion.
+    /// </summary>
+    private async Task<MountChdDrive> MountWithFuseAsync(string resolvedChdFilePath, string? consoleAlias,
+        ILogger logErrors)
+    {
+        if (!FuseValidation.IsFuseAvailable())
+        {
+            const string message = "FUSE is not available on this system; skipping the CHDMounter mount.";
+            _logger.Debug($"[MountChdFiles.MountWithFuseAsync] {message}");
+            logErrors.Information(message);
+            return new MountChdDrive(logErrors, _logger);
+        }
+
+        var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(ChdMounterRelativePath);
+        _logger.Debug($"[MountChdFiles.MountWithFuseAsync] Path to CHDMounter: {resolvedToolPath}");
+
+        if (string.IsNullOrWhiteSpace(resolvedToolPath) || !File.Exists(resolvedToolPath))
+        {
+            var errorMessage = $"CHDMounter not found at {ChdMounterRelativePath}. Cannot mount CHD.";
+            _logger.Debug($"[MountChdFiles.MountWithFuseAsync] {errorMessage}");
+            logErrors.Information(errorMessage);
+            return new MountChdDrive(logErrors, _logger);
+        }
+
+        var mountPoint = Path.Combine(Path.GetTempPath(), "SimpleLauncher",
+            "chd-mount-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(mountPoint);
+
+        var arguments = !string.IsNullOrEmpty(consoleAlias)
+            ? $"/s:{consoleAlias} \"{resolvedChdFilePath}\" \"{mountPoint}\""
+            : $"\"{resolvedChdFilePath}\" \"{mountPoint}\"";
+
+        var psiMount = new ProcessStartInfo
+        {
+            FileName = resolvedToolPath,
+            Arguments = arguments,
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
+        };
+
+        _logger.Debug($"[MountChdFiles.MountWithFuseAsync] Arguments: {psiMount.Arguments}");
+
+        var mountProcess = new Process { StartInfo = psiMount, EnableRaisingEvents = true };
+        var errorOutput = new ConcurrentQueue<string>();
+
+        try
+        {
+            if (!mountProcess.Start()) throw new InvalidOperationException("Failed to start the CHDMounter process.");
+
+            mountProcess.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data != null) errorOutput.Enqueue(e.Data);
+            };
+            mountProcess.BeginErrorReadLine();
+
+            _logger.Debug($"[MountChdFiles.MountWithFuseAsync] CHDMounter process started (ID: {mountProcess.Id}).");
+
+            var chdFileName = Path.GetFileName(resolvedChdFilePath);
+            var (mountSuccessful, _) = await WaitForFuseMountAndDetectAsync(mountPoint, mountProcess,
+                mountProcess.Id, logErrors, errorOutput, chdFileName);
+
+            if (!mountSuccessful)
+            {
+                if (!mountProcess.HasExited) mountProcess.Kill(true);
+                mountProcess.Dispose();
+                await TryDeleteMountPointDirectoryAsync(mountPoint);
+                return new MountChdDrive(logErrors, _logger);
+            }
+
+            _logger.Debug($"[MountChdFiles.MountWithFuseAsync] CHD mounted successfully at {mountPoint}.");
+            return new MountChdDrive(mountProcess, mountPoint, "", logErrors, _logger);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountChdFiles.MountWithFuseAsync] Exception during CHD mounting: {ex}");
+            logErrors.Information($"Error during CHD mount process for {resolvedChdFilePath}: {ex.Message}");
+
+            try
+            {
+                if (!mountProcess.HasExited) mountProcess.Kill(true);
+            }
+            catch (InvalidOperationException)
+            {
+                // Start() itself failed: there is no process to kill.
+            }
+
+            mountProcess.Dispose();
+            await TryDeleteMountPointDirectoryAsync(mountPoint);
+            return new MountChdDrive(logErrors, _logger);
+        }
+    }
+
+    /// <summary>
+    ///     Polls until the FUSE mount point exposes the mounted filesystem. The mount point is a
+    ///     plain (empty) directory before the FUSE session is up, so a non-empty listing marks the
+    ///     mount as ready; an early process exit reports the failure with its stderr output.
+    /// </summary>
+    private async Task<(bool Success, int? ExitCode)> WaitForFuseMountAndDetectAsync(string mountPoint,
+        Process mountProcess, int processId, ILogger logErrors, ConcurrentQueue<string> errorOutput,
+        string chdFileName)
+    {
+        const int maxRetries = 60;
+        const int pollIntervalMs = 500;
+
+        _logger.Debug(
+            $"[MountChdFiles.WaitForFuseMountAndDetectAsync] Polling for the FUSE mount at '{mountPoint}' for '{chdFileName}' (max {maxRetries * pollIntervalMs / 1000}s)...");
+
+        for (var retryCount = 0; retryCount < maxRetries; retryCount++)
+        {
+            if (IsFuseMountReady(mountPoint))
+            {
+                _logger.Debug(
+                    $"[MountChdFiles.WaitForFuseMountAndDetectAsync] FUSE mount is ready after {retryCount * pollIntervalMs / 1000.0:F1} seconds.");
+                return (true, null);
+            }
+
+            if (mountProcess.HasExited)
+            {
+                var exitCode = mountProcess.ExitCode;
+                var contextMessage = $"Failed to mount CHD. The CHDMounter tool exited prematurely with code {exitCode} " +
+                                     "(FUSE device or .NET runtime unavailable).";
+
+                if (errorOutput is { Count: > 0 })
+                {
+                    contextMessage += "\n\n=== CHDMounter error output ===\n" +
+                                      string.Join(Environment.NewLine, errorOutput);
+                }
+
+                _logger.Debug(
+                    $"[MountChdFiles.WaitForFuseMountAndDetectAsync] CHDMounter process (ID: {processId}) exited prematurely during polling. {contextMessage}");
+                // Expected user-environment condition (the caller falls back to the managed
+                // conversion): not a bug.
+                logErrors.Information(contextMessage);
+                return (false, exitCode);
+            }
+
+            await Task.Delay(pollIntervalMs);
+        }
+
+        var timeoutContextMessage = $"Timed out waiting for the CHD to mount '{chdFileName}' at '{mountPoint}'.";
+
+        if (errorOutput is { Count: > 0 })
+        {
+            timeoutContextMessage +=
+                "\n\n=== CHDMounter error output ===\n" + string.Join(Environment.NewLine, errorOutput);
+        }
+
+        // Expected condition (mount timeout; the caller falls back to the managed conversion):
+        // not a bug.
+        logErrors.Information(timeoutContextMessage);
+        return (false, null);
+    }
+
+    private static bool IsFuseMountReady(string mountPoint)
+    {
+        try
+        {
+            return Directory.EnumerateFileSystemEntries(mountPoint).Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    private async Task TryDeleteMountPointDirectoryAsync(string directory)
+    {
+        for (var attempt = 0; attempt < 5 && Directory.Exists(directory); attempt++)
+        {
+            try
+            {
+                Directory.Delete(directory);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                await Task.Delay(200);
+            }
+        }
+
+        if (Directory.Exists(directory))
+            _logger.Debug($"[MountChdFiles] Could not remove the temporary mount point '{directory}'.");
     }
 
     private string? FindGameFile(string driveRoot, ILogger logErrors)

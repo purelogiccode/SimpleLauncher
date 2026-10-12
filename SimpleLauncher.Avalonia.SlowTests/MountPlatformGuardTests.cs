@@ -4,14 +4,15 @@ using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 namespace SimpleLauncher.Avalonia.SlowTests;
 
 /// <summary>
-///     LB-14 regression tests: on Linux/macOS the mount services must report "not supported on
-///     this platform" at Information level instead of complaining that the pruned Windows
-///     tools are missing (Warning + bug-report noise).
+///     LB-14 regression tests: on Linux/macOS the mount services must stay quiet (Information
+///     level, no message boxes, no missing-tool Warning/bug-report noise) for the tools that are
+///     not shipped or not usable there. MountChdFiles additionally falls back to the managed
+///     CHDSharp conversion on Linux when the CHDMounter/FUSE mount is unavailable.
 /// </summary>
 public class MountPlatformGuardTests
 {
     [Fact]
-    public async Task MountChdFiles_OnUnix_ReportsPlatformSupportInsteadOfMissingTool()
+    public async Task MountChdFiles_OnUnix_SkipsMountWithoutWarningOrMessageBoxes()
     {
         if (OperatingSystem.IsWindows()) return;
 
@@ -22,10 +23,10 @@ public class MountPlatformGuardTests
         await using var drive = await mount.MountAsync("game.chd", null, logger.Object, messageBox.Object);
 
         Assert.False(drive.IsMounted);
-        messageBox.Verify(m => m.DokanDriverNotInstalledMessageBoxAsync(), Times.Once);
+        messageBox.Verify(m => m.DokanDriverNotInstalledMessageBoxAsync(), Times.Never);
         messageBox.Verify(m => m.ThereWasAnErrorMountingTheFileMessageBoxAsync(It.IsAny<int?>()), Times.Never);
         logger.Verify(l => l.Warning(It.IsAny<string>()), Times.Never);
-        logger.Verify(l => l.Information("Mounting CHD is not supported on this platform."), Times.Once);
+        logger.Verify(l => l.Information(It.IsAny<string>()), Times.AtLeastOnce);
     }
 
     [Fact]

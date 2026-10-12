@@ -12,12 +12,6 @@ public interface IExternalToolLauncher
     Task BatchConvertToCompressedFileAsync();
 
     /// <summary>
-    ///     Launches the external tool for batch converting files to RVZ format.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    Task BatchConvertToRvzAsync();
-
-    /// <summary>
     ///     Launches the external tool for creating batch files for PS3 games.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
@@ -56,6 +50,13 @@ public interface IExternalToolLauncher
     /// <param name="selectedRomFolder">The optional path to the folder containing ROMs to convert.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task LaunchChdStudioAsync(string? selectedRomFolder);
+
+    /// <summary>
+    ///     Launches RVZStudio (the cross-platform GameCube/Wii disc-image utility that replaces
+    ///     BatchConvertToRVZ) for the running platform.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task LaunchRvzStudioAsync();
 
     /// <summary>
     ///     Launches XISOStudio (the cross-platform ISO/XISO/Xbox image utility that replaces

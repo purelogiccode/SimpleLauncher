@@ -22,10 +22,10 @@ Windows. Windows-only bundled tools are pruned:
   * tools/**/*.exe and tools/**/*.dll (Windows binaries)
   * tools/FindRomCover/** (WebView2-based Windows tool)
   * the other architecture's RetroAchievementsSharp and 7-Zip binaries
-  * the other XISOStudio/CHDStudio platform payloads (tools/<tool>/<rid>/ — one payload per
-    OS/architecture ships in the repo; only the matching linux-<arch> folder is kept)
-XISOStudio, CHDStudio, RetroAchievementsSharp and 7-Zip ship per-architecture extension-less
-binaries on Linux; the matching ones are kept and marked executable.
+  * the other XISOStudio/CHDStudio/RVZStudio/CHDMounter platform payloads (tools/<tool>/<rid>/ —
+    one payload per OS/architecture ships in the repo; only the matching linux-<arch> folder is kept)
+XISOStudio, CHDStudio, RVZStudio, CHDMounter, RetroAchievementsSharp and 7-Zip ship
+per-architecture extension-less binaries on Linux; the matching ones are kept and marked executable.
 
 ZIP files cannot store Unix permissions reliably when written from Windows, so the
 script writes the permission bits into the ZIP entries' external attributes
@@ -174,7 +174,7 @@ function Remove-WindowsOnlyFiles {
             if ($file.Extension -in @('.exe', '.dll')) {
                 $remove = $true
             }
-            elseif ($relative -match '^tools/(?:XISOStudio|CHDStudio)/([^/]+)/') {
+            elseif ($relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter)/([^/]+)/') {
                 if ($Matches[1] -ne $Rid) { $remove = $true }
             }
             elseif ($Rid -eq 'linux-x64' -and $relative -in @(
@@ -226,7 +226,10 @@ function Test-ExecutableEntry {
             $RelativePath -eq 'tools/XISOStudio/linux-arm64/XISOStudio' -or
             $RelativePath -eq 'tools/XISOStudio/linux-arm64/7zz_linux_arm64' -or
             $RelativePath -eq 'tools/CHDStudio/linux-arm64/CHDStudio' -or
-            $RelativePath -eq 'tools/CHDStudio/linux-arm64/7zz'
+            $RelativePath -eq 'tools/CHDStudio/linux-arm64/7zz' -or
+            $RelativePath -eq 'tools/RVZStudio/linux-arm64/RVZStudio' -or
+            $RelativePath -eq 'tools/RVZStudio/linux-arm64/7za_arm64' -or
+            $RelativePath -eq 'tools/CHDMounter/linux-arm64/CHDMounter'
     }
 
     return $RelativePath -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp' -or
@@ -234,7 +237,10 @@ function Test-ExecutableEntry {
         $RelativePath -eq 'tools/XISOStudio/linux-x64/XISOStudio' -or
         $RelativePath -eq 'tools/XISOStudio/linux-x64/7zz_linux_x64' -or
         $RelativePath -eq 'tools/CHDStudio/linux-x64/CHDStudio' -or
-        $RelativePath -eq 'tools/CHDStudio/linux-x64/7zz'
+        $RelativePath -eq 'tools/CHDStudio/linux-x64/7zz' -or
+        $RelativePath -eq 'tools/RVZStudio/linux-x64/RVZStudio' -or
+        $RelativePath -eq 'tools/RVZStudio/linux-x64/7za' -or
+        $RelativePath -eq 'tools/CHDMounter/linux-x64/CHDMounter'
 }
 
 # unzip only honours the Unix permission bits in a ZIP entry's external attributes when the

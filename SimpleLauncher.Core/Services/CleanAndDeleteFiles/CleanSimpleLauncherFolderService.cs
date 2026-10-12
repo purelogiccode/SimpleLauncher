@@ -25,6 +25,8 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso"),
         // Obsolete tool folder; replaced by tools\CHDStudio.
         Path.Combine(AppDirectory, "tools", "BatchConvertToCHD"),
+        // Obsolete tool folder; replaced by tools\RVZStudio.
+        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ"),
         Path.Combine(AppDirectory, "tools", "PSXPackager"),
         Path.Combine(AppDirectory, "tools", "RAHasher"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForSegaModel3Games"),
@@ -66,12 +68,10 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
             "BatchConvertToCompressedFile.runtimeconfig.json"),
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "7z.dll"),
 
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "7z.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "7z.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "BatchConvertToRVZ.deps.json"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "BatchConvertToRVZ.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "BatchConvertToRVZ.pdb"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "BatchConvertToRVZ.runtimeconfig.json"),
+        // Obsolete top-level CHDMounter files; the tool now ships per-OS/architecture payloads.
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "CHDMounter.exe"),
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "CHDMounter_arm64.exe"),
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "README.md"),
 
         Path.Combine(AppDirectory, "tools", "FindRomCover", "ControlzEx.dll"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "error_user.log"),
@@ -124,9 +124,6 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "easymode_arm64.xml"),
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "7z_arm64.dll"),
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "BatchConvertToCompressedFile_arm64.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "7z_arm64.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "BatchConvertToRVZ_arm64.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "DolphinTool_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForPS3Games", "CreateBatchFilesForPS3Games_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForScummVMGames",
             "CreateBatchFilesForScummVMGames_arm64.exe"),
@@ -149,9 +146,6 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "easymode.xml"),
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "7z_x64.dll"),
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "BatchConvertToCompressedFile.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "7z_x64.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "BatchConvertToRVZ.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToRVZ", "DolphinTool.exe"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForPS3Games", "CreateBatchFilesForPS3Games.exe"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForScummVMGames", "CreateBatchFilesForScummVMGames.exe"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForWindowsGames", "CreateBatchFilesForWindowsGames.exe"),
@@ -166,27 +160,35 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive.exe")
     ];
 
-    // XISOStudio and CHDStudio ship one payload per OS/architecture under tools\<tool>; the
-    // release packages already prune the other architectures, so this only clears leftovers
-    // from an updated install or a hand-copied tools folder.
+    // XISOStudio, CHDStudio, RVZStudio and CHDMounter ship one payload per OS/architecture
+    // under tools\<tool>; the release packages already prune the other architectures, so this
+    // only clears leftovers from an updated install or a hand-copied tools folder.
     internal static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsX64 =
     [
         Path.Combine(AppDirectory, "tools", "XISOStudio", "win-arm64"),
         Path.Combine(AppDirectory, "tools", "XISOStudio", "linux-arm64"),
         Path.Combine(AppDirectory, "tools", "CHDStudio", "win-arm64"),
-        Path.Combine(AppDirectory, "tools", "CHDStudio", "linux-arm64")
+        Path.Combine(AppDirectory, "tools", "CHDStudio", "linux-arm64"),
+        Path.Combine(AppDirectory, "tools", "RVZStudio", "win-arm64"),
+        Path.Combine(AppDirectory, "tools", "RVZStudio", "linux-arm64"),
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "win-arm64"),
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "linux-arm64")
     ];
 
-    // The XISOStudio and CHDStudio tool folders must never be deleted as a whole on an ARM64 OS:
-    // each ships a native ARM64 payload, so removing the whole folder destroyed the ARM64 tools
-    // at every startup. Only the other architecture's payload folders are removed.
+    // The cross-platform tool folders must never be deleted as a whole on an ARM64 OS: each
+    // ships a native ARM64 payload, so removing the whole folder destroyed the ARM64 tools at
+    // every startup. Only the other architecture's payload folders are removed.
     internal static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsArm64 =
     [
         Path.Combine(AppDirectory, "tools", "xbox-iso-vfs"),
         Path.Combine(AppDirectory, "tools", "XISOStudio", "win-x64"),
         Path.Combine(AppDirectory, "tools", "XISOStudio", "linux-x64"),
         Path.Combine(AppDirectory, "tools", "CHDStudio", "win-x64"),
-        Path.Combine(AppDirectory, "tools", "CHDStudio", "linux-x64")
+        Path.Combine(AppDirectory, "tools", "CHDStudio", "linux-x64"),
+        Path.Combine(AppDirectory, "tools", "RVZStudio", "win-x64"),
+        Path.Combine(AppDirectory, "tools", "RVZStudio", "linux-x64"),
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "win-x64"),
+        Path.Combine(AppDirectory, "tools", "CHDMounter", "linux-x64")
     ];
 
     private readonly IDeleteFilesService _deleteFilesService;
