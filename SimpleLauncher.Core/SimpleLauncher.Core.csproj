@@ -30,11 +30,11 @@
         <PackageReference Include="CHDSharp" Version="1.4.3" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.290">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.299">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MessagePack" Version="3.1.10" />
+        <PackageReference Include="MessagePack" Version="3.1.11" />
         <PackageReference Include="NAudio.Alsa" Version="3.1.0" />
         <PackageReference Include="NAudio.SoundFile" Version="3.1.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401">
@@ -51,20 +51,12 @@
         <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
         <PackageReference Include="NAudio.Core" Version="3.1.0" />
         <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
-        <PackageReference Include="PBPSharp" Version="1.1.1" />
-        <PackageReference Include="Roslynator.Analyzers" Version="5.0.0">
+        <PackageReference Include="PBPSharp" Version="1.1.4" />
+        <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="5.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Roslynator.Formatting.Analyzers" Version="5.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="SharpCompress" Version="0.50.4" />
+        <PackageReference Include="SharpCompress" Version="0.50.5" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
         <PackageReference Include="Tomlyn" Version="2.10.1" />
