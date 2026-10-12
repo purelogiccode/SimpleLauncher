@@ -1506,7 +1506,12 @@ public class LauncherService : ILauncherService
             case true:
             {
                 Log.Debug("RetroArch parameter issues detected");
-                Log.Warning(
+                // An emulator the app launched successfully but which then died is an
+                // emulator-side/environment outcome, not an app bug (bugs 67748/67749:
+                // the RetroArch AppImage died with exit code 135 before producing output) —
+                // Information only, so it never files a bug report. The user-facing
+                // parameter-issue dialog and AI fix flow below are unchanged.
+                Log.Information(
                     "RetroArch parameter issue.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
                     "Stdout: {Stdout}\nStderr: {Stderr}",
@@ -1669,9 +1674,12 @@ public class LauncherService : ILauncherService
             return;
         }
 
-        // Generic fallback — any other non-zero exit code
+        // Generic fallback — any other non-zero exit code: the emulator was launched
+        // successfully but died on its own (environment, signal, bad content — not an
+        // app bug), so Information only, never a bug report. The user-facing
+        // could-not-launch dialog and AI fix flow below are unchanged.
         Log.Debug("Exit code {ExitCode} detected for {Emulator}", exitCode, emulatorName);
-        Log.Warning(
+        Log.Information(
             "Emulator exited with error.\n" +
             "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
             "Stdout: {Stdout}\nStderr: {Stderr}",

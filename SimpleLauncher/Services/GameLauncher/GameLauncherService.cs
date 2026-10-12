@@ -1634,7 +1634,13 @@ public partial class GameLauncherService : ILauncherService
             emulatorManager.EmulatorLocation.Contains("retroarch", StringComparison.OrdinalIgnoreCase))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] RetroArch parameter issues");
-            _logger.Warning(contextMessage);
+
+            // An emulator the app launched successfully but which then died is an
+            // emulator-side/environment outcome, not an app bug (bugs 67748/67749:
+            // the RetroArch AppImage died with exit code 135 before producing output) —
+            // Information only, so it never files a bug report. The user-facing
+            // parameter-issue dialog and AI fix flow below are unchanged.
+            _logger.Information(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
@@ -1806,7 +1812,11 @@ public partial class GameLauncherService : ILauncherService
             return;
         }
 
-        _logger.Warning(contextMessage);
+        // Generic error handler: the emulator was launched successfully but died on its
+        // own (environment, signal, bad content — not an app bug), so Information only,
+        // never a bug report. The user-facing could-not-launch dialog and AI fix flow
+        // below are unchanged.
+        _logger.Information(contextMessage);
 
         // Generic error handler
         if (emulatorManager.ReceiveANotificationOnEmulatorError)
