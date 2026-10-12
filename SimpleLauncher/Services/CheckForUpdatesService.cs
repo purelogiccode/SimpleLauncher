@@ -126,19 +126,24 @@ public partial class CheckForUpdatesService
                 }
             }
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger.Debug("Silent update check canceled (network timeout or user canceled)");
+            // HttpClient timeouts surface as TaskCanceledException (an
+            // OperationCanceledException): an expected user-environment condition
+            // (slow/flaky network — bug 68021), logged at Information so the
+            // silent check never files a bug report.
+            _logger.Information(ex, "Silent update check canceled (network timeout or user canceled)");
         }
-        catch (OperationCanceledException)
+        catch (TimeoutException ex)
         {
-            _logger.Debug("Silent update check canceled");
+            // Same expected condition as above (bug 68021).
+            _logger.Information(ex, "Silent update check timed out");
         }
         catch (HttpRequestException ex)
         {
             // Expected user-environment condition (offline, DNS failure, connection
             // refused): the silent check must never file a bug report.
-            _logger.Debug($"Silent update check network failure: {ex.Message}");
+            _logger.Information(ex, "Silent update check network failure");
         }
         catch (Exception ex)
         {

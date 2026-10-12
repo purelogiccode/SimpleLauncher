@@ -37,9 +37,11 @@ public class MameMachineData
 
         if (!File.Exists(datPath))
         {
-            // Notify developer
+            // A missing mame.dat is an expected user condition (fresh install or portable
+            // copy without the data file — bug 67737): Information level so it is never
+            // reported as a bug.
             const string contextMessage = "The file 'mame.dat' could not be found in the application folder.";
-            logErrors.Warning(contextMessage);
+            logErrors.Information(contextMessage);
 
             // Notify user
             if (messageBox != null) _ = messageBox.ReinstallSimpleLauncherFileMissingMessageBoxAsync();
@@ -57,9 +59,12 @@ public class MameMachineData
         }
         catch (Exception ex)
         {
-            // Notify developer
+            // A foreign, truncated, or version-skewed mame.dat is the user's data failing,
+            // not app code (bug 67738 — e.g. a text file dropped in as mame.dat): an expected
+            // user condition, logged at Information so it is never reported as a bug. The user
+            // is still notified via the reinstall dialog below.
             const string contextMessage = "The file mame.dat could not be loaded or is corrupted.";
-            logErrors.Error(ex, contextMessage);
+            logErrors.Information(ex, contextMessage);
 
             // Notify user
             if (messageBox != null) _ = messageBox.ReinstallSimpleLauncherFileCorruptedMessageBoxAsync();

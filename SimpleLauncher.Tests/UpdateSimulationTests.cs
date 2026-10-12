@@ -1,5 +1,7 @@
 using System.IO.Compression;
 using System.Reflection;
+using Moq;
+using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Tests.TestHelpers;
 using Xunit;
 using CheckForUpdatesService = SimpleLauncher.Services.CheckForUpdatesService;
@@ -255,6 +257,33 @@ public class UpdateSimulationTests : IDisposable
     }
 
     // ------------------------------------------------------------------
+    // SilentCheckForUpdatesAsync — timeout handling (bug 68021)
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    ///     Verifies that an HttpClient timeout during the silent update check stays silent:
+    ///     no Error or Warning is logged (Warning+ reaches the bug-report sink) and no
+    ///     update UI is shown. Bug 68021 filed a bug report for this expected
+    ///     user-environment condition.
+    /// </summary>
+    [Fact]
+    public async Task SilentCheckForUpdatesAsyncHttpTimeoutLogsNoErrorAndShowsNoUi()
+    {
+        var logger = new Mock<ILogger>();
+        var messageBox = new Mock<IMessageBoxLibraryService>();
+        var service = CreateTimeoutCheckerInstance(messageBox.Object, logger.Object);
+
+        await service.SilentCheckForUpdatesAsync(null!);
+
+        logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Error(It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Warning(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Warning(It.IsAny<string>()), Times.Never);
+        messageBox.Verify(
+            m => m.DoYouWantToUpdateMessageBoxAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 
@@ -320,6 +349,15 @@ public class UpdateSimulationTests : IDisposable
         return (CheckForUpdatesService)constructor.Invoke([factory, null, null, logErrors, null, null]);
     }
 
+    private static CheckForUpdatesService CreateTimeoutCheckerInstance(
+        IMessageBoxLibraryService messageBox, ILogger logger)
+    {
+        var constructor = typeof(CheckForUpdatesService)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.Public).First();
+        return (CheckForUpdatesService)constructor.Invoke(
+            [new TimeoutHttpClientFactory(), messageBox, null, logger, null, null]);
+    }
+
     private sealed class MockHttpClientFactory : IHttpClientFactory
     {
         /// <summary>
@@ -330,6 +368,38 @@ public class UpdateSimulationTests : IDisposable
         public HttpClient CreateClient(string name)
         {
             return new HttpClient();
+        }
+    }
+
+    private sealed class TimeoutHttpClientFactory : IHttpClientFactory
+    {
+        /// <summary>
+        ///     Creates an <see cref="HttpClient" /> that fails every request with a
+        ///     <see cref="TaskCanceledException" /> mirroring an <see cref="HttpClient" />.Timeout expiry.
+        /// </summary>
+        /// <param name="name">The logical name of the client to create.</param>
+        /// <returns>An <see cref="HttpClient" /> bound to the timeout stub handler.</returns>
+        public HttpClient CreateClient(string name)
+        {
+            return new HttpClient(new TimeoutHttpMessageHandler());
+        }
+    }
+
+    private sealed class TimeoutHttpMessageHandler : HttpMessageHandler
+    {
+        /// <summary>
+        ///     Fails every request with the same exception shape an
+        ///     <see cref="HttpClient" />.Timeout expiry produces (bug 68021).
+        /// </summary>
+        /// <param name="request">The request message.</param>
+        /// <param name="cancellationToken">A cancellation token (unused by the stub).</param>
+        /// <returns>A faulted task.</returns>
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromException<HttpResponseMessage>(new TaskCanceledException(
+                "The request was canceled due to the configured HttpClient.Timeout of 30 seconds elapsing.",
+                new TimeoutException("The operation was canceled.")));
         }
     }
 }

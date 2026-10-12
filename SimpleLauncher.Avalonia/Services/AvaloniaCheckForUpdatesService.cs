@@ -173,9 +173,18 @@ public partial class AvaloniaCheckForUpdatesService
                 await ShowUpdateWindowAsync(releasePackageUrl, updaterZipAssetUrl, TryGetMainWindow());
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger.Debug("Silent update check canceled");
+            // HttpClient timeouts surface as TaskCanceledException (an
+            // OperationCanceledException): an expected user-environment condition
+            // (slow/flaky network — bug 68021), logged at Information so the
+            // silent check never files a bug report.
+            _logger.Information(ex, "Silent update check canceled (network timeout or user canceled)");
+        }
+        catch (TimeoutException ex)
+        {
+            // Same expected condition as above (bug 68021).
+            _logger.Information(ex, "Silent update check timed out");
         }
         catch (HttpRequestException ex)
         {

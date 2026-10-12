@@ -376,6 +376,38 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SilentCheck_HttpTimeout_StaysSilentAndLogsNoError()
+    {
+        // Bug 68021: an HttpClient timeout during the silent check was logged as
+        // an Error and filed as a bug report. A timeout is an expected
+        // user-environment condition — the check must stay silent (no Error or
+        // Warning, which is what reaches the bug-report sink) and show no UI.
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        httpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(new HttpClient(new ThrowingHandler(new TaskCanceledException(
+                "The request was canceled due to the configured HttpClient.Timeout of 30 seconds elapsing.",
+                new TimeoutException("The operation was canceled.")))));
+        var messageBox = new Mock<IMessageBoxLibraryService>();
+        var logger = new Mock<ILogger>();
+        var lifetime = new Mock<IApplicationLifetime>();
+
+        Directory.CreateDirectory(_updaterDir);
+        var service = new AvaloniaCheckForUpdatesService(httpClientFactory.Object, messageBox.Object, logger.Object,
+            lifetime.Object, _updaterDir);
+
+        await service.SilentCheckForUpdatesAsync();
+
+        logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Error(It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Warning(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Warning(It.IsAny<string>()), Times.Never);
+        messageBox.Verify(m => m.DoYouWantToUpdateMessageBoxAsync(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+        messageBox.Verify(m => m.ErrorCheckingForUpdatesMessageBoxAsync(), Times.Never);
+        lifetime.Verify(m => m.Shutdown(), Times.Never);
+    }
+
+    [Fact]
     public async Task ManualCheck_AllSourcesUnreachable_ShowsError()
     {
         var (service, messageBox, _) = CreateService(_ =>
@@ -436,6 +468,22 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
             CancellationToken cancellationToken)
         {
             return Task.FromResult(_responder(request));
+        }
+    }
+
+    private sealed class ThrowingHandler : HttpMessageHandler
+    {
+        private readonly Exception _exception;
+
+        public ThrowingHandler(Exception exception)
+        {
+            _exception = exception;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromException<HttpResponseMessage>(_exception);
         }
     }
 }
