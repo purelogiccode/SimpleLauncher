@@ -5,7 +5,7 @@
 
 ## Shipped payloads (`SimpleLauncher\tools\`)
 
-Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. All are launched through `ExternalToolLauncherService` (below). The whole Tools menu is Windows-only: the Avalonia app hides it on Linux/macOS (`MainWindow` sets `ToolsMenuItem.IsVisible = OperatingSystem.IsWindows()`), and the Linux packaging script prunes every `tools/**/*.exe` and `tools/**/*.dll`. In `BatchConvertIsoToXiso`, the `bchunk.exe`, `extract-xiso.exe` and `xdvdfs.exe` helpers are x64-only and are invoked by the wrapper (on Windows 11 ARM64 they run under x64 emulation). The mount services (`MountChdFiles`, `MountXisoFiles`) check the OS before resolving the tool path, so on Linux/macOS they log a single Information-level "not supported on this platform" entry instead of a missing-Windows-tool Warning (LB-14).
+Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. All are launched through `ExternalToolLauncherService` (below). The Tools menu is Windows-only **except `XISOStudio` and `CHDStudio`**: the Avalonia app keeps only those two items visible off Windows (`MainWindow` hides the other entries on Linux/macOS) because the Linux packaging script prunes every Windows `tools/**/*.exe` and `tools/**/*.dll`. Both are the cross-platform successors of the old `BatchConvertIsoToXiso` / `BatchConvertToCHD` tools and ship one self-contained payload per OS/architecture (`tools\XISOStudio\<rid>\` and `tools\CHDStudio\<rid>\` — `win-x64` / `win-arm64` with the `.exe` plus `7za.exe` / `7za_arm64.exe` (and, for CHDStudio, `chdman` and the Avalonia/Skia/HarfBuzz native libraries), `linux-x64` / `linux-arm64` with the extension-less binary, `7zz` and the `.so` natives), each with the tool's license files and `ReadMe.md`; the launcher resolves the payload for the running OS/architecture and both packaging scripts keep only the packaged RID's subfolder. The mount services (`MountChdFiles`, `MountXisoFiles`) check the OS before resolving the tool path, so on Linux/macOS they log a single Information-level "not supported on this platform" entry instead of a missing-Windows-tool Warning (LB-14).
 
 | Folder | Executables | Purpose |
 |---|---|---|
@@ -13,9 +13,9 @@ Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. Al
 | `CHDMounter` | `CHDMounter.exe`, `_arm64.exe` (+ README) | Mounts CHD files as virtual drives for emulators without native CHD support |
 | `SimpleXisoDrive` | `SimpleXisoDrive.exe`, `_arm64.exe` | Mounts XISO images (Dokan); 1.4.0+ also exposes a virtual `image.iso` inside the mount with `--image-iso` (CISO decompressed and ZAR trees synthesized on demand — no extraction) for xemu |
 | `SimpleZipDrive` | `SimpleZipDrive.exe`, `_arm64.exe` (+ ReadMe) | Mounts ZIP archives (Dokan) |
-| `BatchConvertToCHD` | `BatchConvertToCHD.exe`, `_arm64.exe`, `chdman.exe`, `chdman_arm64.exe`, 7za | Convert to CHD; `DiscConverter` extracts CHD→ISO/CUE with the managed **CHDSharp** decoder on every platform (Linux/macOS have no `chdman`) and falls back to the bundled `chdman` on Windows |
+| `CHDStudio` | `win-x64` / `win-arm64` (`CHDStudio.exe` + `chdman.exe` / `chdman_arm64.exe` + 7za + Avalonia/Skia/HarfBuzz natives) and `linux-x64` / `linux-arm64` (`CHDStudio` + `7zz` + `.so` natives) subfolders | Convert to CHD (the cross-platform successor of `BatchConvertToCHD`, bundled per OS/architecture; see below). `DiscConverter`, `ConvertChdToIso` and `ConvertChdToCueBin` run the bundled `chdman` from `tools\CHDStudio\win-{x64,arm64}\` as the Windows fallback |
 | `BatchConvertToRVZ` | `BatchConvertToRVZ.exe`, `_arm64.exe`, `DolphinTool.exe`, `_arm64.exe`, 7za | Convert to RVZ; `DolphinTool` is used by `DiscConverter.ConvertToIsoAsync` |
-| `BatchConvertIsoToXiso` | `BatchConvertIsoToXiso.exe`, `_arm64.exe`, `bchunk.exe`, `extract-xiso.exe`, 7za | ISO ↔ XISO conversion |
+| `XISOStudio` | `win-x64` / `win-arm64` (`XISOStudio.exe`) and `linux-x64` / `linux-arm64` (`XISOStudio`) subfolders, each with the matching 7za/7zz helper + licenses | ISO ↔ XISO conversion (the cross-platform successor of `BatchConvertIsoToXiso`, bundled per OS/architecture; see below) |
 | `BatchConvertToCompressedFile` | `BatchConvertToCompressedFile.exe`, `_arm64.exe`, 7z dlls | Convert to 7z/zip |
 | `CreateBatchFilesForPS3Games` | `.exe`, `_arm64.exe` | PS3 game launcher batch files |
 | `CreateBatchFilesForScummVMGames` | `.exe`, `_arm64.exe` | ScummVM game launchers |
@@ -34,7 +34,7 @@ Every tool ships x64 + ARM64 variants (`X.exe` + `X_arm64.exe`) unless noted. Al
 - **PE validation:** bundled executables are checked for a valid MZ/PE signature before launch.
 - Public methods (each shows a "not found" / "canceled" / error box on failure):
   - `CreateBatchFilesForXbox360XblaGamesAsync`, `CreateBatchFilesForWindowsGamesAsync`, `CreateBatchFilesForPs3GamesAsync`, `CreateBatchFilesForScummVmGamesAsync`
-  - `BatchConvertIsoToXisoAsync`, `BatchConvertToChdAsync`, `BatchConvertToRvzAsync`, `BatchConvertToCompressedFileAsync`
+  - `LaunchXisoStudioAsync`, `LaunchChdStudioAsync`, `BatchConvertToRvzAsync`, `BatchConvertToCompressedFileAsync`
   - `FindRomCoverLaunchAsync`, `RetroGameCoverDownloaderAsync`, `RomValidatorAsync`
 - UAC cancel (error 1223) is handled with a "canceled" message.
 

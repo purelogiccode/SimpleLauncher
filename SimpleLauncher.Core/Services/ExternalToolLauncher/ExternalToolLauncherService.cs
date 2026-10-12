@@ -96,23 +96,23 @@ public class ExternalToolLauncherService : IExternalToolLauncher
     }
 
     /// <summary>
-    ///     Launches the external tool for batch converting ISO files to XISO format.
+    ///     Launches XISOStudio (the ISO/XISO/Xbox image utility that replaces BatchConvertIsoToXiso).
     /// </summary>
-    public async Task BatchConvertIsoToXisoAsync()
+    public async Task LaunchXisoStudioAsync()
     {
-        var toolPath = await GetToolExecutablePathAsync("BatchConvertIsoToXiso", "BatchConvertIsoToXiso");
+        var toolPath = await GetPlatformToolExecutablePathAsync("XISOStudio", "XISOStudio");
         if (toolPath == null) return;
 
         await LaunchExternalToolAsync(toolPath);
     }
 
     /// <summary>
-    ///     Launches the external tool for batch converting ROM files to CHD format.
+    ///     Launches CHDStudio (the CHD utility that replaces BatchConvertToCHD).
     /// </summary>
     /// <param name="selectedRomFolder">The optional path to the folder containing ROMs to convert.</param>
-    public async Task BatchConvertToChdAsync(string? selectedRomFolder)
+    public async Task LaunchChdStudioAsync(string? selectedRomFolder)
     {
-        var toolPath = await GetToolExecutablePathAsync("BatchConvertToCHD", "BatchConvertToCHD");
+        var toolPath = await GetPlatformToolExecutablePathAsync("CHDStudio", "CHDStudio");
         if (toolPath == null) return;
 
         var arguments = "";
@@ -221,7 +221,9 @@ public class ExternalToolLauncherService : IExternalToolLauncher
             return;
         }
 
-        if (!IsValidPeFile(toolPath))
+        // The Windows payloads are PE executables; the Linux payloads are extension-less ELF
+        // binaries, so the signature check only makes sense on Windows.
+        if (OperatingSystem.IsWindows() && !IsValidPeFile(toolPath))
         {
             // Expected user-error condition (invalid/placeholder tool file): not a bug.
             _logger.Information($"External tool is not a valid PE executable: {toolPath}");
@@ -231,11 +233,15 @@ public class ExternalToolLauncherService : IExternalToolLauncher
 
         try
         {
+            // On Unix the payload is a native ELF binary that must be executed directly (with its
+            // execute bit set); Windows launches through the shell like a double-click would.
+            EnsureUnixExecuteBits(toolPath);
+
             var psi = new ProcessStartInfo
             {
                 FileName = toolPath,
                 Arguments = arguments ?? "",
-                UseShellExecute = true
+                UseShellExecute = OperatingSystem.IsWindows()
             };
 
             if (!string.IsNullOrEmpty(workingDirectory))
@@ -318,6 +324,29 @@ public class ExternalToolLauncherService : IExternalToolLauncher
         }
     }
 
+    /// <summary>
+    ///     Ensures a bundled Unix tool carries the execute bit before it is launched. Git checkouts
+    ///     and Windows-built payloads do not have Unix modes; the release ZIPs do (the Linux
+    ///     packaging script stamps them into the archive entries).
+    /// </summary>
+    private void EnsureUnixExecuteBits(string toolPath)
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        try
+        {
+            const UnixFileMode executeBits =
+                UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+            var mode = File.GetUnixFileMode(toolPath);
+            if ((mode & executeBits) != executeBits) File.SetUnixFileMode(toolPath, mode | executeBits);
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: the launch below surfaces any failure to the user.
+            _logger.Debug(ex, $"Could not set the execute bit on '{toolPath}'");
+        }
+    }
+
     private async Task<string?> GetToolExecutablePathAsync(string toolFolder, string baseName,
         bool useArchSubfolders = false)
     {
@@ -342,4 +371,52 @@ public class ExternalToolLauncherService : IExternalToolLauncher
 
         return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", toolFolder, archPath);
     }
+
+    /// <summary>
+    ///     Resolves the executable of a tool that ships one payload per OS/architecture under
+    ///     tools\{toolFolder}\{rid}\ (XISOStudio and CHDStudio; the Tools menu hides a tool where
+    ///     no payload exists).
+    /// </summary>
+    private async Task<string?> GetPlatformToolExecutablePathAsync(string toolFolder, string baseName)
+    {
+        var runtimeIdentifier = GetPlatformRuntimeIdentifier();
+        if (runtimeIdentifier == null)
+        {
+            var msg = _resourceProvider.GetString("AppNotAvailableForArch",
+                "This application is not available for {0}");
+            await _messageBoxLibrary.LaunchToolInformationMessageBoxAsync(string.Format(CultureInfo.InvariantCulture,
+                msg, RuntimeInformation.ProcessArchitecture));
+            return null;
+        }
+
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", toolFolder, runtimeIdentifier,
+            GetPlatformExecutableName(baseName));
+    }
+
+    /// <summary>
+    ///     Gets the tools\{tool}\ payload folder for the running OS/architecture (for example
+    ///     win-x64 or linux-arm64), or <c>null</c> when no payload is bundled for the platform.
+    /// </summary>
+    internal static string? GetPlatformRuntimeIdentifier()
+    {
+        string? operatingSystem = null;
+        if (OperatingSystem.IsWindows()) operatingSystem = "win";
+        else if (OperatingSystem.IsLinux()) operatingSystem = "linux";
+
+        var architecture = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "x64",
+            Architecture.Arm64 => "arm64",
+            _ => null
+        };
+
+        return operatingSystem == null || architecture == null ? null : $"{operatingSystem}-{architecture}";
+    }
+
+    /// <summary>
+    ///     Gets a bundled tool's executable file name inside its payload folder (Windows appends
+    ///     the .exe suffix; the Linux payloads are extension-less ELF binaries).
+    /// </summary>
+    internal static string GetPlatformExecutableName(string baseName) =>
+        OperatingSystem.IsWindows() ? $"{baseName}.exe" : baseName;
 }

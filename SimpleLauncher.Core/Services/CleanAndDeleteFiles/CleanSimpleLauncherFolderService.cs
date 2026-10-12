@@ -21,11 +21,10 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "cache"),
         Path.Combine(AppDirectory, "x64"),
         Path.Combine(AppDirectory, "x86"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "x64"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "x86"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "x64"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "x86"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "Resources"),
+        // Obsolete tool folder; replaced by tools\XISOStudio.
+        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso"),
+        // Obsolete tool folder; replaced by tools\CHDStudio.
+        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD"),
         Path.Combine(AppDirectory, "tools", "PSXPackager"),
         Path.Combine(AppDirectory, "tools", "RAHasher"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForSegaModel3Games"),
@@ -57,21 +56,6 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "easymode_arm64.xml"),
         Path.Combine(AppDirectory, "error_user.log"),
         Path.Combine(AppDirectory, "helpuser.xml"),
-
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "7z.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "7z.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "BatchConvertIsoToXiso.deps.json"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "BatchConvertIsoToXiso.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "BatchConvertIsoToXiso.pdb"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "BatchConvertIsoToXiso.runtimeconfig.json"),
-
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "7z.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "7z.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "maxcso.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "BatchConvertToCHD.deps.json"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "BatchConvertToCHD.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "BatchConvertToCHD.pdb"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "BatchConvertToCHD.runtimeconfig.json"),
 
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "7z.exe"),
         Path.Combine(AppDirectory, "tools", "BatchConvertToCompressedFile", "7z_x86.exe"),
@@ -154,10 +138,6 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "RomValidator", "RomValidator_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "SimpleZipDrive_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "RetroGameCoverDownloader", "RetroGameCoverDownloader_arm64.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "BatchConvertIsoToXiso_arm64.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "7z_arm64.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "BatchConvertToCHD_arm64.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "chdman_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "Magick.Native-Q16-arm64.dll"),
         Path.Combine(AppDirectory, "tools", "RomValidator", "7z_arm64.dll"),
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive_arm64.exe")
@@ -181,26 +161,32 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "RomValidator", "RomValidator.exe"),
         Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "SimpleZipDrive.exe"),
         Path.Combine(AppDirectory, "tools", "RetroGameCoverDownloader", "RetroGameCoverDownloader.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "BatchConvertIsoToXiso.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertIsoToXiso", "7z_x64.dll"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "BatchConvertToCHD.exe"),
-        Path.Combine(AppDirectory, "tools", "BatchConvertToCHD", "chdman.exe"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "Magick.Native-Q16-x64.dll"),
         Path.Combine(AppDirectory, "tools", "RomValidator", "7z_x64.dll"),
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive.exe")
     ];
 
+    // XISOStudio and CHDStudio ship one payload per OS/architecture under tools\<tool>; the
+    // release packages already prune the other architectures, so this only clears leftovers
+    // from an updated install or a hand-copied tools folder.
     internal static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsX64 =
     [
+        Path.Combine(AppDirectory, "tools", "XISOStudio", "win-arm64"),
+        Path.Combine(AppDirectory, "tools", "XISOStudio", "linux-arm64"),
+        Path.Combine(AppDirectory, "tools", "CHDStudio", "win-arm64"),
+        Path.Combine(AppDirectory, "tools", "CHDStudio", "linux-arm64")
     ];
 
-    // The BatchConvertIsoToXiso and BatchConvertToCHD folders must never be deleted:
-    // both ship native ARM64 variants (BatchConvertToCHD_arm64.exe, chdman_arm64.exe,
-    // CHDSharp_arm64.exe, BatchConvertIsoToXiso_arm64.exe, 7za_arm64.exe), so removing
-    // the whole folder on an ARM64 OS destroyed the ARM64 tools at every startup.
+    // The XISOStudio and CHDStudio tool folders must never be deleted as a whole on an ARM64 OS:
+    // each ships a native ARM64 payload, so removing the whole folder destroyed the ARM64 tools
+    // at every startup. Only the other architecture's payload folders are removed.
     internal static readonly string[] DirectoriesToDeleteIfCurrentArchitectureIsArm64 =
     [
-        Path.Combine(AppDirectory, "tools", "xbox-iso-vfs")
+        Path.Combine(AppDirectory, "tools", "xbox-iso-vfs"),
+        Path.Combine(AppDirectory, "tools", "XISOStudio", "win-x64"),
+        Path.Combine(AppDirectory, "tools", "XISOStudio", "linux-x64"),
+        Path.Combine(AppDirectory, "tools", "CHDStudio", "win-x64"),
+        Path.Combine(AppDirectory, "tools", "CHDStudio", "linux-x64")
     ];
 
     private readonly IDeleteFilesService _deleteFilesService;

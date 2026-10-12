@@ -330,13 +330,82 @@
         <None Update="images\systems\Zeebo.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertIsoToXiso\BatchConvertIsoToXiso.exe">
+        <None Update="tools\XISOStudio\win-x64\XISOStudio.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertToCHD\BatchConvertToCHD.exe">
+        <None Update="tools\XISOStudio\win-x64\7za.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertToCHD\chdman.exe">
+        <None Update="tools\XISOStudio\win-x64\7-Zip-License.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-x64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-x64\ReadMe.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-arm64\XISOStudio.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-arm64\7za_arm64.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-arm64\7-Zip-License.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-arm64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\XISOStudio\win-arm64\ReadMe.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\CHDStudio.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\chdman.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\7za.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\av_libglesv2.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\libHarfBuzzSharp.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\libSkiaSharp.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-x64\ReadMe.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\CHDStudio.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\chdman_arm64.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\7za_arm64.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\av_libglesv2.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\libHarfBuzzSharp.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\libSkiaSharp.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\ReadMe.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCompressedFile\7z_arm64.dll">
@@ -399,9 +468,6 @@
         <None Update="images\systems\Nintendo Virtual Boy.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertIsoToXiso\bchunk.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\RetroGameCoverDownloader\RetroGameCoverDownloader.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -418,9 +484,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\SimpleXisoDrive\SimpleXisoDrive_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertIsoToXiso\BatchConvertIsoToXiso_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Services\EasyMode\Samples\easymode_arm64.xml">
@@ -498,12 +561,6 @@
         <None Update="images\systems\Super ACan.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertToCHD\BatchConvertToCHD_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\chdman_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="images\systems\Atomiswave.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -520,12 +577,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="samples\Redream\redream.cfg">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertIsoToXiso\extract-xiso.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertIsoToXiso\xdvdfs.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\CHDMounter\CHDMounter.exe">
@@ -546,12 +597,6 @@
         <None Update="images\systems\NEC PC88.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\BatchConvertIsoToXiso\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertIsoToXiso\7za_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\SevenZip\7za.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -559,12 +604,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="history.dat">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\7za_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\x64\FindRomCover.exe">
@@ -658,18 +697,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\Tiger Game.Com.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\CHDSharp.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\CHDSharp_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCHD\ReadMe.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\FindRomCover\arm64\LICENSE.txt">

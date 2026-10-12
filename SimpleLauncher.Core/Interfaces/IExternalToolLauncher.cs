@@ -6,19 +6,6 @@ namespace SimpleLauncher.Core.Interfaces;
 public interface IExternalToolLauncher
 {
     /// <summary>
-    ///     Launches the external tool for batch converting ISO files to XISO format.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    Task BatchConvertIsoToXisoAsync();
-
-    /// <summary>
-    ///     Launches the external tool for batch converting ROM files to CHD format.
-    /// </summary>
-    /// <param name="selectedRomFolder">The optional path to the folder containing ROMs to convert.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    Task BatchConvertToChdAsync(string? selectedRomFolder);
-
-    /// <summary>
     ///     Launches the external tool for batch converting files to compressed archive format.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
@@ -61,6 +48,21 @@ public interface IExternalToolLauncher
     /// <param name="selectedRomFolder">The optional path to the ROM folder to match covers against.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task FindRomCoverLaunchAsync(string? selectedImageFolder, string? selectedRomFolder);
+
+    /// <summary>
+    ///     Launches CHDStudio (the cross-platform CHD utility that replaces BatchConvertToCHD)
+    ///     for the running platform.
+    /// </summary>
+    /// <param name="selectedRomFolder">The optional path to the folder containing ROMs to convert.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task LaunchChdStudioAsync(string? selectedRomFolder);
+
+    /// <summary>
+    ///     Launches XISOStudio (the cross-platform ISO/XISO/Xbox image utility that replaces
+    ///     BatchConvertIsoToXiso) for the running platform.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task LaunchXisoStudioAsync();
 
     /// <summary>
     ///     Launches the retro game cover downloader tool with the specified ROM and image folders.

@@ -129,8 +129,16 @@ public partial class MainWindow : Window, IPaginationHost
 
         InitializeComponent();
 
-        // The bundled external tools are Windows executables only.
-        ToolsMenuItem.IsVisible = OperatingSystem.IsWindows();
+        // Windows ships the full external-tool set. Linux only ships XISOStudio and CHDStudio (one
+        // payload per OS/architecture each); the other tools are Windows executables, so the menu
+        // keeps just those entries there. macOS has no bundled payloads, so it stays hidden.
+        var isWindows = OperatingSystem.IsWindows();
+        ToolsMenuItem.IsVisible = isWindows || OperatingSystem.IsLinux();
+        if (!isWindows)
+        {
+            foreach (var toolItem in ToolsMenuItem.Items.OfType<MenuItem>())
+                toolItem.IsVisible = toolItem.Tag is "XISOStudio" or "CHDStudio";
+        }
 
         // Storefront scanning reads the Windows registry and store databases; it is a
         // no-op on other platforms, so hide the "Scan for Microsoft Windows games" action.
@@ -3106,7 +3114,8 @@ public partial class MainWindow : Window, IPaginationHost
         {
             if (sender is not MenuItem { Tag: string toolTag }) return;
 
-            if (!OperatingSystem.IsWindows()) return;
+            // XISOStudio and CHDStudio ship for Windows and Linux; every other tool is a Windows executable.
+            if (!OperatingSystem.IsWindows() && toolTag is not ("XISOStudio" or "CHDStudio")) return;
 
             tool = toolTag;
 
@@ -3123,12 +3132,12 @@ public partial class MainWindow : Window, IPaginationHost
 
                 switch (tool)
                 {
-                    case "BatchConvertIsoToXiso":
-                        await _externalToolLauncher.BatchConvertIsoToXisoAsync();
+                    case "XISOStudio":
+                        await _externalToolLauncher.LaunchXisoStudioAsync();
                         break;
-                    case "BatchConvertToCHD":
-                        Log.Debug("Called BatchConvertToCHD with args: {RomFolder}", romFolder);
-                        await _externalToolLauncher.BatchConvertToChdAsync(romFolder);
+                    case "CHDStudio":
+                        Log.Debug("Called CHDStudio with args: {RomFolder}", romFolder);
+                        await _externalToolLauncher.LaunchChdStudioAsync(romFolder);
                         break;
                     case "BatchConvertToCompressedFile":
                         await _externalToolLauncher.BatchConvertToCompressedFileAsync();

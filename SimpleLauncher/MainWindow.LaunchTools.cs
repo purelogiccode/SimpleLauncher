@@ -23,34 +23,34 @@ public partial class MainWindow
         }
     }
 
-    private async void BatchConvertIsoToXiso_ClickAsync(object sender, RoutedEventArgs e)
+    private async void XisoStudio_ClickAsync(object sender, RoutedEventArgs e)
     {
         try
         {
             UpdateStatusBarService.UpdateContent((string)Application.Current.TryFindResource("LaunchingTool") ??
                                                  "Launching tool...");
             _audioInput.PlayNotificationSound();
-            await _externalToolLauncher.BatchConvertIsoToXisoAsync();
+            await _externalToolLauncher.LaunchXisoStudioAsync();
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method BatchConvertIsoToXiso_ClickAsync");
+            _logger.Error(ex, "Error in the method XisoStudio_ClickAsync");
         }
     }
 
-    private async void BatchConvertToCHD_ClickAsync(object sender, RoutedEventArgs e)
+    private async void ChdStudio_ClickAsync(object sender, RoutedEventArgs e)
     {
         try
         {
             UpdateStatusBarService.UpdateContent((string)Application.Current.TryFindResource("LaunchingTool") ??
                                                  "Launching tool...");
             _audioInput.PlayNotificationSound();
-            await _externalToolLauncher.BatchConvertToChdAsync(_selectedRomFolders?.FirstOrDefault());
-            _logger.Debug($"Called BatchConvertToCHD with args: {_selectedRomFolders?.FirstOrDefault()}");
+            await _externalToolLauncher.LaunchChdStudioAsync(_selectedRomFolders?.FirstOrDefault());
+            _logger.Debug($"Called CHDStudio with args: {_selectedRomFolders?.FirstOrDefault()}");
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method BatchConvertToCHD_ClickAsync");
+            _logger.Error(ex, "Error in the method ChdStudio_ClickAsync");
         }
     }
 

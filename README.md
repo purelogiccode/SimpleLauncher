@@ -91,9 +91,9 @@ Simple Launcher includes a comprehensive suite of specialized utilities:
 
 * **CHDMounter:** Automatically handles CHD file mounting for emulators without native support
 * **Format Converters:**
-  - BatchConvertToCHD: Convert to CHD format
+  - CHDStudio: Convert, verify, and explore CHD images (Windows/Linux)
   - BatchConvertToRVZ: Convert to RVZ format (Dolphin)
-  - BatchConvertIsoToXiso: Convert ISO to XISO format
+  - XISOStudio: Convert, verify, and explore Xbox/Xbox 360 images (Windows/Linux)
   - BatchConvertToCompressedFile: Convert to 7z/Zip format
 * **Metadata & Cover Tools:**
   - FindRomCover: Intelligent cover art finder

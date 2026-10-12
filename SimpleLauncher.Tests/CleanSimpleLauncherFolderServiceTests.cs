@@ -172,8 +172,8 @@ public class CleanSimpleLauncherFolderServiceTests
     {
         string[] converterFolders =
         [
-            Path.Combine("tools", "BatchConvertIsoToXiso"),
-            Path.Combine("tools", "BatchConvertToCHD")
+            Path.Combine("tools", "XISOStudio"),
+            Path.Combine("tools", "CHDStudio")
         ];
 
         Assert.DoesNotContain(
@@ -184,6 +184,37 @@ public class CleanSimpleLauncherFolderServiceTests
             CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsX64,
             directory => converterFolders.Any(folder =>
                 directory.EndsWith(folder, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    /// <summary>
+    ///     Verifies that the architecture-specific cleanup removes only the other architecture's
+    ///     payload folder for the tools that ship one payload per OS/architecture
+    ///     (tools\XISOStudio and tools\CHDStudio).
+    /// </summary>
+    [Fact]
+    public void ArchitectureSpecificFolderCleanupRemovesOtherArchitectureToolPayloads()
+    {
+        string[] tools = ["XISOStudio", "CHDStudio"];
+
+        foreach (var tool in tools)
+        {
+            Assert.Contains(
+                CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsX64,
+                directory => directory.EndsWith(Path.Combine("tools", tool, "win-arm64"),
+                    StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(
+                CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsX64,
+                directory => directory.EndsWith(Path.Combine("tools", tool, "linux-arm64"),
+                    StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(
+                CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsArm64,
+                directory => directory.EndsWith(Path.Combine("tools", tool, "win-x64"),
+                    StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(
+                CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsArm64,
+                directory => directory.EndsWith(Path.Combine("tools", tool, "linux-x64"),
+                    StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private sealed class NoOpDeleteFilesService : IDeleteFilesService

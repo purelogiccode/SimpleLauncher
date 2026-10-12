@@ -484,12 +484,8 @@
 
     <!-- Batch/utility tools — mirrors the file list shipped by the WPF csproj -->
     <ItemGroup>
-        <None Include="..\SimpleLauncher\tools\BatchConvertIsoToXiso\*"
-              Link="tools\BatchConvertIsoToXiso\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\BatchConvertToCHD\*"
-              Link="tools\BatchConvertToCHD\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\CHDStudio\**\*"
+              Link="tools\CHDStudio\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\SimpleLauncher\tools\BatchConvertToCompressedFile\*"
@@ -537,11 +533,15 @@
         <None Include="..\SimpleLauncher\tools\SimpleXisoDrive\*" Link="tools\SimpleXisoDrive\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\SimpleZipDrive\*" Link="tools\SimpleZipDrive\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\SimpleZipDrive\*"
+              Link="tools\SimpleZipDrive\%(Filename)%(Extension)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Include="..\SimpleLauncher\tools\XISOStudio\**\*"
+              Link="tools\XISOStudio\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-
     <ItemGroup>
         <Using Include="System.IO" />
         <Using Include="System.Net.Http" />

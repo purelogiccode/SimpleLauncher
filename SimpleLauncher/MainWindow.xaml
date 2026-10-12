@@ -691,15 +691,15 @@
                 </MenuItem>
                 <MenuItem Header="{DynamicResource Tools}"
                           ToolTip="{DynamicResource TooltipToolsMenu}">
-                    <MenuItem Click="BatchConvertIsoToXiso_ClickAsync"
-                              Header="Batch Convert Iso To Xiso" ToolTip="{DynamicResource TooltipToolsMenu}">
+                    <MenuItem Click="XisoStudio_ClickAsync"
+                              Header="XISOStudio" ToolTip="{DynamicResource TooltipToolsMenu}">
                         <MenuItem.Icon>
                             <Image Source="pack://application:,,,/images/xiso.png" Width="16" Height="16"
                                    AutomationProperties.Name="{DynamicResource ToolsIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Click="BatchConvertToCHD_ClickAsync"
-                              Header="Batch Convert To CHD" ToolTip="{DynamicResource TooltipToolsMenu}">
+                    <MenuItem Click="ChdStudio_ClickAsync"
+                              Header="CHDStudio" ToolTip="{DynamicResource TooltipToolsMenu}">
                         <MenuItem.Icon>
                             <Image Source="pack://application:,,,/images/chd.png" Width="16" Height="16"
                                    AutomationProperties.Name="{DynamicResource ToolsIcon}" />

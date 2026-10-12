@@ -148,7 +148,9 @@ public class DiscConverter : IDiscConverter
         {
             var arch = RuntimeInformation.ProcessArchitecture;
             var exeName = arch == Architecture.Arm64 ? "chdman_arm64.exe" : "chdman.exe";
-            var chdmanPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "BatchConvertToCHD", exeName);
+            var payloadFolder = arch == Architecture.Arm64 ? "win-arm64" : "win-x64";
+            var chdmanPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "CHDStudio",
+                payloadFolder, exeName);
 
             if (!File.Exists(chdmanPath))
             {
