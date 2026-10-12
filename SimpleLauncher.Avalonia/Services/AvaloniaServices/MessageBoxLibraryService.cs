@@ -31,7 +31,26 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
         _localization = localization;
     }
 
-    private Window? O => _ctx.PlatformWindow as Window;
+    /// <summary>
+    ///     The current owner window, or null when no window exists yet (e.g. startup
+    ///     failures reported before the main window is shown). Never throws: every dialog
+    ///     guards on <c>null</c>, and a throw here escaped those guards as an unobserved
+    ///     task exception (bugs 67739/67737: "No window available").
+    /// </summary>
+    private Window? O
+    {
+        get
+        {
+            try
+            {
+                return _ctx.PlatformWindow as Window;
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+    }
 
 
     public async Task ListOfErrorsMessageBoxAsync(StringBuilder errorMessages)

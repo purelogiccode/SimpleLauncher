@@ -106,8 +106,10 @@ print("SL_READY: " + json.dumps({"nodes": len(entries),
 
 function Start-VmApp {
     param([string]$Arguments = '', [int]$SettleSeconds = 8)
+    # Automated runs intentionally provoke failures (missing mame.dat, bad fixture
+    # params, emulator crashes); they must never file live bug reports.
     $start = @'
-setsid /home/vm/SimpleLauncher/SimpleLauncher.Avalonia __ARGS__ >/tmp/simplelauncher.log 2>&1 < /dev/null &
+SIMPLELAUNCHER_BUGREPORT_DISABLE=1 setsid /home/vm/SimpleLauncher/SimpleLauncher.Avalonia __ARGS__ >/tmp/simplelauncher.log 2>&1 < /dev/null &
 for i in $(seq 1 40); do xdotool search --name "^Simple Launcher$" >/dev/null 2>&1 && break; sleep 0.5; done
 '@ -replace '__ARGS__', $Arguments
     Invoke-VmXdo -Script $start -TimeoutSec 90 | Out-Null

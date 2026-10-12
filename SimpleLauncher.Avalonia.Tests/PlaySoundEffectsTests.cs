@@ -126,6 +126,26 @@ public class PlaySoundEffectsTests
             new TypeInitializationException("Audio", new NullReferenceException("static initializer defect"))));
     }
 
+    /// <summary>
+    ///     Bugs 67862-67879: Windows images without Media Foundation can report a missing
+    ///     native module when the decoder is created, which must be recognized so the
+    ///     managed MP3/WAV fallback engages instead of losing sound playback.
+    /// </summary>
+    [Fact]
+    public void IsMediaFoundationUnavailable_DetectsMissingNativeRuntime()
+    {
+        Assert.True(PlaySoundEffects.IsMediaFoundationUnavailable(
+            new DllNotFoundException(
+                "Unable to load DLL 'mfplat.dll' or one of its dependencies: The specified module could not be found. (0x8007007E)")));
+        Assert.True(PlaySoundEffects.IsMediaFoundationUnavailable(
+            new TypeInitializationException("NAudio.MediaFoundation.MediaFoundationApi",
+                new DllNotFoundException("Unable to load DLL 'mfplat.dll'"))));
+        Assert.True(PlaySoundEffects.IsMediaFoundationUnavailable(new FileNotFoundException("mfreadwrite.dll")));
+
+        Assert.False(PlaySoundEffects.IsMediaFoundationUnavailable(new InvalidDataException("corrupt sound file")));
+        Assert.False(PlaySoundEffects.IsMediaFoundationUnavailable(new InvalidOperationException("real bug")));
+    }
+
     [Fact]
     public void CreateReader_UsesManagedDecodersForMp3AndWav()
     {

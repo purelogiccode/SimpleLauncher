@@ -134,6 +134,12 @@ public partial class CheckForUpdatesService
         {
             _logger.Debug("Silent update check canceled");
         }
+        catch (HttpRequestException ex)
+        {
+            // Expected user-environment condition (offline, DNS failure, connection
+            // refused): the silent check must never file a bug report.
+            _logger.Debug($"Silent update check network failure: {ex.Message}");
+        }
         catch (Exception ex)
         {
             // Notify developer
@@ -202,7 +208,17 @@ public partial class CheckForUpdatesService
         {
             // Notify developer
             const string contextMessage = "Error checking for updates (variant).";
-            _logger.Error(ex, contextMessage);
+            if (ex is HttpRequestException or TaskCanceledException or OperationCanceledException)
+            {
+                // Expected user-environment condition (offline or timed out while the user
+                // explicitly checked): the user is notified via the message box below —
+                // not a bug report.
+                _logger.Information(ex, contextMessage);
+            }
+            else
+            {
+                _logger.Error(ex, contextMessage);
+            }
 
             // Notify user
             await _messageBoxLibrary.ErrorCheckingForUpdatesMessageBoxAsync();
@@ -319,6 +335,19 @@ public partial class CheckForUpdatesService
     private async Task ShowUpdateWindowAsync(string? releasePackageUrl, string currentVersion, string latestVersion,
         Window owner)
     {
+        // The silent check can run on a background thread (bug 68034: Window.Show()
+        // threw "the calling thread cannot access this object"). Marshal to the UI
+        // thread before touching any window.
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher != null && !dispatcher.CheckAccess())
+        {
+            // Unwrap: Dispatcher.InvokeAsync(Func<Task>) yields the inner task —
+            // awaiting the operation alone would not observe its exceptions.
+            await dispatcher.InvokeAsync(() =>
+                ShowUpdateWindowAsync(releasePackageUrl, currentVersion, latestVersion, owner)).Task.Unwrap();
+            return;
+        }
+
         UpdateLogWindow? logWindow = null;
 
         try

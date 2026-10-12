@@ -27,7 +27,7 @@ public class RetroAchievementsHasherToolTests : IDisposable
         _tempFolder = Path.Combine(Path.GetTempPath(), "SimpleLauncherHasherToolTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempFolder);
 
-        _systemMatcher = new RetroAchievementsSystemMatcher(new NoOpLogger(), new NoOpLogger());
+        _systemMatcher = new RetroAchievementsSystemMatcher(new NoOpLogger());
         _extractionService = new FakeExtractionService();
         _fileHasher = new FakeFileHasher();
         _tool = new RetroAchievementsHasherTool(

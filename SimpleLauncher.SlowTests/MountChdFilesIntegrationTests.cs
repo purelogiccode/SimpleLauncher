@@ -1,11 +1,11 @@
 using System.Runtime.InteropServices;
+using Moq;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
-using SimpleLauncher.Tests.TestHelpers;
 using Xunit;
 using Xunit.Sdk;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 /// <summary>
 ///     Integration tests that mount real CHD disc images with CHDMounter and verify the mount succeeds.
@@ -14,7 +14,7 @@ namespace SimpleLauncher.Tests;
 public sealed class MountChdFilesIntegrationTests
 {
     private readonly ILogger _logger = new NoOpLogger();
-    private readonly IMessageBoxLibraryService _messageBox = new NoOpMessageBoxLibraryService();
+    private readonly IMessageBoxLibraryService _messageBox = new Mock<IMessageBoxLibraryService>().Object;
 
     /// <summary>
     ///     Gets the test data rows for CHD mount integration tests, specifying the file path, game name, and console alias.

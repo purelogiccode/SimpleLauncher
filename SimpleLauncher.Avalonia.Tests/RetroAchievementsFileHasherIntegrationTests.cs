@@ -15,7 +15,7 @@ public class RetroAchievementsFileHasherIntegrationTests
     {
         return new RetroAchievementsFileHasher(
             new Mock<ILogger>().Object,
-            new RetroAchievementsSystemMatcher(new Mock<ILogger>().Object, new Mock<ILogger>().Object));
+            new RetroAchievementsSystemMatcher(new Mock<ILogger>().Object));
     }
 
     [Fact]

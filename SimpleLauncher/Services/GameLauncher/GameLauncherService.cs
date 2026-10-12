@@ -32,6 +32,12 @@ public partial class GameLauncherService : ILauncherService
     private const int DepViolation = -1073740791;
 
     /// <summary>
+    ///     Windows <c>STATUS_DLL_NOT_FOUND</c> (0xC0000135): the process died on startup because a
+    ///     system DLL (e.g. a Visual C++ runtime or GPU driver component) is missing.
+    /// </summary>
+    private const int StatusDllNotFound = -1073741515;
+
+    /// <summary>
     ///     Set when the game/emulator process for the current launch pipeline was actually started.
     ///     Strategies that return early (cancelled file selection, failed mount, unsupported image)
     ///     leave it false so no play history is recorded for the dialog time.
@@ -708,12 +714,7 @@ public partial class GameLauncherService : ILauncherService
                              StringComparison.OrdinalIgnoreCase));
 
         var isMame = selectedEmulatorManager?.EmulatorLocation != null &&
-                     (selectedEmulatorName.Equals("MAME", StringComparison.OrdinalIgnoreCase) ||
-                      selectedEmulatorName.Equals("M.A.M.E.", StringComparison.OrdinalIgnoreCase) ||
-                      selectedEmulatorManager.EmulatorLocation.Contains("mame.exe",
-                          StringComparison.OrdinalIgnoreCase) ||
-                      selectedEmulatorManager.EmulatorLocation.Contains("mame64.exe",
-                          StringComparison.OrdinalIgnoreCase));
+                     PathHelper.IsMameFamilyEmulator(selectedEmulatorName, selectedEmulatorManager.EmulatorLocation);
 
         var isOotake = selectedEmulatorManager?.EmulatorLocation != null &&
                        (selectedEmulatorName.Contains("Ootake", StringComparison.OrdinalIgnoreCase) ||
@@ -749,11 +750,13 @@ public partial class GameLauncherService : ILauncherService
 
         var fileExtension = Path.GetExtension(resolvedFilePath).ToLowerInvariant();
 
+        var retroArchParameters = selectedEmulatorManager?.EmulatorParameters;
         if (isRetroArch &&
-            selectedEmulatorManager?.EmulatorParameters.Contains("-L", StringComparison.OrdinalIgnoreCase) == false)
+            selectedEmulatorManager is not null &&
+            !PathHelper.ContainsStandaloneFlag(retroArchParameters, "-L"))
         {
             var errorMessage =
-                $"[LaunchRegularEmulatorAsync] RetroArch parameter should contain -L. Parameter field: {selectedEmulatorManager.EmulatorParameters}";
+                $"[LaunchRegularEmulatorAsync] RetroArch parameter should contain -L. Parameter field: {retroArchParameters}";
             _logger.Debug(errorMessage);
             _logger.Information(errorMessage);
 
@@ -972,8 +975,11 @@ public partial class GameLauncherService : ILauncherService
             var isNeoGeoCd = ext is ".cue" or ".iso" or ".bin";
 
             // If the original parameters contained %ROM%, it was already resolved by ResolveParameterString
-            // and we should not append the file path again.
-            var containsRomPlaceholder = rawEmulatorParameters.Contains("%ROM%", StringComparison.OrdinalIgnoreCase);
+            // and we should not append the file path again. Legacy per-game placeholders
+            // (%ROMFILE%, %ROMNAME%, %GAME%, $...$, {...}) count as well: they are now
+            // substituted by ResolveParameterString, so appending would duplicate the ROM.
+            var containsRomPlaceholder = rawEmulatorParameters.Contains("%ROM%", StringComparison.OrdinalIgnoreCase) ||
+                                         PathHelper.ContainsGameSpecificPlaceholder(rawEmulatorParameters);
             var containsNamePlaceholder = rawEmulatorParameters.Contains("%NAME%", StringComparison.OrdinalIgnoreCase);
 
             if (containsRomPlaceholder || containsNamePlaceholder ||
@@ -1502,9 +1508,7 @@ public partial class GameLauncherService : ILauncherService
             var emulatorName = context.EmulatorName;
             var emulatorLocation = context.EmulatorManager?.EmulatorLocation ?? "";
 
-            var isMame = emulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
-                         emulatorLocation.Contains("mame.exe", StringComparison.OrdinalIgnoreCase) ||
-                         emulatorLocation.Contains("mame64.exe", StringComparison.OrdinalIgnoreCase);
+            var isMame = PathHelper.IsMameFamilyEmulator(emulatorName, emulatorLocation);
 
             var isDosBox = emulatorName.Contains("DOSBox", StringComparison.OrdinalIgnoreCase) ||
                            emulatorLocation.Contains("dosbox", StringComparison.OrdinalIgnoreCase);
@@ -1585,6 +1589,14 @@ public partial class GameLauncherService : ILauncherService
             return;
         }
 
+        // Emulator-reported access violation (e.g. RPCS3 "VM: Access violation ..."):
+        // already logged at Information by CheckForMemoryAccessViolationAsync — don't
+        // also report it as a bug here.
+        if ((output + "\n" + error).Contains("Access violation", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
         // Handle common RetroArch error that should be ignored
         if (output.ToString().Contains("File open/read error", StringComparison.OrdinalIgnoreCase))
         {
@@ -1637,15 +1649,22 @@ public partial class GameLauncherService : ILauncherService
             return;
         }
 
+        // MAME writes its diagnostics to stderr, not stdout: match the known
+        // user-error signatures against both streams, otherwise they fall through
+        // to the generic Warning below and get reported as bugs (e.g. bugs #68195
+        // "Required files are missing" and #68188 "approximately matches").
+        var combinedOutput = output + "\n" + error;
+
         // Handle MAME Not Found error
         if ((emulatorManager.EmulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("mame", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("mame64", StringComparison.OrdinalIgnoreCase) ||
+             emulatorManager.EmulatorLocation.Contains("arcade", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("retroarch", StringComparison.OrdinalIgnoreCase)) &&
-            (output.ToString().Contains("Not Found", StringComparison.OrdinalIgnoreCase) ||
-             output.ToString().Contains("WRONG LENGTH", StringComparison.OrdinalIgnoreCase) ||
-             output.ToString().Contains("couldn't find ECD", StringComparison.OrdinalIgnoreCase) ||
-             output.ToString().Contains("Required files are missing", StringComparison.OrdinalIgnoreCase)))
+            (combinedOutput.Contains("Not Found", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("WRONG LENGTH", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("couldn't find ECD", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("Required files are missing", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME ROM set error");
             _logger.Information(contextMessage);
@@ -1664,9 +1683,10 @@ public partial class GameLauncherService : ILauncherService
         if ((emulatorManager.EmulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorName.Contains("retroarch", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("mame", StringComparison.OrdinalIgnoreCase) ||
+             emulatorManager.EmulatorLocation.Contains("arcade", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("retroarch", StringComparison.OrdinalIgnoreCase)) &&
-            (output.ToString().Contains("Unknown system", StringComparison.OrdinalIgnoreCase) ||
-             output.ToString().Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
+           (combinedOutput.Contains("Unknown system", StringComparison.OrdinalIgnoreCase) ||
+            combinedOutput.Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unknown system error");
             _logger.Information(contextMessage);
@@ -1683,9 +1703,10 @@ public partial class GameLauncherService : ILauncherService
 
         // Handle MAME Unable to load image
         if ((emulatorManager.EmulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
-             emulatorManager.EmulatorLocation.Contains("mame", StringComparison.OrdinalIgnoreCase)) &&
-            (output.ToString().Contains("Unable to load image", StringComparison.OrdinalIgnoreCase) ||
-             output.ToString().Contains("No such file or directory", StringComparison.OrdinalIgnoreCase)))
+             emulatorManager.EmulatorLocation.Contains("mame", StringComparison.OrdinalIgnoreCase) ||
+             emulatorManager.EmulatorLocation.Contains("arcade", StringComparison.OrdinalIgnoreCase)) &&
+            (combinedOutput.Contains("Unable to load image", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unable to load image error");
             _logger.Information(contextMessage);
@@ -1703,6 +1724,7 @@ public partial class GameLauncherService : ILauncherService
         // Handle MAME corrupted INI (unknown option warnings)
         if ((emulatorManager.EmulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("mame", StringComparison.OrdinalIgnoreCase) ||
+             emulatorManager.EmulatorLocation.Contains("arcade", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("mame64", StringComparison.OrdinalIgnoreCase)) &&
             error.ToString().Contains("Warning: unknown option in INI", StringComparison.OrdinalIgnoreCase))
         {
@@ -1717,7 +1739,73 @@ public partial class GameLauncherService : ILauncherService
             return;
         }
 
+        var isRpcs3 = emulatorManager.EmulatorName.Contains("rpcs3", StringComparison.OrdinalIgnoreCase) ||
+                      emulatorManager.EmulatorLocation.Contains("rpcs3", StringComparison.OrdinalIgnoreCase);
+
+        // Handle RPCS3 failing to decrypt the game (truncated/corrupt PS3 dump, bug #68231:
+        // "SELFDecrypter ... Reached the end of the file"): user-side content issue, not an
+        // app bug — Information only, so it never files a bug report.
+        if (isRpcs3 &&
+            (combinedOutput.Contains("SELFDecrypter", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("Reached the end of the file", StringComparison.OrdinalIgnoreCase)))
+        {
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] RPCS3 corrupt game dump error");
+            _logger.Information(contextMessage);
+
+            if (emulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBoxLibrary.CouldNotLaunchGameMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+
+                // Offer AI parameter fix
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
+                    _parameterResolverService, _configuration, _serviceProvider, _logger);
+            }
+
+            return;
+        }
+
+        // Handle RPCS3 being unable to write its own log file (bug #68096:
+        // "Log file open failed"): read-only/protected emulator folder — user environment,
+        // not an app bug — Information only, so it never files a bug report.
+        if (isRpcs3 &&
+            combinedOutput.Contains("Log file open failed", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] RPCS3 log file open error");
+            _logger.Information(contextMessage);
+
+            if (emulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBoxLibrary.CouldNotLaunchGameMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+
+                // Offer AI parameter fix
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
+                    _parameterResolverService, _configuration, _serviceProvider, _logger);
+            }
+
+            return;
+        }
+
         _logger.Debug($"[CheckForExitCodeWithErrorAnyAsync] Exit code {process.ExitCode} detected.");
+
+        // The emulator died on startup with STATUS_DLL_NOT_FOUND (bugs 67810-67812:
+        // RetroArch with a missing system DLL): user environment, not an app bug —
+        // Information only, so it never files a bug report.
+        if (process.HasExited && process.ExitCode == StatusDllNotFound)
+        {
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Emulator missing system DLL error");
+            _logger.Information(contextMessage);
+
+            if (emulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBoxLibrary.CouldNotLaunchGameMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+            }
+
+            return;
+        }
+
         _logger.Warning(contextMessage);
 
         // Generic error handler
@@ -1735,7 +1823,14 @@ public partial class GameLauncherService : ILauncherService
     private Task CheckForMemoryAccessViolationAsync(Process process, ProcessStartInfo psi, StringBuilder output,
         StringBuilder error)
     {
-        if (process.HasExited && process.ExitCode != MemoryAccessViolation) return Task.CompletedTask;
+        // Native access-violation exit code, or the emulator itself reporting a guest/VM
+        // access violation (e.g. RPCS3 "VM: Access violation ..." aborts with a different
+        // exit code such as 0xC0000425, bugs #68224/#68223): an emulator-side crash, not an
+        // app bug — Information only, so it never files a bug report.
+        var combinedOutput = output + "\n" + error;
+        var isAccessViolation = (process.HasExited && process.ExitCode == MemoryAccessViolation) ||
+                                combinedOutput.Contains("Access violation", StringComparison.OrdinalIgnoreCase);
+        if (!isAccessViolation) return Task.CompletedTask;
 
         // Notify developer
         var contextMessage = "There was a memory access violation error running the emulator.\n" +

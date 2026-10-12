@@ -1,4 +1,4 @@
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 public static class LanguageLaunchTestsBase
 {

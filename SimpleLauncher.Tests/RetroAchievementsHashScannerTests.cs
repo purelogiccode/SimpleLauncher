@@ -33,7 +33,7 @@ public class RetroAchievementsHashScannerTests : IDisposable
         Directory.CreateDirectory(_romsFolder);
 
         _store = new RetroAchievementsHashStore(new NoOpLogger(), Path.Combine(_tempFolder, "Hashes"));
-        _systemMatcher = new RetroAchievementsSystemMatcher(new NoOpLogger(), new NoOpLogger());
+        _systemMatcher = new RetroAchievementsSystemMatcher(new NoOpLogger());
         _fileHasher = new FakeFileHasher();
         _getListOfFiles = new FakeGetListOfFilesService();
         _extractionService = new FakeExtractionService();

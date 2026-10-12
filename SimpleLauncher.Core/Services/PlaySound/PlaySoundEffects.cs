@@ -4,11 +4,9 @@ using NAudio.Wave;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.SettingsManager;
 using NAudio.SoundFile;
+using NLayer.NAudioSupport;
 // ReSharper disable once RedundantUsingDirective
 using NAudio.Wave.Alsa;
-#if !WINDOWS
-using NLayer.NAudioSupport;
-#endif
 
 namespace SimpleLauncher.Core.Services.PlaySound;
 
@@ -318,17 +316,50 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     }
 
     /// <summary>
-    ///     Creates the sound decoder. Windows uses Media Foundation (built into the OS,
-    ///     no extra dependencies). On Linux/macOS, WAV and MP3 use fully managed decoders
-    ///     (NAudio's <see cref="WaveFileReader" /> and <see cref="Mp3FileReaderBase" /> with
-    ///     NLayer), so the built-in UI sounds play without any system packages; other formats
-    ///     use the system libsndfile through <see cref="SoundFileReader" />.
+    ///     Creates the sound decoder. Windows uses Media Foundation (built into most Windows
+    ///     installs) and falls back to the fully managed MP3/WAV decoders when Media
+    ///     Foundation is unavailable (Windows N/KN editions without the Media Feature Pack,
+    ///     stripped images: bugs 67862-67879), so the built-in UI sounds still play. On
+    ///     Linux/macOS, WAV and MP3 use the managed decoders directly, so the built-in UI
+    ///     sounds play without any system packages; other formats use the system libsndfile
+    ///     through <see cref="SoundFileReader" />.
     /// </summary>
     internal static WaveStream CreateReader(string soundPath)
     {
 #if WINDOWS
-        return new MediaFoundationReader(soundPath);
+        try
+        {
+            return new MediaFoundationReader(soundPath);
+        }
+        catch (Exception ex) when (IsMediaFoundationUnavailable(ex))
+        {
+            var extension = Path.GetExtension(soundPath);
+            if (extension.Equals(".mp3", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".wav", StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Debug(
+                    $"[PlaySoundEffects] Media Foundation is unavailable ({ex.Message}); falling back to the managed '{extension}' decoder.");
+                return CreateManagedReader(soundPath);
+            }
+
+            // No managed decoder exists for this format on Windows: rethrow the Media
+            // Foundation failure so the playback loop reports an expected environment
+            // condition instead of a decoder error.
+            throw;
+        }
 #else
+        return CreateManagedReader(soundPath);
+#endif
+    }
+
+    /// <summary>
+    ///     Creates a decoder that needs no OS codec: MP3 through NLayer and WAV through
+    ///     <see cref="WaveFileReader" />. Used directly on Linux/macOS and as the Windows
+    ///     Media Foundation fallback; on Linux/macOS, other formats use the system
+    ///     libsndfile through <see cref="SoundFileReader" />.
+    /// </summary>
+    internal static WaveStream CreateManagedReader(string soundPath)
+    {
         var extension = Path.GetExtension(soundPath);
 
         if (extension.Equals(".mp3", StringComparison.OrdinalIgnoreCase))
@@ -338,7 +369,25 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
             return new WaveFileReader(soundPath);
 
         return new SoundFileReader(soundPath);
-#endif
+    }
+
+    /// <summary>
+    ///     Whether the exception (or one of its inner exceptions) reports that the native
+    ///     Media Foundation runtime could not be loaded — e.g. <c>DllNotFoundException:
+    ///     Unable to load DLL 'mfplat.dll' or one of its dependencies</c>. This is an
+    ///     environment condition on Windows images without the media feature set (N/KN
+    ///     editions, bugs 67862-67879). Only consulted around Media Foundation
+    ///     construction, where a missing native module can only be a Media Foundation
+    ///     component.
+    /// </summary>
+    internal static bool IsMediaFoundationUnavailable(Exception exception)
+    {
+        for (var current = exception; current != null; current = current.InnerException)
+        {
+            if (current is DllNotFoundException or FileNotFoundException) return true;
+        }
+
+        return false;
     }
 
     /// <summary>

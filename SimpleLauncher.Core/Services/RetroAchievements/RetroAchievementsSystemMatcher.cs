@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using SimpleLauncher.Core.Interfaces;
 
 namespace SimpleLauncher.Core.Services.RetroAchievements;
@@ -14,7 +16,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["nintendo 64"] = new RaSystemInfo(2, ["nintendo 64", "n64", "nintendo64", "Nintendo 64DD", "Nintendo N64"]),
         ["super nintendo entertainment system"] = new RaSystemInfo(3,
         [
-            "super nintendo entertainment system", "snes", "super nintendo", "super famicom", "Nintendo SNES",
+            "super nintendo entertainment system", "snes", "sfc", "super nintendo", "super famicom", "Nintendo SNES",
             "Nintendo SFC", "Nintendo Super Famicom", "NintendoSNES", "Nintendo Satellaview"
         ]),
         ["game boy"] = new RaSystemInfo(4, ["game boy", "gb", "gameboy", "Nintendo Gameboy", "Nintendo Game Boy"]),
@@ -36,12 +38,12 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "nintendo gc", "Nintndo Gamecube"
         ]),
         ["nintendo ds"] =
-            new RaSystemInfo(18, ["nintendo ds", "nintendo-ds", "nintendods", "nds", "ds", "nintendo ds"]),
+            new RaSystemInfo(18, ["nintendo ds", "nintendo-ds", "nintendods", "nds", "ds"]),
         ["virtual boy"] = new RaSystemInfo(28,
             ["virtual boy", "virtualboy", "vb", "nintendo virtual boy", "nintendo virtualboy", "nintendo vb"]),
         ["pokemon mini"] = new RaSystemInfo(24, ["pokemon mini", "pokémon mini"]),
         ["nintendo dsi"] = new RaSystemInfo(78,
-            ["nintendo dsi", "nintendo ds-i", "ndsi", "dsi", "nintendo ndsi", "nintendo dsi"]),
+            ["nintendo dsi", "nintendo ds-i", "ndsi", "dsi", "nintendo ndsi"]),
         ["famicom disk system"] = new RaSystemInfo(81,
         [
             "famicom disk system", "fds", "nintendo famicom disk system", "nintendo fds", "Nintendo Family Computer",
@@ -51,7 +53,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["wii u"] = new RaSystemInfo(20,
             ["wii u", "wiiu", "wii-u", "nintendo wii u", "nintendo wiiu", "nintendo wii-u"]),
         ["nintendo 3ds"] = new RaSystemInfo(62,
-            ["nintendo 3ds", "3ds", "nintendo3ds", "nintendo 3ds", "Nintendo - Nintendo 3DS"]),
+            ["nintendo 3ds", "3ds", "nintendo3ds", "Nintendo - Nintendo 3DS"]),
 
         // Sega systems
         ["genesis/mega drive"] = new RaSystemInfo(1,
@@ -67,7 +69,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["32x"] = new RaSystemInfo(10,
         [
             "32x", "sega 32x", "sega genesis 32x", "genesis 32x", "megadrive 32x", "mega drive 32x",
-            "sega megadrive 32x", "mega drive 32x", "sega mega drive 32x"
+            "sega megadrive 32x", "sega mega drive 32x", "sega super 32x"
         ]),
         ["master system"] = new RaSystemInfo(11,
             ["master system", "mastersystem", "mark3", "Sega Master System", "Sega - Master System - Mark III"]),
@@ -81,7 +83,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
 
         // Sony systems
         ["playstation"] = new RaSystemInfo(12, [
-            "playstation", "ps1", "psx", "playstation 1", "sony playstation 1", "sony playstation", "SONY PlayStation",
+            "playstation", "ps1", "psx", "playstation 1", "sony playstation 1", "sony playstation",
             "Sony Play Station",
             "Sony Play Station 1", "Sony - PlayStation", "Sony - PlayStation 1", "Sony PlayStation x1"
         ]),
@@ -119,6 +121,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["arcade"] = new RaSystemInfo(27, [
             "arcade", "mame", "m.a.m.e.", "arcade games", "arcade classics", "fliperama",
             "neogeo", "neo geo", "neo-geo", "snk neo geo", "snk neogeo", "ARCADE GAME",
+            "arcade ra",
             "ARCADE - Multiple Arcade Machine Emulator", "sega model",
             "sega_Model 2", "@sega_Model 2", "@sega model", "CPS 1", "CPS2", "CPS3", "CPS1", "MAME0143u7"
         ]),
@@ -156,7 +159,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "C64 - Tapes [Pytronik Collection]", "C64 - Tapes [My Compilations]", "C64 - Ultimate Tape Archive",
             "C64 - Floppy [Scene Collection]"
         ]),
-        ["amiga"] = new RaSystemInfo(35, ["amiga", "commodore amiga"]),
+        ["amiga"] = new RaSystemInfo(35, ["amiga", "commodore amiga", "commodore amiga cd32", "amiga cd32"]),
         ["zx spectrum"] = new RaSystemInfo(59, ["zx spectrum", "zxspectrum", "spectrum", "Sinclair ZX Spectrum"]),
         ["fairchild channel f"] = new RaSystemInfo(57, ["fairchild channel f", "channel f"]),
         ["philips cd-i"] = new RaSystemInfo(42, ["philips cd-i", "cd-i"]),
@@ -206,14 +209,14 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "Philips P2000", "SEGA_action", "ReflectionHLE", "Spectravideo", "Symbian", "Tandy TRS80",
             "Tangerine Microtan 65",
             "Tatung Einstein TC-01", "SEGA_fighting", "SEGA_arcade", "SEGA_SPORTS", "Metroid Saga", "Sega Chihiro",
-            "ReflectionHLE",
             "Technosys Aamber Pegasus", "TI-99", "TI-73", "TI-80", "@sega_model 3", "sega model 3m", "FBNeo",
             "EACA Colour Genie",
-            "NEC PC9801", "NEC PC9821", "Metroid Saga", "PC_Shooter_1998-2002", "super a'can", "NEC PC98", "MAMEICHON",
+            "NEC PC9801", "NEC PC9821", "PC_Shooter_1998-2002", "super a'can", "NEC PC98", "MAMEICHON",
             "Videoton TVC",
             "Tiger GameCom", "Tiger Game.com", "Game.com", "Systema1", "Tomy Pyuta",
             "C64 - Cartridge [EasyFlash Collection]", "Aucun système sélectionné", "Test System",
-            "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000", "TestDOS", "No system selected", "Aucun système sélectionné"
+            "Luxor ABC 80", "90er_PC_Spiele_und_die_frühen_2000", "TestDOS", "No system selected",
+            "No se ha seleccionado ningún sistema", "Nenhum sistema selecionado"
         ]),
         ["Xbox"] = new RaSystemInfo(22, ["xbox", "x-box", "Microsoft Xbox"]),
         ["DOS"] = new RaSystemInfo(26, ["dos", "microsoft dos", "MS DOS", "MSDOS", "MS-DOS"]),
@@ -241,11 +244,9 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
     /// <summary>
     ///     Initializes a new instance of the <see cref="RetroAchievementsSystemMatcher" /> class.
     /// </summary>
-    /// <param name="logErrors">The logger instance for error logging.</param>
     /// <param name="logger">The logger instance for diagnostic output.</param>
-    public RetroAchievementsSystemMatcher(ILogger logErrors, ILogger logger)
+    public RetroAchievementsSystemMatcher(ILogger logger)
     {
-        _logger = logErrors;
         _logger = logger;
     }
 
@@ -253,13 +254,23 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
     ///     Finds the best matching RetroAchievements system name using fuzzy matching.
     /// </summary>
     /// <param name="inputSystemName">The system name to match</param>
-    /// <returns>The normalized RetroAchievements system name, or the original if no match found</returns>
+    /// <returns>The canonical RetroAchievements system name, or the trimmed lowercase input when no match is found</returns>
     public string GetBestMatchSystemName(string inputSystemName)
     {
         if (string.IsNullOrWhiteSpace(inputSystemName))
             return inputSystemName;
 
         var normalizedInput = inputSystemName.Trim().ToLowerInvariant();
+
+        // The UI's "no system selected" placeholder (in any language, including
+        // encoding-mangled variants) is UI state, not a system — never log it as an
+        // unmatched system (bugs 68042/68005/68032/67842/67823).
+        if (IsNoSystemSelectedPlaceholder(normalizedInput))
+        {
+            _logger?.Debug(
+                $"[RA System Matcher] Ignoring 'no system selected' placeholder: '{inputSystemName}'.");
+            return normalizedInput;
+        }
 
         // Direct exact match (faster for common cases)
         foreach (var kvp in SystemMappings)
@@ -268,12 +279,12 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
                 return kvp.Key;
         }
 
-        // No match found, log it once per unique system name for future improvement
+        // No match found, log it once per unique system name for future improvement.
+        // Expected user-side condition (custom system name): Information only, so it
+        // never files a bug report (bug #68227: system name 'SFC').
         if (_loggedUnmatchedSystems.Add(inputSystemName))
         {
-            _logger?.Debug(
-                $"[RA System Matcher] No match found for system name: '{inputSystemName}'. Consider adding it as an alias.");
-            _logger?.Warning(
+            _logger?.Information(
                 $"[RA System Matcher] No match found for system name: '{inputSystemName}'. Consider adding it as an alias.");
         }
 
@@ -282,13 +293,17 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
 
     /// <summary>
     ///     Checks whether the given system name is an official RetroAchievements system name (a key in the SystemMappings
-    ///     dictionary).
+    ///     dictionary). The comparison is case-insensitive because the dictionary mixes
+    ///     display-cased keys (e.g. "DOS", "Xbox") with lowercase ones.
     /// </summary>
     /// <param name="systemName">The system name to check.</param>
     /// <returns>True if the system name is an official key; otherwise, false.</returns>
     public bool IsOfficialSystemName(string systemName)
     {
-        return SystemMappings.ContainsKey(systemName.ToLowerInvariant());
+        if (string.IsNullOrWhiteSpace(systemName)) return false;
+
+        var trimmed = systemName.Trim();
+        return SystemMappings.Keys.Any(key => key.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -307,9 +322,9 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
     /// <returns>The console ID, or -1 if not found.</returns>
     public int GetSystemId(string inputSystemName)
     {
-        _logger.Debug($"[GetSystemId] Looking up system ID for '{inputSystemName}'");
+        _logger?.Debug($"[GetSystemId] Looking up system ID for '{inputSystemName}'");
         var bestMatch = GetBestMatchSystemName(inputSystemName);
-        _logger.Debug($"[GetSystemId] Best match: '{bestMatch}'");
+        _logger?.Debug($"[GetSystemId] Best match: '{bestMatch}'");
         return SystemMappings.TryGetValue(bestMatch, out var systemInfo) ? systemInfo.Id : -1;
     }
 
@@ -334,8 +349,10 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
     }
 
     /// <summary>
-    ///     Checks if a system name exists in the SystemMappings dictionary.
-    ///     This checks both the dictionary keys and all aliases for each system.
+    ///     Checks if a system name exists in the SystemMappings dictionary, either as an
+    ///     official key (case-insensitive) or as one of the known aliases. Matching is exact:
+    ///     substring matching would contradict the matcher's semantics (e.g. "sega model 2"
+    ///     must not match the arcade alias "sega model", and "nintendo" is not a system).
     /// </summary>
     /// <param name="systemName">The system name to check.</param>
     /// <returns>True if the system exists in SystemMappings; otherwise, false.</returns>
@@ -344,27 +361,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         if (string.IsNullOrWhiteSpace(systemName))
             return false;
 
-        var normalizedInput = systemName.Trim().ToLowerInvariant();
-
-        // Check if input matches any dictionary key directly
-        if (SystemMappings.ContainsKey(normalizedInput))
-            return true;
-
-        // Check if input matches any alias in any system
-        foreach (var kvp in SystemMappings)
-        {
-            if (kvp.Value.Aliases.Any(alias =>
-                    alias.Equals(normalizedInput, StringComparison.OrdinalIgnoreCase) ||
-                    alias.Contains(normalizedInput, StringComparison.OrdinalIgnoreCase) ||
-                    normalizedInput.Contains(alias, StringComparison.OrdinalIgnoreCase)))
-            {
-                return true;
-            }
-        }
-
-        // Try fuzzy matching as a last resort
-        var bestMatch = GetBestMatchSystemName(systemName);
-        return SystemMappings.ContainsKey(bestMatch);
+        return IsOfficialSystemName(systemName) || GetExactAliasMatch(systemName) is not null;
     }
 
     /// <summary>
@@ -380,7 +377,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         if (string.IsNullOrWhiteSpace(systemName))
             return false;
 
-        var matchedName = GetExactAliasMatch(systemName) ?? GetBestMatchSystemName(systemName);
+        var matchedName = GetBestMatchSystemName(systemName);
 
         if (IsUnsupportedHashLogicSystem(matchedName)) return false;
 
@@ -403,6 +400,27 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         }
 
         return false;
+    }
+
+    /// <summary>
+    ///     Whether the input is the UI's "no system selected" placeholder rather than a real
+    ///     system name. Covers the languages the placeholder has been observed in (English,
+    ///     French, Spanish, Portuguese). Comparison is diacritics-insensitive and letters-only so
+    ///     encoding-mangled variants (e.g. "Aucun syst�me s�lectionn�") are recognized too.
+    /// </summary>
+    internal static bool IsNoSystemSelectedPlaceholder(string normalizedInput)
+    {
+        var withoutDiacritics = normalizedInput.Normalize(NormalizationForm.FormD)
+            .Where(static c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray();
+        var asciiLettersOnly = new string(withoutDiacritics)
+            .Where(static c => c is >= 'a' and <= 'z')
+            .ToArray();
+
+        return asciiLettersOnly.StartsWith("nosystemselected", StringComparison.Ordinal) ||
+               asciiLettersOnly.StartsWith("aucunsyst", StringComparison.Ordinal) ||
+               asciiLettersOnly.StartsWith("nosehaseleccionado", StringComparison.Ordinal) ||
+               asciiLettersOnly.StartsWith("nenhumsistema", StringComparison.Ordinal);
     }
 
     private static string NormalizeForHashLogicMatch(string systemName)

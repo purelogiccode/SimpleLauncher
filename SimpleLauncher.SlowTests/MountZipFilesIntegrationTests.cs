@@ -5,7 +5,7 @@ using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 using Xunit;
 using Xunit.Sdk;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 /// <summary>
 ///     Integration tests that mount real ZIP archives with SimpleZipDrive and verify the mount succeeds.

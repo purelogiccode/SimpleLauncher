@@ -225,6 +225,12 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
 
             await _messageBox.SystemHasBeenDeletedMessageBoxAsync(systemName);
         }
+        catch (OperationCanceledException)
+        {
+            // Expected when the delete is superseded by a UI reset (bug 67576):
+            // the pending delay/message box is canceled — not a bug.
+            _logger.Debug("DeleteSystemFromContextMenuAsync was canceled.");
+        }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error in DeleteSystemFromContextMenuAsync");

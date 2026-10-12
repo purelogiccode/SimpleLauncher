@@ -3924,7 +3924,7 @@ Command line parameters can be found on [ScummVM Website](https://scumm-thedocs.
 **%ROMSYSTEMFOLDER%** - Represents the System Folder that contains the selected ROM<br>
 
 **System Folder (Example):** c:\Sega Dreamcast<br>
-**Extension to Search in the System Folder:** chd, gdi, cdi, cue, bin<br>
+**Extension to Search in the System Folder:** chd, gdi, cdi, cue<br>
 **Extract File Before Launch?** false<br>
 **Extension to Launch After Extraction:** <br>
 **Group Files by Folder:** true (if you are using the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) set of files for MAME Software List CHDs and using the MAME emulator)<br>

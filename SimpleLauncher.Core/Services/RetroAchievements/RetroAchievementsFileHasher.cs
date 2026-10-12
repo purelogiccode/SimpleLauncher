@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -66,6 +67,10 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
             return null;
         }
 
+        // Zip extraction can lose the Unix executable bit (bug 67780: "Permission
+        // denied" on Linux). Restore it best-effort before starting the tool.
+        EnsureToolExecutable(toolPath);
+
         var processStartInfo = new ProcessStartInfo
         {
             FileName = toolPath,
@@ -127,6 +132,15 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
 
             return null;
         }
+        catch (Exception ex) when (IsPermissionDenied(ex))
+        {
+            // Expected user-environment condition (the bundled CLI is not executable,
+            // e.g. the executable bit was lost): not a bug.
+            _logger.Information(ex,
+                $"[RA File Hasher] Permission denied running the hashing tool for '{filePath}'. Reinstalling 'Simple Launcher' usually restores the executable permission.");
+            TryKillProcess(process);
+            return null;
+        }
         catch (Exception ex)
         {
             _logger.Error(ex,
@@ -164,6 +178,10 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
                 $"[RA File Hasher] The RetroAchievementsSharp CLI tool could not be found. Skipping hashing of {filePaths.Count} file(s).");
             return result;
         }
+
+        // Zip extraction can lose the Unix executable bit (bug 67780). Restore it
+        // best-effort before starting the tool.
+        EnsureToolExecutable(toolPath);
 
         var outputFile = Path.Combine(Path.GetTempPath(), $"SL_RAScan_{Guid.NewGuid():N}.json");
 
@@ -221,6 +239,14 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
                     {
                         _logger.Warning(
                             $"[RA File Hasher] Batch hashing for system '{systemName}' timed out after {BatchTimeout.TotalMinutes:0} minute(s).");
+                        TryKillProcess(process);
+                    }
+                    catch (Exception ex) when (IsPermissionDenied(ex))
+                    {
+                        // Expected user-environment condition (the bundled CLI is not
+                        // executable): not a bug.
+                        _logger.Information(ex,
+                            $"[RA File Hasher] Permission denied running the hashing tool for system '{systemName}'. Reinstalling 'Simple Launcher' usually restores the executable permission.");
                         TryKillProcess(process);
                     }
                     catch (Exception ex)
@@ -385,5 +411,49 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
         {
             // Best effort — the process may already have exited
         }
+    }
+
+    /// <summary>
+    ///     Restores the Unix executable bit on the bundled CLI tool when it was lost
+    ///     (e.g. by zip extraction). Best effort: failures are Debug-only.
+    /// </summary>
+    private void EnsureToolExecutable(string toolPath)
+    {
+        if (OperatingSystem.IsWindows()) return;
+
+        try
+        {
+            var mode = File.GetUnixFileMode(toolPath);
+            if (!mode.HasFlag(UnixFileMode.UserExecute))
+            {
+                File.SetUnixFileMode(toolPath,
+                    mode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+                _logger.Debug($"[RA File Hasher] Restored the executable bit on '{toolPath}'.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[RA File Hasher] Could not set the executable bit on '{toolPath}': {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Whether the exception (or one of its inner exceptions) is an OS-level permission
+    ///     denial when starting the tool: an environment issue, not an app bug.
+    /// </summary>
+    private static bool IsPermissionDenied(Exception exception)
+    {
+        for (var current = exception; current != null; current = current.InnerException)
+        {
+            if (current is Win32Exception win32 &&
+                (win32.NativeErrorCode == 13 ||
+                 win32.Message.Contains("Permission denied", StringComparison.OrdinalIgnoreCase)))
+                return true;
+
+            if (current is UnauthorizedAccessException)
+                return true;
+        }
+
+        return false;
     }
 }

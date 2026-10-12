@@ -9,7 +9,7 @@ namespace SimpleLauncher.Tests;
 /// </summary>
 public class RetroAchievementsSystemMatcherTests
 {
-    private readonly RetroAchievementsSystemMatcher _matcher = new(new NoOpLogger(), Log.Logger);
+    private readonly RetroAchievementsSystemMatcher _matcher = new(new NoOpLogger());
 
     /// <summary>
     ///     Verifies that GetBestMatchSystemName maps known system aliases to their canonical RetroAchievements names.
@@ -19,6 +19,9 @@ public class RetroAchievementsSystemMatcherTests
     [Theory]
     [InlineData("snes", "super nintendo entertainment system")]
     [InlineData("SNES", "super nintendo entertainment system")]
+    [InlineData("sfc", "super nintendo entertainment system")]
+    [InlineData("SFC", "super nintendo entertainment system")]
+    [InlineData("Super Famicom", "super nintendo entertainment system")]
     [InlineData("Super Nintendo", "super nintendo entertainment system")]
     [InlineData("n64", "nintendo 64")]
     [InlineData("Nintendo 64", "nintendo 64")]
@@ -57,11 +60,24 @@ public class RetroAchievementsSystemMatcherTests
     [InlineData("super nintendo entertainment system", true)]
     [InlineData("playstation", true)]
     [InlineData("arcade", true)]
+    [InlineData("Xbox", true)]
+    [InlineData("xbox", true)]
+    [InlineData("DOS", true)]
+    [InlineData("zeebo", true)]
     [InlineData("unknown console xyz", false)]
     public void IsOfficialSystemNameReturnsExpected(string name, bool expected)
     {
         var result = _matcher.IsOfficialSystemName(name);
         Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     Verifies that IsOfficialSystemName treats a null name as not-official instead of throwing.
+    /// </summary>
+    [Fact]
+    public void IsOfficialSystemNameNullReturnsFalse()
+    {
+        Assert.False(_matcher.IsOfficialSystemName(null!));
     }
 
     /// <summary>
@@ -209,6 +225,9 @@ public class RetroAchievementsSystemMatcherTests
     [InlineData("snes", true)]
     [InlineData("super nintendo", true)]
     [InlineData("nintendo 64", true)]
+    [InlineData("Xbox", true)]
+    [InlineData("nintendo", false)]
+    [InlineData("sega", false)]
     public void IsSystemInMappingsReturnsExpected(string input, bool expected)
     {
         var result = _matcher.IsSystemInMappings(input);
@@ -222,6 +241,8 @@ public class RetroAchievementsSystemMatcherTests
     /// <param name="expected">The expected RetroAchievements system ID.</param>
     [Theory]
     [InlineData("snes", 3)]
+    [InlineData("sfc", 3)]
+    [InlineData("SFC", 3)]
     [InlineData("n64", 2)]
     [InlineData("playstation", 12)]
     public void GetSystemIdKnownSystemReturnsExpectedId(string input, int expected)
@@ -255,5 +276,49 @@ public class RetroAchievementsSystemMatcherTests
     {
         var result = _matcher.IsSystemSupportedForHashing(input);
         Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     New aliases for previously unmatched system names (bugs 67744/67742 "Arcade RA",
+    ///     68035 "Sega Super 32X", 67792 "Commodore Amiga CD32").
+    /// </summary>
+    [Theory]
+    [InlineData("Arcade RA", "arcade")]
+    [InlineData("Sega Super 32X", "32x")]
+    [InlineData("Commodore Amiga CD32", "amiga")]
+    [InlineData("Amiga CD32", "amiga")]
+    public void GetBestMatchSystemNameNewAliasReturnsExpectedKey(string input, string expected)
+    {
+        var result = _matcher.GetBestMatchSystemName(input);
+        Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     The UI's "no system selected" placeholder (bugs 68042/68005/68032/67842/67823,
+    ///     including encoding-mangled variants) is recognized regardless of language.
+    /// </summary>
+    [Theory]
+    [InlineData("No system selected")]
+    [InlineData("Aucun système sélectionné")]
+    [InlineData("Aucun syst�me s�lectionn�")]
+    [InlineData("No se ha seleccionado ningún sistema")]
+    [InlineData("Nenhum sistema selecionado")]
+    public void IsNoSystemSelectedPlaceholderReturnsTrue(string input)
+    {
+        Assert.True(RetroAchievementsSystemMatcher.IsNoSystemSelectedPlaceholder(
+            input.Trim().ToLowerInvariant()));
+    }
+
+    /// <summary>
+    ///     Real system names are not mistaken for the "no system selected" placeholder.
+    /// </summary>
+    [Theory]
+    [InlineData("arcade")]
+    [InlineData("atari 8-bit")]
+    [InlineData("sega super 32x")]
+    public void IsNoSystemSelectedPlaceholderReturnsFalseForRealSystems(string input)
+    {
+        Assert.False(RetroAchievementsSystemMatcher.IsNoSystemSelectedPlaceholder(
+            input.Trim().ToLowerInvariant()));
     }
 }

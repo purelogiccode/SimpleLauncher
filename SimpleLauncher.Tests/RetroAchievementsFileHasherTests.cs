@@ -15,7 +15,7 @@ public class RetroAchievementsFileHasherTests : IDisposable
 {
     private readonly RetroAchievementsFileHasher _hasher = new(
         new NoOpLogger(),
-        new RetroAchievementsSystemMatcher(new NoOpLogger(), new NoOpLogger()));
+        new RetroAchievementsSystemMatcher(new NoOpLogger()));
 
     private readonly string _testDirectory;
 

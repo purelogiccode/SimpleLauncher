@@ -4,6 +4,14 @@ namespace SimpleLauncher.Tests;
 
 public class LanguageLaunchArgumentTests
 {
+    // Mirrors LanguageMenuService.NameToCode (18 selectable languages) — the slow suite's
+    // LanguageLaunchTestsBase keeps an identical list for its app-launch checks.
+    private static readonly string[] SupportedLanguageCodes =
+    [
+        "ar", "bn", "de", "en", "es", "fr", "hi", "id", "it",
+        "ja", "ko", "nl", "pt-br", "ru", "tr", "ur", "vi", "zh-hans"
+    ];
+
     public static TheoryData<string[], string> ParsingCases => new()
     {
         { ["--language", "es"], "es" },
@@ -53,7 +61,7 @@ public class LanguageLaunchArgumentTests
     [Fact]
     public void ResolveStartupLanguage_AllSupportedCodes_AreAccepted()
     {
-        foreach (var code in LanguageLaunchTestsBase.SupportedLanguageCodes)
+        foreach (var code in SupportedLanguageCodes)
             Assert.Equal(code, App.ResolveStartupLanguage(["--language", code.ToUpperInvariant()], "en"));
     }
 }

@@ -12,6 +12,7 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
+using SimpleLauncher.Core.Services.FileCopy;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SanitizeInputString;
 using SimpleLauncher.Core.Services.SettingsManager;
@@ -788,7 +789,10 @@ public partial class EditSystemWindow : Window
                 {
                     try
                     {
-                        File.Copy(sourceFilePath, destFilePath, true);
+                        // Temp file + rename instead of File.Copy: replacing the image also
+                        // succeeds while a viewer merely has the old file open with delete
+                        // sharing (bug 67779).
+                        SafeFileCopy.CopyOverwrite(sourceFilePath, destFilePath);
                         break;
                     }
                     catch (IOException) when (attempt < maxRetries)
@@ -802,6 +806,17 @@ public partial class EditSystemWindow : Window
                         // the OS file manager preview): not a bug, keep it out of the bug report.
                         _logger.Information(ex,
                             "Could not copy the system image to '{DestFilePath}': the file is in use by another program. Ask the user to close the other program and retry",
+                            destFilePath);
+                        await _messageBox.FailedToCopySystemImageMessageBoxAsync(ex.Message);
+                        return;
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        // Windows surfaces a denied replacement as ACCESS_DENIED when the
+                        // destination is open without delete sharing (or is read-only):
+                        // an expected user-environment condition, not a bug (bug 67779).
+                        _logger.Information(ex,
+                            "Could not copy the system image to '{DestFilePath}': access denied. The file is in use by another program or is not writable. Ask the user to close the other program and retry",
                             destFilePath);
                         await _messageBox.FailedToCopySystemImageMessageBoxAsync(ex.Message);
                         return;

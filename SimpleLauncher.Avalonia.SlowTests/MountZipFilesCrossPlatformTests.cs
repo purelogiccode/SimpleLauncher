@@ -5,7 +5,7 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 
-namespace SimpleLauncher.Avalonia.Tests;
+namespace SimpleLauncher.Avalonia.SlowTests;
 
 /// <summary>
 ///     Cross-platform regression tests for the ZIP launch fallback (LB-01): the path-traversal

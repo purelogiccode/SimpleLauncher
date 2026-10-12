@@ -1,11 +1,11 @@
 using System.IO.Compression;
 using System.Net;
 using System.Reflection;
-using SimpleLauncher.Tests.TestHelpers;
+using SimpleLauncher.SlowTests.TestHelpers;
 using Xunit;
 using CheckForUpdatesService = SimpleLauncher.Services.CheckForUpdatesService;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 /// <summary>
 ///     Tests for <see cref="CheckForUpdatesService" /> covering version comparison, response parsing,

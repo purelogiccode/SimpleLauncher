@@ -655,6 +655,14 @@ public class AvaloniaContextMenuFunctions(
 
             await TakeScreenshotWindowsAsync(context, systemImageFolder);
         }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to retrieve window dimensions",
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            // Expected race: the selected emulator window closed between selection and
+            // capture — user timing, not an app bug.
+            _logErrors.Information(ex, "[TakeScreenshotOfSelectedWindow] There was a problem saving the screenshot");
+            await _messageBox.CouldNotSaveScreenshotMessageBoxAsync();
+        }
         catch (Exception ex)
         {
             _logErrors.Error(ex, "[TakeScreenshotOfSelectedWindow] There was a problem saving the screenshot");

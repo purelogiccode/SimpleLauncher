@@ -56,6 +56,32 @@ public static partial class PathHelper
     }
 
     /// <summary>
+    ///     Determines whether an emulator belongs to the MAME family (MAME, MAMEUI, Arcade64,
+    ///     VMAME and similar derivatives) so the launcher can pass the bare ROM name instead
+    ///     of a full path. Matching is intentionally narrow: the friendly name must equal
+    ///     "MAME"/"M.A.M.E." (a <c>Contains</c> check would misfire on RetroArch profiles
+    ///     such as "Retroarch mame", which need the full ROM path), while the executable
+    ///     file name must contain "mame" or "arcade".
+    /// </summary>
+    /// <param name="emulatorName">The configured emulator friendly name.</param>
+    /// <param name="emulatorLocation">The configured emulator executable path.</param>
+    /// <returns>True when the emulator is a MAME-family executable.</returns>
+    public static bool IsMameFamilyEmulator(string? emulatorName, string? emulatorLocation)
+    {
+        if (!string.IsNullOrWhiteSpace(emulatorName) &&
+            (emulatorName.Equals("MAME", StringComparison.OrdinalIgnoreCase) ||
+             emulatorName.Equals("M.A.M.E.", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        if (string.IsNullOrWhiteSpace(emulatorLocation)) return false;
+
+        var fileName = Path.GetFileName(emulatorLocation);
+        var target = string.IsNullOrEmpty(fileName) ? emulatorLocation : fileName;
+        return target.Contains("mame", StringComparison.OrdinalIgnoreCase) ||
+               target.Contains("arcade", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     ///     Determines whether the given text contains any game-specific placeholder tokens such as %GAME% or %ROMNAME%.
     /// </summary>
     /// <param name="text">The text to inspect.</param>
@@ -66,6 +92,32 @@ public static partial class PathHelper
 
         return GameSpecificPlaceholders.Any(placeholder =>
             text.Contains(placeholder, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    ///     Determines whether an emulator parameter string contains a standalone CLI flag
+    ///     (e.g. RetroArch's <c>-L</c>). A plain <see cref="string.Contains(string)" /> check
+    ///     is not enough: a typo such as <c>v-L</c> contains the substring <c>-L</c> and
+    ///     would slip through, only for the emulator to fail with a cryptic exit code.
+    /// </summary>
+    /// <param name="parameters">The raw emulator parameter string.</param>
+    /// <param name="flag">The flag to look for (e.g. "-L").</param>
+    /// <returns>True when the flag appears as its own whitespace-separated token.</returns>
+    public static bool ContainsStandaloneFlag(string? parameters, string flag)
+    {
+        if (string.IsNullOrWhiteSpace(parameters) || string.IsNullOrWhiteSpace(flag)) return false;
+
+        foreach (var token in parameters.Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = token.Trim('"', '\'');
+            if (string.Equals(trimmed, flag, StringComparison.OrdinalIgnoreCase)) return true;
+
+            if (trimmed.StartsWith(flag + "=", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(flag + ":", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -100,14 +152,24 @@ public static partial class PathHelper
                                 (originalToken.StartsWith('\'') && originalToken.EndsWith('\''));
             var tokenForLogic = isQuotedToken ? originalToken[1..^1] : originalToken;
 
-            if (ContainsGameSpecificPlaceholder(tokenForLogic) ||
+            // Legacy per-game placeholders (%ROMFILE%, %ROMNAME%, %GAME% and the
+            // $...$ / {...} variants) resolve to the current ROM. Without this they
+            // were passed literally to the emulator (e.g. RetroArch received a
+            // literal "%romfile%" and exited with code 1).
+            var preSubstitutionToken = tokenForLogic;
+            tokenForLogic = SubstituteLegacyGamePlaceholders(tokenForLogic, resolvedRomPath, resolvedRomName);
+            var legacyPlaceholderSubstituted =
+                !string.Equals(preSubstitutionToken, tokenForLogic, StringComparison.Ordinal);
+
+            if (!legacyPlaceholderSubstituted &&
+                (ContainsGameSpecificPlaceholder(tokenForLogic) ||
                 IsKnownFlag(tokenForLogic) ||
                 (!tokenForLogic.Contains("%BASEFOLDER%", StringComparison.OrdinalIgnoreCase) &&
                  !tokenForLogic.Contains("%SYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase) &&
                  !tokenForLogic.Contains("%ROMSYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase) &&
                  !tokenForLogic.Contains("%EMULATORFOLDER%", StringComparison.OrdinalIgnoreCase) &&
                  !tokenForLogic.Contains("%ROM%", StringComparison.OrdinalIgnoreCase) &&
-                 !tokenForLogic.Contains("%NAME%", StringComparison.OrdinalIgnoreCase)))
+                 !tokenForLogic.Contains("%NAME%", StringComparison.OrdinalIgnoreCase))))
             {
                 return originalToken;
             }
@@ -187,6 +249,37 @@ public static partial class PathHelper
         });
 
         return resolvedParameters;
+    }
+
+    /// <summary>
+    ///     Substitutes legacy per-game placeholders with the current ROM context.
+    ///     <c>%ROMFILE%</c> (<c>$romfile$</c>, <c>{romfile}</c>) resolves to the full ROM path;
+    ///     <c>%ROMNAME%</c>, <c>%GAME%</c> (<c>$romname$</c>, <c>$game$</c>, <c>{romname}</c>, <c>{game}</c>)
+    ///     resolve to the ROM file name without extension. Placeholders without available
+    ///     context are left intact so callers keep the previous behavior.
+    /// </summary>
+    private static string SubstituteLegacyGamePlaceholders(string token, string? resolvedRomPath,
+        string? resolvedRomName)
+    {
+        if (!string.IsNullOrEmpty(resolvedRomPath))
+        {
+            var sanitizedRomPath = SanitizePathToken(resolvedRomPath);
+            token = token.Replace("%ROMFILE%", sanitizedRomPath, StringComparison.OrdinalIgnoreCase)
+                .Replace("$romfile$", sanitizedRomPath, StringComparison.OrdinalIgnoreCase)
+                .Replace("{romfile}", sanitizedRomPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!string.IsNullOrEmpty(resolvedRomName))
+        {
+            token = token.Replace("%ROMNAME%", resolvedRomName, StringComparison.OrdinalIgnoreCase)
+                .Replace("%GAME%", resolvedRomName, StringComparison.OrdinalIgnoreCase)
+                .Replace("$romname$", resolvedRomName, StringComparison.OrdinalIgnoreCase)
+                .Replace("$game$", resolvedRomName, StringComparison.OrdinalIgnoreCase)
+                .Replace("{romname}", resolvedRomName, StringComparison.OrdinalIgnoreCase)
+                .Replace("{game}", resolvedRomName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return token;
     }
 
     /// <summary>

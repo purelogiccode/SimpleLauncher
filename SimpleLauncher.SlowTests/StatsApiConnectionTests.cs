@@ -6,7 +6,7 @@ using System.Text.Json;
 using SimpleLauncher.Core;
 using Xunit;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 /// <summary>
 ///     Integration tests that make real HTTP calls to both Stats API endpoints.

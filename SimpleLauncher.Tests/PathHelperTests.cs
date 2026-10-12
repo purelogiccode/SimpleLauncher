@@ -879,4 +879,84 @@ public class PathHelperTests
         Assert.Equal(expected, fromEmpty);
         Assert.Equal(expected, fromNull);
     }
+
+    /// <summary>
+    ///     Bugs 67542-67548: the legacy <c>%romfile%</c> placeholder was passed literally to the
+    ///     emulator (RetroArch exited with code 1). It must resolve to the full ROM path.
+    /// </summary>
+    [Fact]
+    public void ResolveParameterStringResolvesLegacyRomFilePlaceholder()
+    {
+        const string parameters = "-L \"cores\\mame2003_libretro.dll\" \"%romfile%\"";
+        var result = PathHelper.ResolveParameterString(parameters, null, null, "E:\\ROMS\\mame\\1942.zip");
+
+        Assert.Equal("-L \"cores\\mame2003_libretro.dll\" \"E:\\ROMS\\mame\\1942.zip\"", result);
+    }
+
+    /// <summary>
+    ///     Legacy <c>%ROMNAME%</c> / <c>%GAME%</c> placeholders resolve to the ROM file name
+    ///     without extension.
+    /// </summary>
+    [Theory]
+    [InlineData("%ROMNAME%", "1942")]
+    [InlineData("%romname%", "1942")]
+    [InlineData("%GAME%", "1942")]
+    [InlineData("$romfile$", "E:\\ROMS\\mame\\1942.zip")]
+    [InlineData("{romfile}", "E:\\ROMS\\mame\\1942.zip")]
+    [InlineData("$game$", "1942")]
+    [InlineData("{game}", "1942")]
+    public void ResolveParameterStringResolvesLegacyGamePlaceholders(string placeholder, string expected)
+    {
+        var result = PathHelper.ResolveParameterString($"-rom {placeholder}", null, null,
+            "E:\\ROMS\\mame\\1942.zip", null, "1942");
+
+        Assert.Equal($"-rom {expected}", result);
+    }
+
+    /// <summary>
+    ///     Legacy game placeholders without ROM context are preserved (previous behavior).
+    /// </summary>
+    [Fact]
+    public void ResolveParameterStringKeepsLegacyPlaceholdersWithoutRomContext()
+    {
+        const string parameters = "-rom %ROMFILE%";
+        var result = PathHelper.ResolveParameterString(parameters, ["C:\\roms"], "C:\\emu");
+
+        Assert.Equal("-rom %ROMFILE%", result);
+    }
+
+    /// <summary>
+    ///     Bug 67809: a typo such as <c>v-L</c> contains the substring "-L" but is not the
+    ///     RetroArch core flag. Only standalone flag tokens count.
+    /// </summary>
+    [Theory]
+    [InlineData("-L \"cores\\snes9x_libretro.dll\" -f", true)]
+    [InlineData("-f -L \"cores\\snes9x_libretro.dll\"", true)]
+    [InlineData("-L=cores\\snes9x_libretro.dll", true)]
+    [InlineData("v-L \"cores\\applewin_libretro.dll\" -f", false)]
+    [InlineData("--load-state", false)]
+    [InlineData("", false)]
+    public void ContainsStandaloneFlagDetectsRetroArchCoreFlag(string parameters, bool expected)
+    {
+        Assert.Equal(expected, PathHelper.ContainsStandaloneFlag(parameters, "-L"));
+    }
+
+    /// <summary>
+    ///     MAME derivatives (MAMEUI, Arcade64, VMAME) launch by bare ROM name, while RetroArch
+    ///     profiles whose friendly name merely mentions MAME still need the full ROM path.
+    /// </summary>
+    [Theory]
+    [InlineData("MAME", "C:\\Emulators\\MAME\\mame.exe", true)]
+    [InlineData("M.A.M.E.", "C:\\Emulators\\MAME\\mame64.exe", true)]
+    [InlineData("MAME 0.289", "J:\\Mame Emulators\\Mame0289b\\mame.exe", true)]
+    [InlineData("MAMEUI", "E:\\EMULADORES\\MAME Plus\\MameUI32.exe", true)]
+    [InlineData("Arcade", "C:\\Emulators\\arcade64\\arcade64.exe", true)]
+    [InlineData("VMAME", "E:\\EMULADORES\\mame0133s\\vmame64.exe", true)]
+    [InlineData("Retroarch mame", "C:\\Emulators\\retroarch\\retroarch.exe", false)]
+    [InlineData("MAME", "C:\\Emulators\\retroarch\\retroarch.exe", true)]
+    [InlineData("Stella", "C:\\Emulators\\stella\\Stella.exe", false)]
+    public void IsMameFamilyEmulatorDetectsDerivatives(string name, string location, bool expected)
+    {
+        Assert.Equal(expected, PathHelper.IsMameFamilyEmulator(name, location));
+    }
 }

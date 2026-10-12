@@ -320,6 +320,19 @@ public class RetroAchievementsService
         {
             throw;
         }
+        catch (HttpRequestException ex)
+        {
+            // Expected condition (DNS/connection/SSL failure, e.g. bugs #68173/#68172):
+            // not a bug, keep it out of the bug report service.
+            _logger.Information(ex, $"[RA Service] Network error in GetUserProfileAsync for user {username}.");
+            return null;
+        }
+        catch (TaskCanceledException ex)
+        {
+            // Expected condition (request timed out): not a bug, keep it out of the bug report service.
+            _logger.Information(ex, $"[RA Service] Timeout in GetUserProfileAsync for user {username}.");
+            return null;
+        }
         catch (Exception ex)
         {
             _logger.Error(ex, $"[RA Service] Error in GetUserProfileAsync for user {username}.");

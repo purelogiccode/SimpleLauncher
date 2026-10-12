@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!-- net10.0 (not -windows): the mount fallback/guard paths are cross-platform and must run on Linux too -->
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <NoWarn>NU1903;xUnit1026</NoWarn>
+        <AssemblyVersion>5.8.0</AssemblyVersion>
+        <FileVersion>5.8.0</FileVersion>
+        <Version>5.8.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.299">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+        <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Moq" Version="4.21.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Serilog" />
+        <Using Include="Xunit" />
+    </ItemGroup>
+
+</Project>

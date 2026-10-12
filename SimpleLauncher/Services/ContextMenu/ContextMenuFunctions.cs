@@ -1312,6 +1312,17 @@ public class ContextMenuFunctions : IContextMenuFunctions
                 logErrors.Error(ex, contextMessage);
             }
         }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to retrieve window dimensions",
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            // Expected race: the selected emulator window closed between selection and
+            // capture (bug 67513) — user timing, not an app bug.
+            const string contextMessage = "[TakeScreenshotOfSelectedWindow] There was a problem saving the screenshot.";
+            if (App.ServiceProvider != null) logErrors.Information(ex, contextMessage);
+
+            // Notify user
+            await messageBox.CouldNotSaveScreenshotMessageBoxAsync();
+        }
         catch (Exception ex)
         {
             // Notify developer

@@ -6,7 +6,7 @@ using System.Text.Json;
 using SimpleLauncher.Core;
 using Xunit;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 /// <summary>
 ///     Tests connectivity to the bug report and statistics APIs used by SimpleLauncher.
@@ -69,8 +69,8 @@ public class ApiConnectivityTests
 
         var payload = new
         {
-            message = "Test bug report from SimpleLauncher.Tests",
-            applicationName = "SimpleLauncher.Tests",
+            message = "Test bug report from SimpleLauncher.SlowTests",
+            applicationName = "SimpleLauncher.SlowTests",
             version = "1.0.0",
             userInfo = "TestRunner",
             environment = "Test",
@@ -98,9 +98,9 @@ public class ApiConnectivityTests
 
         var body = await MockHandler.LastRequest.Content!.ReadAsStringAsync();
         using var bodyJson = JsonDocument.Parse(body);
-        Assert.Equal("Test bug report from SimpleLauncher.Tests",
+        Assert.Equal("Test bug report from SimpleLauncher.SlowTests",
             bodyJson.RootElement.GetProperty("message").GetString());
-        Assert.Equal("SimpleLauncher.Tests", bodyJson.RootElement.GetProperty("applicationName").GetString());
+        Assert.Equal("SimpleLauncher.SlowTests", bodyJson.RootElement.GetProperty("applicationName").GetString());
         Assert.Equal("Test stack trace", bodyJson.RootElement.GetProperty("stackTrace").GetString());
     }
 

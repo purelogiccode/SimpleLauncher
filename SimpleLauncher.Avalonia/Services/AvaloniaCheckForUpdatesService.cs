@@ -173,6 +173,16 @@ public partial class AvaloniaCheckForUpdatesService
                 await ShowUpdateWindowAsync(releasePackageUrl, updaterZipAssetUrl, TryGetMainWindow());
             }
         }
+        catch (OperationCanceledException)
+        {
+            _logger.Debug("Silent update check canceled");
+        }
+        catch (HttpRequestException ex)
+        {
+            // Expected user-environment condition (offline, DNS failure, connection
+            // refused): the silent check must never file a bug report.
+            _logger.Information(ex, "Silent update check network failure");
+        }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error checking for updates (silent)");
@@ -217,7 +227,18 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error checking for updates (manual)");
+            if (ex is HttpRequestException or TaskCanceledException or OperationCanceledException)
+            {
+                // Expected user-environment condition (offline or timed out while the user
+                // explicitly checked): the user is notified via the message box below —
+                // not a bug report.
+                _logger.Information(ex, "Error checking for updates (manual)");
+            }
+            else
+            {
+                _logger.Error(ex, "Error checking for updates (manual)");
+            }
+
             await _messageBoxLibrary.ErrorCheckingForUpdatesMessageBoxAsync();
         }
     }

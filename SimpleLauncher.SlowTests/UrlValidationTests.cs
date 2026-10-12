@@ -7,7 +7,7 @@ using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.EasyMode;
 using Xunit;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 /// <summary>
 ///     Tests that URLs referenced in parameters.md and EasyMode configuration files are reachable and valid.

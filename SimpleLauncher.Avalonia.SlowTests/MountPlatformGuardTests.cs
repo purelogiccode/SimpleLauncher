@@ -1,7 +1,7 @@
 using Moq;
 using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 
-namespace SimpleLauncher.Avalonia.Tests;
+namespace SimpleLauncher.Avalonia.SlowTests;
 
 /// <summary>
 ///     LB-14 regression tests: on Linux/macOS the mount services must report "not supported on

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Xunit;
 
-namespace SimpleLauncher.Tests;
+namespace SimpleLauncher.SlowTests;
 
 public class LanguageLaunchProcessTests
 {

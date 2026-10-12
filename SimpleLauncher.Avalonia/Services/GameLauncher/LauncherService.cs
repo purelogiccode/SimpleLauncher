@@ -376,11 +376,11 @@ public class LauncherService : ILauncherService
             var launchParameters = rawEmulatorParameters;
             var emulatorPath = selectedEmulatorManager.EmulatorLocation ?? "";
             var isRetroArch = emulatorName.Contains("RetroArch", StringComparison.OrdinalIgnoreCase);
-            var isMame = emulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase);
+            var isMame = PathHelper.IsMameFamilyEmulator(emulatorName, emulatorPath);
             var isRaine = emulatorName.Contains("Raine", StringComparison.OrdinalIgnoreCase);
             var isXemu = emulatorName.Contains("Xemu", StringComparison.OrdinalIgnoreCase);
 
-            if (isRetroArch && !launchParameters.Contains("-L", StringComparison.OrdinalIgnoreCase))
+            if (isRetroArch && !PathHelper.ContainsStandaloneFlag(launchParameters, "-L"))
             {
                 Log.Debug(
                     "[LaunchRegularEmulatorAsync] RetroArch parameter should contain -L. Parameter field: {Parameters}",
@@ -499,7 +499,11 @@ public class LauncherService : ILauncherService
             // ── Argument fallback (from the original launcher): when the parameter string
             // contains no ROM placeholder, append the ROM path (or bare ROM name for
             // MAME/Raine) so emulators with bare flags still receive the game.
-            var containsRomPlaceholder = launchParameters.Contains("%ROM%", StringComparison.OrdinalIgnoreCase);
+            // Legacy per-game placeholders (%ROMFILE%, %ROMNAME%, %GAME%, $...$, {...})
+            // count as well: they are substituted by ResolveParameterString, so
+            // appending would duplicate the ROM.
+            var containsRomPlaceholder = launchParameters.Contains("%ROM%", StringComparison.OrdinalIgnoreCase) ||
+                                         PathHelper.ContainsGameSpecificPlaceholder(launchParameters);
             var containsNamePlaceholder = launchParameters.Contains("%NAME%", StringComparison.OrdinalIgnoreCase);
             string arguments;
             if (containsRomPlaceholder || containsNamePlaceholder ||
@@ -958,9 +962,7 @@ public class LauncherService : ILauncherService
             var emulatorName = context.EmulatorName;
             var emulatorLocation = context.EmulatorManager?.EmulatorLocation ?? "";
 
-            var isMame = emulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
-                         emulatorLocation.Contains("mame.exe", StringComparison.OrdinalIgnoreCase) ||
-                         emulatorLocation.Contains("mame64.exe", StringComparison.OrdinalIgnoreCase);
+            var isMame = PathHelper.IsMameFamilyEmulator(emulatorName, emulatorLocation);
 
             var isDosBox = emulatorName.Contains("DOSBox", StringComparison.OrdinalIgnoreCase) ||
                            emulatorLocation.Contains("dosbox", StringComparison.OrdinalIgnoreCase);
@@ -1429,9 +1431,11 @@ public class LauncherService : ILauncherService
             // Success — nothing to analyze
             case 0:
                 return;
-            // Memory access violation — log only, no user notification
+            // Memory access violation — log only, no user notification.
+            // Information (not Warning): an emulator-side crash is an expected
+            // condition, never a bug — keeps it out of the bug report service.
             case MemoryAccessViolation:
-                Log.Warning(
+                Log.Information(
                     "Memory access violation error running the emulator.\n" +
                     "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
                     "Stdout: {Stdout}\nStderr: {Stderr}",
@@ -1448,6 +1452,18 @@ public class LauncherService : ILauncherService
 
         var combinedOutput = stdout + "\n" + stderr;
 
+        // Emulator-reported access violation (e.g. RPCS3 "VM: Access violation ...",
+        // which aborts with a non-classic exit code such as 0xC0000425, bugs #68224/#68223):
+        // same handling as a native access violation — Information only, never a bug report.
+        if (combinedOutput.Contains("Access violation", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Information("Memory access violation error running the emulator.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}",
+                exitCode, emulatorPath, arguments, stdout, stderr);
+            return;
+        }
+
         // Ignore RetroArch "File open/read error" — not actionable
         if (combinedOutput.Contains("File open/read error", StringComparison.OrdinalIgnoreCase))
         {
@@ -1459,7 +1475,8 @@ public class LauncherService : ILauncherService
                           (emulatorLocation ?? "").Contains("retroarch", StringComparison.OrdinalIgnoreCase);
         var isMame = emulatorName.Contains("MAME", StringComparison.OrdinalIgnoreCase) ||
                      (emulatorLocation ?? "").Contains("mame", StringComparison.OrdinalIgnoreCase) ||
-                     (emulatorLocation ?? "").Contains("mame64", StringComparison.OrdinalIgnoreCase);
+                     (emulatorLocation ?? "").Contains("mame64", StringComparison.OrdinalIgnoreCase) ||
+                     (emulatorLocation ?? "").Contains("arcade", StringComparison.OrdinalIgnoreCase);
 
         switch (isRetroArch)
         {
@@ -1581,6 +1598,75 @@ public class LauncherService : ILauncherService
 
                 return;
             }
+        }
+
+        var isRpcs3 = emulatorName.Contains("rpcs3", StringComparison.OrdinalIgnoreCase) ||
+                        (emulatorLocation ?? "").Contains("rpcs3", StringComparison.OrdinalIgnoreCase);
+
+        // RPCS3 failing to decrypt the game (truncated/corrupt PS3 dump, bug #68231:
+        // "SELFDecrypter ... Reached the end of the file"): user-side content issue, not an
+        // app bug — Information only, so it never files a bug report.
+        if (isRpcs3 &&
+            (combinedOutput.Contains("SELFDecrypter", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("Reached the end of the file", StringComparison.OrdinalIgnoreCase)))
+        {
+            Log.Debug("RPCS3 corrupt game dump error detected");
+            Log.Information("RPCS3 corrupt game dump error.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}",
+                exitCode, emulatorPath, arguments, stdout, stderr);
+
+            if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
+                await _askAiToFixParameters.ExecuteAsync(
+                    selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+            }
+
+            return;
+        }
+
+        // RPCS3 being unable to write its own log file (bug #68096: "Log file open failed"):
+        // read-only/protected emulator folder — user environment, not an app bug —
+        // Information only, so it never files a bug report.
+        if (isRpcs3 &&
+            combinedOutput.Contains("Log file open failed", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Debug("RPCS3 log file open error detected");
+            Log.Information("RPCS3 log file open error.\n" +
+                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                            "Stdout: {Stdout}\nStderr: {Stderr}",
+                exitCode, emulatorPath, arguments, stdout, stderr);
+
+            if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
+                await _askAiToFixParameters.ExecuteAsync(
+                    selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+            }
+
+            return;
+        }
+
+        // The emulator died on startup with STATUS_DLL_NOT_FOUND (0xC0000135, bugs
+        // 67810-67812: RetroArch with a missing system DLL): user environment, not an
+        // app bug — Information only, so it never files a bug report.
+        const int statusDllNotFound = -1073741515;
+        if (exitCode == statusDllNotFound)
+        {
+            Log.Debug("Emulator missing system DLL error detected for {Emulator}", emulatorName);
+            Log.Information(
+                "Emulator missing system DLL error.\n" +
+                "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                "Stdout: {Stdout}\nStderr: {Stderr}",
+                exitCode, emulatorPath, arguments, stdout, stderr);
+
+            if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
+            }
+
+            return;
         }
 
         // Generic fallback — any other non-zero exit code
