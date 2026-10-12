@@ -4,6 +4,7 @@
 Usage: fixture.py <command>
   seed         Create systems/ROMs/images/dummy emulator in the unified DB
   arcade       seed + an 'Arcade' system backed by real MAME ROMs (two folders)
+  chd          dummy emulator + a 'CHD Test' system for CHD mount checks (keeps systems)
   empty        Remove all systems (first-run state)
   clean-state  Clear favorites/play history/temp artifacts (keep systems)
   dump         Print Systems/Favorites/PlayHistory/AppSettings rows as JSON
@@ -38,6 +39,25 @@ ARCADE_SYSTEM = {
     "Emulators": [
         {
             "EmulatorName": "MAME",
+            "EmulatorLocation": EMULATOR,
+            "EmulatorParameters": '"%ROM%"',
+            "ReceiveANotificationOnEmulatorError": True,
+        }
+    ],
+}
+
+CHD_SYSTEM = {
+    "SystemName": "CHD Test",
+    "SystemFolders": [f"{ROMS}/CHD Test"],
+    "SystemImageFolder": f"{IMAGES}/CHD Test",
+    "FileFormatsToSearch": [".chd"],
+    "FileFormatsToLaunch": [".chd"],
+    "ExtractFileBeforeLaunch": False,
+    "GroupByFolder": False,
+    "DisableRecursiveSearch": False,
+    "Emulators": [
+        {
+            "EmulatorName": "Mednafen",
             "EmulatorLocation": EMULATOR,
             "EmulatorParameters": '"%ROM%"',
             "ReceiveANotificationOnEmulatorError": True,
@@ -205,6 +225,28 @@ def arcade():
     print(json.dumps({"seeded": [s["SystemName"] for s in SYSTEMS] + [ARCADE_SYSTEM["SystemName"]]}))
 
 
+def chd():
+    """Dummy emulator + a 'CHD Test' system for CHD mount checks.
+
+    The real CHD fixture (/home/vm/roms/CHD Test/chdtest.chd) is copied to the VM
+    separately; this only seeds the system configuration. The emulator name matches
+    the Mednafen entry of ChdMountStrategy, so a launch goes through CHDMounter
+    (FUSE on Linux) before falling back to the managed CHDSharp conversion.
+    Existing systems are kept.
+    """
+    write_emulator()
+    os.makedirs(f"{ROMS}/CHD Test", exist_ok=True)
+    os.makedirs(f"{IMAGES}/CHD Test", exist_ok=True)
+    connection = connect()
+    with connection:
+        connection.execute(
+            "INSERT OR REPLACE INTO Systems (SystemName, ConfigJson) VALUES (?, ?)",
+            (CHD_SYSTEM["SystemName"], json.dumps(CHD_SYSTEM)),
+        )
+    connection.close()
+    print(json.dumps({"seeded": [CHD_SYSTEM["SystemName"]]}))
+
+
 def empty():
     connection = connect()
     with connection:
@@ -241,4 +283,4 @@ def dump():
 
 if __name__ == "__main__":
     command = sys.argv[1] if len(sys.argv) > 1 else "dump"
-    {"seed": seed, "arcade": arcade, "empty": empty, "clean-state": clean_state, "dump": dump}[command]()
+    {"seed": seed, "arcade": arcade, "chd": chd, "empty": empty, "clean-state": clean_state, "dump": dump}[command]()

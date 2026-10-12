@@ -856,6 +856,27 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
   storm left the UI responsive (AT-SPI snapshot returned the full 456-node tree; the pre-fix run
   returned 8 nodes and never recovered).
 
+### CHDMounter Linux mount verification (2026-10-12, ad-hoc + fix)
+
+Verified the new Linux CHD mounting path on the VM (payload built from the CHDMounter work):
+
+- Deployed the fresh `linux-x64` payload; the app's startup cleanup removed the obsolete
+  `BatchConvertIsoToXiso` / `BatchConvertToCHD` / `BatchConvertToRVZ` folders and the other-arch
+  payload folders (`tools\CHDMounter\win-arm64` / `linux-arm64`) — migration path verified.
+- Installed the .NET 10 runtime (`/usr/share/dotnet`, `10.0.12`) because CHDMounter is
+  framework-dependent; `fuse3` / `libfuse3-3` and `/dev/fuse` were already present.
+- New `fixture.py chd` command: 'CHD Test' system (emulator name `Mednafen` → dummy script) with a real
+  `chdtest.chd` created with the bundled `chdman` from a synthetic MODE1/2352 cue/bin.
+- App-driven launch (AT-SPI, list view): right-click the row → **Launch Game**. Evidence: CHDMounter ran
+  as `/s:cuebin2352 <chd> /tmp/SimpleLauncher/chd-mount-<guid>`, `mount` showed the FUSE mount, the
+  dummy emulator log recorded the `.cue` **inside the mount**, and after exit the process was gone, the
+  mount was released and the mount-point directory removed.
+- **BUG found + fixed**: `MountChdDrive.DisposeAsync` SIGKILLed CHDMounter, leaving a stale
+  "Transport endpoint is not connected" FUSE mount that no directory delete could remove. The Unix path
+  now sends SIGTERM first (clean unmount), falls back to SIGKILL, then `fusermount3 -u` / `umount` and
+  removes the directory. Re-verified after redeploying the fixed `SimpleLauncher.Core.dll`
+  (`mount-count=0`, mount-point directory gone).
+
 ### Open items for the next session
 
 1. **Full pass - DONE 2026-09-27**: `reports\run-20260927-232933.md` **33/33 PASS in a single run** on the
@@ -903,6 +924,19 @@ then `SimpleLauncher.Core.dll`); both suites are green (Avalonia **696/696**, WP
    quits; restored file -> healthy). See the MAME session section and §8 for details.
 
 ### Resume checklist (next session)
+
+**Guest state after the 2026-10-12 CHDMounter session** (supersedes the 2026-09-28 block below):
+
+- VM IP is now `172.30.187.106` (`lib.ps1` updated); the Default Switch subnet is `172.30.191.x`.
+- .NET 10 runtime installed at `/usr/share/dotnet` (`dotnet-install.sh --channel 10.0 --runtime dotnet`);
+  needed by the framework-dependent CHDMounter (and the other Studio tools' Linux builds are
+  self-contained).
+- App payload rebuilt from the current tree (per-RID XISOStudio/CHDStudio/RVZStudio/CHDMounter tools)
+  and deployed; the startup cleanup removed the obsolete tool folders on first launch.
+- The guest DB keeps the `CHD Test` system (emulator `Mednafen` → `/home/vm/dummy-emulator.sh`, ROM
+  `/home/vm/roms/CHD Test/chdtest.chd`); the app is left running on the CHD Test list view.
+- Verified live: FUSE mount → emulator gets the `.cue` inside the mount → clean SIGTERM unmount →
+  mount point removed (see the session section above).
 
 **Guest state left by the 2026-09-28 manual-testing session** (all of this survives a host/VM reboot unless noted):
 

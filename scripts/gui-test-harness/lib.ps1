@@ -1,4 +1,4 @@
-$script:VmHostAddress = '172.31.176.191'
+$script:VmHostAddress = '172.30.187.106'
 $script:VmUserName = 'vm'
 $script:VmPassword = 'vm'
 $script:HarnessRoot = $PSScriptRoot
@@ -131,7 +131,7 @@ for i in $(seq 1 40); do xdotool search --name "^Simple Launcher$" >/dev/null 2>
 }
 
 function Set-VmFixture {
-    param([Parameter(Mandatory)][ValidateSet('seed', 'seeded', 'arcade', 'empty', 'clean-state', 'dump')][string]$Name)
+    param([Parameter(Mandatory)][ValidateSet('seed', 'seeded', 'arcade', 'chd', 'empty', 'clean-state', 'dump')][string]$Name)
     $command = if ($Name -eq 'seeded') { 'seed' } else { $Name }
     $result = Invoke-VmShell -Command "python3 /home/vm/vision/fixture.py $command" -TimeoutSec 60
     if ($result.ExitStatus -ne 0) {

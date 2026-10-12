@@ -999,6 +999,7 @@ public class MountChdFiles : IMountChdFiles
             {
                 if (!mountProcess.HasExited) mountProcess.Kill(true);
                 mountProcess.Dispose();
+                FuseValidation.TryUnmount(mountPoint, _logger);
                 await TryDeleteMountPointDirectoryAsync(mountPoint);
                 return new MountChdDrive(logErrors, _logger);
             }
@@ -1021,6 +1022,7 @@ public class MountChdFiles : IMountChdFiles
             }
 
             mountProcess.Dispose();
+            FuseValidation.TryUnmount(mountPoint, _logger);
             await TryDeleteMountPointDirectoryAsync(mountPoint);
             return new MountChdDrive(logErrors, _logger);
         }

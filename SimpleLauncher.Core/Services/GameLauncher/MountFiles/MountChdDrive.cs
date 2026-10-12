@@ -54,18 +54,45 @@ public class MountChdDrive : IAsyncDisposable
 
     /// <summary>
     ///     Unmounts the CHD drive by terminating the CHDMounter process and waiting for it to exit.
+    ///     Unix FUSE mounts are shut down with SIGTERM first (a clean unmount) and the mount-point
+    ///     directory is removed afterwards.
     /// </summary>
     public async ValueTask DisposeAsync()
     {
         if (!IsMounted || _mountProcess == null) return;
 
+        // Unix (FUSE) mounts use a mount-point directory the launcher created and must be
+        // unmounted before that directory can be removed.
+        var isUnixFuseMount = string.IsNullOrEmpty(MountedDriveLetter) && !string.IsNullOrEmpty(MountedPath);
+
         var processExitedBeforeKill = false;
         try
         {
+            if (isUnixFuseMount && !_mountProcess.HasExited)
+            {
+                // SIGTERM lets CHDMounter unmount its FUSE session; SIGKILL would leave the
+                // kernel mount behind as a "Transport endpoint is not connected" stub that
+                // cannot be cleaned up by deleting the directory.
+                SendUnixSignal("TERM");
+                if (await WaitForExitWithTimeoutAsync(TimeSpan.FromSeconds(10)))
+                {
+                    _logger.Debug(
+                        $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) exited after SIGTERM (clean unmount).");
+                }
+                else
+                {
+                    _logger.Debug(
+                        $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) did not exit within 10s after SIGTERM.");
+                }
+            }
+
             try
             {
-                _mountProcess.Kill(true);
-                _logger.Debug($"[MountChdDrive.DisposeAsync] Kill signal sent to CHDMounter (ID: {_mountProcessId}).");
+                if (!_mountProcess.HasExited)
+                {
+                    _mountProcess.Kill(true);
+                    _logger.Debug($"[MountChdDrive.DisposeAsync] Kill signal sent to CHDMounter (ID: {_mountProcessId}).");
+                }
             }
             catch (InvalidOperationException)
             {
@@ -80,31 +107,20 @@ public class MountChdDrive : IAsyncDisposable
                     $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) had already exited before explicit unmount was needed.");
             }
 
-            if (!processExitedBeforeKill)
+            if (!processExitedBeforeKill && !_mountProcess.HasExited)
             {
                 _logger.Debug(
                     $"[MountChdDrive.DisposeAsync] Waiting for CHDMounter (ID: {_mountProcessId}) to exit (up to 20s).");
 
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                try
-                {
-                    await _mountProcess.WaitForExitAsync(cts.Token);
-                }
-                catch (TaskCanceledException)
+                if (!await WaitForExitWithTimeoutAsync(TimeSpan.FromSeconds(20)))
                 {
                     _logger.Debug(
-                        $"[MountChdDrive.DisposeAsync] Timeout (10s) waiting for CHDMounter (ID: {_mountProcessId}) to exit after Kill.");
-                }
-
-                if (_mountProcess.HasExited)
-                {
-                    _logger.Debug(
-                        $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) terminated. Exit code: {_mountProcess.ExitCode}.");
+                        $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) did NOT terminate after Kill signal and 20s wait.");
                 }
                 else
                 {
                     _logger.Debug(
-                        $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) did NOT terminate after Kill signal and 10s wait.");
+                        $"[MountChdDrive.DisposeAsync] CHDMounter (ID: {_mountProcessId}) terminated. Exit code: {_mountProcess.ExitCode}.");
                 }
             }
         }
@@ -134,11 +150,12 @@ public class MountChdDrive : IAsyncDisposable
             }
         }
 
-        // Unix (FUSE) mounts use a mount-point directory the launcher created: once the process
-        // exit tears the FUSE session down, the now-empty directory is removed. Retry briefly
-        // while the teardown completes.
-        if (string.IsNullOrEmpty(MountedDriveLetter) && !string.IsNullOrEmpty(MountedPath))
+        // Unix (FUSE): release the kernel mount (a killed daemon leaves it behind) and remove
+        // the now-empty mount-point directory.
+        if (isUnixFuseMount)
         {
+            FuseValidation.TryUnmount(MountedPath, _logger);
+
             for (var attempt = 0; attempt < 10 && Directory.Exists(MountedPath); attempt++)
             {
                 try
@@ -162,5 +179,38 @@ public class MountChdDrive : IAsyncDisposable
         }
 
         GC.SuppressFinalize(this);
+    }
+
+    private void SendUnixSignal(string signal)
+    {
+        try
+        {
+            using var kill = Process.Start(new ProcessStartInfo
+            {
+                FileName = "kill",
+                Arguments = $"-{signal} {_mountProcessId}",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            kill?.WaitForExit(5000);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountChdDrive.DisposeAsync] Could not send SIG{signal} to {_mountProcessId}: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> WaitForExitWithTimeoutAsync(TimeSpan timeout)
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(timeout);
+            await _mountProcess!.WaitForExitAsync(cts.Token);
+            return true;
+        }
+        catch (TaskCanceledException)
+        {
+            return false;
+        }
     }
 }
