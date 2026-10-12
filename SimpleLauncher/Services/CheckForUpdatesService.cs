@@ -208,7 +208,7 @@ public partial class CheckForUpdatesService
         {
             // Notify developer
             const string contextMessage = "Error checking for updates (variant).";
-            if (ex is HttpRequestException or TaskCanceledException or OperationCanceledException)
+            if (ex is HttpRequestException or OperationCanceledException)
             {
                 // Expected user-environment condition (offline or timed out while the user
                 // explicitly checked): the user is notified via the message box below —

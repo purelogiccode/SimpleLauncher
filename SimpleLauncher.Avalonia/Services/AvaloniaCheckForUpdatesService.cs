@@ -227,7 +227,7 @@ public partial class AvaloniaCheckForUpdatesService
         }
         catch (Exception ex)
         {
-            if (ex is HttpRequestException or TaskCanceledException or OperationCanceledException)
+            if (ex is HttpRequestException or OperationCanceledException)
             {
                 // Expected user-environment condition (offline or timed out while the user
                 // explicitly checked): the user is notified via the message box below —
