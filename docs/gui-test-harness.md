@@ -432,16 +432,17 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 ## 13. Coverage map (what is automated vs manual)
 
 Automated by the 33 scenarios (**33/33 PASS in a single run, 2026-10-13**,
-`reports\run-20261013-143750.md`, on the payload built from HEAD `5e4f4230` — the 5.8.0 release tree;
-WPF 2182/2182, Avalonia 701/701 and the slow suites 83/83 + 11/11 on the same tree. Earlier: 33/33 on
-2026-09-27, `reports\run-20260927-232933.md`, payload `9f684574`; 31/31 on 2026-09-26,
+`reports\run-20261013-171217.md`, on the payload built from HEAD `db8f47ae` — the per-RID tool
+refresh with the Linux FUSE mounts; earlier the same day 33/33 on `5e4f4230`,
+`reports\run-20261013-143750.md` — the 5.8.0 release tree; 33/33 on 2026-09-27,
+`reports\run-20260927-232933.md`, payload `9f684574`; 31/31 on 2026-09-26,
 `reports\run-20260926-143336.md`):
 startup/load, system selection, grid/list rendering, covers, filter bar, search + empty state,
 view-mode menu checkmarks, theme menu + persistence, Edit System window/help pane, Easy Mode
 selection state, fuzzy threshold, dead-zone, Edit Links, Sound Configuration, About/Update History,
 Support validation, Favorites add/remove, Play History, ZIP extraction + temp cleanup, file watcher,
 Debug window + live log lines, ROM History message, Broken System error dialog, menu structure
-(the Linux Options set; Tools shows only the three cross-platform studios), real-MAME machine
+(the Linux Options set; Tools shows only the cross-platform tools), real-MAME machine
 descriptions + sort toggle (MAME-01) and a real `history.dat` entry (MAME-02).
 
 Manual/integration by design: store scanners, config injection (Windows-only), RetroAchievements
@@ -481,15 +482,17 @@ and the DOSBox file picker exercised — see `ManualTests.md` and §15). BUG-13.
 fixed. Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
-the VM/app state left behind (the 2026-10-13 suite ran last, leaving the app on the arcade fixture;
-all standalone emulators + BIOS/keys installed), the console/screensaver recovery steps, how to
-rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised manual items in
-`ManualTests.md` §6) and the working-tree state. The 2026-10-13 full pass was **33/33** on the
-payload built from `5e4f4230` (`reports\run-20261013-143750.md`): `SimpleLauncher.Core.dll` md5
-`b908e1e60c0ac28da56d7f97ca7cd903` + `SimpleLauncher.Avalonia.dll` md5
-`9405a3544d59d95d2be57d073a15d2a6`. MENU-00 now asserts the intentional Linux Tools menu
-(XISOStudio/CHDStudio/RVZStudio only, commit `bff12568`) and keeps the popup open for the vision
-check.
+the VM/app state left behind (the 2026-10-13 tool-refresh suite ran last, leaving the app on the
+arcade fixture; all standalone emulators + BIOS/keys installed), the console/screensaver recovery
+steps, how to rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised manual
+items in `ManualTests.md` §6) and the working-tree state. The 2026-10-13 tool-refresh full pass was
+**33/33** on the payload built from `db8f47ae` (`reports\run-20261013-171217.md`):
+`SimpleLauncher.Core.dll` md5 `6e994b5aaec82cb5b1aef32b317b00b0` + `SimpleLauncher.Avalonia.dll` md5
+`c8959c0c7c6b390f98e2ff21a629af28`; the same day's earlier release-gate pass was 33/33 on
+`5e4f4230` (`reports\run-20261013-143750.md`). MENU-00 now asserts the Linux Tools menu
+(`CHDStudio, Find Rom Cover, RVZStudio, XISOStudio`) and keeps the popup open for the vision check.
+The targeted Linux FUSE mount checks (SimpleZipDrive/SimpleXisoDrive direct + app-driven) are
+recorded in `ManualTests.md` §6.
 
 ---
 

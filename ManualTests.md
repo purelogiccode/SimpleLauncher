@@ -895,6 +895,32 @@ had one transient failure, a live GitHub HTTP 500 for the DuckStation arm64 asse
 - Known environment flakes recovered automatically (two "AT-SPI tree not ready" restarts before
   MENU-00 in the -Only re-check; none in the final run).
 
+### Per-RID tool refresh + Linux FUSE mounts (2026-10-13, later session)
+
+Bundled-tool refresh: FindRomCover **3.3.0**, RetroAchievementsSharp **1.0.0** (CLI renamed
+`RetroAchievementsSharp.Cli`), SimpleXisoDrive **1.5.0** and SimpleZipDrive **3.1.1** now ship in
+per-RID folders (`tools\<Tool>\win-{x64,arm64}` / `linux-{x64,arm64}`), and the launcher mounts
+through the Linux FUSE builds (ZIP/7z/RAR for RPCS3/ScummVM/XBLA; Xbox `.iso`/`.cso`/`.chd`/`.zar`
+for xemu/Cxbx, `--image-iso` included). FindRomCover joined the Linux Tools menu. Payload rebuilt
+from `db8f47ae` and deployed; verified on the VM:
+
+- Direct tool checks: `SimpleZipDrive <zip> <dir>` mounted the archive (game folder visible) and
+  unmounted cleanly on SIGTERM; `SimpleXisoDrive <xbox>.chd <dir> --image-iso` mounted the CHD
+  (`default.xbe` + `image.iso` and `Raw image available` in its log) and unmounted cleanly on SIGTERM.
+- App-driven ZIP mount (ScummVM system → RetroArch scummvm core): the app spawned
+  `tools/SimpleZipDrive/linux-x64/SimpleZipDrive "<zip>" /tmp/SimpleLauncher/zip-mount-<guid>`, the
+  mount exposed `Beneath a Steel Sky (Multi-Platform)`, and everything was released afterwards.
+- App-driven Xbox CHD mount (Microsoft Xbox → xemu): the app mounted the `.chd` through SimpleXisoDrive
+  with `--image-iso` and launched xemu with `-dvd_path /tmp/SimpleLauncher/xiso-mount-<guid>/image.iso`
+  (xemu ran ~48 s; the mount stays held while the launch flow/dialogs are open and is released
+  afterwards — verified empty `/tmp/SimpleLauncher`, no leftover processes/mounts).
+- Full suite re-run on this payload: **33/33 PASS** (`reports\run-20261013-171217.md`); MENU-00 now
+  expects the 4-entry Linux Tools menu (`CHDStudio, Find Rom Cover, RVZStudio, XISOStudio`; the
+  localized label is "Find Rom Cover").
+
+Note: killing xemu with SIGTERM (nonzero exit) triggers the standard "could not launch" + AI
+parameter-suggestion dialogs — pre-existing behavior, not a regression.
+
 ### Open items for the next session
 
 1. **Full pass - DONE 2026-10-13**: `reports\run-20261013-143750.md` **33/33 PASS in a single run**
@@ -946,7 +972,19 @@ had one transient failure, a live GitHub HTTP 500 for the DuckStation arm64 asse
 
 ### Resume checklist (next session)
 
-**Guest state after the 2026-10-13 release-verification session** (supersedes all blocks below):
+**Guest state after the 2026-10-13 tool-refresh session** (supersedes the blocks below):
+
+- Payload redeployed from `db8f47ae` with a full `tar` extract over `~/SimpleLauncher` (DLL md5s
+  `SimpleLauncher.Core.dll` `6e994b5aaec82cb5b1aef32b317b00b0`,
+  `SimpleLauncher.Avalonia.dll` `c8959c0c7c6b390f98e2ff21a629af28`); the legacy flat/x64/arm64 tool
+  files were removed first and the per-RID tool folders extracted in their place
+  (`find tools -path '*linux-*' -exec chmod +x` re-applied).
+- **Full suite green 33/33** (`reports\run-20261013-171217.md`); the app is left on the last
+  scenario's `arcade` fixture (MAME-02). The ScummVM/Microsoft Xbox systems used for the targeted
+  mount tests are gone again after the suite's fixture resets — reseed with
+  `seed-batch.py ScummVM` / `seed-batch2.py "Microsoft Xbox"` for more mount testing.
+
+**Guest state after the 2026-10-13 release-verification session** (supersedes the blocks below):
 
 - App payload rebuilt from `5e4f4230` and deployed with a full `tar` extract over `~/SimpleLauncher`
   (`SimpleLauncher.Core.dll` md5 `b908e1e60c0ac28da56d7f97ca7cd903`,

@@ -182,7 +182,7 @@ Then report the button appearances and any mismatch. Be brief.
     # bff12568 and the 2026-10-13 tool refresh); every other tool entry is hidden.
     n.open_menu("Tools")
     items = sorted({e.name for e in n.popup_items() if e.name})
-    checks["tools_menu_linux_set"] = items == ["CHDStudio", "FindRomCover", "RVZStudio", "XISOStudio"]
+    checks["tools_menu_linux_set"] = items == ["CHDStudio", "Find Rom Cover", "RVZStudio", "XISOStudio"]
     extra["tools_items"] = items
     extra["menu"] = got
 '@ + $pyTail
@@ -193,7 +193,7 @@ Expected:
 - The main window is rendered (no blank/garbled areas).
 - Window title is "Simple Launcher".
 - The menu bar contains exactly these top-level items: Options, Edit System, Select Window, Tools, Donate, About.
-- The opened "Tools" popup lists exactly these entries: XISOStudio, CHDStudio, RVZStudio, FindRomCover. (Linux ships only these cross-platform tools; every other tool entry is Windows-only and hidden.)
+- The opened "Tools" popup lists exactly these entries: XISOStudio, CHDStudio, RVZStudio, Find Rom Cover. (Linux ships only these cross-platform tools; every other tool entry is Windows-only and hidden.)
 First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
 Then list any mismatches briefly.
 '@
