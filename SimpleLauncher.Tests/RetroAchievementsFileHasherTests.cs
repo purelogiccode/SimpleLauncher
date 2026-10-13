@@ -306,6 +306,61 @@ public class RetroAchievementsFileHasherTests : IDisposable
     }
 
     /// <summary>
+    ///     Batch hashing: several files of one system are hashed in a single CLI
+    ///     invocation and every hash matches the single-file result.
+    /// </summary>
+    [Fact]
+    public async Task CalculateHashesAsyncMultipleFilesHashesAll()
+    {
+        var file1 = CreateTempFile("batch/A.gb", "Hello World"u8.ToArray());
+        var file2 = CreateTempFile("batch/B.gb", "The quick brown fox jumps over the lazy dog"u8.ToArray());
+
+        var result = await _hasher.CalculateHashesAsync([file1, file2], "game boy");
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("b10a8db164e0754105b7a99be72e3fe5", result[file1]);
+        Assert.Equal("9e107d9d372bb6826bd81d3542a419d6", result[file2]);
+    }
+
+    /// <summary>
+    ///     The CLI stops at the first file it cannot hash. The hasher must resume the
+    ///     untouched tail so one unhashable file (e.g. an unsupported format) never
+    ///     hides the rest of the library.
+    /// </summary>
+    [Fact]
+    public async Task CalculateHashesAsyncUnhashableFileInTheMiddleStillHashesTheRest()
+    {
+        var good1 = CreateTempFile("resume/A.gb", "Hello World"u8.ToArray());
+        var unhashable = Path.Combine(_testDirectory, "resume", "missing.bin");
+        var good2 = CreateTempFile("resume/B.gb", []);
+
+        var result = await _hasher.CalculateHashesAsync([good1, unhashable, good2], "game boy");
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("b10a8db164e0754105b7a99be72e3fe5", result[good1]);
+        Assert.Equal("d41d8cd98f00b204e9800998ecf8427e", result[good2]);
+        Assert.False(result.ContainsKey(unhashable));
+    }
+
+    /// <summary>
+    ///     The CLI prints only the file name next to each hash, so files with the same
+    ///     name in different folders must still be mapped back to their full paths
+    ///     (positional mapping) with their own content hash.
+    /// </summary>
+    [Fact]
+    public async Task CalculateHashesAsyncDuplicateBasenamesInDifferentDirectoriesHashesBoth()
+    {
+        var file1 = CreateTempFile("dirA/game.gb", "Hello World"u8.ToArray());
+        var file2 = CreateTempFile("dirB/game.gb", []);
+
+        var result = await _hasher.CalculateHashesAsync([file1, file2], "game boy");
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("b10a8db164e0754105b7a99be72e3fe5", result[file1]);
+        Assert.Equal("d41d8cd98f00b204e9800998ecf8427e", result[file2]);
+    }
+
+    /// <summary>
     ///     Bug 67780: the permission-denied classifier must recognize the Win32Exception
     ///     Process.Start throws on Linux when the bundled CLI lost its executable bit —
     ///     native code 13 (EACCES) or a "Permission denied" message, including via an

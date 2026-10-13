@@ -148,7 +148,7 @@ public class RetroAchievementsHashScannerTests : IDisposable
         Assert.Contains("Nintendo 64", completedSystems, StringComparer.OrdinalIgnoreCase);
 
         var loaded = _store.LoadSystemHashes("Nintendo 64");
-        Assert.Equal(1, loaded!.HashVersion);
+        Assert.Equal(2, loaded!.HashVersion);
         Assert.Equal("hash-Game 1", loaded.Hashes[Path.Combine(_romsFolder, "Game 1.7z")]);
     }
 

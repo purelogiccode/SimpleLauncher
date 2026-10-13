@@ -15,9 +15,11 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
 {
     /// <summary>
     ///     Version of the hash calculation logic. Bump this whenever the hashing behavior
-    ///     changes (e.g. extraction rules) so existing scans are recalculated.
+    ///     changes (e.g. extraction rules) so existing scans are recalculated. Version 2
+    ///     invalidates the empty scans produced while the batch hashing invoked the CLI
+    ///     with the unsupported <c>scan --console/--out</c> syntax.
     /// </summary>
-    private const int CurrentHashVersion = 1;
+    private const int CurrentHashVersion = 2;
 
     private readonly IExtractionService _extractionService;
     private readonly IRetroAchievementsFileHasher _fileHasher;

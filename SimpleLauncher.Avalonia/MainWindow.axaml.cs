@@ -1210,19 +1210,69 @@ public partial class MainWindow : Window, IPaginationHost
             switch (e.Delta.Y)
             {
                 case > 0:
-                    Log.Debug("Ctrl+MouseWheel: zooming the card size in");
-                    _viewModel.ZoomIn();
-                    SyncButtonSizeUi();
+                    Log.Debug("Ctrl+MouseWheel: zooming in");
+                    _ = HandleZoomSafeAsync(1);
                     e.Handled = true;
                     break;
                 case < 0:
-                    Log.Debug("Ctrl+MouseWheel: zooming the card size out");
-                    _viewModel.ZoomOut();
-                    SyncButtonSizeUi();
+                    Log.Debug("Ctrl+MouseWheel: zooming out");
+                    _ = HandleZoomSafeAsync(-1);
                     e.Handled = true;
                     break;
             }
         }
+    }
+
+    /// <summary>
+    ///     Fire-and-forget wrapper for the Ctrl+wheel handler (a delegate assignment must
+    ///     stay non-async, MA0147); every exception is logged inside.
+    /// </summary>
+    private async Task HandleZoomSafeAsync(int direction)
+    {
+        try
+        {
+            await HandleZoomAsync(direction);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in the method HandleZoomSafeAsync");
+        }
+    }
+
+    /// <summary>
+    ///     System icon size steps mirror the settings whitelist (50/100/150).
+    /// </summary>
+    private const int SystemIconZoomStep = 50;
+    private const int MinSystemIconSize = 50;
+    private const int MaxSystemIconSize = 150;
+
+    /// <summary>
+    ///     WPF HandleZoomInAsync/HandleZoomOutAsync parity: while the system selection
+    ///     screen is shown, zoom changes the system icon size (ThumbnailSizeForSystem)
+    ///     instead of the game card size; everywhere else it changes the game card size.
+    /// </summary>
+    private async Task HandleZoomAsync(int direction)
+    {
+        if (SystemSelectionRoot.IsVisible)
+        {
+            var newSize = Math.Clamp(_settings.ThumbnailSizeForSystem + (direction * SystemIconZoomStep),
+                MinSystemIconSize, MaxSystemIconSize);
+            if (newSize == _settings.ThumbnailSizeForSystem) return;
+
+            _settings.ThumbnailSizeForSystem = newSize;
+            await _settings.SaveAsync();
+
+            _viewModel.StatusText = direction > 0
+                ? $"{_localization.GetString("ZoomingIn", "Zooming in...")} {newSize}{_localization.GetString("Px", "px")}"
+                : $"{_localization.GetString("ZoomingOut", "Zooming out...")} {newSize}{_localization.GetString("Px", "px")}";
+
+            await PopulateSystemSelectionGridAsync();
+            return;
+        }
+
+        if (direction > 0) _viewModel.ZoomIn();
+        else _viewModel.ZoomOut();
+        SyncButtonSizeUi();
     }
 
     #endregion
@@ -1251,6 +1301,12 @@ public partial class MainWindow : Window, IPaginationHost
 
         // System selection screen is always hidden when a content view is active
         SystemSelectionRoot.IsVisible = false;
+
+        // WPF parity: Favorites / Play History / Global Search pages replace the whole
+        // game-browser content in WPF (MainGameContent vs PageContentFrame), so the top
+        // system-selection bar (and its status bar) is never shown on them. Navigating
+        // to a system re-shows it (NavigateToSystemAsync) before this method runs.
+        TopSystemSelection.IsVisible = section == MainSection.None;
 
         // WPF parity: the status bar is shown whenever a system/game view is active
         StatusBarArea.IsVisible = true;
@@ -1459,20 +1515,32 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    /// <summary>Nav rail: zooms the card size in (WPF NavZoomInButton parity).</summary>
-    private void NavZoomInButton_Click(object? sender, RoutedEventArgs e)
+    /// <summary>Nav rail: zooms in — system icons on the selection screen, cards otherwise.</summary>
+    private async void NavZoomInButton_Click(object? sender, RoutedEventArgs e)
     {
-        _viewModel.ZoomIn();
-        SyncButtonSizeUi();
-        _playSound.PlayNotificationSound();
+        try
+        {
+            _playSound.PlayNotificationSound();
+            await HandleZoomAsync(1);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in the method NavZoomInButton_Click");
+        }
     }
 
-    /// <summary>Nav rail: zooms the card size out (WPF NavZoomOutButton parity).</summary>
-    private void NavZoomOutButton_Click(object? sender, RoutedEventArgs e)
+    /// <summary>Nav rail: zooms out — system icons on the selection screen, cards otherwise.</summary>
+    private async void NavZoomOutButton_Click(object? sender, RoutedEventArgs e)
     {
-        _viewModel.ZoomOut();
-        SyncButtonSizeUi();
-        _playSound.PlayNotificationSound();
+        try
+        {
+            _playSound.PlayNotificationSound();
+            await HandleZoomAsync(-1);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in the method NavZoomOutButton_Click");
+        }
     }
 
     #endregion

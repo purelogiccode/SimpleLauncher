@@ -13,8 +13,7 @@
         <!-- Start/Process Button -->
         <StackPanel Grid.Row="1" Margin="10" HorizontalAlignment="Center"
                     IsVisible="{Binding IsStartButtonVisible}">
-            <Button Width="110"
-                    Command="{Binding StartCommand}"
+            <Button Command="{Binding StartCommand}"
                     Content="{ext:Translate StartProcess}"
                     AutomationProperties.Name="{ext:Translate StartProcess}" />
         </StackPanel>
@@ -42,8 +41,7 @@
                     HorizontalAlignment="Center"
                     Orientation="Horizontal"
                     IsVisible="{Binding IsSaveButtonVisible}">
-            <Button Width="110"
-                    Command="{Binding SaveReportCommand}"
+            <Button Command="{Binding SaveReportCommand}"
                     Content="{ext:Translate SaveReport}"
                     AutomationProperties.Name="{ext:Translate SaveReport}" />
         </StackPanel>

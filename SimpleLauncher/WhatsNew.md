@@ -43,6 +43,11 @@
 - **23 Linux port findings fixed (LB-01…LB-23)** — Case-insensitive ROM/EXE discovery after extraction, backslash archive entry names, execute bits for bundled tools, CHD temp-file cleanup, mount platform guards, updater Zip-Slip comparison, platform-neutral dialog wording, defensive scan-handler gating, and Information-level logging when a release ships no update assets for the current platform.
 
 ## Avalonia Fixes
+- **RetroAchievements hash scan** — The bundled CLI is now invoked through its positional interface (with automatic resume after a file it cannot hash), so fresh scans on a new library no longer store zero hashes; existing scans are versioned and recalculated automatically. Applies to both apps.
+- **System icon size** — Ctrl+Mouse wheel and the zoom buttons now resize the system icons on the system selection screen (50/100/150 px) and remember the choice, matching WPF.
+- **Pages hide the system bar** — Favorites, Play History and Global Search no longer show the top system-selection bar, matching WPF.
+- **Auto-sized dialog buttons** — The Global Statistics Start Process / Save Report buttons size to their localized text instead of a fixed width.
+- **No bogus legacy message** — Opening Edit System with no configured systems no longer claims `system.xml` is missing; the window opens so the first system can be added.
 - **Tray icon** — Embedded in the Avalonia app (and as a pack resource in WPF) with `icon.ico` shipped in the payload, so the tray icon always has an image.
 - **Wait overlay** — Shown for all long-running operations, matching the WPF app.
 - **System info panel** — The selected system's configuration summary now appears after selection and hides when games load; the game cache is invalidated after system edits instead of showing stale games.

@@ -20,7 +20,8 @@ public interface IRetroAchievementsFileHasher
 
     /// <summary>
     ///     Calculates the RetroAchievements hashes for a set of game files of the same system
-    ///     in a single CLI invocation (batch mode), keyed by full file path.
+    ///     through the CLI tool's positional interface (multiple files per invocation, one
+    ///     hash per file parsed from stdout), keyed by full file path.
     /// </summary>
     /// <param name="filePaths">The full paths of the game files to hash.</param>
     /// <param name="systemName">The RetroAchievements system name (resolved to a console ID internally).</param>

@@ -123,13 +123,10 @@ public partial class EditSystemWindow : Window
 
             _systems = _systemManager.LoadSystems();
 
-            if (_systems.Count == 0)
-            {
-                await _messageBox.SystemXmlNotFoundMessageBoxAsync();
-                Close();
-                return;
-            }
-
+            // WPF parity: a system list that loads successfully but is empty is a normal
+            // state — systems live in the SQLite database, not system.xml anymore. The
+            // window stays open with an empty dropdown so the user can add the first
+            // system through "Add New"; only a genuine load failure (exception) is an error.
             PopulateSystemNamesDropdown();
 
             if (!string.IsNullOrEmpty(_preSelectedSystemName)) SystemNameDropdown.SelectedItem = _preSelectedSystemName;
