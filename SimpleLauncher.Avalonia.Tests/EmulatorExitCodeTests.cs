@@ -1,13 +1,11 @@
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using SimpleLauncher.Avalonia.Services.GameLauncher;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
-using Xunit;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

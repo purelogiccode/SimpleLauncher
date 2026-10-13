@@ -841,7 +841,7 @@ public class MountChdFiles : IMountChdFiles
 
     /// <summary>
     ///     Determines the CHDMounter executable relative path for the running OS/architecture.
-    ///     The tool ships one payload per OS/architecture under tools\CHDMounter\<rid>\; anything
+    ///     The tool ships one payload per OS/architecture under tools\CHDMounter\&lt;rid&gt;\; anything
     ///     else falls back to the x64 name so DI construction stays inert and the tool check
     ///     reports the problem (LB-14).
     /// </summary>
