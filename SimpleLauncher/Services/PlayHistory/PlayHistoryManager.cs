@@ -123,6 +123,15 @@ public class PlayHistoryManager
                 fresh.SaveToDatabase();
                 return fresh;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                                           or NewerSchemaVersionException)
+            {
+                // Expected environment condition (locked/read-only/newer database): the
+                // database is left untouched and the in-memory state is used — Information
+                // only, never a bug report (same policy as SavePlayHistoryAsync).
+                logErrors?.Information(ex,
+                    "Could not create play history in the unified database; keeping the database untouched");
+            }
             catch (Exception ex)
             {
                 logErrors?.Error(ex, "Error creating play history in the unified database; using a legacy file");

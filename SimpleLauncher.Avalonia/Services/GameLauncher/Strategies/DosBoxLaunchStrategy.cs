@@ -796,9 +796,11 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     }
 
     /// <summary>
-    ///     Deletes the temporary image files produced by a CHD conversion (the CUE and its BIN
-    ///     sibling, or the ISO). Cleanup failures are logged at Debug: the next startup cleanup
-    ///     of %TEMP%\SimpleLauncher removes any file left behind.
+    ///     Deletes the temporary image files produced by a CHD conversion. Multi-track and
+    ///     GD-ROM conversions produce per-track <c>.bin</c> files in addition to the CUE/BIN
+    ///     pair, so everything sharing the conversion's unique base name is removed. Cleanup
+    ///     failures are logged at Debug: the next startup cleanup of %TEMP%\SimpleLauncher
+    ///     removes any file left behind.
     /// </summary>
     private static void CleanupConvertedImageFiles(string? convertedPath)
     {
@@ -806,9 +808,29 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
 
         try
         {
-            var binPath = Path.ChangeExtension(convertedPath, ".bin");
-            if (File.Exists(convertedPath)) File.Delete(convertedPath);
-            if (File.Exists(binPath)) File.Delete(binPath);
+            var directory = Path.GetDirectoryName(convertedPath);
+            if (string.IsNullOrEmpty(directory))
+            {
+                if (File.Exists(convertedPath)) File.Delete(convertedPath);
+                _logger.Debug($"[DosBoxLaunchStrategy] Deleted converted CHD image files: {convertedPath}");
+                return;
+            }
+
+            // Multi-track and GD-ROM conversions produce per-track .bin files in addition
+            // to the CUE/BIN pair; remove everything sharing the conversion's GUID base name.
+            var baseName = Path.GetFileNameWithoutExtension(convertedPath);
+            foreach (var file in Directory.EnumerateFiles(directory, baseName + "*"))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _logger.Debug($"[DosBoxLaunchStrategy] Failed to delete converted CHD image file '{file}': {ex.Message}");
+                }
+            }
+
             _logger.Debug($"[DosBoxLaunchStrategy] Deleted converted CHD image files: {convertedPath}");
         }
         catch (Exception ex)

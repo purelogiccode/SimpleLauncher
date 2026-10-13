@@ -132,9 +132,8 @@ public sealed class MountChdFilesIntegrationTests
 
     private static string GetChdMounterExecutableName()
     {
-        return RuntimeInformation.ProcessArchitecture ==
-               Architecture.Arm64
-            ? "CHDMounter_arm64.exe"
-            : "CHDMounter.exe";
+        // Each per-architecture payload ships the executable under the same name
+        // (tools/CHDMounter/win-x64 and win-arm64 both contain CHDMounter.exe).
+        return "CHDMounter.exe";
     }
 }

@@ -122,12 +122,14 @@ public class DiscConverter : IDiscConverter
 
     /// <summary>
     ///     Deletes the files a failed CHDSharp extraction may have left in the temp folder.
+    ///     The pattern has no dot after the GUID base name: multi-track extractions emit
+    ///     per-track files such as <c>&lt;base&gt; (1).bin</c>.
     /// </summary>
     private static void CleanupTempBaseName(string baseName)
     {
         try
         {
-            foreach (var file in Directory.EnumerateFiles(TempFolder, baseName + ".*"))
+            foreach (var file in Directory.EnumerateFiles(TempFolder, baseName + "*"))
                 TryDeleteFile(file);
         }
         catch

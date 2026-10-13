@@ -584,7 +584,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                 picked.IsFavorite = _favoritesManager.GetFavoritePaths().Contains(Path.GetFileName(picked.FilePath));
 
                 var historyLookup = _playHistoryManager.GetHistoryLookup();
-                if (historyLookup.TryGetValue(picked.FilePath, out var history))
+                if (historyLookup.TryGetValue((picked.FilePath, picked.SystemName), out var history))
                 {
                     picked.PlayCount = history.TimesPlayed;
                     picked.LastPlayed = history.LastPlayDate;
@@ -592,9 +592,10 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             }
 
             // Replace the whole visible list with the single picked game (an empty
-            // pool renders the inline no-games state, like the WPF app)
-            _currentBaseGames = picked is null ? [] : [picked];
-            ReapplyLetterFilterAndPagination();
+            // pool renders the inline no-games state, like the WPF app). Route through
+            // ShowGames so the system information panel is replaced by the picked card
+            // (the panel is opaque and covers the game browser while visible).
+            ShowGames(picked is null ? [] : [picked]);
 
             if (picked != null)
             {
@@ -1359,8 +1360,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                     ApplyFavoritesAndHistory(allGames);
 
                     return allGames
-                        .Where(g => historyLookup.ContainsKey(g.FilePath))
-                        .OrderByDescending(g => historyLookup[g.FilePath].LastPlayDate,
+                        .Where(g => historyLookup.ContainsKey((g.FilePath, g.SystemName)))
+                        .OrderByDescending(g => historyLookup[(g.FilePath, g.SystemName)].LastPlayDate,
                             StringComparer.OrdinalIgnoreCase)
                         .Take(20)
                         .ToList();
@@ -1700,7 +1701,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         {
             game.IsFavorite = _favoritePaths.Contains(Path.GetFileName(game.FilePath));
 
-            if (historyLookup.TryGetValue(game.FilePath, out var history))
+            if (historyLookup.TryGetValue((game.FilePath, game.SystemName), out var history))
             {
                 game.PlayCount = history.TimesPlayed;
                 game.TimesPlayed = history.TimesPlayed.ToString(CultureInfo.InvariantCulture);

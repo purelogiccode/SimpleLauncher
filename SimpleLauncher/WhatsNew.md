@@ -1,5 +1,5 @@
 # Release 5.8.0
-*2026-09-18*
+*2026-10-13*
 ---
 
 ## Unified Windows Release (WPF + Avalonia)
@@ -58,6 +58,51 @@
 - **Bundled tools** — SimpleZipDrive updated to **3.0.1** (x64 and ARM64); refreshed the default game image.
 - **Dependencies** — Meziantou.Analyzer **3.0.264**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**, NLayer **3.0.0** + NLayer.NAudioSupport **3.0.0** (managed MP3 decoding on Linux/macOS).
 - **Zero analyzer warnings** across all projects; both test suites pass.
+
+## Bundled Tools Refresh
+- **XISOStudio replaces the ISO→XISO batch tool** — The Tools menu entry now launches XISOStudio for extracting/creating XISO (Xbox) images; it ships native Windows (x64/ARM64) and Linux (x64/ARM64) payloads.
+- **CHDStudio replaces the CHD batch tool** — The CHD conversion entry now launches CHDStudio; the bundled `chdman` used by the app for CHD→ISO/CUE/BIN conversions ships inside `tools\CHDStudio\<arch>\`.
+- **RVZStudio replaces the RVZ batch tool** — The GameCube/Wii conversion entry now launches RVZStudio with `DolphinTool` bundled beside it under `tools\RVZStudio\<arch>\`.
+- **CHDMounter goes cross-platform** — One payload per OS/architecture; on Linux CHD images mount through FUSE with a clean unmount (SIGTERM, `fusermount3`/`umount` fallback) and the managed CHDSharp conversion as the automatic fallback.
+- **SimpleXisoDrive** — Mounts `cso`/`zar` Xbox images for xemu by generating the `image.iso` the emulator expects.
+- **Release packaging** — The Windows and Linux packaging scripts keep only the running platform's tool payloads; the Linux ZIP marks bundled tools executable.
+
+## Update & Download Reliability
+- **Locked update files** — The updater now waits (and retries) for files locked by a running instance before swapping the install (#67442–#67445).
+- **Single-file emulator downloads** — Downloads that are a single executable (for example `.AppImage`) are installed directly instead of being treated as an archive (#67537).
+- **Cancelled/stalled downloads** — Cancelled downloads delete their partial files, and stalled transfers time out and retry with the canceled read kept as the inner exception.
+- **Update checks** — Network timeouts and missing update assets for the current platform are logged as information instead of errors (LB-23).
+
+## Emulator Launch & Parameters
+- **Stray line breaks are erased** — CR/LF in emulator parameters are collapsed on save (Edit System and AI suggestions) and again at launch, so a pasted empty line can never corrupt the command line (bug #67575).
+- **Legacy placeholders resolve** — `%ROMFILE%`, `%ROMNAME%`, `%GAME%` and the `$…$`/`{…}` variants now resolve to the current ROM instead of being passed literally; RetroArch's `-L` is only recognized as a standalone token.
+- **Grounded AI parameter fix** — MAME "Unknown system" failures caused by a full ROM path get a bare-machine-name hint, and the AI parameter resolver receives the real launch-failure context (exit code, emulator output, local diagnosis).
+- **Expected emulator conditions stay out of bug reports** — Access violations (including RPCS3 guest crashes), `ERROR_NO_UNICODE_TRANSLATION` (1113), Unicode/ANSI path failures, policy-blocked executables, `STATUS_DLL_NOT_FOUND`, unclassified emulator exits, missing MAME ROM-set/image errors and canceled UI operations are logged as information, never filed as bugs.
+- **mame.dat failures** — A missing/corrupt `mame.dat` reports after the main window exists (corrupt files offer auto-reinstall), and the app now quits on missing required files instead of hanging.
+- **Windows audio fallback** — Managed MP3/WAV decoding now ships on Windows too, so a missing Media Foundation no longer breaks UI sounds.
+- **System image replacement** — Downloading an image over one held open by a viewer/thumbnail generator no longer fails (temp file + rename; bug #67779).
+
+## RetroAchievements
+- **Classification matches the bundled CLI** — The system picker and hashing now follow the CLI's supported-console switch exactly: Wii U, PC-9800 and Zeebo are blocked, while C64, ZX Spectrum, Oric, SCV, Uzebox, TIC-80, TI-83, Elektor, VC4000 and Arcadia are hashable; Sega Model 2 no longer steals the Arcade name.
+- **More aliases** — 'Sega Mega Drive (Sega Genesis)', 'PSP GOLD', Famicom/FDS spellings and 'DREAMCAST NAOMI' resolve to the right consoles, and the "no system selected" placeholder is no longer logged as an unmatched system.
+
+## Avalonia & UI Fixes
+- **Audio never blocks the UI** — UI sounds play on a dedicated background thread, so a wedged audio stop/dispose cannot freeze the UI or shutdown.
+- **Dialogs stay with their window** — Message dialogs are owned by the active window, so Easy Mode dialogs are no longer hidden behind the main window.
+- **Card overlay & button size** — The card overlay buttons and button-size controls are wired to the Options menu; the "Show Games" cover filter, DataGrid Enter launch and search-cancel behavior were repaired.
+- **Adaptive theme** — The Adaptive base theme resolves the machine's light/dark preference on Linux (gsettings) with a bounded timeout, falling back to Avalonia's platform settings.
+- **Single instance across sessions** — A per-user lock file now enforces single-instance on Linux even for instances started in another session; the lock file is authoritative, so a simultaneous double launch can never leave both processes quitting.
+- **Preferences window** — Navigating the Preferences list no longer crashes while the window is loading.
+
+## Easy Mode
+- **Fallback XML parsed in memory** — Easy Mode parses its fallback XML without touching temp files and stops reporting expected conditions as bugs.
+- **Every emulator/core format installs on Linux** — Single-file and archive downloads (including `.AppImage`) install for all bundled emulators/cores.
+
+## Accessibility
+- **Accessible names everywhere** — Every interactive control (inputs, sliders, grids, status/progress) exposes an accessible name, a stable automation id and polite live settings where it reports status, so Narrator/NVDA on Windows and Orca/AT-SPI on Linux can identify and drive the UI; guardrail tests fail on missing names.
+
+## Dependency Updates
+- **Avalonia 12.1.4**, **Roslynator 5.0.1**, **Meziantou.Analyzer 3.0.299**, **MessagePack 3.1.11**, **SharpCompress 0.50.5**, **PBPSharp 1.1.4**, **xunit.runner 4.0.1** (supersedes the versions listed above).
 
 ---
 

@@ -201,8 +201,22 @@ public class App : Application, IDisposable
             // Cross-platform guard: a lock file held open for the process lifetime. On Unix,
             // .NET named mutexes are scoped to the login session, so an instance started from
             // another session (or detached with setsid) would not see the first.
-            _singleInstanceLock = SingleInstance.TryAcquireLockFile(SingleInstance.GetLockFilePath());
-            _isFirstInstance = _singleInstanceLock is not null;
+            FileStream? singleInstanceLock = null;
+            var lockFileUnavailable = false;
+            try
+            {
+                singleInstanceLock = SingleInstance.TryAcquireLockFile(SingleInstance.GetLockFilePath());
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Environment error using the lock file (contention already returns null):
+                // fall back to the named-mutex verdict instead of refusing to start.
+                lockFileUnavailable = true;
+                Log.Debug(ex, "Could not use the single-instance lock file; falling back to the named mutex");
+            }
+
+            _singleInstanceLock = singleInstanceLock;
+            _isFirstInstance = singleInstanceLock is not null;
 
             if (OperatingSystem.IsWindows())
             {
@@ -211,7 +225,11 @@ public class App : Application, IDisposable
                 try
                 {
                     _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
-                    if (!mutexCreatedNew) _isFirstInstance = false;
+
+                    // The lock file is authoritative when it was acquired: during a simultaneous
+                    // double launch the losing process may create the mutex before it exits, and
+                    // that must not flip the lock-file winner's verdict (or both would quit).
+                    if (lockFileUnavailable) _isFirstInstance = mutexCreatedNew;
                 }
                 catch (AbandonedMutexException)
                 {
@@ -227,6 +245,12 @@ public class App : Application, IDisposable
                 }
 
                 _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SingleInstance.EventName);
+            }
+            else if (lockFileUnavailable)
+            {
+                // Unix has no named mutex; the lock file is the only guard. An environment
+                // error using it must not keep the app from starting.
+                _isFirstInstance = true;
             }
 
             if (!_isFirstInstance)

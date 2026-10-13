@@ -218,13 +218,24 @@ public static class AvaloniaThemeService
             using var process = Process.Start(startInfo);
             if (process is null) return null;
 
-            var output = process.StandardOutput.ReadToEnd().Trim();
+            // Read the redirected streams asynchronously: a synchronous ReadToEnd blocks
+            // until the child closes stdout, so a hung gsettings (dbus stall) would freeze
+            // the UI thread that applies the theme and the WaitForExit timeout below would
+            // never be enforced.
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+
             if (!process.WaitForExit(2000))
             {
-                try { process.Kill(); }
+                try { process.Kill(true); }
                 catch (InvalidOperationException) { }
                 return null;
             }
+
+            // The process has exited, so the stream reads complete promptly.
+            var output = outputTask.GetAwaiter().GetResult().Trim();
+            try { _ = errorTask.GetAwaiter().GetResult(); }
+            catch (IOException) { }
 
             if (process.ExitCode != 0) return null;
 

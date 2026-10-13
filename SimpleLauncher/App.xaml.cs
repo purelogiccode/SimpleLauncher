@@ -591,14 +591,33 @@ public partial class App : IDisposable
             // Cross-platform guard: a lock file held open for the process lifetime. On Unix,
             // .NET named mutexes are scoped to the login session, so an instance started from
             // another session (or detached with setsid) would not see the first.
-            _singleInstanceLock = SingleInstance.TryAcquireLockFile(SingleInstance.GetLockFilePath());
-            _isFirstInstance = _singleInstanceLock is not null;
+            FileStream? singleInstanceLock = null;
+            var lockFileUnavailable = false;
+            try
+            {
+                singleInstanceLock = SingleInstance.TryAcquireLockFile(SingleInstance.GetLockFilePath());
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Environment error using the lock file (contention already returns null):
+                // fall back to the named-mutex verdict instead of refusing to start.
+                lockFileUnavailable = true;
+                ServiceProvider.GetRequiredService<ILogger>()
+                    .Information(ex, "Could not use the single-instance lock file; falling back to the named mutex");
+            }
+
+            _singleInstanceLock = singleInstanceLock;
+            _isFirstInstance = singleInstanceLock is not null;
 
             try
             {
                 // The named mutex also guards against the Avalonia app (which shares it).
                 _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
-                if (!mutexCreatedNew) _isFirstInstance = false;
+
+                // The lock file is authoritative when it was acquired: during a simultaneous
+                // double launch the losing process may create the mutex before it exits, and
+                // that must not flip the lock-file winner's verdict (or both would quit).
+                if (lockFileUnavailable) _isFirstInstance = mutexCreatedNew;
             }
             catch (AbandonedMutexException)
             {
@@ -849,11 +868,34 @@ public partial class App : IDisposable
         if (string.IsNullOrEmpty(stackTrace)) return false;
 
         // An app frame means this is our code, not the framework race.
-        if (stackTrace.Contains("SimpleLauncher", StringComparison.Ordinal)) return false;
+        if (HasApplicationStackFrame(stackTrace)) return false;
 
         return stackTrace.Contains("WeakEventManager", StringComparison.Ordinal)
                || stackTrace.Contains("PropertyChangedEventManager", StringComparison.Ordinal)
                || stackTrace.Contains("ListCollectionView", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Determines whether the stack contains a frame from Simple Launcher code. The
+    ///     generated application entry point (<c>SimpleLauncher.App.Main</c>) sits at the
+    ///     bottom of every exception raised while the dispatcher processes a message and is
+    ///     therefore not an "our code" frame; only excluding it lets a real dispatcher-race
+    ///     stack (which always carries that entry frame) be recognized as framework-internal.
+    /// </summary>
+    private static bool HasApplicationStackFrame(string stackTrace)
+    {
+        foreach (var line in stackTrace.Split('\n'))
+        {
+            var frame = line.Trim();
+            if (frame.Length == 0 || !frame.Contains("SimpleLauncher", StringComparison.Ordinal)) continue;
+
+            if (frame.Contains("SimpleLauncher.App.Main", StringComparison.Ordinal)) continue;
+            if (frame.Contains("SimpleLauncher.App.<Main>", StringComparison.Ordinal)) continue;
+
+            return true;
+        }
+
+        return false;
     }
 
     private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

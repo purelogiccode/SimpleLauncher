@@ -356,11 +356,16 @@ public class MainViewModelQuickActionsTests : IDisposable
     public async Task PickRandomGame_ReplacesViewWithSingleGameFromSelectedSystem()
     {
         await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+        // A selected system shows the info panel; the random pick must replace it with
+        // the picked game's card (the panel is opaque and covers the browser).
+        _viewModel.ShowSystemInformation([new SystemInfoLine { Text = "System Folder: C:\\roms" }]);
+        Assert.True(_viewModel.IsSystemInfoVisible);
 
         var randomGame = await _viewModel.PickRandomGameAsync();
 
         Assert.NotNull(randomGame);
         Assert.Equal("Test System", randomGame.SystemName);
+        Assert.False(_viewModel.IsSystemInfoVisible);
         var shown = Assert.Single(_viewModel.Games);
         Assert.Equal(randomGame.FilePath, shown.FilePath);
     }

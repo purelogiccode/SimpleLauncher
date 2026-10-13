@@ -109,6 +109,15 @@ public class PlayHistoryManager
                 fresh.SaveToDatabase();
                 return fresh;
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                                           or NewerSchemaVersionException)
+            {
+                // Expected environment condition (locked/read-only/newer database): the
+                // database is left untouched and the in-memory state is used — Information
+                // only, never a bug report (same policy as SavePlayHistoryAsync).
+                logErrors?.Information(ex,
+                    "Could not create play history in the unified database; keeping the database untouched");
+            }
             catch (Exception ex)
             {
                 logErrors?.Error(ex, "Error creating play history in the unified database; using a legacy file");
@@ -384,13 +393,16 @@ public class PlayHistoryManager
 
     /// <summary>
     ///     Records a play event for the given game. Increments play count and updates timestamps.
+    ///     The database keys history by <c>(FileName, SystemName)</c>, so the same ROM path played
+    ///     under two systems keeps two independent entries (WPF parity).
     /// </summary>
     public Task RecordPlayAsync(string filePath, string systemName, long playTimeSeconds = 0)
     {
         lock (_historyLock)
         {
             var entry = PlayHistoryList.FirstOrDefault(h =>
-                string.Equals(h.FileName, filePath, StringComparison.OrdinalIgnoreCase));
+                string.Equals(h.FileName, filePath, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(h.SystemName, systemName, StringComparison.OrdinalIgnoreCase));
 
             if (entry is null)
             {
@@ -445,24 +457,54 @@ public class PlayHistoryManager
     }
 
     /// <summary>
-    ///     Gets a dictionary of file path → PlayHistoryItem for quick lookup.
-    ///     Safe against duplicate file names (e.g. corrupted playhistory.dat) — first entry wins.
+    ///     Gets a dictionary keyed by <c>(FileName, SystemName)</c> for quick lookup. The
+    ///     composite key matches the database primary key: the same ROM path played under
+    ///     two systems keeps two entries, so a path-only lookup would show the wrong
+    ///     system's counters (WPF parity). First entry wins on duplicates.
     /// </summary>
-    public Dictionary<string, PlayHistoryItem> GetHistoryLookup()
+    public Dictionary<(string FileName, string SystemName), PlayHistoryItem> GetHistoryLookup()
     {
         lock (_historyLock)
         {
             try
             {
-                return PlayHistoryList
-                    .GroupBy(h => h.FileName, StringComparer.OrdinalIgnoreCase)
-                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+                var lookup = new Dictionary<(string FileName, string SystemName), PlayHistoryItem>(
+                    HistoryKeyComparer.Instance);
+                foreach (var history in PlayHistoryList)
+                {
+                    var key = (history.FileName ?? "", history.SystemName ?? "");
+                    if (!lookup.ContainsKey(key)) lookup.Add(key, history);
+                }
+
+                return lookup;
             }
             catch (Exception ex)
             {
                 _logger?.Error(ex, "Error building play history lookup; returning empty dictionary");
-                return new Dictionary<string, PlayHistoryItem>(StringComparer.OrdinalIgnoreCase);
+                return new Dictionary<(string FileName, string SystemName), PlayHistoryItem>(
+                    HistoryKeyComparer.Instance);
             }
+        }
+    }
+
+    /// <summary>
+    ///     Case-insensitive comparer for the composite <c>(FileName, SystemName)</c> history key.
+    /// </summary>
+    private sealed class HistoryKeyComparer : IEqualityComparer<(string FileName, string SystemName)>
+    {
+        public static readonly HistoryKeyComparer Instance = new();
+
+        public bool Equals((string FileName, string SystemName) x, (string FileName, string SystemName) y)
+        {
+            return string.Equals(x.FileName, y.FileName, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(x.SystemName, y.SystemName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode((string FileName, string SystemName) obj)
+        {
+            var fileNameHash = StringComparer.OrdinalIgnoreCase.GetHashCode(obj.FileName ?? "");
+            var systemNameHash = StringComparer.OrdinalIgnoreCase.GetHashCode(obj.SystemName ?? "");
+            return HashCode.Combine(fileNameHash, systemNameHash);
         }
     }
 }

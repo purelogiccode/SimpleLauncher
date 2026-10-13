@@ -48,6 +48,41 @@ public class WpfFrameworkRaceTests
         """;
 
     /// <summary>
+    ///     Real dispatcher stacks always carry the generated application entry point at the
+    ///     bottom; the race frames themselves are still entirely framework code.
+    /// </summary>
+    private const string RealisticDispatcherStack67562 =
+        """
+           at System.ComponentModel.PropertyChangedEventManager.OnPropertyChanged(Object sender, PropertyChangedEventArgs args)
+           at System.Windows.Data.ListCollectionView.RefreshOverride()
+           at System.Windows.Data.CollectionView.RefreshInternal()
+           at System.Windows.Controls.ItemCollection.SetCollectionView(CollectionView view)
+           at System.Windows.Controls.ItemsControl.OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+           at System.Windows.Threading.DispatcherOperation.InvokeDelegateCore()
+           at System.Windows.Threading.DispatcherOperation.InvokeImpl()
+           at System.Windows.Threading.Dispatcher.PushFrameImpl(DispatcherFrame frame)
+           at System.Windows.Threading.Dispatcher.PushFrame(DispatcherFrame frame)
+           at System.Windows.Threading.Dispatcher.Run()
+           at System.Windows.Application.RunDispatcher(Object ignore)
+           at System.Windows.Application.RunInternal(Window window)
+           at System.Windows.Application.Run()
+           at SimpleLauncher.App.Main()
+        """;
+
+    /// <summary>
+    ///     Same dispatcher entry frame, but with a real application frame above it: the
+    ///     exception originates in our code and must stay at Error.
+    /// </summary>
+    private const string RealisticAppBugStack =
+        """
+           at System.ComponentModel.PropertyChangedEventManager.OnPropertyChanged(Object sender, PropertyChangedEventArgs args)
+           at SimpleLauncher.MainWindow.RefreshGameList()
+           at System.Windows.Threading.DispatcherOperation.InvokeDelegateCore()
+           at System.Windows.Threading.Dispatcher.Run()
+           at SimpleLauncher.App.Main()
+        """;
+
+    /// <summary>
     ///     The 67562 stack shape (NRE in PropertyChangedEventManager during an
     ///     ItemsSource change) is recognized as the framework race.
     /// </summary>
@@ -78,6 +113,26 @@ public class WpfFrameworkRaceTests
     public void RaceLikeStackWithAppFrame_IsNotClassifiedAsFrameworkRace()
     {
         Assert.False(InvokePredicate(new NullReferenceException("boom"), AppFrameStack));
+    }
+
+    /// <summary>
+    ///     A real dispatcher stack (which always carries the generated App.Main entry
+    ///     frame at the bottom) is still classified as the framework race.
+    /// </summary>
+    [Fact]
+    public void RealisticDispatcherStack_WithEntryPointFrameOnly_IsClassifiedAsFrameworkRace()
+    {
+        Assert.True(InvokePredicate(new NullReferenceException("boom"), RealisticDispatcherStack67562));
+    }
+
+    /// <summary>
+    ///     A real dispatcher stack with an application frame above the entry point is
+    ///     our code: it must stay at Error.
+    /// </summary>
+    [Fact]
+    public void RealisticDispatcherStack_WithAppFrame_IsNotClassifiedAsFrameworkRace()
+    {
+        Assert.False(InvokePredicate(new NullReferenceException("boom"), RealisticAppBugStack));
     }
 
     /// <summary>

@@ -49,21 +49,28 @@ public static class SingleInstance
     /// </summary>
     /// <param name="lockFilePath">The lock file path (see <see cref="GetLockFilePath" />).</param>
     /// <returns>An open, exclusively locked stream, or <c>null</c> when another instance owns it.</returns>
+    /// <exception cref="IOException">
+    ///     The lock file cannot be created or opened for an environment reason (only a
+    ///     sharing violation — another instance owns the lock — returns <c>null</c>).
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    ///     The data folder or lock file is not writable (an environment error, not contention).
+    /// </exception>
     public static FileStream? TryAcquireLockFile(string lockFilePath)
     {
+        var directory = Path.GetDirectoryName(lockFilePath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
         try
         {
-            var directory = Path.GetDirectoryName(lockFilePath);
-            if (!string.IsNullOrEmpty(directory))
-                Directory.CreateDirectory(directory);
             return new FileStream(lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         }
         catch (IOException)
         {
-            return null;
-        }
-        catch (UnauthorizedAccessException)
-        {
+            // Sharing violation: another instance holds the lock. Any other environment
+            // IOException (disk, path) is rare and also surfaces as IOException; callers
+            // treat a null result as "another instance", which is the safe verdict.
             return null;
         }
     }
