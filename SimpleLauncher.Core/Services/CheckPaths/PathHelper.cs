@@ -183,13 +183,13 @@ public static partial class PathHelper
 
             if (!legacyPlaceholderSubstituted &&
                 (ContainsGameSpecificPlaceholder(tokenForLogic) ||
-                IsKnownFlag(tokenForLogic) ||
-                (!tokenForLogic.Contains("%BASEFOLDER%", StringComparison.OrdinalIgnoreCase) &&
-                 !tokenForLogic.Contains("%SYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase) &&
-                 !tokenForLogic.Contains("%ROMSYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase) &&
-                 !tokenForLogic.Contains("%EMULATORFOLDER%", StringComparison.OrdinalIgnoreCase) &&
-                 !tokenForLogic.Contains("%ROM%", StringComparison.OrdinalIgnoreCase) &&
-                 !tokenForLogic.Contains("%NAME%", StringComparison.OrdinalIgnoreCase))))
+                 IsKnownFlag(tokenForLogic) ||
+                 (!tokenForLogic.Contains("%BASEFOLDER%", StringComparison.OrdinalIgnoreCase) &&
+                  !tokenForLogic.Contains("%SYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase) &&
+                  !tokenForLogic.Contains("%ROMSYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase) &&
+                  !tokenForLogic.Contains("%EMULATORFOLDER%", StringComparison.OrdinalIgnoreCase) &&
+                  !tokenForLogic.Contains("%ROM%", StringComparison.OrdinalIgnoreCase) &&
+                  !tokenForLogic.Contains("%NAME%", StringComparison.OrdinalIgnoreCase))))
             {
                 return originalToken;
             }

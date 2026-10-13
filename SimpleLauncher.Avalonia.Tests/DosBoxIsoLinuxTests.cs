@@ -37,7 +37,8 @@ public class DosBoxIsoLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var isoPath = WriteIso(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["GAME.EXE"] = new byte[1234] });
+        var isoPath = WriteIso(new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            { ["GAME.EXE"] = new byte[1234] });
 
         var (strategy, launcher, messageBox, mountIso) = CreateStrategy();
         string? confPath = null;
@@ -46,11 +47,12 @@ public class DosBoxIsoLinuxTests : IDisposable
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path, _, _, _, _, _, _, _) =>
-                {
-                    confPath = path;
-                    confContent = File.Exists(path) ? File.ReadAllText(path) : null;
-                })
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path,
+                _, _, _, _, _, _, _) =>
+            {
+                confPath = path;
+                confContent = File.Exists(path) ? File.ReadAllText(path) : null;
+            })
             .Returns(Task.CompletedTask);
 
         await strategy.ExecuteAsync(CreateContext(isoPath), launcher.Object);
@@ -82,7 +84,8 @@ public class DosBoxIsoLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var isoPath = WriteIso(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["SUB/PLAY.BAT"] = new byte[99] });
+        var isoPath = WriteIso(new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            { ["SUB/PLAY.BAT"] = new byte[99] });
 
         var (strategy, launcher, _, _) = CreateStrategy();
         string? confContent = null;
@@ -102,7 +105,8 @@ public class DosBoxIsoLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var isoPath = WriteIso(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["README.TXT"] = new byte[42] });
+        var isoPath = WriteIso(new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            { ["README.TXT"] = new byte[42] });
 
         var (strategy, launcher, messageBox, mountIso) = CreateStrategy();
 
@@ -113,8 +117,9 @@ public class DosBoxIsoLinuxTests : IDisposable
         mountIso.Verify(m => m.ExecutePowerShellMountCommandAsync(
             It.IsAny<string>(), It.IsAny<ILogger>(), It.IsAny<IMessageBoxLibraryService>()), Times.Never);
         launcher.Verify(l => l.LaunchRegularEmulatorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
-            It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
+            Times.Never);
     }
 
     private static (DosBoxLaunchStrategy Strategy, Mock<ILauncherService> Launcher,
@@ -142,8 +147,8 @@ public class DosBoxIsoLinuxTests : IDisposable
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>(
-                (path, _, _, _, _, _, _, _) => onConf(File.Exists(path) ? File.ReadAllText(path) : null))
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string
+                ?>((path, _, _, _, _, _, _, _) => onConf(File.Exists(path) ? File.ReadAllText(path) : null))
             .Returns(Task.CompletedTask);
     }
 

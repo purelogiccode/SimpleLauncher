@@ -133,8 +133,9 @@ public class ExtractionService : IExtractionService
             // Expected user-error condition (unsupported input): per repo policy it must not be
             // reported as a bug, so log it at Information, below the bug-report sink threshold
             // (bug #67537 reported this as a Warning).
-            var contextMessage = $"Only 7z, ZIP, RAR, tar.gz, tgz, tar.xz, and txz files are supported by this extraction method.\n" +
-                                 $"File type: {extension}";
+            var contextMessage =
+                $"Only 7z, ZIP, RAR, tar.gz, tgz, tar.xz, and txz files are supported by this extraction method.\n" +
+                $"File type: {extension}";
             _logger.Information(contextMessage);
 
             // Notify user

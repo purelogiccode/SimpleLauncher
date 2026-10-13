@@ -1679,8 +1679,10 @@ public partial class GameLauncherService : ILauncherService
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameRomSetErrorMessageBoxAsync();
-                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
-                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary, _parameterResolverService, _configuration, _serviceProvider, _logger);
+                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
+                    _parameterResolverService, _configuration, _serviceProvider, _logger);
             }
 
             return;
@@ -1692,8 +1694,8 @@ public partial class GameLauncherService : ILauncherService
              emulatorManager.EmulatorLocation.Contains("mame", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("arcade", StringComparison.OrdinalIgnoreCase) ||
              emulatorManager.EmulatorLocation.Contains("retroarch", StringComparison.OrdinalIgnoreCase)) &&
-           (combinedOutput.Contains("Unknown system", StringComparison.OrdinalIgnoreCase) ||
-            combinedOutput.Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
+            (combinedOutput.Contains("Unknown system", StringComparison.OrdinalIgnoreCase) ||
+             combinedOutput.Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unknown system error");
 
@@ -1711,9 +1713,11 @@ public partial class GameLauncherService : ILauncherService
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameUnknownSystemErrorMessageBoxAsync();
-                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
+                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
 
-                var launchFailureContext = BuildMameLaunchFailureContext(process.ExitCode, output, error, mameDiagnosis);
+                var launchFailureContext =
+                    BuildMameLaunchFailureContext(process.ExitCode, output, error, mameDiagnosis);
                 await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
                     _parameterResolverService, _configuration, _serviceProvider, _logger, launchFailureContext);
             }
@@ -1734,8 +1738,10 @@ public partial class GameLauncherService : ILauncherService
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameUnableToLoadImageMessageBoxAsync();
-                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
-                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary, _parameterResolverService, _configuration, _serviceProvider, _logger);
+                await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
+                    _parameterResolverService, _configuration, _serviceProvider, _logger);
             }
 
             return;

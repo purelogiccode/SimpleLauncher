@@ -259,7 +259,8 @@ public class ExtractionServiceTests
             await File.WriteAllTextAsync(payload, "#!/bin/sh\n");
             if (!OperatingSystem.IsWindows())
             {
-                File.SetUnixFileMode(payload, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                File.SetUnixFileMode(payload, UnixFileMode.UserRead | UnixFileMode.UserWrite |
+                                              UnixFileMode.UserExecute |
                                               UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
                                               UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
             }
@@ -363,4 +364,3 @@ public class ExtractionServiceTests
         return process.ExitCode == 0;
     }
 }
-

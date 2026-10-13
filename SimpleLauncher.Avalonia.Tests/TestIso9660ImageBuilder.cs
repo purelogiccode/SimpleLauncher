@@ -63,7 +63,8 @@ internal static class TestIso9660ImageBuilder
             offset += WriteRecord(sector, offset, directorySectors[ParentOf(directory)], SectorSize, true, [0x01]);
 
             foreach (var child in directories.Where(child => child.Length > 0 &&
-                                                             string.Equals(ParentOf(child), directory, StringComparison.Ordinal)))
+                                                             string.Equals(ParentOf(child), directory,
+                                                                 StringComparison.Ordinal)))
                 offset += WriteRecord(sector, offset, directorySectors[child], SectorSize, true,
                     Encoding.ASCII.GetBytes(NameOf(child)));
 

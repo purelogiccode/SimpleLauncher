@@ -66,7 +66,8 @@ public static class Iso9660ImageReader
     ///     Scans the volume descriptor sequence for the primary volume descriptor and returns
     ///     its root directory record (extent LBA and data length).
     /// </summary>
-    private static (uint Extent, uint Length)? FindRootDirectoryRecord(FileStream stream, string imagePath, ILogger logger)
+    private static (uint Extent, uint Length)? FindRootDirectoryRecord(FileStream stream, string imagePath,
+        ILogger logger)
     {
         for (var i = 0; i < MaxVolumeDescriptorSectors; i++)
         {

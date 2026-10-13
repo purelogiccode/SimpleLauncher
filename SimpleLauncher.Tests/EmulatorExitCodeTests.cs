@@ -49,7 +49,8 @@ public class EmulatorExitCodeTests
         await InvokeCheckForExitCodeWithErrorAnyAsync(service, process,
             new ProcessStartInfo { FileName = "retroarch.exe", Arguments = "-L core -f game.zip" },
             new StringBuilder(),
-            new StringBuilder("Setting $HOME to /home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64.AppImage.home"),
+            new StringBuilder(
+                "Setting $HOME to /home/vm/SimpleLauncher/emulators/RetroArch/RetroArch-Linux-x86_64.AppImage.home"),
             emulator);
 
         Assert.Equal(135, process.ExitCode);

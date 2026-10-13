@@ -220,7 +220,8 @@ public class EasyModeManager : IDisposable
         }
         catch (Exception ex)
         {
-            logErrors.Error(ex, $"The EasyMode XML content from '{sourceName}' could not be parsed. It might be corrupted.");
+            logErrors.Error(ex,
+                $"The EasyMode XML content from '{sourceName}' could not be parsed. It might be corrupted.");
             return null;
         }
     }

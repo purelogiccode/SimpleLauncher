@@ -227,15 +227,26 @@ public static class AvaloniaThemeService
 
             if (!process.WaitForExit(2000))
             {
-                try { process.Kill(true); }
-                catch (InvalidOperationException) { }
+                try
+                {
+                    process.Kill(true);
+                }
+                catch (InvalidOperationException)
+                {
+                }
+
                 return null;
             }
 
             // The process has exited, so the stream reads complete promptly.
             var output = outputTask.GetAwaiter().GetResult().Trim();
-            try { _ = errorTask.GetAwaiter().GetResult(); }
-            catch (IOException) { }
+            try
+            {
+                _ = errorTask.GetAwaiter().GetResult();
+            }
+            catch (IOException)
+            {
+            }
 
             if (process.ExitCode != 0) return null;
 

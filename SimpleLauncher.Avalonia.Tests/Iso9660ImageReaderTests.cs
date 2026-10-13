@@ -61,7 +61,8 @@ public class Iso9660ImageReaderTests
     [Fact]
     public void ListFiles_FileLargerThanOneSector_IsListed()
     {
-        var imagePath = WriteImage(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["BIG.DAT"] = new byte[5000] });
+        var imagePath = WriteImage(new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            { ["BIG.DAT"] = new byte[5000] });
 
         try
         {
@@ -80,4 +81,3 @@ public class Iso9660ImageReaderTests
         return imagePath;
     }
 }
-

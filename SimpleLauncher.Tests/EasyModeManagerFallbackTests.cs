@@ -74,7 +74,7 @@ public class EasyModeManagerFallbackTests : IDisposable
     public async Task LoadAsync_ApiFails_FallbackXmlIsParsedInMemoryAndPersisted()
     {
         var manager = CreateManager(m => m.RequestUri != null &&
-            m.RequestUri.AbsoluteUri.Contains("api/Systems", StringComparison.Ordinal)
+                                         m.RequestUri.AbsoluteUri.Contains("api/Systems", StringComparison.Ordinal)
             ? new HttpResponseMessage(HttpStatusCode.InternalServerError)
             : new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -96,7 +96,8 @@ public class EasyModeManagerFallbackTests : IDisposable
     public async Task LoadAsync_FallbackXmlInvalid_ReturnsNullWithoutThrowing()
     {
         var manager = CreateManager(request => request.RequestUri != null &&
-                request.RequestUri.AbsoluteUri.Contains("api/Systems", StringComparison.Ordinal)
+                                               request.RequestUri.AbsoluteUri.Contains("api/Systems",
+                                                   StringComparison.Ordinal)
             ? new HttpResponseMessage(HttpStatusCode.InternalServerError)
             : new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -115,7 +116,8 @@ public class EasyModeManagerFallbackTests : IDisposable
         // configured server-side yet); per repo policy it must never reach the
         // Warning+ bug-report sink.
         var manager = CreateManager(request => request.RequestUri != null &&
-                request.RequestUri.AbsoluteUri.Contains("api/Systems", StringComparison.Ordinal)
+                                               request.RequestUri.AbsoluteUri.Contains("api/Systems",
+                                                   StringComparison.Ordinal)
             ? new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("[]", Encoding.UTF8, "application/json")

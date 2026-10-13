@@ -233,8 +233,10 @@ public class EmulatorExitCodeTests
             BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.NotNull(method);
         var task = (Task?)method.Invoke(service,
-            [exitCode, stdout, stderr, emulatorPath, arguments, emulatorName, emulatorLocation, emulator,
-                Mock.Of<ISystemManager>(), null]);
+        [
+            exitCode, stdout, stderr, emulatorPath, arguments, emulatorName, emulatorLocation, emulator,
+            Mock.Of<ISystemManager>(), null
+        ]);
         Assert.NotNull(task);
         return task;
     }

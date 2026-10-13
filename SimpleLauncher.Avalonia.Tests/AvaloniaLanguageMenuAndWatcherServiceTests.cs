@@ -34,7 +34,8 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
     public void GetLanguageCodeFromMenuItemName_ReturnsCode()
     {
         Assert.Equal("pt-BR", AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("LanguagePortugueseBr"));
-        Assert.Equal("zh-Hans", AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("LanguageChineseSimplified"));
+        Assert.Equal("zh-Hans",
+            AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("LanguageChineseSimplified"));
         Assert.Null(AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName("NotALanguageItem"));
         Assert.Null(AvaloniaLanguageMenuService.GetLanguageCodeFromMenuItemName(null));
     }
@@ -45,7 +46,8 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
         Assert.Equal("LanguagePortugueseBr", AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("pt-BR"));
         Assert.Equal("LanguagePortugueseBr",
             AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("pt-br")); // WPF-style code
-        Assert.Equal("LanguageChineseSimplified", AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("zh-hans"));
+        Assert.Equal("LanguageChineseSimplified",
+            AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("zh-hans"));
         Assert.Null(AvaloniaLanguageMenuService.GetMenuItemNameForLanguageCode("xx"));
     }
 

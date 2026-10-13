@@ -1055,8 +1055,9 @@ public class MountChdFiles : IMountChdFiles
             if (mountProcess.HasExited)
             {
                 var exitCode = mountProcess.ExitCode;
-                var contextMessage = $"Failed to mount CHD. The CHDMounter tool exited prematurely with code {exitCode} " +
-                                     "(FUSE device or .NET runtime unavailable).";
+                var contextMessage =
+                    $"Failed to mount CHD. The CHDMounter tool exited prematurely with code {exitCode} " +
+                    "(FUSE device or .NET runtime unavailable).";
 
                 if (errorOutput is { Count: > 0 })
                 {

@@ -267,6 +267,7 @@ public class DownloadManagerTests
         public override bool CanSeek => false;
         public override bool CanWrite => false;
         public override long Length => throw new NotSupportedException();
+
         public override long Position
         {
             get => _position;

@@ -1304,7 +1304,8 @@ public class MountZipFiles : IMountZipFiles
 
             if (string.IsNullOrEmpty(fileToLoad))
             {
-                _logger.Debug($"[MountZipFiles] No suitable file found in nested directory structure in {extractedDirectory}.");
+                _logger.Debug(
+                    $"[MountZipFiles] No suitable file found in nested directory structure in {extractedDirectory}.");
                 logErrors.Information($"No launchable file found inside archive: {resolvedZipFilePath}");
                 await messageBox.CouldNotFindAFileMessageBoxAsync();
                 return;

@@ -39,7 +39,8 @@ public class DosBoxChdLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var chdPath = CreateChd(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["GAME.EXE"] = new byte[1234] });
+        var chdPath =
+            CreateChd(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["GAME.EXE"] = new byte[1234] });
 
         var (strategy, launcher, messageBox, mountChd) = CreateStrategy();
         string? confPath = null;
@@ -49,12 +50,13 @@ public class DosBoxChdLinuxTests : IDisposable
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path, _, _, _, _, _, _, _) =>
-                {
-                    confPath = path;
-                    confContent = File.Exists(path) ? File.ReadAllText(path) : null;
-                    if (confContent != null) imageExistedDuringLaunch = File.Exists(ExtractImgmountPath(confContent));
-                })
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path,
+                _, _, _, _, _, _, _) =>
+            {
+                confPath = path;
+                confContent = File.Exists(path) ? File.ReadAllText(path) : null;
+                if (confContent != null) imageExistedDuringLaunch = File.Exists(ExtractImgmountPath(confContent));
+            })
             .Returns(Task.CompletedTask);
 
         await strategy.ExecuteAsync(CreateContext(chdPath), launcher.Object);
@@ -76,7 +78,8 @@ public class DosBoxChdLinuxTests : IDisposable
         Assert.False(File.Exists(Path.ChangeExtension(imagePath, ".bin")));
         Assert.False(File.Exists(confPath));
         mountChd.Verify(m => m.MountAsync(
-            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<ILogger>(), It.IsAny<IMessageBoxLibraryService>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<ILogger>(), It.IsAny<IMessageBoxLibraryService>()),
+            Times.Never);
         messageBox.Verify(m => m.ThereWasAnErrorMountingTheFileMessageBoxAsync(It.IsAny<int?>()), Times.Never);
         messageBox.Verify(m => m.CouldNotFindAFileMessageBoxAsync(), Times.Never);
         messageBox.Verify(m => m.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(It.IsAny<string>()), Times.Never);
@@ -88,7 +91,8 @@ public class DosBoxChdLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var chdPath = CreateChd(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["SUB/PLAY.BAT"] = new byte[99] });
+        var chdPath = CreateChd(new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            { ["SUB/PLAY.BAT"] = new byte[99] });
 
         var (strategy, launcher, _, _) = CreateStrategy();
         string? confContent = null;
@@ -108,7 +112,8 @@ public class DosBoxChdLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var chdPath = CreateMixedModeChd(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["GAME.EXE"] = new byte[1234] });
+        var chdPath = CreateMixedModeChd(new Dictionary<string, byte[]>(StringComparer.Ordinal)
+            { ["GAME.EXE"] = new byte[1234] });
 
         var (strategy, launcher, _, _) = CreateStrategy();
         string? confContent = null;
@@ -128,7 +133,8 @@ public class DosBoxChdLinuxTests : IDisposable
     {
         if (OperatingSystem.IsWindows()) return;
 
-        var chdPath = CreateChd(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["README.TXT"] = new byte[42] });
+        var chdPath =
+            CreateChd(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["README.TXT"] = new byte[42] });
 
         var (strategy, launcher, messageBox, _) = CreateStrategy();
 
@@ -137,8 +143,9 @@ public class DosBoxChdLinuxTests : IDisposable
         messageBox.Verify(m => m.CouldNotFindAFileMessageBoxAsync(), Times.Once);
         messageBox.Verify(m => m.ThereWasAnErrorMountingTheFileMessageBoxAsync(It.IsAny<int?>()), Times.Never);
         launcher.Verify(l => l.LaunchRegularEmulatorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
-            It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
+            Times.Never);
     }
 
     [Fact]
@@ -159,8 +166,9 @@ public class DosBoxChdLinuxTests : IDisposable
         messageBox.Verify(m => m.ThereWasAnErrorLaunchingThisGameMessageBoxAsync(It.IsAny<string>()), Times.Once);
         messageBox.Verify(m => m.CouldNotFindAFileMessageBoxAsync(), Times.Never);
         launcher.Verify(l => l.LaunchRegularEmulatorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
-            It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
+            Times.Never);
     }
 
     private static (DosBoxLaunchStrategy Strategy, Mock<ILauncherService> Launcher,
@@ -189,7 +197,8 @@ public class DosBoxChdLinuxTests : IDisposable
             .Setup(l => l.LaunchRegularEmulatorAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
                 It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()))
-            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string?>((path, _, _, _, _, _, _, _) => onConf(File.Exists(path) ? File.ReadAllText(path) : null))
+            .Callback<string, string, ISystemManager, Emulator, string, IWindowContext, ILoadingState?, string
+                ?>((path, _, _, _, _, _, _, _) => onConf(File.Exists(path) ? File.ReadAllText(path) : null))
             .Returns(Task.CompletedTask);
     }
 

@@ -55,6 +55,7 @@ public class CheckForRequiredFilesService
                 "mame.dat"
             ];
         }
+
         try
         {
             // The configuration uses Windows separators; normalize them so the check works

@@ -473,7 +473,7 @@ public class PlayHistoryManager
                 foreach (var history in PlayHistoryList)
                 {
                     var key = (history.FileName ?? "", history.SystemName ?? "");
-                    if (!lookup.ContainsKey(key)) lookup.Add(key, history);
+                    lookup.TryAdd(key, history);
                 }
 
                 return lookup;

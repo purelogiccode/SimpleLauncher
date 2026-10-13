@@ -242,14 +242,14 @@ public class WpfFrameworkRaceTests
     private sealed class FakeStackNre(string stackTrace) : NullReferenceException(
         "Object reference not set to an instance of an object.")
     {
-        public override string StackTrace => stackTrace;
+        public override string StackTrace { get; } = stackTrace;
     }
 
     /// <summary>InvalidCast whose StackTrace is fabricated from the bug-report stacks.</summary>
     private sealed class FakeStackInvalidCast(string stackTrace) : InvalidCastException(
         "Unable to cast object of type 'System.Windows.Controls.ItemCollection' to type 'System.ComponentModel.PropertyChangedEventArgs'.")
     {
-        public override string StackTrace => stackTrace;
+        public override string StackTrace { get; } = stackTrace;
     }
 
     /// <summary>Serilog sink that records every emitted event for level assertions.</summary>

@@ -1313,7 +1313,7 @@ public class ContextMenuFunctions : IContextMenuFunctions
             }
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to retrieve window dimensions",
-                     StringComparison.OrdinalIgnoreCase))
+                                                       StringComparison.OrdinalIgnoreCase))
         {
             // Expected race: the selected emulator window closed between selection and
             // capture (bug 67513) — user timing, not an app bug.

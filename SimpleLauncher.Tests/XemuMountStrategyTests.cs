@@ -209,8 +209,8 @@ public class XemuMountStrategyTests
         await strategy.ExecuteAsync(context, launcher.Object);
 
         launcher.Verify(l => l.LaunchRegularEmulatorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
-            It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
             Times.Never);
     }
 }

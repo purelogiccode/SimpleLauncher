@@ -79,7 +79,8 @@ public class ScanItchioGames : IGamePlatformScanner
                                     if (parts.Length > 1)
                                     {
                                         var val = parts[1].Trim().Trim('"', '\'');
-                                        launchExe = Path.Combine(gameDir, val.Replace('/', Path.DirectorySeparatorChar));
+                                        launchExe = Path.Combine(gameDir,
+                                            val.Replace('/', Path.DirectorySeparatorChar));
                                         // We found the executable for the first action, stop parsing
                                         break;
                                     }

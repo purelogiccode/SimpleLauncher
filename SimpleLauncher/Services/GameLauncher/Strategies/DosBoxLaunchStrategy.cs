@@ -696,7 +696,8 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     {
         if (gameFiles.Count == 1)
         {
-            _logger.Debug($"[DosBoxLaunchStrategy] Single game file found in disc image, auto-selecting: {gameFiles[0]}");
+            _logger.Debug(
+                $"[DosBoxLaunchStrategy] Single game file found in disc image, auto-selecting: {gameFiles[0]}");
             return Task.FromResult<string?>(gameFiles[0]);
         }
 
@@ -714,9 +715,10 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
         }
 
         _logger.Debug($"[DosBoxLaunchStrategy] User selected file from the disc image: {dialog.SelectedFilePath}");
-        return Task.FromResult<string?>(dialog.SelectedFilePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase)
-            ? dialog.SelectedFilePath[imageRoot.Length..]
-            : dialog.SelectedFilePath);
+        return Task.FromResult<string?>(
+            dialog.SelectedFilePath.StartsWith(imageRoot, StringComparison.OrdinalIgnoreCase)
+                ? dialog.SelectedFilePath[imageRoot.Length..]
+                : dialog.SelectedFilePath);
     }
 
     /// <summary>
@@ -782,7 +784,8 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    _logger.Debug($"[DosBoxLaunchStrategy] Failed to delete converted CHD image file '{file}': {ex.Message}");
+                    _logger.Debug(
+                        $"[DosBoxLaunchStrategy] Failed to delete converted CHD image file '{file}': {ex.Message}");
                 }
             }
 

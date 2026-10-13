@@ -1,5 +1,4 @@
 using SimpleLauncher.Avalonia.Services.PlayHistory;
-using Xunit;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

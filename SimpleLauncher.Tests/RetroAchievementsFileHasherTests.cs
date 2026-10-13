@@ -311,8 +311,9 @@ public class RetroAchievementsFileHasherTests : IDisposable
     ///     native code 13 (EACCES) or a "Permission denied" message, including via an
     ///     inner exception — so that catch logs Information instead of Error.
     /// </summary>
-    /// <param name="exception">The exception to classify.</param>
-    /// <param name="expected">Whether the classifier must report permission denied.</param>
+    /// <param name="useEacces">
+    ///     True to use native code 13 (EACCES); false for an unrelated Win32 error code.
+    /// </param>
     [Theory]
     [InlineData(true)] // native code 13 (EACCES), as thrown on Linux
     [InlineData(false)] // unrelated Win32 error code

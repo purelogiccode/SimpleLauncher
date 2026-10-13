@@ -91,7 +91,8 @@ public class MountChdDrive : IAsyncDisposable
                 if (!_mountProcess.HasExited)
                 {
                     _mountProcess.Kill(true);
-                    _logger.Debug($"[MountChdDrive.DisposeAsync] Kill signal sent to CHDMounter (ID: {_mountProcessId}).");
+                    _logger.Debug(
+                        $"[MountChdDrive.DisposeAsync] Kill signal sent to CHDMounter (ID: {_mountProcessId}).");
                 }
             }
             catch (InvalidOperationException)
@@ -196,7 +197,8 @@ public class MountChdDrive : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.Debug($"[MountChdDrive.DisposeAsync] Could not send SIG{signal} to {_mountProcessId}: {ex.Message}");
+            _logger.Debug(
+                $"[MountChdDrive.DisposeAsync] Could not send SIG{signal} to {_mountProcessId}: {ex.Message}");
         }
     }
 

@@ -1088,7 +1088,8 @@ public class LauncherService : ILauncherService
                     // Expected user condition (the batch file's emulator/tool failed, e.g. an
                     // incomplete ROM set) — Information level so it is never reported as a bug.
                     // The user still gets the error toast/status below.
-                    Log.Information("Batch file exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
+                    Log.Information("Batch file exited with code {ExitCode}: {Path}", process.ExitCode,
+                        resolvedFilePath);
                     LogBatchFileContentsOnError(resolvedFilePath);
                     launchFeedback?.ShowToast("Simple Launcher", $"Error: {batchShortName} failed");
                     launchFeedback?.SetStatusText($"Error: {batchShortName} failed");
@@ -1301,7 +1302,8 @@ public class LauncherService : ILauncherService
                 if (process.ExitCode != 0 && !IsInEmulatorsToSkipList(selectedEmulatorManager.EmulatorName))
                     // Expected user condition (the launched executable failed) — Information level
                     // so it is never reported as a bug.
-                    Log.Information("Executable exited with code {ExitCode}: {Path}", process.ExitCode, resolvedFilePath);
+                    Log.Information("Executable exited with code {ExitCode}: {Path}", process.ExitCode,
+                        resolvedFilePath);
             }
             catch (Exception ex)
             {
@@ -1446,8 +1448,8 @@ public class LauncherService : ILauncherService
             // DEP violation — log only, no user notification
             case DepViolation:
                 Log.Information("Data Execution Prevention (DEP) violation error running the emulator.\n" +
-                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                            "Stdout: {Stdout}\nStderr: {Stderr}",
+                                "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                                "Stdout: {Stdout}\nStderr: {Stderr}",
                     exitCode, emulatorPath, arguments, stdout, stderr);
                 return;
         }
@@ -1540,15 +1542,16 @@ public class LauncherService : ILauncherService
             {
                 Log.Debug("MAME ROM set error detected");
                 Log.Information("MAME ROM set error.\n" +
-                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                            "Stdout: {Stdout}\nStderr: {Stderr}",
+                                "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                                "Stdout: {Stdout}\nStderr: {Stderr}",
                     exitCode, emulatorPath, arguments, stdout, stderr);
 
                 if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
                 {
                     await _messageBox.MameRomSetErrorMessageBoxAsync();
                     await _messageBox.WouldYouLikeToOpenTheLogMessageBoxAsync(LogFilePath());
-                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager,
+                        loadingStateProvider);
                 }
 
                 return;
@@ -1570,8 +1573,9 @@ public class LauncherService : ILauncherService
                     Log.Information("[MAME Parameter Hint] {Hint}", mameDiagnosis);
 
                 Log.Information("MAME Unknown system error.\n" +
-                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                            "Stdout: {Stdout}\nStderr: {Stderr}", exitCode, emulatorPath, arguments, stdout, stderr);
+                                "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                                "Stdout: {Stdout}\nStderr: {Stderr}", exitCode, emulatorPath, arguments, stdout,
+                    stderr);
 
                 if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
                 {
@@ -1592,15 +1596,16 @@ public class LauncherService : ILauncherService
             {
                 Log.Debug("MAME Unable to load image error detected");
                 Log.Information("MAME Unable to load image error.\n" +
-                            "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
-                            "Stdout: {Stdout}\nStderr: {Stderr}",
+                                "Exit code: {ExitCode}, Emulator: {EmulatorPath}, Parameters: {Arguments}\n" +
+                                "Stdout: {Stdout}\nStderr: {Stderr}",
                     exitCode, emulatorPath, arguments, stdout, stderr);
 
                 if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
                 {
                     await _messageBox.MameUnableToLoadImageMessageBoxAsync();
                     await _messageBox.WouldYouLikeToOpenTheLogMessageBoxAsync(LogFilePath());
-                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
+                    await _askAiToFixParameters.ExecuteAsync(selectedSystemManager, selectedEmulatorManager,
+                        loadingStateProvider);
                 }
 
                 return;
@@ -1621,7 +1626,7 @@ public class LauncherService : ILauncherService
         }
 
         var isRpcs3 = emulatorName.Contains("rpcs3", StringComparison.OrdinalIgnoreCase) ||
-                        (emulatorLocation ?? "").Contains("rpcs3", StringComparison.OrdinalIgnoreCase);
+                      (emulatorLocation ?? "").Contains("rpcs3", StringComparison.OrdinalIgnoreCase);
 
         // RPCS3 failing to decrypt the game (truncated/corrupt PS3 dump, bug #68231:
         // "SELFDecrypter ... Reached the end of the file"): user-side content issue, not an

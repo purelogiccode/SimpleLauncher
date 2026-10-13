@@ -26,7 +26,8 @@ public class PathHandlingCrossPlatformTests
             Assert.Equal(absolutePath, result);
 
         // Relative paths are never prefixed on any platform.
-        Assert.Equal(Path.Combine("images", "default.png"), PathHelper.GetLongPath(Path.Combine("images", "default.png")));
+        Assert.Equal(Path.Combine("images", "default.png"),
+            PathHelper.GetLongPath(Path.Combine("images", "default.png")));
     }
 
     [Fact]

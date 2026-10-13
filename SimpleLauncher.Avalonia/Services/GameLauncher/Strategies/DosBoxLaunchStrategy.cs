@@ -731,7 +731,8 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
     {
         if (gameFiles.Count == 1)
         {
-            _logger.Debug($"[DosBoxLaunchStrategy] Single game file found in disc image, auto-selecting: {gameFiles[0]}");
+            _logger.Debug(
+                $"[DosBoxLaunchStrategy] Single game file found in disc image, auto-selecting: {gameFiles[0]}");
             return gameFiles[0];
         }
 
@@ -827,7 +828,8 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    _logger.Debug($"[DosBoxLaunchStrategy] Failed to delete converted CHD image file '{file}': {ex.Message}");
+                    _logger.Debug(
+                        $"[DosBoxLaunchStrategy] Failed to delete converted CHD image file '{file}': {ex.Message}");
                 }
             }
 
