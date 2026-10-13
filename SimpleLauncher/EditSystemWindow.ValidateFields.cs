@@ -50,11 +50,13 @@ internal partial class EditSystemWindow
         emulator3LocationText = Emulator3PathTextBox.Text.Trim();
         emulator4LocationText = Emulator4PathTextBox.Text.Trim();
         emulator5LocationText = Emulator5PathTextBox.Text.Trim();
-        emulator1ParametersText = Emulator1ParametersTextBox.Text.Trim();
-        emulator2ParametersText = Emulator2ParametersTextBox.Text.Trim();
-        emulator3ParametersText = Emulator3ParametersTextBox.Text.Trim();
-        emulator4ParametersText = Emulator4ParametersTextBox.Text.Trim();
-        emulator5ParametersText = Emulator5ParametersTextBox.Text.Trim();
+        // Normalize parameters on save: collapse stray line breaks and trim, so an
+        // empty line pasted into the field can never be persisted (bug 67575).
+        emulator1ParametersText = PathHelper.SanitizeParameterString(Emulator1ParametersTextBox.Text);
+        emulator2ParametersText = PathHelper.SanitizeParameterString(Emulator2ParametersTextBox.Text);
+        emulator3ParametersText = PathHelper.SanitizeParameterString(Emulator3ParametersTextBox.Text);
+        emulator4ParametersText = PathHelper.SanitizeParameterString(Emulator4ParametersTextBox.Text);
+        emulator5ParametersText = PathHelper.SanitizeParameterString(Emulator5ParametersTextBox.Text);
     }
 
     // ReSharper disable once UnusedParameter.Local

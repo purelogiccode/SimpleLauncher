@@ -1,6 +1,7 @@
 using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.Services.GameLauncher;
 
@@ -137,7 +138,7 @@ public class AskAiToFixParameters
                         {
                             EmulatorName = emu.EmulatorName,
                             EmulatorLocation = emu.EmulatorLocation,
-                            EmulatorParameters = suggestedParam,
+                            EmulatorParameters = PathHelper.SanitizeParameterString(suggestedParam),
                             ReceiveANotificationOnEmulatorError = emu.ReceiveANotificationOnEmulatorError,
                             ImagePackDownloadLink = emu.ImagePackDownloadLink,
                             ImagePackDownloadLink2 = emu.ImagePackDownloadLink2,

@@ -82,6 +82,19 @@ public static partial class PathHelper
     }
 
     /// <summary>
+    ///     Normalizes a raw Emulator Parameters string before it is persisted: stray line
+    ///     breaks (bug 67575, an empty line pasted into the field) collapse to spaces and
+    ///     the result is trimmed, so an empty line can never reach the command line.
+    /// </summary>
+    /// <param name="parameters">The raw parameter string from the UI or the AI suggestion.</param>
+    /// <returns>A single-line, trimmed parameter string.</returns>
+    public static string SanitizeParameterString(string? parameters)
+    {
+        if (string.IsNullOrWhiteSpace(parameters)) return "";
+        return parameters.Replace('\r', ' ').Replace('\n', ' ').Trim();
+    }
+
+    /// <summary>
     ///     Determines whether the given text contains any game-specific placeholder tokens such as %GAME% or %ROMNAME%.
     /// </summary>
     /// <param name="text">The text to inspect.</param>

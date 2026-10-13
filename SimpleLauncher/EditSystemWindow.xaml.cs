@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.FileCopy;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
@@ -946,7 +947,8 @@ internal partial class EditSystemWindow : ILoadingState
                 if (applyResult)
                 {
                     var textBox = FindParametersTextBox(emulatorName);
-                    textBox?.Text = suggestedParam;
+                    if (textBox != null)
+                        textBox.Text = PathHelper.SanitizeParameterString(suggestedParam);
                 }
             }
             else
