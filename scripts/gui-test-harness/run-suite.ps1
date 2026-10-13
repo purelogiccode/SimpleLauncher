@@ -164,7 +164,7 @@ Then report the button appearances and any mismatch. Be brief.
     },
     @{
         Id      = 'MENU-00'
-        Name    = 'Main window renders; menu bar has no Windows-only Tools'
+        Name    = 'Main window renders; Tools menu shows the three cross-platform studios'
         Fixture = 'seeded'
         Py      = $pyCommon + @'
     n.close_welcome(); n.press("Escape"); n.close_dialogs(); n.activate_window(); n.maximize_window()
@@ -176,19 +176,25 @@ Then report the button appearances and any mismatch. Be brief.
         if e.extents and ext and e.extents[1] < ext[1] + 40 and e.name:
             tops[e.name] = e.extents[0]
     got = [k for k, _ in sorted(tops.items(), key=lambda kv: kv[1])]
-    expected = ["Options", "Edit System", "Select Window", "Donate", "About"]
+    expected = ["Options", "Edit System", "Select Window", "Tools", "Donate", "About"]
     checks["menu_exact"] = got == expected
-    checks["no_tools_menu"] = "Tools" not in tops
+    # Linux ships only the three cross-platform studios; every other tool entry
+    # is hidden (commit bff12568, docs/11-bundled-tools.md). The popup stays open
+    # so the screenshot shows the three entries to the vision check.
+    n.open_menu("Tools")
+    items = sorted({e.name for e in n.popup_items() if e.name})
+    checks["tools_menu_linux_set"] = items == ["CHDStudio", "RVZStudio", "XISOStudio"]
+    extra["tools_items"] = items
     extra["menu"] = got
 '@ + $pyTail
-        Shot    = 'MENU-00-main'
+        Shot    = 'MENU-00-tools'
         Prompt  = @'
-This is the main window of Simple Launcher (Avalonia build) on Linux Mint.
+This is the main window of Simple Launcher (Avalonia build) on Linux Mint, with the "Tools" menu opened.
 Expected:
 - The main window is rendered (no blank/garbled areas).
 - Window title is "Simple Launcher".
-- The menu bar contains exactly these top-level items: Options, Edit System, Select Window, Donate, About.
-- There is NO "Tools" menu (Tools is Windows-only and must be hidden on Linux).
+- The menu bar contains exactly these top-level items: Options, Edit System, Select Window, Tools, Donate, About.
+- The opened "Tools" popup lists exactly these entries: XISOStudio, CHDStudio, RVZStudio. (Linux ships only these three cross-platform studios; every other tool entry is Windows-only and hidden.)
 First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
 Then list any mismatches briefly.
 '@

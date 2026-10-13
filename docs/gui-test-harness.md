@@ -431,20 +431,18 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 
 ## 13. Coverage map (what is automated vs manual)
 
-Automated by the 33 scenarios (**33/33 PASS in a single run, 2026-09-27**,
-`reports\run-20260927-232933.md`, on the payload built from HEAD `9f684574` including the
-BUG-07..BUG-15 fixes; the previous 31/31 run was 2026-09-26, `reports\run-20260926-143336.md`; WPF
-suite 2122/2122 and Avalonia suite 696/696 on the current tree, 2026-09-28). **The 33/33 report
-predates the 2026-09-28 fixes (BUG-16..19: dialog ownership, card overlay buttons, button-size
-slider sync, background sound playback), so the full suite needs a fresh run on the rebuilt
-payload** - see the resume pointer below):
+Automated by the 33 scenarios (**33/33 PASS in a single run, 2026-10-13**,
+`reports\run-20261013-143750.md`, on the payload built from HEAD `5e4f4230` — the 5.8.0 release tree;
+WPF 2182/2182, Avalonia 701/701 and the slow suites 83/83 + 11/11 on the same tree. Earlier: 33/33 on
+2026-09-27, `reports\run-20260927-232933.md`, payload `9f684574`; 31/31 on 2026-09-26,
+`reports\run-20260926-143336.md`):
 startup/load, system selection, grid/list rendering, covers, filter bar, search + empty state,
 view-mode menu checkmarks, theme menu + persistence, Edit System window/help pane, Easy Mode
 selection state, fuzzy threshold, dead-zone, Edit Links, Sound Configuration, About/Update History,
 Support validation, Favorites add/remove, Play History, ZIP extraction + temp cleanup, file watcher,
 Debug window + live log lines, ROM History message, Broken System error dialog, menu structure
-(Windows-only items hidden), real-MAME machine descriptions + sort toggle (MAME-01) and a real
-`history.dat` entry (MAME-02).
+(the Linux Options set; Tools shows only the three cross-platform studios), real-MAME machine
+descriptions + sort toggle (MAME-01) and a real `history.dat` entry (MAME-02).
 
 Manual/integration by design: store scanners, config injection (Windows-only), RetroAchievements
 login/hashing, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius,
@@ -483,14 +481,15 @@ and the DOSBox file picker exercised — see `ManualTests.md` and §15). BUG-13.
 fixed. Update `docs/manual-tests.md` checkboxes only for items the suite actually verified.
 
 **To resume this work later, follow `ManualTests.md` → "Resume checklist (next session)"**: it lists
-the VM/app state left behind (developer was manually testing on the **Atari 2600** system, 776 ROMs
-mounted from the host share; all standalone emulators + BIOS/keys installed), the console/screensaver
-recovery steps, how to rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised
-manual items and the **full 33-scenario pass on the rebuilt payload** - the BUG-16..19 fixes changed
-`SimpleLauncher.Avalonia.dll`/`SimpleLauncher.Core.dll` after the 33/33 report) and the working-tree
-state (clean, everything committed and pushed through `04836cbd`). The deployed payload is
-`SimpleLauncher.Core.dll` md5 `2d7eff75dee0bc6be36ecbf3af976135` +
-`SimpleLauncher.Avalonia.dll` md5 `ac3b2f7961b44fa197d930df4d4bf824`.
+the VM/app state left behind (the 2026-10-13 suite ran last, leaving the app on the arcade fixture;
+all standalone emulators + BIOS/keys installed), the console/screensaver recovery steps, how to
+rebuild+deploy the Avalonia payload, the remaining work (the still-unexercised manual items in
+`ManualTests.md` §6) and the working-tree state. The 2026-10-13 full pass was **33/33** on the
+payload built from `5e4f4230` (`reports\run-20261013-143750.md`): `SimpleLauncher.Core.dll` md5
+`b908e1e60c0ac28da56d7f97ca7cd903` + `SimpleLauncher.Avalonia.dll` md5
+`9405a3544d59d95d2be57d073a15d2a6`. MENU-00 now asserts the intentional Linux Tools menu
+(XISOStudio/CHDStudio/RVZStudio only, commit `bff12568`) and keeps the popup open for the vision
+check.
 
 ---
 

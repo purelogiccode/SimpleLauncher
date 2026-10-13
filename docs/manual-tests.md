@@ -32,16 +32,18 @@ zip execute bits, BUG-05 `.tar.xz` support and BUG-06 solid-7z extraction perfor
 → "Easy Mode real-install session" and "Easy Mode emulator/core install sweep".
 
 The automated AT-SPI/vision suite (`scripts\gui-test-harness\`) also ran the full Linux checklist on this VM:
-**33/33 scenarios PASS in a single run** (2026-09-27, `reports\run-20260927-232933.md`) on the payload built from
-HEAD `9f684574` (including the BUG-07..BUG-15 fixes); the same session live-verified BUG-14 (a failing `.bat`
-exits at `Information`, no `error_user*.log` entry) and BUG-15 (DOSBox picker items now expose real file names).
-The 2026-09-26 run (31/31, `reports\run-20260926-143336.md`) and the Easy Mode edge-case session that surfaced
-BUG-07/BUG-08 are documented in `ManualTests.md` §6 and §8; the WPF suite passed 2122/2122 and the Avalonia
-suite 696/696 on the current tree (2026-09-28). That day fixed four user-reported Avalonia issues: BUG-16
-(message dialogs now owned by the active window), BUG-17 (card overlay buttons follow the Options menu
-settings), BUG-18 (card-size slider/menu/zoom sync on the 50-px options) and BUG-19 (sound playback moved off
-the UI thread after a rapid-click freeze). A **fresh full 33-scenario pass is pending on the rebuilt payload**
-(the 33/33 report predates these fixes); see `ManualTests.md` → "Resume checklist (next session)".
+**33/33 scenarios PASS in a single run** (2026-10-13, `reports\run-20261013-143750.md`) on the payload built from
+HEAD `5e4f4230` (the 5.8.0 release tree, including BUG-16..19 and the post-`f03d3c21` fixes; MENU-00 was updated
+in the same session for the intentional Tools-menu change from `bff12568` — Linux shows only XISOStudio, CHDStudio
+and RVZStudio). Earlier runs: 33/33 on 2026-09-27 (`reports\run-20260927-232933.md`, payload `9f684574`, including
+the BUG-07..BUG-15 fixes; that session live-verified BUG-14 — a failing `.bat` exits at `Information`, no
+`error_user*.log` entry — and BUG-15 — DOSBox picker items expose real file names) and 31/31 on 2026-09-26
+(`reports\run-20260926-143336.md`); the Easy Mode edge-case session that surfaced BUG-07/BUG-08 is documented in
+`ManualTests.md` §6 and §8. On the same 2026-10-13 tree the WPF suite passed 2182/2182, the Avalonia suite
+701/701, and the slow suites 83/83 (WPF) and 11/11 (Avalonia); BUG-16 (message dialogs owned by the active
+window), BUG-17 (card overlay buttons follow the Options menu settings), BUG-18 (card-size slider/menu/zoom sync
+on the 50-px options) and BUG-19 (sound playback moved off the UI thread after a rapid-click freeze) are all
+covered by this pass.
 
 ---
 
@@ -62,7 +64,7 @@ the UI thread after a rapid-click freeze). A **fresh full 33-scenario pass is pe
 - [X] **Language menu** (`LanguageMenuService`) — switch language → notification sound, status "Changing language...", app restarts into that language; checkmark shows current language.
 - [X] **View/Display menu options** — change thumbnail size, games-per-page, show-games, aspect ratio, filename display, font sizes, view mode → the grid re-renders accordingly; restart → checkmarks restored from settings. (Verified 2026-09-26 on Linux Mint 22.3: Set Button Size 300->500 px, Aspect Ratio Square->Taller, Games Per Page and Show Games updated the checkmarks and `settings.dat`, and survived a restart; "Display Clean Up Filenames" stripped annotations (vision). The font-size submenus were not changed. 2026-09-28: the card-size slider was wired to the same path as the menu - it now snaps to the 50-px Button Size options, persists, and keeps the menu check mark and slider handle in sync (**BUG-18**); the nav zoom buttons/Ctrl+wheel do the same. Unit-tested; manual re-check pending.)
 - [ ] **Menu actions** (`MenuActionHandlerService`) — every menu item opens the right window / performs the right action with status-bar feedback: Easy/Expert mode, Download Image Pack, Scan for store games, Edit links, Gamepad toggle, Dead zone, fuzzy matching toggle/threshold, annotation stripping, Support, Donate. Rapid clicking → no double handling.
-- [X] **Platform-specific menus & data (Avalonia)** — on Windows the Tools menu (11 bundled tools), Options → Inject Emulator Config (21 emulators) and Edit System → "Scan for Microsoft Windows games" are present; on Linux/macOS all three are hidden (Windows executables / registry-based features) and the first-run flow skips the "Scanning for Windows games..." overlay. About → Open AppData Path opens the folder that actually holds `settings.dat`: `%LocalAppData%\SimpleLauncher` on Windows, `~/.local/share/SimpleLauncher` (XDG) on Linux/macOS, where `settings.dat` (+ `-wal`/`-shm`), logs, window bounds and legacy `.bak` files live.
+- [X] **Platform-specific menus & data (Avalonia)** — on Windows the Tools menu (11 bundled tools), Options → Inject Emulator Config (21 emulators) and Edit System → "Scan for Microsoft Windows games" are present; on Linux/macOS the Tools menu keeps only the three cross-platform studios (XISOStudio, CHDStudio, RVZStudio — Windows-only entries hidden, commit `bff12568`) while Options → Inject Emulator Config and Edit System → "Scan for Microsoft Windows games" are hidden (Windows executables / registry-based features) and the first-run flow skips the "Scanning for Windows games..." overlay (Tools-menu contents verified by MENU-00, 2026-10-13). About → Open AppData Path opens the folder that actually holds `settings.dat`: `%LocalAppData%\SimpleLauncher` on Windows, `~/.local/share/SimpleLauncher` (XDG) on Linux/macOS, where `settings.dat` (+ `-wal`/`-shm`), logs, window bounds and legacy `.bak` files live.
 - [X] **Filter bar** (`FilterMenu`) — A–Z / # / All letters filter the game list with button highlight; "All" resets; keyboard arrows/Home/End navigate the letter buttons; notification sound on click.
 - [X] **Status bar** — actions (sorting, launching, saving) show status text that auto-clears after the timeout.
 - [X] **Gamepad navigation** — see section 10.

@@ -877,14 +877,35 @@ Verified the new Linux CHD mounting path on the VM (payload built from the CHDMo
   removes the directory. Re-verified after redeploying the fixed `SimpleLauncher.Core.dll`
   (`mount-count=0`, mount-point directory gone).
 
+### Full-suite release verification (2026-10-13)
+
+Release gate for 5.8.0: local slow suites green (`SimpleLauncher.SlowTests` **83/83** - the first run
+had one transient failure, a live GitHub HTTP 500 for the DuckStation arm64 asset in
+`UrlValidationTests`, green on the immediate unfiltered re-run; `SimpleLauncher.Avalonia.SlowTests`
+**11/11**), then the Avalonia payload rebuilt from HEAD `5e4f4230` and redeployed to the guest
+(`SimpleLauncher.Core.dll` md5 `b908e1e60c0ac28da56d7f97ca7cd903`, `SimpleLauncher.Avalonia.dll` md5
+`9405a3544d59d95d2be57d073a15d2a6`) and the **full suite re-run: 33/33 PASS**
+(`reports\run-20261013-143750.md`; previous full pass was 33/33 on 2026-09-27, `9f684574`).
+
+- **MENU-00 updated** - the scenario still expected no `Tools` menu on Linux; since `bff12568`
+  (XISOStudio/CHDStudio/RVZStudio Linux payloads) the menu is intentionally visible with only those
+  three entries (`docs/11-bundled-tools.md`). The scenario now asserts the exact Linux menu set
+  (`Options, Edit System, Select Window, Tools, Donate, About`) plus the three studio popup entries,
+  and keeps the popup open so the vision check sees them; green in the final pass.
+- Known environment flakes recovered automatically (two "AT-SPI tree not ready" restarts before
+  MENU-00 in the -Only re-check; none in the final run).
+
 ### Open items for the next session
 
-1. **Full pass - DONE 2026-09-27**: `reports\run-20260927-232933.md` **33/33 PASS in a single run** on the
-   payload built from HEAD (`9f684574`, BUG-07..BUG-15 fixes); the previous 31/31 run was 2026-09-26
-   (`reports\run-20260926-143336.md`). Keep this runbook and `docs/manual-tests.md` in sync after any app change.
-2. **WPF suite re-run - DONE 2026-09-26**: `dotnet test SimpleLauncher.Tests\SimpleLauncher.Tests.csproj`
-   **2122/2122 pass, 0 failures** (the 19 environment-only failures from the previous run did not
-   reproduce); Avalonia suite `SimpleLauncher.Avalonia.Tests` **677/677 pass**.
+1. **Full pass - DONE 2026-10-13**: `reports\run-20261013-143750.md` **33/33 PASS in a single run**
+   on the 5.8.0 payload (`5e4f4230`); the previous full passes were 33/33 on 2026-09-27
+   (`reports\run-20260927-232933.md`, `9f684574`, BUG-07..BUG-15 fixes) and 31/31 on 2026-09-26
+   (`reports\run-20260926-143336.md`). Keep this runbook and `docs/manual-tests.md` in sync after any
+   app change.
+2. **Suites re-run - DONE 2026-10-13**: `dotnet test SimpleLauncher.Tests` **2182/2182** and
+   `SimpleLauncher.Avalonia.Tests` **701/701**, plus the slow suites **83/83** (WPF) and **11/11**
+   (Avalonia) before the release; Release build 0 warnings / 0 errors (the 2026-09-26 run was
+   2122/2122 WPF, 677/677 Avalonia).
 3. **AT-SPI registration flakiness (environment)**: after a rapid app restart the app occasionally
    fails to register with the a11y bus (empty tree while the window still renders). It occurred twice
    this session (THEME-02's restart in the first full pass, and the empty->seeded fixture change during
@@ -924,6 +945,17 @@ Verified the new Linux CHD mounting path on the VM (payload built from the CHDMo
    quits; restored file -> healthy). See the MAME session section and §8 for details.
 
 ### Resume checklist (next session)
+
+**Guest state after the 2026-10-13 release-verification session** (supersedes all blocks below):
+
+- App payload rebuilt from `5e4f4230` and deployed with a full `tar` extract over `~/SimpleLauncher`
+  (`SimpleLauncher.Core.dll` md5 `b908e1e60c0ac28da56d7f97ca7cd903`,
+  `SimpleLauncher.Avalonia.dll` md5 `9405a3544d59d95d2be57d073a15d2a6`); bundled Linux tools were
+  `chmod +x`-ed after the extract. The upload tar was removed from the guest.
+- **Full suite green 33/33** (`scripts\gui-test-harness\reports\run-20261013-143750.md`); the app is
+  left running with the last scenario's `arcade` fixture (MAME-02). MENU-00 was updated for the
+  Linux Tools menu (XISOStudio/CHDStudio/RVZStudio only) - see the session section above.
+- Host publish tree kept at `D:\payload\linux-x64-20261013` if a re-deploy is needed.
 
 **Guest state after the 2026-10-12 CHDMounter session** (supersedes the 2026-09-28 block below):
 
@@ -1018,12 +1050,9 @@ Verified the new Linux CHD mounting path on the VM (payload built from the CHDMo
    `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
-6. **Next work (where the 2026-09-28 session stopped):** the developer was manually testing the four
-   fixes from the third session (BUG-16 dialog ownership, BUG-17 overlay buttons, BUG-18 slider/menu
-   sync, BUG-19 audio freeze) on the running app. Resume by continuing that manual pass, then:
-   - **Re-run the full 33-scenario suite on the new payload** - the last full pass
-     (`reports\run-20260927-232933.md`, 33/33) was on `9f684574`; `SimpleLauncher.Avalonia.dll` and
-     `SimpleLauncher.Core.dll` have changed since (BUG-16..19), so a fresh report is required.
+6. **Next work:** the manual pass of the BUG-16..19 fixes and the **full 33-scenario suite re-run**
+   are DONE (33/33 on 2026-10-13, `reports\run-20261013-143750.md`, payload `5e4f4230`). What remains
+   for future sessions:
    - Candidate new scenarios: the card overlay buttons (AT-SPI exposes them as push buttons named
      `View Achievements`/`View Video`/`View Info`) and the button-size slider/menu sync.
    - The freeze repro is reusable: 300 `xdotool` clicks @15 ms on the nav aspect-ratio button, then
@@ -1041,18 +1070,18 @@ Verified the new Linux CHD mounting path on the VM (payload built from the CHDMo
    `reports\run-*.md` first (deterministic JSON + vision answer).
 8. Keep this section (and the AGENTS.md pointer) updated after every session; attach the report path
    and the coverage delta against `docs/manual-tests.md`.
-9. **Working tree at session end (2026-09-28):** **clean, everything committed and pushed** through
-   `04836cbd` on `origin/master`:
+9. **Working tree at session end (2026-10-13):** clean, everything committed and pushed on
+   `origin/master`; the release gate for 5.8.0 (slow suites + full 33/33 GUI pass on `5e4f4230`) is
+   green, the release workflow dispatches from the latest `master`. The 2026-09-28 state is kept for
+   history:
    - `c263dcc9` dialog owner fix (BUG-16), `2c933066` card overlay buttons + button-size sync
      (BUG-17/18), `4115bffe` background audio thread (BUG-19) + regression test, `73d589e7` +
      `a5a9b3e9` docs (full-suite pass, EASY-02 rewrite, BUG-16..19, resume state), `9b601eba` +
      `04836cbd` the dead-`async` Button Size handler fix + test comment. Earlier: BUG-07..15 in
      `aa87e469`..`a22d4d32` and the emulator fixtures in `b9f9d157`, `d1818050`, docs through
      `9f684574`.
-   - `dotnet test` green: Avalonia **696/696**, WPF **2122/2122** (2026-09-28, Windows host).
-   - No pending source changes. The **guest payload is one behavior-neutral commit behind** (the
-     dead-`async` Button Size handler fix); rebuild+deploy per step 5 if a byte-exact match is wanted
-     before the next full-suite run.
+   - `dotnet test` at the time: Avalonia **696/696**, WPF **2122/2122** (2026-09-28); the 2026-10-13
+     state is Avalonia **701/701**, WPF **2182/2182** and the slow suites 83/83 + 11/11.
    - `AGENTS.md` is gitignored (local-only, updated with the resume state); everything tracked is
      committed - nothing to commit before starting the next session.
 
