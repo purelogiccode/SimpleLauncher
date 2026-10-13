@@ -63,7 +63,7 @@ pwsh scripts/package-release.ps1 -Version 5.8.0
 - Both apps are published **framework-dependent** (the **.NET 10 Desktop Runtime** is required on the target machine), so the payload carries no runtime: each is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
 - Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing.
 - Merges the two publish outputs and fails loudly when a shared file has different content (for example `appsettings.json` drift); `AppSettingsFilesAreIdentical` guards the two appsettings sources in the test suite.
-- Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `RetroAchievementsSharp` and `7zz` binaries) and packages `Updater.exe` alone into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate).
+- Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` alone into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID tools (`FindRomCover`, `RetroAchievementsSharp`, `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target `win-{x64,arm64}` subfolder.
 - Prunes debug symbol files (`*.pdb`) — never needed at runtime; the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
 
 ### Linux release packaging script
@@ -82,9 +82,10 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
   `SimpleLauncher.Avalonia` binary with only the native libraries beside it, mirroring the
   Windows exes); the standalone `Updater` is a self-contained
   single file so it can run without a runtime too.
-- Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`,
-  `tools/FindRomCover/**`, the other architecture's `RetroAchievementsSharp` and `7zz`);
-  the matching `7zz` stays as the 7-Zip extraction fallback.
+- Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`, the other
+  architecture's `7zz`); the per-RID tools (`FindRomCover`, `RetroAchievementsSharp`,
+  `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target
+  `linux-{x64,arm64}` subfolder; the matching `7zz` stays as the 7-Zip extraction fallback.
 - ZIP files written on Windows cannot carry Unix permission bits through `unzip`, so the
   script stamps the entries' external attributes (0755 for `SimpleLauncher.Avalonia`,
   `Updater`, `RetroAchievementsSharp` and `7zz`, 0644 otherwise) and patches the entries'

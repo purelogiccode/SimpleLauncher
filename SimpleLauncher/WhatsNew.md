@@ -35,11 +35,11 @@
 ## Linux Support (Avalonia) — Beta
 - **Beta** — Linux support is in beta: it was tested end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE (GUI smoke-tested on Wayland); the ARM64 bundle is structurally verified only. Please report issues on GitHub.
 - **Native Linux builds** — The Avalonia app now ships self-contained single-file bundles for `linux-x64` and `linux-arm64` (one `SimpleLauncher.Avalonia` binary plus its native libraries, like the Windows exes; `release_{version}_linux-*.zip` plus `updater_linux-*.zip`); the release workflow publishes them next to the Windows bundles and the in-app updater resolves the Linux assets.
-- **No Dokan needed on Linux** — ZIP/7z/RAR games extract to a temp folder on launch, CHD images are converted on the fly with the managed CHDSharp library and mounted natively in DOSBox (`imgmount`), and DOSBox ISO games use the same native mount instead of the Windows PowerShell path.
+- **No Dokan needed on Linux** — Archive launches (ZIP/7z/RAR) mount through the bundled SimpleZipDrive FUSE build and Xbox images (`.iso`/`.xiso`/`.cso`/`.chd`/`.zar`) through the bundled SimpleXisoDrive FUSE build (with the virtual `image.iso` for xemu); the temp-extraction and managed CHDSharp conversion paths remain automatic fallbacks when FUSE or the payload is unavailable. DOSBox ISO games use the native `imgmount` instead of the Windows PowerShell path.
 - **Native Linux behavior** — App data lives in the XDG folder (`~/.local/share/SimpleLauncher`), Commander Genius uses `~/.CommanderGenius`, paths are handled POSIX-style with case-sensitive matching, and the extension-less bundled 7-Zip fallback (`7zz`) runs correctly. SDL2 gamepad navigation is supported.
 - **Sound works out of the box** — MP3/WAV UI sounds decode through managed decoders (NLayer + NAudio), so no extra packages are required; FLAC/Ogg/Opus use the system `libsndfile`. Missing audio libraries/devices are logged as information instead of being reported as bugs.
 - **Platform-aware pickers and checks** — The emulator pickers no longer hide extension-less Linux binaries, `.AppImage`/`.sh`/`.run` files are accepted, and file dialogs attach to the active window (Wayland).
-- **Windows-only features are hidden on Linux/macOS** — Store scanning, Dokan mounting, Take Screenshot, the RetroAchievements emulator-configuration section and the Windows-only Tools menu entries.
+- **Windows-only features are hidden on Linux/macOS** — Store scanning, Dokan mounting, Take Screenshot, the RetroAchievements emulator-configuration section and the Windows-only Tools menu entries (Linux keeps XISOStudio, CHDStudio, RVZStudio and FindRomCover).
 - **23 Linux port findings fixed (LB-01…LB-23)** — Case-insensitive ROM/EXE discovery after extraction, backslash archive entry names, execute bits for bundled tools, CHD temp-file cleanup, mount platform guards, updater Zip-Slip comparison, platform-neutral dialog wording, defensive scan-handler gating, and Information-level logging when a release ships no update assets for the current platform.
 
 ## Avalonia Fixes
@@ -55,7 +55,7 @@
 
 ## Tooling
 - **PBPSharp** — Replaced the vendored library with the NuGet package **1.1.1**.
-- **Bundled tools** — SimpleZipDrive updated to **3.0.1** (x64 and ARM64); refreshed the default game image.
+- **Bundled tools** — SimpleZipDrive updated to **3.1.1** (Windows + Linux, x64 and ARM64); refreshed the default game image.
 - **Dependencies** — Meziantou.Analyzer **3.0.264**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**, NLayer **3.0.0** + NLayer.NAudioSupport **3.0.0** (managed MP3 decoding on Linux/macOS).
 - **Zero analyzer warnings** across all projects; both test suites pass.
 
@@ -65,6 +65,10 @@
 - **RVZStudio replaces the RVZ batch tool** — The GameCube/Wii conversion entry now launches RVZStudio with `DolphinTool` bundled beside it under `tools\RVZStudio\<arch>\`.
 - **CHDMounter goes cross-platform** — One payload per OS/architecture; on Linux CHD images mount through FUSE with a clean unmount (SIGTERM, `fusermount3`/`umount` fallback) and the managed CHDSharp conversion as the automatic fallback.
 - **SimpleXisoDrive** — Mounts `cso`/`zar` Xbox images for xemu by generating the `image.iso` the emulator expects.
+- **Linux FUSE mounts for archives and Xbox images** — SimpleZipDrive **3.1.1** and SimpleXisoDrive **1.5.0** now ship Linux (x64/ARM64) builds: ZIP/7Z/RAR launches (RPCS3/ScummVM/XBLA) mount through FUSE instead of extracting to temp, and Xbox images (`.iso`/`.xiso`/`.cso`/`.chd`/`.zar`) mount through SimpleXisoDrive — including Xbox ISO CHD images via on-demand hunk decompression — for xemu/Cxbx-Reloaded; the extraction/conversion paths stay as automatic fallbacks.
+- **FindRomCover 3.3.0 goes cross-platform** — It now ships Linux (x64/ARM64) payloads and appears in the Linux Tools menu.
+- **RetroAchievementsSharp 1.0.0** — The CLI ships per OS/architecture as `RetroAchievementsSharp.Cli` (`.exe` on Windows) and is resolved from `tools\RetroAchievementsSharp\<rid>\`.
+- **Per-RID tool payloads** — FindRomCover, RetroAchievementsSharp, SimpleXisoDrive and SimpleZipDrive now use the same one-folder-per-OS/architecture layout as the studios; both packaging scripts keep only the target RID and the Linux package marks the tool binaries executable.
 - **Release packaging** — The Windows and Linux packaging scripts keep only the running platform's tool payloads; the Linux ZIP marks bundled tools executable.
 
 ## Update & Download Reliability

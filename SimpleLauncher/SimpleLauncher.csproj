@@ -462,9 +462,6 @@
         <None Update="tools\RomValidator\RomValidator.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\SimpleZipDrive\SimpleZipDrive.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\BatchConvertToCompressedFile\BatchConvertToCompressedFile_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -483,9 +480,6 @@
         <None Update="tools\RomValidator\RomValidator_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\SimpleZipDrive\SimpleZipDrive_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="RetroAchievements.dat">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -502,12 +496,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\RomValidator\7z_x64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleXisoDrive\SimpleXisoDrive.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleXisoDrive\SimpleXisoDrive_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Services\EasyMode\Samples\easymode_arm64.xml">
@@ -645,109 +633,19 @@
         <None Update="history.dat">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\x64\FindRomCover.exe">
+        <None Update="tools\FindRomCover\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\x64\Magick.Native-Q16-x64.dll">
+        <None Update="tools\RetroAchievementsSharp\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\x64\mame.dat">
+        <None Update="tools\SimpleXisoDrive\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\x64\Microsoft.Web.WebView2.Core.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\Microsoft.Web.WebView2.WinForms.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\Microsoft.Web.WebView2.Wpf.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\WebView2Loader.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\runtimes\win-x64\native\WebView2Loader.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\audio\click.mp3">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\FindRomCover.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\Magick.Native-Q16-arm64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\mame.dat">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\Microsoft.Web.WebView2.Core.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\Microsoft.Web.WebView2.WinForms.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\Microsoft.Web.WebView2.Wpf.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\WebView2Loader.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\runtimes\win-arm64\native\WebView2Loader.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\audio\click.mp3">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleZipDrive\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\LICENSE">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\README.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\RetroAchievementsSharp.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\RetroAchievementsSharp_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\THIRD-PARTY-NOTICES.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\RetroAchievementsSharp">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroAchievementsSharp\RetroAchievementsSharp_arm64">
+        <None Update="tools\SimpleZipDrive\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\Tiger Game.Com.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\arm64\README.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\FindRomCover\x64\README.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleZipDrive\7z.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleZipDrive\7z_arm64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleZipDrive\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\SimpleZipDrive\WhatsNew.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

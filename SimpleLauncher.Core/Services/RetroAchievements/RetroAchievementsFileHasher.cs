@@ -1,25 +1,25 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.ExternalToolLauncher;
 
 namespace SimpleLauncher.Core.Services.RetroAchievements;
 
 /// <summary>
 ///     Calculates RetroAchievements hashes for game files. All hash computation is
 ///     delegated to the bundled RetroAchievementsSharp CLI tool
-///     (<c>tools\RetroAchievementsSharp\RetroAchievementsSharp.exe</c> on x64,
-///     <c>RetroAchievementsSharp_arm64.exe</c> on arm64) — a 1:1 port of the rcheevos
-///     hashing engine that produces the exact same hashes as RAHasher. Single files
-///     use the legacy positional interface; bulk scans use the <c>scan</c> subcommand
-///     with a forced console and JSON manifest output.
+///     (<c>tools\RetroAchievementsSharp\&lt;rid&gt;\RetroAchievementsSharp.Cli</c>, with the
+///     <c>.exe</c> suffix on Windows) — a 1:1 port of the rcheevos hashing engine that
+///     produces the exact same hashes as RAHasher. Single files use the legacy positional
+///     interface; bulk scans use the <c>scan</c> subcommand with a forced console and JSON
+///     manifest output.
 /// </summary>
 public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
 {
     private const string ToolFolderName = "RetroAchievementsSharp";
-    private const string ToolBaseName = "RetroAchievementsSharp";
+    private const string ToolBaseName = "RetroAchievementsSharp.Cli";
 
     /// <summary>Windows command lines are capped at ~32 K characters; stay safely below.</summary>
     private const int MaxBatchCommandLineLength = 30000;
@@ -362,25 +362,18 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
 
     /// <summary>
     ///     Resolves the OS/architecture-appropriate CLI executable under
-    ///     <c>tools\RetroAchievementsSharp</c>, or null when unavailable for this platform.
-    ///     Windows ships <c>RetroAchievementsSharp.exe</c> / <c>_arm64.exe</c>; Linux
-    ///     ships the extension-less <c>RetroAchievementsSharp</c> / <c>_arm64</c>.
+    ///     <c>tools\RetroAchievementsSharp\&lt;rid&gt;</c>, or null when unavailable for this
+    ///     platform. The payload ships one folder per RID (win-x64, win-arm64, linux-x64,
+    ///     linux-arm64); Windows uses <c>RetroAchievementsSharp.Cli.exe</c>, Linux the
+    ///     extension-less <c>RetroAchievementsSharp.Cli</c>.
     /// </summary>
     private static string? GetToolExecutablePath()
     {
-        var architecture = RuntimeInformation.ProcessArchitecture;
-        var suffix = architecture switch
-        {
-            Architecture.X64 => "",
-            Architecture.Arm64 => "_arm64",
-            _ => null
-        };
+        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
+        if (runtimeIdentifier == null) return null;
 
-        if (suffix == null) return null;
-
-        var extension = OperatingSystem.IsWindows() ? ".exe" : "";
         var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", ToolFolderName,
-            $"{ToolBaseName}{suffix}{extension}");
+            runtimeIdentifier, ExternalToolLauncherService.GetPlatformExecutableName(ToolBaseName));
         return File.Exists(path) ? path : null;
     }
 

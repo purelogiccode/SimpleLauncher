@@ -20,12 +20,14 @@ only the native libraries it needs (Skia/HarfBuzz/SQLite) ship beside it. Conten
 (appsettings.json, images, tools, samples) still ship next to the exe, exactly as on
 Windows. Windows-only bundled tools are pruned:
   * tools/**/*.exe and tools/**/*.dll (Windows binaries)
-  * tools/FindRomCover/** (WebView2-based Windows tool)
-  * the other architecture's RetroAchievementsSharp and 7-Zip binaries
-  * the other XISOStudio/CHDStudio/RVZStudio/CHDMounter platform payloads (tools/<tool>/<rid>/ —
-    one payload per OS/architecture ships in the repo; only the matching linux-<arch> folder is kept)
-XISOStudio, CHDStudio, RVZStudio, CHDMounter, RetroAchievementsSharp and 7-Zip ship
-per-architecture extension-less binaries on Linux; the matching ones are kept and marked executable.
+  * the other architecture's 7-Zip binaries
+  * the other platform payloads of tools/<tool>/<rid>/ for XISOStudio, CHDStudio, RVZStudio,
+    CHDMounter, FindRomCover, RetroAchievementsSharp, SimpleXisoDrive and SimpleZipDrive
+    (one payload per OS/architecture ships in the repo; only the matching linux-<arch> folder
+    is kept)
+XISOStudio, CHDStudio, RVZStudio, CHDMounter, FindRomCover, RetroAchievementsSharp,
+SimpleXisoDrive, SimpleZipDrive and 7-Zip ship per-architecture extension-less binaries on
+Linux; the matching ones are kept and marked executable.
 
 ZIP files cannot store Unix permissions reliably when written from Windows, so the
 script writes the permission bits into the ZIP entries' external attributes
@@ -167,26 +169,17 @@ function Remove-WindowsOnlyFiles {
         $relative = [System.IO.Path]::GetRelativePath($PublishDir, $file.FullName).Replace('\', '/')
         $remove = $false
 
-        if ($relative -like 'tools/FindRomCover/*') {
-            $remove = $true
-        }
-        elseif ($relative -like 'tools/*') {
+        if ($relative -like 'tools/*') {
             if ($file.Extension -in @('.exe', '.dll')) {
                 $remove = $true
             }
-            elseif ($relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter)/([^/]+)/') {
+            elseif ($relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter|FindRomCover|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
                 if ($Matches[1] -ne $Rid) { $remove = $true }
             }
-            elseif ($Rid -eq 'linux-x64' -and $relative -in @(
-                'tools/RetroAchievementsSharp/RetroAchievementsSharp_arm64',
-                'tools/SevenZip/7zz_arm64'
-            )) {
+            elseif ($Rid -eq 'linux-x64' -and $relative -eq 'tools/SevenZip/7zz_arm64') {
                 $remove = $true
             }
-            elseif ($Rid -eq 'linux-arm64' -and $relative -in @(
-                'tools/RetroAchievementsSharp/RetroAchievementsSharp',
-                'tools/SevenZip/7zz'
-            )) {
+            elseif ($Rid -eq 'linux-arm64' -and $relative -eq 'tools/SevenZip/7zz') {
                 $remove = $true
             }
         }
@@ -221,26 +214,34 @@ function Test-ExecutableEntry {
     }
 
     if ($Rid -eq 'linux-arm64') {
-        return $RelativePath -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp_arm64' -or
-            $RelativePath -eq 'tools/SevenZip/7zz_arm64' -or
+        return $RelativePath -eq 'tools/SevenZip/7zz_arm64' -or
+            $RelativePath -eq 'tools/FindRomCover/linux-arm64/FindRomCover' -or
+            $RelativePath -eq 'tools/RetroAchievementsSharp/linux-arm64/RetroAchievementsSharp.Cli' -or
             $RelativePath -eq 'tools/XISOStudio/linux-arm64/XISOStudio' -or
             $RelativePath -eq 'tools/XISOStudio/linux-arm64/7zz_linux_arm64' -or
             $RelativePath -eq 'tools/CHDStudio/linux-arm64/CHDStudio' -or
             $RelativePath -eq 'tools/CHDStudio/linux-arm64/7zz' -or
             $RelativePath -eq 'tools/RVZStudio/linux-arm64/RVZStudio' -or
             $RelativePath -eq 'tools/RVZStudio/linux-arm64/7za_arm64' -or
-            $RelativePath -eq 'tools/CHDMounter/linux-arm64/CHDMounter'
+            $RelativePath -eq 'tools/CHDMounter/linux-arm64/CHDMounter' -or
+            $RelativePath -eq 'tools/SimpleXisoDrive/linux-arm64/SimpleXisoDrive' -or
+            $RelativePath -eq 'tools/SimpleZipDrive/linux-arm64/SimpleZipDrive' -or
+            $RelativePath -eq 'tools/SimpleZipDrive/linux-arm64/7zzs'
     }
 
-    return $RelativePath -eq 'tools/RetroAchievementsSharp/RetroAchievementsSharp' -or
-        $RelativePath -eq 'tools/SevenZip/7zz' -or
+    return $RelativePath -eq 'tools/SevenZip/7zz' -or
+        $RelativePath -eq 'tools/FindRomCover/linux-x64/FindRomCover' -or
+        $RelativePath -eq 'tools/RetroAchievementsSharp/linux-x64/RetroAchievementsSharp.Cli' -or
         $RelativePath -eq 'tools/XISOStudio/linux-x64/XISOStudio' -or
         $RelativePath -eq 'tools/XISOStudio/linux-x64/7zz_linux_x64' -or
         $RelativePath -eq 'tools/CHDStudio/linux-x64/CHDStudio' -or
         $RelativePath -eq 'tools/CHDStudio/linux-x64/7zz' -or
         $RelativePath -eq 'tools/RVZStudio/linux-x64/RVZStudio' -or
         $RelativePath -eq 'tools/RVZStudio/linux-x64/7za' -or
-        $RelativePath -eq 'tools/CHDMounter/linux-x64/CHDMounter'
+        $RelativePath -eq 'tools/CHDMounter/linux-x64/CHDMounter' -or
+        $RelativePath -eq 'tools/SimpleXisoDrive/linux-x64/SimpleXisoDrive' -or
+        $RelativePath -eq 'tools/SimpleZipDrive/linux-x64/SimpleZipDrive' -or
+        $RelativePath -eq 'tools/SimpleZipDrive/linux-x64/7zzs'
 }
 
 # unzip only honours the Unix permission bits in a ZIP entry's external attributes when the

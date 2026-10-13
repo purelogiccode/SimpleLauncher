@@ -26,12 +26,13 @@ payloads must be byte-identical (the two appsettings.json sources are kept in sy
 guarded by a unit test); any other content conflict fails the build loudly.
 
 The other architecture's bundled tools are pruned from the payload:
-  win-x64   : drops *_arm64 files and tools/FindRomCover/arm64
-  win-arm64 : drops *_x64 files, tools/FindRomCover/x64, and the unsuffixed
-              executables that have an _arm64 sibling (7z.dll is kept)
-Both RIDs drop the Linux-only extension-less RetroAchievementsSharp and 7-Zip (7zz) binaries.
-tools/XISOStudio, tools/CHDStudio, tools/RVZStudio and tools/CHDMounter ship one payload per
-OS/architecture (win-x64, win-arm64, linux-x64, linux-arm64), so both RIDs keep only the
+  win-x64   : drops *_arm64 files (legacy flat tools)
+  win-arm64 : drops *_x64 files and the unsuffixed executables that have an
+              _arm64 sibling (7z.dll is kept)
+Both RIDs drop the Linux-only extension-less 7-Zip (7zz/7zzs) binaries.
+tools/XISOStudio, tools/CHDStudio, tools/RVZStudio, tools/CHDMounter, tools/FindRomCover,
+tools/RetroAchievementsSharp, tools/SimpleXisoDrive and tools/SimpleZipDrive ship one payload
+per OS/architecture (win-x64, win-arm64, linux-x64, linux-arm64), so both RIDs keep only the
 matching subfolder.
 
 Debug symbol files (*.pdb) are pruned from the payload: they are never needed at runtime
@@ -261,30 +262,23 @@ function Remove-OtherArchitectureFiles {
         $relative = $relativeByFullName[$file.FullName]
         $remove = $false
 
-        if ($Rid -eq 'win-x64') {
-            if ($relative -like '*_arm64*' -or $relative -like 'tools/FindRomCover/arm64/*') {
+        # Tools that ship one payload per OS/architecture (tools\<Tool>\<rid>\) keep only the
+        # subfolder matching the target RID; the suffix rules below do not apply inside them.
+        if ($relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter|FindRomCover|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
+            if ($Matches[1] -ne $Rid) { $remove = $true }
+        }
+        elseif ($Rid -eq 'win-x64') {
+            if ($relative -like '*_arm64*') {
                 $remove = $true
             }
         }
         else {
-            if ($relative -like '*_x64*' -or $relative -like 'tools/FindRomCover/x64/*') {
+            if ($relative -like '*_x64*') {
                 $remove = $true
             }
             elseif ($relative -match '\.exe$' -and $relative -notmatch '_arm64\.exe$') {
                 $sibling = $relative -replace '\.exe$', '_arm64.exe'
                 if ($fileSet.Contains($sibling)) { $remove = $true }
-            }
-        }
-
-        # XISOStudio/CHDStudio/RVZStudio/CHDMounter ship one payload per OS/architecture; keep only this RID's subfolder.
-        if (-not $remove -and $relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter)/([^/]+)/') {
-            if ($Matches[1] -ne $Rid) { $remove = $true }
-        }
-
-        if (-not $remove -and $relative -like 'tools/RetroAchievementsSharp/*') {
-            $leaf = [System.IO.Path]::GetFileName($relative)
-            if ($leaf -eq 'RetroAchievementsSharp' -or $leaf -eq 'RetroAchievementsSharp_arm64') {
-                $remove = $true
             }
         }
 

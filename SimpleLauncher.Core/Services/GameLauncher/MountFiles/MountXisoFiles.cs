@@ -2,12 +2,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 
 /// <summary>
-///     Mounts original Xbox ISO (XISO) images using SimpleXisoDrive.exe and the Dokan filesystem driver.
+///     Mounts original Xbox ISO (XISO) images using the bundled SimpleXisoDrive tool: Dokan on
+///     Windows, FUSE 3 on Linux. SimpleXisoDrive can also mount Xbox ISO images stored as CHD
+///     (on-demand hunk decompression) and compressed CISO/ZArchive images.
 /// </summary>
 public class MountXisoFiles : IMountXisoFiles
 {
@@ -45,13 +48,19 @@ public class MountXisoFiles : IMountXisoFiles
     {
         _logger.Debug($"[MountXisoFiles.MountAsync] Starting to mount ISO: {resolvedIsoFilePath}");
 
-        // SimpleXisoDrive and Dokan are Windows-only and the Linux/macOS release package prunes
-        // the Windows tools; check the platform before the tool path (LB-14).
+        // Windows mounts through Dokan; Linux through FUSE 3 with the bundled SimpleXisoDrive
+        // build. macOS has no payload and reports the platform as unsupported (LB-14).
         if (!OperatingSystem.IsWindows())
         {
-            const string errorMessage = "Mounting XISO is not supported on this platform.";
-            _logger.Debug($"[MountXisoFiles.MountAsync] {errorMessage}");
-            logErrors.Information(errorMessage);
+            if (OperatingSystem.IsLinux() && FuseValidation.IsFuseAvailable())
+            {
+                return await MountXisoFileWithFuseAsync(resolvedIsoFilePath, expectedFileName, extraArguments,
+                    logErrors);
+            }
+
+            const string unsupportedMessage = "Mounting XISO is not supported on this platform.";
+            _logger.Debug($"[MountXisoFiles.MountAsync] {unsupportedMessage}");
+            logErrors.Information(unsupportedMessage);
             await messageBox.DokanDriverNotInstalledMessageBoxAsync();
             return new MountXisoDrive(logErrors, _logger);
         }
@@ -66,6 +75,15 @@ public class MountXisoFiles : IMountXisoFiles
         }
 
         var toolRelativePath = GetToolPath();
+        if (toolRelativePath == null)
+        {
+            var unsupportedMessage = "No SimpleXisoDrive payload exists for this platform/architecture.";
+            _logger.Debug($"[MountXisoFiles.MountAsync] {unsupportedMessage}");
+            logErrors.Information(unsupportedMessage);
+            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
+            return new MountXisoDrive(logErrors, _logger);
+        }
+
         var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(toolRelativePath);
 
         _logger.Debug($"[MountXisoFiles.MountAsync] Path to tool: {resolvedToolPath}");
@@ -170,13 +188,73 @@ public class MountXisoFiles : IMountXisoFiles
         }
     }
 
-    private static string GetToolPath()
+    private static string? GetToolPath()
     {
-        var exeName = RuntimeInformation.OSArchitecture == Architecture.Arm64
-            ? "SimpleXisoDrive_arm64.exe"
-            : "SimpleXisoDrive.exe";
+        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
+        if (runtimeIdentifier == null) return null;
 
-        return Path.Combine("tools", "SimpleXisoDrive", exeName);
+        return Path.Combine("tools", "SimpleXisoDrive", runtimeIdentifier,
+            ExternalToolLauncherService.GetPlatformExecutableName("SimpleXisoDrive"));
+    }
+
+    /// <summary>
+    ///     Linux FUSE path: mounts the image through the bundled SimpleXisoDrive build into a
+    ///     launcher-owned mount-point directory and returns the same disposable drive handle the
+    ///     Windows Dokan path returns. Failures are expected conditions on Linux (no Xbox image,
+    ///     no FUSE support in the tool) and are logged at Information level without dialogs: the
+    ///     strategies that call this either fall back (CHD) or report the failure themselves.
+    ///     The mount point is released by <see cref="MountXisoDrive.DisposeAsync" /> when the
+    ///     emulator exits.
+    /// </summary>
+    private async Task<MountXisoDrive> MountXisoFileWithFuseAsync(string resolvedIsoFilePath,
+        string expectedFileName, string extraArguments, ILogger logErrors)
+    {
+        var toolRelativePath = GetToolPath();
+        if (toolRelativePath == null)
+        {
+            logErrors.Information("No SimpleXisoDrive payload exists for this platform/architecture.");
+            return new MountXisoDrive(logErrors, _logger);
+        }
+
+        var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(toolRelativePath);
+        if (string.IsNullOrWhiteSpace(resolvedToolPath) || !File.Exists(resolvedToolPath))
+        {
+            logErrors.Information($"SimpleXisoDrive not found at {toolRelativePath}. Cannot mount ISO.");
+            return new MountXisoDrive(logErrors, _logger);
+        }
+
+        var mountPoint = FuseMountHelper.CreateMountPoint("xiso-mount-");
+
+        var (mountProcess, started) = FuseMountHelper.StartFuseMountTool(resolvedToolPath,
+            $"\"{resolvedIsoFilePath}\" \"{mountPoint}\"{extraArguments}", "SimpleXisoDrive", logErrors,
+            out var errorOutput);
+
+        if (!started || mountProcess == null)
+        {
+            await FuseMountHelper.ReleaseAsync(null, mountPoint, _logger);
+            return new MountXisoDrive(logErrors, _logger);
+        }
+
+        try
+        {
+            if (!await FuseMountHelper.WaitForFuseMountReadyAsync(mountPoint, expectedFileName, mountProcess,
+                    "SimpleXisoDrive", Path.GetFileName(resolvedIsoFilePath), logErrors, errorOutput))
+            {
+                await FuseMountHelper.ReleaseAsync(mountProcess, mountPoint, _logger);
+                return new MountXisoDrive(logErrors, _logger);
+            }
+
+            var mountedPath = Path.Combine(mountPoint, expectedFileName);
+            _logger.Debug($"[MountXisoFiles.MountXisoFileWithFuseAsync] ISO mounted successfully. Path: {mountedPath}");
+            return new MountXisoDrive(mountProcess, mountedPath, logErrors, _logger);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountXisoFiles.MountXisoFileWithFuseAsync] Exception during mounting: {ex}");
+            logErrors.Information($"Error during ISO mount process for {resolvedIsoFilePath}: {ex.Message}");
+            await FuseMountHelper.ReleaseAsync(mountProcess, mountPoint, _logger);
+            return new MountXisoDrive(logErrors, _logger);
+        }
     }
 
     private char? GetAvailableDriveLetter(ILogger logErrors)

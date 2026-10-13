@@ -3,9 +3,9 @@ namespace SimpleLauncher.Core.Interfaces;
 /// <summary>
 ///     Calculates RetroAchievements hashes for game files. All hash computation is
 ///     delegated to the bundled RetroAchievementsSharp CLI tool
-///     (<c>tools\RetroAchievementsSharp\RetroAchievementsSharp.exe</c>), which is a
-///     1:1 port of the rcheevos hashing engine and produces the exact same hashes
-///     as RAHasher.
+///     (<c>tools\RetroAchievementsSharp\&lt;rid&gt;\RetroAchievementsSharp.Cli</c>, with the
+///     <c>.exe</c> suffix on Windows), which is a 1:1 port of the rcheevos hashing engine
+///     and produces the exact same hashes as RAHasher.
 /// </summary>
 public interface IRetroAchievementsFileHasher
 {

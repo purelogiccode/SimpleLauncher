@@ -10,9 +10,9 @@ namespace SimpleLauncher.Avalonia.SlowTests;
 /// <summary>
 ///     Cross-platform regression tests for the ZIP launch fallback (LB-01): the path-traversal
 ///     validator must not simulate extraction under a Windows-only root, Windows-authored
-///     entries (DIR\FILE.BIN) must keep their directory structure on Unix, and on platforms
-///     without Dokan/SimpleZipDrive archives are extracted to a temp directory instead of
-///     being mounted.
+///     entries (DIR\FILE.BIN) must keep their directory structure on Unix, and on Unix the
+///     archive is mounted through the bundled SimpleZipDrive FUSE build when FUSE is available
+///     (otherwise extracted to a temp directory instead of being mounted).
 /// </summary>
 public class MountZipFilesCrossPlatformTests
 {
@@ -117,12 +117,12 @@ public class MountZipFilesCrossPlatformTests
     }
 
     [Fact]
-    public async Task MountZipFileAndSearchForFileToLoadAsync_OnUnix_ExtractsToTempDirectoryAndLaunchesFoundFile()
+    public async Task MountZipFileAndSearchForFileToLoadAsync_OnUnix_MountsOrExtractsAndLaunchesFoundFile()
     {
         if (OperatingSystem.IsWindows())
         {
-            // The mount path requires SimpleZipDrive/Dokan and is covered by the WPF suite;
-            // the extraction fallback added for LB-01 only runs on Unix.
+            // The Windows mount path requires Dokan and is covered by the WPF suite; this test
+            // exercises the Unix path (FUSE mount when available, extraction fallback otherwise).
             return;
         }
 

@@ -129,8 +129,8 @@ public partial class MainWindow : Window, IPaginationHost
 
         InitializeComponent();
 
-        // Windows ships the full external-tool set. Linux only ships XISOStudio, CHDStudio and
-        // RVZStudio (one payload per OS/architecture each); the other tools are Windows
+        // Windows ships the full external-tool set. Linux ships XISOStudio, CHDStudio, RVZStudio
+        // and FindRomCover (one payload per OS/architecture each); the other tools are Windows
         // executables, so the menu keeps just those entries there. macOS has no bundled payloads,
         // so it stays hidden.
         var isWindows = OperatingSystem.IsWindows();
@@ -138,7 +138,7 @@ public partial class MainWindow : Window, IPaginationHost
         if (!isWindows)
         {
             foreach (var toolItem in ToolsMenuItem.Items.OfType<MenuItem>())
-                toolItem.IsVisible = toolItem.Tag is "XISOStudio" or "CHDStudio" or "RVZStudio";
+                toolItem.IsVisible = toolItem.Tag is "XISOStudio" or "CHDStudio" or "RVZStudio" or "FindRomCover";
         }
 
         // Storefront scanning reads the Windows registry and store databases; it is a
@@ -3115,8 +3115,9 @@ public partial class MainWindow : Window, IPaginationHost
         {
             if (sender is not MenuItem { Tag: string toolTag }) return;
 
-            // XISOStudio, CHDStudio and RVZStudio ship for Windows and Linux; the rest are Windows executables.
-            if (!OperatingSystem.IsWindows() && toolTag is not ("XISOStudio" or "CHDStudio" or "RVZStudio")) return;
+            // XISOStudio, CHDStudio, RVZStudio and FindRomCover ship for Windows and Linux; the rest are Windows executables.
+            if (!OperatingSystem.IsWindows() &&
+                toolTag is not ("XISOStudio" or "CHDStudio" or "RVZStudio" or "FindRomCover")) return;
 
             tool = toolTag;
 

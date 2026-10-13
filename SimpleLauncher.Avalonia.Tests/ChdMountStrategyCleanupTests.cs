@@ -30,6 +30,7 @@ public class ChdMountStrategyCleanupTests
                 TestEnvironment.ConfigurationFromJson("{}"),
                 TestDependencies.MessageBox().Object,
                 new Mock<IMountChdFiles>().Object,
+                new Mock<IMountXisoFiles>().Object,
                 new Mock<IDiscConverter>().Object,
                 TestDependencies.Logger().Object);
 

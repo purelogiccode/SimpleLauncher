@@ -14,7 +14,8 @@ namespace SimpleLauncher.SlowTests;
 public sealed class MountZipFilesIntegrationTests
 {
     private static readonly string SimpleZipDriveExePath = Path.Combine(
-        AppContext.BaseDirectory, "tools", "SimpleZipDrive", GetSimpleZipDriveExecutableName());
+        AppContext.BaseDirectory, "tools", "SimpleZipDrive", GetSimpleZipDriveRuntimeIdentifier(),
+        "SimpleZipDrive.exe");
 
     private static readonly TimeSpan MountTimeout = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
@@ -334,11 +335,11 @@ public sealed class MountZipFilesIntegrationTests
         return null;
     }
 
-    private static string GetSimpleZipDriveExecutableName()
+    private static string GetSimpleZipDriveRuntimeIdentifier()
     {
         return RuntimeInformation.ProcessArchitecture ==
                Architecture.Arm64
-            ? "SimpleZipDrive_arm64.exe"
-            : "SimpleZipDrive.exe";
+            ? "win-arm64"
+            : "win-x64";
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using SharpCompress.Archives;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
@@ -17,8 +18,8 @@ public class MountZipFiles : IMountZipFiles
 {
     private readonly ILogger _logger;
     private readonly string _preferredMountDriveLetterOnly;
-    private readonly string _zipMountExecutableName;
-    private readonly string _zipMountExecutableRelativePath;
+    private readonly string? _zipMountExecutableName;
+    private readonly string? _zipMountExecutableRelativePath;
 
     /// <summary>
     ///     Platform-neutral root used by the path-traversal simulation. A Windows-only root
@@ -39,9 +40,12 @@ public class MountZipFiles : IMountZipFiles
 
         var mountPathFromConfig = configuration.GetValue("ZipMountOptions:MountDriveLetter", "Z:");
 
-        // Determine the correct executable based on architecture
-        _zipMountExecutableName = GetArchitectureSpecificExecutableName();
-        _zipMountExecutableRelativePath = Path.Combine("tools", "SimpleZipDrive", _zipMountExecutableName);
+        // The tool ships one payload per OS/architecture (tools\SimpleZipDrive\<rid>\); the
+        // Windows builds mount through Dokan, the Linux builds through FUSE 3.
+        _zipMountExecutableRelativePath = GetPlatformMountExecutableRelativePath();
+        _zipMountExecutableName = _zipMountExecutableRelativePath == null
+            ? null
+            : Path.GetFileName(_zipMountExecutableRelativePath);
 
         if (string.IsNullOrEmpty(mountPathFromConfig)) mountPathFromConfig = "Z:"; // Fallback
 
@@ -153,10 +157,19 @@ public class MountZipFiles : IMountZipFiles
             return;
         }
 
-        // Dokan and SimpleZipDrive do not exist outside Windows (LB-01): extract the archive
-        // to a temporary directory instead of mounting it and reuse the EBOOT.BIN launch flow.
+        // The Dokan mount is Windows-only. Linux mounts through the bundled SimpleZipDrive FUSE
+        // build when FUSE and the payload are present; elsewhere (macOS, no FUSE, no payload) the
+        // archive is extracted to a temporary directory and the existing launch flow is reused
+        // (LB-01).
         if (!OperatingSystem.IsWindows())
         {
+            if (await TryMountZipWithFuseAndLaunchAsync(resolvedZipFilePath, ZipMountMode.EbootBin,
+                    selectedSystemName, selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
+                    rawEmulatorParameters, windowContext, logPath, gameLauncher, logErrors, messageBox))
+            {
+                return;
+            }
+
             await LaunchEbootFromExtractedArchiveAsync(resolvedZipFilePath, selectedEmulatorName,
                 selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, windowContext, logPath,
                 gameLauncher, logErrors, messageBox);
@@ -461,10 +474,19 @@ public class MountZipFiles : IMountZipFiles
             return;
         }
 
-        // Dokan and SimpleZipDrive do not exist outside Windows (LB-01): extract the archive
-        // to a temporary directory instead of mounting it and reuse the nested-file launch flow.
+        // The Dokan mount is Windows-only. Linux mounts through the bundled SimpleZipDrive FUSE
+        // build when FUSE and the payload are present; elsewhere (macOS, no FUSE, no payload) the
+        // archive is extracted to a temporary directory and the existing launch flow is reused
+        // (LB-01).
         if (!OperatingSystem.IsWindows())
         {
+            if (await TryMountZipWithFuseAndLaunchAsync(resolvedZipFilePath, ZipMountMode.NestedFile,
+                    selectedSystemName, selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
+                    rawEmulatorParameters, windowContext, logPath, gameLauncher, logErrors, messageBox))
+            {
+                return;
+            }
+
             await LaunchNestedFileFromExtractedArchiveAsync(resolvedZipFilePath, selectedEmulatorName,
                 selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, windowContext, logPath,
                 gameLauncher, logErrors, messageBox);
@@ -742,10 +764,19 @@ public class MountZipFiles : IMountZipFiles
             return;
         }
 
-        // Dokan and SimpleZipDrive do not exist outside Windows (LB-01): extract the archive
-        // to a temporary directory instead of mounting it and run ScummVM against that folder.
+        // The Dokan mount is Windows-only. Linux mounts through the bundled SimpleZipDrive FUSE
+        // build when FUSE and the payload are present; elsewhere (macOS, no FUSE, no payload) the
+        // archive is extracted to a temporary directory and the existing launch flow is reused
+        // (LB-01).
         if (!OperatingSystem.IsWindows())
         {
+            if (await TryMountZipWithFuseAndLaunchAsync(resolvedZipFilePath, ZipMountMode.ScummVm,
+                    selectedSystemName, selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
+                    selectedEmulatorParameters, null, logPath, null, logErrors, messageBox))
+            {
+                return;
+            }
+
             await LaunchScummVmFromExtractedArchiveAsync(resolvedZipFilePath, selectedEmulatorName,
                 selectedSystemManager, selectedEmulatorManager, selectedEmulatorParameters, logPath, logErrors,
                 messageBox);
@@ -988,15 +1019,18 @@ public class MountZipFiles : IMountZipFiles
     }
 
     /// <summary>
-    ///     Determines the SimpleZipDrive executable name based on the current process architecture.
-    ///     Only x64/arm64 builds of the Windows tool exist; anything else falls back to the x64
-    ///     name so DI construction stays inert and the tool check reports the problem (LB-14).
+    ///     Gets the bundled SimpleZipDrive payload path for the running OS/architecture (for
+    ///     example tools\SimpleZipDrive\win-x64\SimpleZipDrive.exe or
+    ///     tools/SimpleZipDrive/linux-x64/SimpleZipDrive), or null when no payload is bundled for
+    ///     the platform (macOS, unsupported architectures).
     /// </summary>
-    private static string GetArchitectureSpecificExecutableName()
+    private static string? GetPlatformMountExecutableRelativePath()
     {
-        return RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-            ? "SimpleZipDrive_arm64.exe"
-            : "SimpleZipDrive.exe";
+        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
+        if (runtimeIdentifier == null) return null;
+
+        return Path.Combine("tools", "SimpleZipDrive", runtimeIdentifier,
+            ExternalToolLauncherService.GetPlatformExecutableName("SimpleZipDrive"));
     }
 
     private static string GetExitCodeReason(int exitCode)
@@ -1214,6 +1248,132 @@ public class MountZipFiles : IMountZipFiles
             logErrors.Error(ex, "Error in FindScummVmGamePath");
 
             return mountDriveRootForChecks;
+        }
+    }
+
+    /// <summary>
+    ///     Which downstream launch flow a Linux FUSE ZIP mount should run once the archive is
+    ///     mounted (mirrors the three Windows Dokan-mounted flows).
+    /// </summary>
+    private enum ZipMountMode
+    {
+        EbootBin,
+        NestedFile,
+        ScummVm
+    }
+
+    /// <summary>
+    ///     Linux FUSE path: mounts the archive through the bundled SimpleZipDrive build and runs
+    ///     the same downstream launch flow as the Windows Dokan path. Returns false when the
+    ///     preconditions are missing (not Linux, no FUSE, no payload) or the mount could not
+    ///     start, so the caller can reuse the extraction fallback; returns true once a launch was
+    ///     attempted (including launch errors, which are reported and not retried as extraction).
+    /// </summary>
+    private async Task<bool> TryMountZipWithFuseAndLaunchAsync(string resolvedZipFilePath, ZipMountMode mode,
+        string selectedSystemName, string selectedEmulatorName, ISystemManager selectedSystemManager,
+        Emulator selectedEmulatorManager, string rawEmulatorParameters, IWindowContext? windowContext,
+        string? logPath, ILauncherService? gameLauncher, ILogger logErrors, IMessageBoxLibraryService messageBox)
+    {
+        if (!OperatingSystem.IsLinux() || !FuseValidation.IsFuseAvailable()) return false;
+
+        var relativePath = _zipMountExecutableRelativePath;
+        if (string.IsNullOrEmpty(relativePath))
+        {
+            _logger.Debug("[MountZipFiles] No SimpleZipDrive payload for this platform; extracting the archive.");
+            return false;
+        }
+
+        var resolvedToolPath = PathHelper.ResolveRelativeToAppDirectory(relativePath);
+        if (string.IsNullOrWhiteSpace(resolvedToolPath) || !File.Exists(resolvedToolPath))
+        {
+            logErrors.Information(
+                $"{_zipMountExecutableName} not found at {_zipMountExecutableRelativePath}. Cannot mount ZIP.");
+            return false;
+        }
+
+        _logger.Debug(
+            $"[MountZipFiles] Mounting ZIP through FUSE with {_zipMountExecutableName}: {resolvedToolPath}");
+
+        var mountPoint = FuseMountHelper.CreateMountPoint("zip-mount-");
+
+        var (mountProcess, started) = FuseMountHelper.StartFuseMountTool(resolvedToolPath,
+            $"\"{resolvedZipFilePath}\" \"{mountPoint}\"", _zipMountExecutableName ?? "SimpleZipDrive",
+            logErrors, out var errorOutput);
+
+        if (!started || mountProcess == null)
+        {
+            await FuseMountHelper.ReleaseAsync(null, mountPoint, _logger);
+            return false;
+        }
+
+        try
+        {
+            if (!await FuseMountHelper.WaitForFuseMountReadyAsync(mountPoint, null, mountProcess,
+                    _zipMountExecutableName ?? "SimpleZipDrive", Path.GetFileName(resolvedZipFilePath), logErrors,
+                    errorOutput))
+            {
+                return false;
+            }
+
+            _logger.Debug($"[MountZipFiles] ZIP mounted at {mountPoint}. Running the {mode} launch flow.");
+
+            switch (mode)
+            {
+                case ZipMountMode.EbootBin:
+                {
+                    var ebootBinPath = FindEbootBin.FindEbootBinRecursive(mountPoint, logErrors, _logger);
+                    if (string.IsNullOrEmpty(ebootBinPath))
+                    {
+                        throw new FileNotFoundException(
+                            $"EBOOT.BIN not found within the mounted ZIP file at {mountPoint}.");
+                    }
+
+                    await gameLauncher!.LaunchRegularEmulatorAsync(ebootBinPath, selectedEmulatorName,
+                        selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, windowContext!, null,
+                        resolvedZipFilePath);
+                    break;
+                }
+                case ZipMountMode.NestedFile:
+                {
+                    var fileToLoad = FindNestedFile(mountPoint, logErrors);
+                    if (string.IsNullOrEmpty(fileToLoad))
+                    {
+                        throw new FileNotFoundException(
+                            $"Could not find a file to launch within the expected nested directory structure of the mounted ZIP at {mountPoint}.");
+                    }
+
+                    await gameLauncher!.LaunchRegularEmulatorAsync(fileToLoad, selectedEmulatorName,
+                        selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, windowContext!, null,
+                        resolvedZipFilePath);
+                    break;
+                }
+                case ZipMountMode.ScummVm:
+                {
+                    var gamePath = FindScummVmGamePath(mountPoint, logErrors);
+                    var scummVmPath = string.Equals(gamePath, mountPoint, StringComparison.Ordinal)
+                        ? gamePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                        : gamePath;
+
+                    await LaunchScummVmWithGameRootAsync(scummVmPath, resolvedZipFilePath, selectedEmulatorName,
+                        selectedSystemManager, selectedEmulatorManager, rawEmulatorParameters, logErrors);
+                    break;
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug($"[MountZipFiles] Exception during FUSE ZIP mounting or launching: {ex}");
+            var contextMessage = $"Error during ZIP mount/launch process for {resolvedZipFilePath}.\n" +
+                                 $"Exception: {ex.Message}";
+            logErrors.Error(ex, contextMessage);
+            await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
+            return true;
+        }
+        finally
+        {
+            await FuseMountHelper.ReleaseAsync(mountProcess, mountPoint, _logger);
         }
     }
 

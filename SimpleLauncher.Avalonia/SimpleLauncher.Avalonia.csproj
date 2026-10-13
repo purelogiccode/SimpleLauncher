@@ -435,8 +435,8 @@
               Link="tools\CHDMounter\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\RetroAchievementsSharp\*"
-              Link="tools\RetroAchievementsSharp\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\RetroAchievementsSharp\**\*"
+              Link="tools\RetroAchievementsSharp\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\SimpleLauncher\audio\*.mp3" Link="audio\%(Filename)%(Extension)">
@@ -513,12 +513,8 @@
               Link="tools\CreateBatchFilesForXbox360XBLAGames\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\FindRomCover\arm64\**\*"
-              Link="tools\FindRomCover\arm64\%(RecursiveDir)%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\FindRomCover\x64\**\*"
-              Link="tools\FindRomCover\x64\%(RecursiveDir)%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\FindRomCover\**\*"
+              Link="tools\FindRomCover\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\SimpleLauncher\tools\RetroGameCoverDownloader\*"
@@ -531,11 +527,12 @@
         <None Include="..\SimpleLauncher\tools\SevenZip\*" Link="tools\SevenZip\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\SimpleXisoDrive\*" Link="tools\SimpleXisoDrive\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\SimpleXisoDrive\**\*"
+              Link="tools\SimpleXisoDrive\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\SimpleZipDrive\*"
-              Link="tools\SimpleZipDrive\%(Filename)%(Extension)">
+        <None Include="..\SimpleLauncher\tools\SimpleZipDrive\**\*"
+              Link="tools\SimpleZipDrive\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\SimpleLauncher\tools\XISOStudio\**\*"

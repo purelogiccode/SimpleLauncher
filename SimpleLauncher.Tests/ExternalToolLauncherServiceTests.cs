@@ -7,7 +7,8 @@ namespace SimpleLauncher.Tests;
 /// <summary>
 ///     Tests for the platform-specific payload resolution in
 ///     <see cref="ExternalToolLauncherService" /> for the bundled tools that ship one payload
-///     per OS/architecture under tools\ (XISOStudio and CHDStudio).
+///     per OS/architecture under tools\ (XISOStudio, CHDStudio, RVZStudio, CHDMounter,
+///     FindRomCover, RetroAchievementsSharp, SimpleXisoDrive and SimpleZipDrive).
 /// </summary>
 public class ExternalToolLauncherServiceTests
 {
@@ -42,8 +43,32 @@ public class ExternalToolLauncherServiceTests
     [Theory]
     [InlineData("XISOStudio")]
     [InlineData("CHDStudio")]
+    [InlineData("FindRomCover")]
+    [InlineData("RetroAchievementsSharp.Cli")]
+    [InlineData("SimpleXisoDrive")]
+    [InlineData("SimpleZipDrive")]
     public void PlatformExecutableNameUsesTheWindowsExeSuffix(string baseName)
     {
         Assert.Equal($"{baseName}.exe", ExternalToolLauncherService.GetPlatformExecutableName(baseName));
+    }
+
+    /// <summary>
+    ///     Guards the csproj copy rules: every per-RID tool must ship its binary for the running
+    ///     OS/architecture in the build output (same resolution the app performs at runtime).
+    /// </summary>
+    [Theory]
+    [InlineData("FindRomCover", "FindRomCover")]
+    [InlineData("RetroAchievementsSharp", "RetroAchievementsSharp.Cli")]
+    [InlineData("SimpleXisoDrive", "SimpleXisoDrive")]
+    [InlineData("SimpleZipDrive", "SimpleZipDrive")]
+    public void PerRidToolPayloadExistsForTheRunningPlatform(string toolFolder, string baseName)
+    {
+        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
+        if (runtimeIdentifier == null) return; // unsupported OS/architecture: no payload expected
+
+        var executableName = ExternalToolLauncherService.GetPlatformExecutableName(baseName);
+        var path = Path.Combine(AppContext.BaseDirectory, "tools", toolFolder, runtimeIdentifier, executableName);
+
+        Assert.True(File.Exists(path), $"The bundled payload is missing for the running platform: {path}");
     }
 }

@@ -65,7 +65,7 @@ public class ExternalToolLauncherService : IExternalToolLauncher
     /// <param name="selectedRomFolder">The optional path to the ROM folder to match covers against.</param>
     public async Task FindRomCoverLaunchAsync(string? selectedImageFolder, string? selectedRomFolder)
     {
-        var toolPath = await GetToolExecutablePathAsync("FindRomCover", "FindRomCover", true);
+        var toolPath = await GetPlatformToolExecutablePathAsync("FindRomCover", "FindRomCover");
         if (toolPath == null) return;
 
         var arguments = "";
@@ -347,16 +347,13 @@ public class ExternalToolLauncherService : IExternalToolLauncher
         }
     }
 
-    private async Task<string?> GetToolExecutablePathAsync(string toolFolder, string baseName,
-        bool useArchSubfolders = false)
+    private async Task<string?> GetToolExecutablePathAsync(string toolFolder, string baseName)
     {
         var architecture = RuntimeInformation.ProcessArchitecture;
         var archPath = architecture switch
         {
-            Architecture.X64 => useArchSubfolders ? Path.Combine("x64", $"{baseName}.exe") : $"{baseName}.exe",
-            Architecture.Arm64 => useArchSubfolders
-                ? Path.Combine("arm64", $"{baseName}.exe")
-                : $"{baseName}_arm64.exe",
+            Architecture.X64 => $"{baseName}.exe",
+            Architecture.Arm64 => $"{baseName}_arm64.exe",
             _ => null
         };
 

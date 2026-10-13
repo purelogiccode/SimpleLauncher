@@ -61,6 +61,14 @@ public class XemuMountStrategy : ILaunchStrategy
             await launcher.LaunchRegularEmulatorAsync(mountedDrive.MountedPath, context.EmulatorName,
                 context.SystemManagerService!, context.EmulatorManager!, context.Parameters, context.WindowContext!,
                 context.LoadingState, context.ResolvedFilePath);
+            return;
+        }
+
+        // The Windows mount path reports failures itself; the Linux FUSE path logs quietly, so
+        // surface the error dialog here.
+        if (!OperatingSystem.IsWindows())
+        {
+            await _messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
         }
     }
 }

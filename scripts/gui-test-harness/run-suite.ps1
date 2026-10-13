@@ -164,7 +164,7 @@ Then report the button appearances and any mismatch. Be brief.
     },
     @{
         Id      = 'MENU-00'
-        Name    = 'Main window renders; Tools menu shows the three cross-platform studios'
+        Name    = 'Main window renders; Tools menu shows the cross-platform tools'
         Fixture = 'seeded'
         Py      = $pyCommon + @'
     n.close_welcome(); n.press("Escape"); n.close_dialogs(); n.activate_window(); n.maximize_window()
@@ -178,12 +178,11 @@ Then report the button appearances and any mismatch. Be brief.
     got = [k for k, _ in sorted(tops.items(), key=lambda kv: kv[1])]
     expected = ["Options", "Edit System", "Select Window", "Tools", "Donate", "About"]
     checks["menu_exact"] = got == expected
-    # Linux ships only the three cross-platform studios; every other tool entry
-    # is hidden (commit bff12568, docs/11-bundled-tools.md). The popup stays open
-    # so the screenshot shows the three entries to the vision check.
+    # Linux ships only the cross-platform tools (the studios plus FindRomCover, commit
+    # bff12568 and the 2026-10-13 tool refresh); every other tool entry is hidden.
     n.open_menu("Tools")
     items = sorted({e.name for e in n.popup_items() if e.name})
-    checks["tools_menu_linux_set"] = items == ["CHDStudio", "RVZStudio", "XISOStudio"]
+    checks["tools_menu_linux_set"] = items == ["CHDStudio", "FindRomCover", "RVZStudio", "XISOStudio"]
     extra["tools_items"] = items
     extra["menu"] = got
 '@ + $pyTail
@@ -194,7 +193,7 @@ Expected:
 - The main window is rendered (no blank/garbled areas).
 - Window title is "Simple Launcher".
 - The menu bar contains exactly these top-level items: Options, Edit System, Select Window, Tools, Donate, About.
-- The opened "Tools" popup lists exactly these entries: XISOStudio, CHDStudio, RVZStudio. (Linux ships only these three cross-platform studios; every other tool entry is Windows-only and hidden.)
+- The opened "Tools" popup lists exactly these entries: XISOStudio, CHDStudio, RVZStudio, FindRomCover. (Linux ships only these cross-platform tools; every other tool entry is Windows-only and hidden.)
 First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
 Then list any mismatches briefly.
 '@

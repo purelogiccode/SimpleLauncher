@@ -88,7 +88,8 @@ public class LaunchStrategyTests
     {
         var strategy = new ChdMountStrategy(
             TestEnvironment.ConfigurationFromJson("{}"), TestDependencies.MessageBox().Object,
-            new Mock<IMountChdFiles>().Object, new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
+            new Mock<IMountChdFiles>().Object, new Mock<IMountXisoFiles>().Object,
+            new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
 
         Assert.True(strategy.IsMatch(Context(@"C:\games\game.chd", "RPCS3")));
         Assert.True(strategy.IsMatch(Context(@"C:\games\game.chd", "Xenia")));
@@ -103,7 +104,8 @@ public class LaunchStrategyTests
     {
         var strategy = new ChdMountStrategy(
             TestEnvironment.ConfigurationFromJson("{}"), TestDependencies.MessageBox().Object,
-            new Mock<IMountChdFiles>().Object, new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
+            new Mock<IMountChdFiles>().Object, new Mock<IMountXisoFiles>().Object,
+            new Mock<IDiscConverter>().Object, TestDependencies.Logger().Object);
 
         Assert.False(strategy.IsMatch(Context(@"C:\games\game.chd", "RetroArch")));
         Assert.False(strategy.IsMatch(Context(@"C:\games\game.chd", "DOSBox")));
@@ -254,7 +256,7 @@ public class LaunchStrategyTests
             new ZipMountStrategy(config, logger, messageBox, new Mock<IMountZipFiles>().Object), // 30
             new XisoMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object), // 20
             new XemuMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object), // 20
-            new ChdMountStrategy(config, messageBox, chd, converter, logger), // 10
+            new ChdMountStrategy(config, messageBox, chd, new Mock<IMountXisoFiles>().Object, converter, logger), // 10
             new PbpToCueStrategy(messageBox, logger, converter, config), // 15
             new CommanderGeniusLaunchStrategy(extraction, config, messageBox, logger), // 20
             new ChdToCueStrategy(messageBox, logger, converter, config), // 25
@@ -293,7 +295,7 @@ public class LaunchStrategyTests
             new ZipMountStrategy(config, logger, messageBox, new Mock<IMountZipFiles>().Object),
             new XisoMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object),
             new XemuMountStrategy(logger, messageBox, new Mock<IMountXisoFiles>().Object),
-            new ChdMountStrategy(config, messageBox, chd, converter, logger),
+            new ChdMountStrategy(config, messageBox, chd, new Mock<IMountXisoFiles>().Object, converter, logger),
             new PbpToCueStrategy(messageBox, logger, converter, config),
             new CommanderGeniusLaunchStrategy(extraction, config, messageBox, logger),
             new ChdToCueStrategy(messageBox, logger, converter, config),
