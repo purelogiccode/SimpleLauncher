@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Reflection;
 using System.Text;
 using SimpleLauncher.Core.Services.RetroAchievements;
 using SimpleLauncher.Tests.TestHelpers;
@@ -301,5 +303,76 @@ public class RetroAchievementsFileHasherTests : IDisposable
         var result = await _hasher.CalculateHashAsync(missingFile, "game boy");
 
         Assert.Null(result);
+    }
+
+    /// <summary>
+    ///     Bug 67780: the permission-denied classifier must recognize the Win32Exception
+    ///     Process.Start throws on Linux when the bundled CLI lost its executable bit —
+    ///     native code 13 (EACCES) or a "Permission denied" message, including via an
+    ///     inner exception — so that catch logs Information instead of Error.
+    /// </summary>
+    /// <param name="exception">The exception to classify.</param>
+    /// <param name="expected">Whether the classifier must report permission denied.</param>
+    [Theory]
+    [InlineData(true)] // native code 13 (EACCES), as thrown on Linux
+    [InlineData(false)] // unrelated Win32 error code
+    public void IsPermissionDenied_Win32NativeCodes_ClassifiesAsExpected(bool useEacces)
+    {
+        var exception = useEacces
+            ? new Win32Exception(13)
+            : new Win32Exception(2, "The system cannot find the file specified.");
+
+        Assert.Equal(useEacces, InvokeIsPermissionDenied(exception));
+    }
+
+    /// <summary>
+    ///     Bug 67780: the exact exception shape from the report — "Permission denied" in
+    ///     the Win32Exception message — must be classified as permission denied.
+    /// </summary>
+    [Fact]
+    public void IsPermissionDenied_PermissionDeniedMessage_ClassifiesAsPermissionDenied()
+    {
+        var exception = new Win32Exception(1,
+            "An error occurred trying to start process 'x' with working directory 'y'. Permission denied");
+
+        Assert.True(InvokeIsPermissionDenied(exception));
+    }
+
+    /// <summary>
+    ///     Bug 67780: a wrapped Win32Exception (inner-exception chain) is still detected.
+    /// </summary>
+    [Fact]
+    public void IsPermissionDenied_InnerWin32Exception_ClassifiesAsPermissionDenied()
+    {
+        var exception = new InvalidOperationException("outer", new Win32Exception(13));
+
+        Assert.True(InvokeIsPermissionDenied(exception));
+    }
+
+    /// <summary>
+    ///     UnauthorizedAccessException is also classified as permission denied.
+    /// </summary>
+    [Fact]
+    public void IsPermissionDenied_UnauthorizedAccess_ClassifiesAsPermissionDenied()
+    {
+        Assert.True(InvokeIsPermissionDenied(new UnauthorizedAccessException()));
+    }
+
+    /// <summary>
+    ///     An unrelated exception must not be classified as permission denied (it stays
+    ///     on the Error path).
+    /// </summary>
+    [Fact]
+    public void IsPermissionDenied_UnrelatedException_ClassifiesAsNotPermissionDenied()
+    {
+        Assert.False(InvokeIsPermissionDenied(new InvalidOperationException("boom")));
+    }
+
+    private static bool InvokeIsPermissionDenied(Exception exception)
+    {
+        var method = typeof(RetroAchievementsFileHasher).GetMethod("IsPermissionDenied",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+        return Assert.IsType<bool>(method.Invoke(null, [exception]));
     }
 }

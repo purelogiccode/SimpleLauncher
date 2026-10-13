@@ -25,6 +25,11 @@ public static class AskAiToFixParameters
     /// <param name="configuration">The application configuration.</param>
     /// <param name="serviceProvider">The service provider for resolving dependencies.</param>
     /// <param name="logger">The logger instance.</param>
+    /// <param name="launchFailureContext">
+    ///     Optional launch-failure context (emulator output and local diagnosis) forwarded to
+    ///     the parameter resolver so the AI grounds its suggestion in what actually failed
+    ///     (e.g. MAME's "Unknown system" echo of a full ROM path, bugs 67522/67529).
+    /// </param>
     public static async Task ExecuteAsync(
         ISystemManager systemManager,
         Emulator emulatorManager,
@@ -32,7 +37,8 @@ public static class AskAiToFixParameters
         IParameterResolverService parameterResolverService,
         IConfiguration configuration,
         IServiceProvider serviceProvider,
-        ILogger logger)
+        ILogger logger,
+        string? launchFailureContext = null)
     {
         try
         {
@@ -63,7 +69,8 @@ public static class AskAiToFixParameters
                     DisableRecursiveSearch = systemManager.DisableRecursiveSearch,
                     EmulatorName = emulatorManager.EmulatorName ?? "",
                     EmulatorPath = emulatorManager.EmulatorLocation ?? "",
-                    CurrentParameters = emulatorManager.EmulatorParameters ?? ""
+                    CurrentParameters = emulatorManager.EmulatorParameters ?? "",
+                    LaunchFailureContext = launchFailureContext
                 };
 
                 var result = await parameterResolverService.ResolveParametersAsync(request);

@@ -54,4 +54,12 @@ public class ParameterResolverRequest
     ///     Gets or sets the current launch parameters to be fixed or resolved.
     /// </summary>
     public string CurrentParameters { get; set; } = "";
+
+    /// <summary>
+    ///     Gets or sets optional launch-failure context (emulator output and any local
+    ///     diagnosis) so the AI can ground its suggestion in what actually failed —
+    ///     e.g. MAME echoing a full ROM path as the system name (bugs 67522/67529).
+    ///     Null when no failure context is available.
+    /// </summary>
+    public string? LaunchFailureContext { get; set; }
 }

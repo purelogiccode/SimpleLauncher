@@ -11,7 +11,9 @@ namespace SimpleLauncher.Core.Services.WpfServices;
 /// <remarks>
 ///     DPAPI is Windows-only. On Linux there is no OS key store available to this app,
 ///     so the portable fallback stores the data Base64-encoded (obfuscation only) and
-///     logs a warning on first use — equivalent security to storing the plaintext.
+///     logs an information message on first use — equivalent security to storing the
+///     plaintext (Information, never Warning: an expected platform condition per
+///     AGENTS.md, bug 67776).
 /// </remarks>
 public class WindowsCredentialProtector : ICredentialProtector
 {

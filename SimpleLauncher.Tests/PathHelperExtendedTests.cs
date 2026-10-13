@@ -238,25 +238,59 @@ public class PathHelperExtendedTests
 
     /// <summary>
     ///     Verifies that ResolveParameterString resolves %SYSTEMFOLDER% to an empty string when the system folders list is
-    ///     empty.
+    ///     empty (edge whitespace is trimmed from the result).
     /// </summary>
     [Fact]
     public void ResolveParameterStringEmptySystemFoldersListResolvesEmpty()
     {
         const string parameters = "-rompath %SYSTEMFOLDER%";
         var result = PathHelper.ResolveParameterString(parameters, []);
-        Assert.Equal("-rompath ", result);
+        Assert.Equal("-rompath", result);
     }
 
     /// <summary>
-    ///     Verifies that ResolveParameterString resolves %SYSTEMFOLDER% to an empty string when system folders is null.
+    ///     Verifies that ResolveParameterString resolves %SYSTEMFOLDER% to an empty string when system folders is null
+    ///     (edge whitespace is trimmed from the result).
     /// </summary>
     [Fact]
     public void ResolveParameterStringNullSystemFoldersResolvesEmpty()
     {
         const string parameters = "-rompath %SYSTEMFOLDER%";
         var result = PathHelper.ResolveParameterString(parameters);
-        Assert.Equal("-rompath ", result);
+        Assert.Equal("-rompath", result);
+    }
+
+    /// <summary>
+    ///     Bug 67575: a stray empty line around "%ROM%" in the Emulator Parameters field
+    ///     must not leak a raw newline into the command line (DuckStation received
+    ///     "\n\"game.chd\"" and exited 1). Newlines collapse to spaces and the result is
+    ///     trimmed, so only the quoted ROM path remains.
+    /// </summary>
+    [Fact]
+    public void ResolveParameterStringStripsNewlinesAroundRomPlaceholder()
+    {
+        const string parameters = "\n\"%ROM%\"\n";
+        var result = PathHelper.ResolveParameterString(parameters, null, null,
+            @"H:\Sony Playstation (CHD)\Madden NFL 2002 (USA).chd");
+
+        Assert.DoesNotContain('\n', result);
+        Assert.DoesNotContain('\r', result);
+        Assert.Equal("\"H:\\Sony Playstation (CHD)\\Madden NFL 2002 (USA).chd\"", result);
+    }
+
+    /// <summary>
+    ///     Bug 67575: line breaks between parameters collapse to single spaces so the
+    ///     command line stays a single well-formed line.
+    /// </summary>
+    [Fact]
+    public void ResolveParameterStringCollapsesInternalNewlinesToSpaces()
+    {
+        const string parameters = "-rompath\n\"C:\\roms\"\r\n-window";
+        var result = PathHelper.ResolveParameterString(parameters);
+
+        Assert.DoesNotContain('\n', result);
+        Assert.DoesNotContain('\r', result);
+        Assert.Equal("-rompath \"C:\\roms\"  -window", result);
     }
 
     /// <summary>

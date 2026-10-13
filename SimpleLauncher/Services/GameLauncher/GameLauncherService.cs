@@ -989,8 +989,9 @@ public partial class GameLauncherService : ILauncherService
             }
             else
             {
-                // Trim trailing spaces and check if it ends with '=' to avoid adding an extra space
-                var trimmedParameters = resolvedParameters.TrimEnd();
+                // Trim both ends: a stray leading empty line in the parameters (bug 67575)
+                // must not reach the command line.
+                var trimmedParameters = resolvedParameters.Trim();
                 var space = string.IsNullOrWhiteSpace(trimmedParameters) || trimmedParameters.EndsWith('=')
                     ? ""
                     : " ";
@@ -1695,13 +1696,26 @@ public partial class GameLauncherService : ILauncherService
             combinedOutput.Contains("approximately matches the following", StringComparison.OrdinalIgnoreCase)))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] MAME Unknown system error");
+
+            // MAME echoes the unresolved argument (bugs 67522/67529): when it contains a
+            // directory separator the user passed a full ROM path instead of the bare
+            // machine name. Surface the diagnosis in the log and hand it — together with
+            // MAME's own output — to the AI parameter resolver so its suggestion is
+            // grounded in the actual failure instead of the config alone.
+            var mameDiagnosis = DiagnoseMameFullPathArgument(combinedOutput);
+            if (mameDiagnosis != null)
+                _logger.Information($"[MAME Parameter Hint] {mameDiagnosis}");
+
             _logger.Information(contextMessage);
 
             if (emulatorManager.ReceiveANotificationOnEmulatorError)
             {
                 await _messageBoxLibrary.MameUnknownSystemErrorMessageBoxAsync();
                 await _messageBoxLibrary.WouldYouLikeToOpenTheLogMessageBoxAsync(PathHelper.ResolveLogFilePath(_configuration));
-                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary, _parameterResolverService, _configuration, _serviceProvider, _logger);
+
+                var launchFailureContext = BuildMameLaunchFailureContext(process.ExitCode, output, error, mameDiagnosis);
+                await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
+                    _parameterResolverService, _configuration, _serviceProvider, _logger, launchFailureContext);
             }
 
             return;
@@ -1812,6 +1826,28 @@ public partial class GameLauncherService : ILauncherService
             return;
         }
 
+        // The emulator failed to convert the (Unicode) ROM path to its ANSI code page —
+        // Windows error 1113 ERROR_NO_UNICODE_TRANSLATION (bug 67583: Ymir on a Japanese
+        // path, "No mapping for the Unicode character exists in the target multi-byte code
+        // page"). The launcher passes a correct Unicode command line; the emulator's own
+        // narrow-char conversion failed — user path/environment, not an app bug —
+        // Information only, so it never files a bug report.
+        const int errorNoUnicodeTranslation = 1113;
+        if ((process.HasExited && process.ExitCode == errorNoUnicodeTranslation) ||
+            combinedOutput.Contains("No mapping for the Unicode character", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Emulator Unicode/ANSI code page conversion error");
+            _logger.Information(contextMessage);
+
+            if (emulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBoxLibrary.CouldNotLaunchGameMessageBoxAsync(
+                    PathHelper.ResolveLogFilePath(_configuration));
+            }
+
+            return;
+        }
+
         // Generic error handler: the emulator was launched successfully but died on its
         // own (environment, signal, bad content — not an app bug), so Information only,
         // never a bug report. The user-facing could-not-launch dialog and AI fix flow
@@ -1828,6 +1864,51 @@ public partial class GameLauncherService : ILauncherService
             await AskAiToFixParameters.ExecuteAsync(systemManager, emulatorManager, _messageBoxLibrary,
                 _parameterResolverService, _configuration, _serviceProvider, _logger);
         }
+    }
+
+    /// <summary>
+    ///     Diagnoses the MAME "Unknown system" failure when a full ROM path was passed as
+    ///     the system name (bugs 67522/67529): MAME echoes the unresolved argument, so a
+    ///     directory separator in it proves a path was used instead of the bare machine
+    ///     name. Returns the user-facing diagnosis, or null for any other unknown-system
+    ///     cause (e.g. a wrong ROM-set name), where no path hint applies.
+    /// </summary>
+    private static string? DiagnoseMameFullPathArgument(string combinedOutput)
+    {
+        const string marker = "Unknown system '";
+        var markerIndex = combinedOutput.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var start = markerIndex + marker.Length;
+        var end = combinedOutput.IndexOf('\'', start);
+        if (end <= start) return null;
+
+        var argument = combinedOutput[start..end];
+        if (!argument.Contains('\\') && !argument.Contains('/')) return null;
+
+        return "MAME was passed a full ROM path as the system name (" + argument +
+               "). MAME expects the bare machine name without path or extension — remove the ROM placeholder " +
+               "from Emulator Parameters (Simple Launcher appends the machine name automatically).";
+    }
+
+    /// <summary>
+    ///     Builds the launch-failure context handed to the AI parameter resolver for the
+    ///     MAME Unknown-system branch: exit code, MAME's own output (capped) and the
+    ///     optional full-path diagnosis.
+    /// </summary>
+    private static string BuildMameLaunchFailureContext(int exitCode, StringBuilder output, StringBuilder error,
+        string? diagnosis)
+    {
+        var diagnostics = error.ToString().Trim();
+        if (diagnostics.Length == 0) diagnostics = output.ToString().Trim();
+
+        const int maxDiagnosticsLength = 1500;
+        if (diagnostics.Length > maxDiagnosticsLength)
+            diagnostics = diagnostics[..maxDiagnosticsLength] + "…";
+
+        var context = $"MAME exited with code {exitCode}. MAME output: {diagnostics}";
+        if (diagnosis != null) context += $" Diagnosis: {diagnosis}";
+        return context;
     }
 
     private Task CheckForMemoryAccessViolationAsync(Process process, ProcessStartInfo psi, StringBuilder output,

@@ -94,6 +94,131 @@ public class EmulatorExitCodeTests
         }
     }
 
+    /// <summary>
+    ///     Verifies that exit code 1113 (ERROR_NO_UNICODE_TRANSLATION — the emulator
+    ///     could not convert a Unicode ROM path to its ANSI code page, bug 67583) is
+    ///     classified as an expected path/environment condition: its dedicated branch
+    ///     logs at Information, never Warning/Error.
+    /// </summary>
+    [Fact]
+    public async Task UnicodePathConversionExit1113LogsInformationNeverWarningOrError()
+    {
+        var sink = new ListSink();
+        var previous = Log.Logger;
+        Log.Logger = new LoggerConfiguration().MinimumLevel.Verbose().WriteTo.Sink(sink).CreateLogger();
+        try
+        {
+            var messageBox = new Mock<IMessageBoxLibraryService>();
+            var service = CreateService(messageBox.Object);
+            var emulator = new Emulator
+            {
+                EmulatorName = "Ymir",
+                EmulatorLocation = @"D:\Emulators\Saturn\ymir-sdl3.exe",
+                ReceiveANotificationOnEmulatorError = false
+            };
+
+            await InvokeAnalyzeProcessExitAsync(service, 1113, "",
+                "System error: No mapping for the Unicode character exists in the target multi-byte code page.",
+                @"D:\Emulators\Saturn\ymir-sdl3.exe",
+                "\"D:\\ROMS\\Dの食卓\\Dの食卓Disc1.cue\"", "Ymir", @"D:\Emulators\Saturn", emulator);
+
+            var relevant = sink.EventsMatching("Emulator Unicode/ANSI path conversion error.");
+            Assert.Single(relevant);
+            Assert.Equal(LogEventLevel.Information, relevant[0].Level);
+            messageBox.Verify(m => m.CouldNotLaunchGameMessageBoxAsync(It.IsAny<string>()), Times.Never);
+        }
+        finally
+        {
+            Log.Logger = previous;
+        }
+    }
+
+    /// <summary>
+    ///     Bugs 67522/67529: MAME echoing a full ROM path as the system name logs the
+    ///     dedicated parameter hint and the unknown-system error, both at Information —
+    ///     never Warning/Error (notifications disabled: dialogs are covered by the WPF
+    ///     suite, this pins the log classification).
+    /// </summary>
+    [Fact]
+    public async Task MameUnknownSystemWithFullPath_LogsParameterHintAtInformation()
+    {
+        var sink = new ListSink();
+        var previous = Log.Logger;
+        Log.Logger = new LoggerConfiguration().MinimumLevel.Verbose().WriteTo.Sink(sink).CreateLogger();
+        try
+        {
+            var messageBox = new Mock<IMessageBoxLibraryService>();
+            var service = CreateService(messageBox.Object);
+            var emulator = new Emulator
+            {
+                EmulatorName = "MAME",
+                EmulatorLocation = @"D:\MAME\mame.exe",
+                ReceiveANotificationOnEmulatorError = false
+            };
+
+            var mameError =
+                "Unknown system 'J:\\ROMS [Mame]\\MAME 0.289 ROMs (merged)\\a1cass.zip'\n" +
+                "\"J:\\ROMS [Mame]\\MAME 0.289 ROMs (merged)\\a1cass.zip\" approximately matches the following\n" +
+                "supported machines (best match first):\n" +
+                "roma2             Mephisto Roma II";
+
+            await InvokeAnalyzeProcessExitAsync(service, 5, "", mameError,
+                @"D:\MAME\mame.exe", "-rompath \"J:\\roms\" \"J:\\roms\\a1cass.zip\"",
+                "MAME", @"D:\MAME", emulator);
+
+            var hints = sink.EventsMatching("[MAME Parameter Hint]");
+            Assert.Single(hints);
+            Assert.Equal(LogEventLevel.Information, hints[0].Level);
+
+            var unknownSystem = sink.EventsMatching("MAME Unknown system error.");
+            Assert.Single(unknownSystem);
+            Assert.Equal(LogEventLevel.Information, unknownSystem[0].Level);
+
+            Assert.DoesNotContain(sink.Events, static e => e.Level >= LogEventLevel.Warning);
+            messageBox.Verify(m => m.CouldNotLaunchGameMessageBoxAsync(It.IsAny<string>()), Times.Never);
+        }
+        finally
+        {
+            Log.Logger = previous;
+        }
+    }
+
+    /// <summary>
+    ///     The full-path diagnosis detects MAME's echoed directory-separated argument
+    ///     and produces the bare-machine-name guidance (bugs 67522/67529).
+    /// </summary>
+    [Fact]
+    public void DiagnoseMameFullPathArgument_FullPath_ReturnsHint()
+    {
+        var output =
+            "Unknown system 'J:\\ROMS [Mame]\\a1cass.zip'\n" +
+            "\"J:\\ROMS [Mame]\\a1cass.zip\" approximately matches the following";
+
+        var result = InvokeDiagnoseMameFullPathArgument(output);
+
+        Assert.NotNull(result);
+        Assert.Contains("bare machine name", result, StringComparison.Ordinal);
+        Assert.Contains("J:\\ROMS [Mame]\\a1cass.zip", result, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     A bare machine name that MAME simply does not know (wrong ROM-set name)
+    ///     gets no path hint — that is a ROM-set problem, not a parameter problem.
+    /// </summary>
+    [Fact]
+    public void DiagnoseMameFullPathArgument_BareName_ReturnsNull()
+    {
+        Assert.Null(InvokeDiagnoseMameFullPathArgument("Unknown system 'a1cass' approximately matches"));
+    }
+
+    private static string? InvokeDiagnoseMameFullPathArgument(string combinedOutput)
+    {
+        var method = typeof(LauncherService).GetMethod("DiagnoseMameFullPathArgument",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+        return (string?)method.Invoke(null, [combinedOutput]);
+    }
+
     private static LauncherService CreateService(IMessageBoxLibraryService messageBox)
     {
         return new LauncherService(messageBox, [], new ConfigurationBuilder().Build(), null!, null!, null!,
@@ -124,6 +249,17 @@ public class EmulatorExitCodeTests
             lock (_sync)
             {
                 _events.Add(logEvent);
+            }
+        }
+
+        public IReadOnlyList<LogEvent> Events
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _events.ToList();
+                }
             }
         }
 

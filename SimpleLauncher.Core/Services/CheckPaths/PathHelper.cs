@@ -141,6 +141,13 @@ public static partial class PathHelper
     {
         if (string.IsNullOrWhiteSpace(parameters)) return "";
 
+        // Normalize stray line breaks in the parameter template: a pasted/hand-edited
+        // empty line (bug 67575) otherwise reaches the command line verbatim —
+        // DuckStation received "\n\"game.chd\"" and exited 1. A newline is never
+        // meaningful in a command line (it is not even an argv separator on Windows),
+        // so collapse it to a space before tokenizing.
+        parameters = parameters.Replace('\r', ' ').Replace('\n', ' ');
+
         var pathTokenRegex = MyRegex();
 
         var resolvedParameters = pathTokenRegex.Replace(parameters, match =>
@@ -248,7 +255,10 @@ public static partial class PathHelper
             return finalTokenValue;
         });
 
-        return resolvedParameters;
+        // Drop edge whitespace left by the line-break collapse (and any leading/trailing
+        // spaces in the stored template) so the command line never starts or ends with
+        // a stray blank.
+        return resolvedParameters.Trim();
     }
 
     /// <summary>

@@ -46,10 +46,16 @@ public class AskAiToFixParameters
     /// <param name="systemManager">The system manager for the current system.</param>
     /// <param name="emulatorManager">The emulator whose parameters may be updated.</param>
     /// <param name="loadingStateProvider">Optional loading overlay provider.</param>
+    /// <param name="launchFailureContext">
+    ///     Optional launch-failure context (emulator output and local diagnosis) forwarded to
+    ///     the parameter resolver so the AI grounds its suggestion in what actually failed
+    ///     (e.g. MAME's "Unknown system" echo of a full ROM path, bugs 67522/67529).
+    /// </param>
     public async Task ExecuteAsync(
         ISystemManager systemManager,
         Emulator emulatorManager,
-        ILoadingState? loadingStateProvider = null)
+        ILoadingState? loadingStateProvider = null,
+        string? launchFailureContext = null)
     {
         try
         {
@@ -78,7 +84,8 @@ public class AskAiToFixParameters
                     DisableRecursiveSearch = systemManager.DisableRecursiveSearch,
                     EmulatorName = emulatorManager.EmulatorName ?? "",
                     EmulatorPath = emulatorManager.EmulatorLocation ?? "",
-                    CurrentParameters = emulatorManager.EmulatorParameters ?? ""
+                    CurrentParameters = emulatorManager.EmulatorParameters ?? "",
+                    LaunchFailureContext = launchFailureContext
                 };
 
                 var result = await _parameterResolver.ResolveParametersAsync(request);

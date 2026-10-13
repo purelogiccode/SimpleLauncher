@@ -814,6 +814,15 @@ public partial class App : IDisposable
                 // so it is not an application bug — keep it out of the bug report service.
                 Log.Information(ex, contextMessage);
             }
+            else if (IsKnownWpfFrameworkRace(ex, ex.StackTrace))
+            {
+                contextMessage =
+                    $"[WpfWeakEventRace] {contextMessage} | Known WPF weak-event/collection-view race during DataGrid layout (bugs 67562/67563/67564). Framework-internal, already handled by the dispatcher; not an app bug.";
+
+                // Expected framework condition (no app frames on the stack): the dispatcher
+                // already marked it handled — Information only, never a bug report.
+                Log.Information(ex, contextMessage);
+            }
             else
             {
                 Log.Error(ex, contextMessage);
@@ -824,6 +833,27 @@ public partial class App : IDisposable
             // If even Serilog fails, fall back to debug output
             Debug.WriteLine($"[SimpleLauncher] {contextMessage}: {ex}");
         }
+    }
+
+    /// <summary>
+    ///     Detects the known WPF weak-event/collection-view race that surfaces as an
+    ///     NRE or InvalidCast inside WeakEventManager/PropertyChangedEventManager/
+    ///     ListCollectionView during DataGrid layout (bugs 67562/67563/67564). The
+    ///     stack must be entirely framework frames — any SimpleLauncher frame means it
+    ///     is our code and must stay at Error. The stack is passed explicitly so tests
+    ///     can exercise the predicate with fabricated stacks.
+    /// </summary>
+    private static bool IsKnownWpfFrameworkRace(Exception ex, string? stackTrace)
+    {
+        if (ex is not (NullReferenceException or InvalidCastException)) return false;
+        if (string.IsNullOrEmpty(stackTrace)) return false;
+
+        // An app frame means this is our code, not the framework race.
+        if (stackTrace.Contains("SimpleLauncher", StringComparison.Ordinal)) return false;
+
+        return stackTrace.Contains("WeakEventManager", StringComparison.Ordinal)
+               || stackTrace.Contains("PropertyChangedEventManager", StringComparison.Ordinal)
+               || stackTrace.Contains("ListCollectionView", StringComparison.Ordinal);
     }
 
     private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
