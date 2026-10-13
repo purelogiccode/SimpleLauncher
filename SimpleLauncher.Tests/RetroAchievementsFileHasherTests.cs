@@ -272,6 +272,25 @@ public class RetroAchievementsFileHasherTests : IDisposable
     }
 
     /// <summary>
+    ///     Verifies the single-source gate rejects systems the CLI cannot hash — the
+    ///     "unsupported" pseudo-system and Wii U (no FromFile hasher, id 20) — before
+    ///     the CLI tool is ever invoked.
+    /// </summary>
+    /// <param name="systemName">The unsupported system name.</param>
+    [Theory]
+    [InlineData("standalone")]
+    [InlineData("unsupported")]
+    [InlineData("Wii U")]
+    public async Task CalculateHashAsyncUnsupportedSystemReturnsNull(string systemName)
+    {
+        var filePath = CreateTempFile("game.bin", [1, 2, 3, 4]);
+
+        var result = await _hasher.CalculateHashAsync(filePath, systemName);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>
     ///     Verifies that hashing returns null for files that do not exist.
     /// </summary>
     [Fact]

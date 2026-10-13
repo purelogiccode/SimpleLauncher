@@ -360,7 +360,8 @@ public class RetroAchievementsHashScannerTests : IDisposable
     /// <summary>
     ///     Verifies that systems without usable hashing support are reported as not scannable,
     ///     using the same single source of truth as the hasher tool (Arcade is supported even
-    ///     though "SEGA_arcade" is not, and Mega Duck/Naomi are supported arcade/console ids).
+    ///     though "SEGA_arcade" is not; Mega Duck/Naomi/Commodore 64 are supported; Wii U has
+    ///     no hasher in the bundled CLI).
     /// </summary>
     [Fact]
     public void IsSystemScannable_SupportsOnlyKnownSystems()
@@ -370,7 +371,8 @@ public class RetroAchievementsHashScannerTests : IDisposable
         Assert.True(_scanner.IsSystemScannable("Arcade"));
         Assert.True(_scanner.IsSystemScannable("Mega Duck"));
         Assert.True(_scanner.IsSystemScannable("Sega Naomi"));
-        Assert.False(_scanner.IsSystemScannable("Commodore 64"));
+        Assert.True(_scanner.IsSystemScannable("Commodore 64"));
+        Assert.False(_scanner.IsSystemScannable("Wii U"));
         Assert.False(_scanner.IsSystemScannable("Microsoft Windows"));
         Assert.False(_scanner.IsSystemScannable(""));
     }

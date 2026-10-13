@@ -252,10 +252,11 @@ public class RetroAchievementsSystemMatcherTests
     }
 
     /// <summary>
-    ///     Verifies the single source of truth for hash support: systems with a usable console id
-    ///     and known hash logic are supported, while unknown-hash-logic and pseudo systems are not.
-    ///     "Arcade" must not be rejected because "SEGA_arcade" is unsupported, and Mega Duck /
-    ///     Naomi (console ids 69/27) are hashable by the bundled CLI.
+    ///     Verifies the single source of truth for hash support against the bundled CLI's
+    ///     HashEngine.FromFile switch: consoles with a FromFile case and a usable id are
+    ///     supported, consoles without one (Wii U, PC-9800, Zeebo) and pseudo systems are
+    ///     not. "Arcade" must not be rejected because "SEGA_arcade" is unsupported, and
+    ///     Mega Duck / Naomi (console ids 69/27) are hashable by the bundled CLI.
     /// </summary>
     /// <param name="input">The system name to check.</param>
     /// <param name="expected">Whether the system is expected to be supported.</param>
@@ -266,8 +267,16 @@ public class RetroAchievementsSystemMatcherTests
     [InlineData("Sega Naomi", true)]
     [InlineData("Naomi", true)]
     [InlineData("NES", true)]
+    [InlineData("Commodore 64", true)]
+    [InlineData("ZX Spectrum", true)]
+    [InlineData("Oric", true)]
+    [InlineData("Uzebox", true)]
+    [InlineData("Arcadia 2001", true)]
+    [InlineData("Wii U", false)]
+    [InlineData("PC-9800", false)]
+    [InlineData("Zeebo", false)]
+    [InlineData("Xbox", false)]
     [InlineData("SEGA_arcade", false)]
-    [InlineData("Commodore 64", false)]
     [InlineData("PlayStation 3", false)]
     [InlineData("Microsoft Windows", false)]
     [InlineData("UnknownSystem12345", false)]
@@ -291,6 +300,63 @@ public class RetroAchievementsSystemMatcherTests
     {
         var result = _matcher.GetBestMatchSystemName(input);
         Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     Classification fixes aligned with the bundled CLI: Sega Model 2 resolves to the
+    ///     "unsupported" pseudo-system (the CLI has no Model 2 console; arcade must not steal
+    ///     the name via the case-insensitive "sega_Model 2" alias), "DREAMCAST NAOMI" is an
+    ///     arcade board (console 27, filename hash) rather than a Dreamcast disc, and
+    ///     Famicom-cartridge names hash as NES (CLI console table: "NES/Famicom"), not FDS.
+    /// </summary>
+    /// <param name="input">The system name or alias to match.</param>
+    /// <param name="expected">The expected canonical RetroAchievements system name.</param>
+    [Theory]
+    [InlineData("sega model 2", "unsupported")]
+    [InlineData("Sega_Model 2", "unsupported")]
+    [InlineData("DREAMCAST NAOMI", "naomi")]
+    [InlineData("Nintendo - Family Computer", "nintendo entertainment system")]
+    [InlineData("Nintendo Family Computer", "nintendo entertainment system")]
+    [InlineData("Nintendo FC", "nintendo entertainment system")]
+    [InlineData("Nintendo - Family Computer Disk System", "famicom disk system")]
+    public void GetBestMatchSystemNameClassificationFixesReturnExpectedKey(string input, string expected)
+    {
+        var result = _matcher.GetBestMatchSystemName(input);
+        Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     Famicom-cartridge aliases resolve to console id 7 (NES); only disk-system names
+    ///     resolve to 81 (FDS).
+    /// </summary>
+    /// <param name="input">The system name or alias to look up.</param>
+    /// <param name="expected">The expected RetroAchievements console id.</param>
+    [Theory]
+    [InlineData("Nintendo - Family Computer", 7)]
+    [InlineData("Nintendo FC", 7)]
+    [InlineData("famicom disk system", 81)]
+    [InlineData("DREAMCAST NAOMI", 27)]
+    public void GetSystemIdClassificationFixesReturnExpectedId(string input, int expected)
+    {
+        var result = _matcher.GetSystemId(input);
+        Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     The hash system-selection list only offers systems the CLI can hash: Wii U and
+    ///     Commodore 64 must not both appear (Wii U has no FromFile hasher, C64 has one).
+    /// </summary>
+    [Fact]
+    public void GetSupportedSystemNamesExcludesUnsupportedSystems()
+    {
+        var names = _matcher.GetSupportedSystemNames();
+
+        Assert.DoesNotContain("wii u", names, StringComparer.OrdinalIgnoreCase);
+        Assert.DoesNotContain("pc-9800", names, StringComparer.OrdinalIgnoreCase);
+        Assert.DoesNotContain("zeebo", names, StringComparer.OrdinalIgnoreCase);
+        Assert.DoesNotContain("unsupported", names, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("commodore 64", names, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("arcade", names, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>

@@ -121,15 +121,18 @@ public class RetroAchievementsHasherTool : IRetroAchievementsHasherTool
             return new RaHashResult(null, null, false, "System name is missing.");
         }
 
-        // Systems without a usable console ID (e.g. the "unsupported" pseudo-system) cannot be hashed
-        var systemId = _systemMatcher.GetSystemId(systemName);
-        if (systemId is <= 0 or > RetroAchievementsConstants.MaxConsoleId)
+        // The matcher is the single source of truth for hash support (usable console id
+        // and hash logic known to the CLI): rejects the "unsupported" pseudo-system and
+        // consoles without a FromFile hasher (Wii U, PC-9800, Zeebo) before any work.
+        if (!_systemMatcher.IsSystemSupportedForHashing(systemName))
         {
             _logger.Debug($"[RA Hasher Tool] System '{systemName}' is not supported for RetroAchievements hashing.");
             loadingState?.SetLoadingState(false);
             return new RaHashResult(null, null, false,
                 $"System '{systemName}' is not supported for RetroAchievements hashing.");
         }
+
+        var systemId = _systemMatcher.GetSystemId(systemName);
 
         var fileExtension = Path.GetExtension(filePath).ToLowerInvariant();
 

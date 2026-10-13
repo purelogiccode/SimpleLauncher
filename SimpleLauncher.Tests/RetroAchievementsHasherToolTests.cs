@@ -126,7 +126,9 @@ public class RetroAchievementsHasherToolTests : IDisposable
 
     /// <summary>
     ///     Verifies the hasher tool delegates hash-support decisions to the system matcher:
-    ///     Arcade is supported (even though "SEGA_arcade" is not) and Mega Duck is supported.
+    ///     Arcade is supported (even though "SEGA_arcade" is not), Mega Duck and Commodore 64
+    ///     are supported (the CLI has FromFile hashers for them), while Wii U has no hasher
+    ///     and PlayStation 3 is a pseudo mapping.
     /// </summary>
     /// <param name="systemName">The system name to check.</param>
     /// <param name="expected">Whether the system is expected to be supported.</param>
@@ -134,11 +136,33 @@ public class RetroAchievementsHasherToolTests : IDisposable
     [InlineData("Arcade", true)]
     [InlineData("Mega Duck", true)]
     [InlineData("Sega Naomi", true)]
-    [InlineData("Commodore 64", false)]
+    [InlineData("Commodore 64", true)]
+    [InlineData("Wii U", false)]
     [InlineData("PlayStation 3", false)]
     public void IsSystemSupportedForHashingDelegatesToMatcher(string systemName, bool expected)
     {
         Assert.Equal(expected, _tool.IsSystemSupportedForHashing(systemName));
+    }
+
+    /// <summary>
+    ///     Verifies that a system the CLI cannot hash (Wii U — no FromFile case) is rejected
+    ///     by the single-source gate before any extraction or hash call happens.
+    /// </summary>
+    [Fact]
+    public async Task GetGameHash_UnsupportedSystem_RejectsBeforeHashing()
+    {
+        var romPath = Path.Combine(_tempFolder, "Game.rom");
+        File.WriteAllText(romPath, "rom");
+
+        var result = await _tool.GetGameHashForRetroAchievementsAsync(
+            romPath, "Wii U", [".rom"], new NoOpLoadingState(), new NoOpLogger());
+
+        Assert.Null(result.Hash);
+        Assert.False(result.IsExtractionSuccessful);
+        Assert.NotNull(result.ExtractionErrorMessage);
+        Assert.Contains("not supported", result.ExtractionErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(_fileHasher.HashedPaths);
+        Assert.Empty(_extractionService.ExtractedArchives);
     }
 
     /// <summary>

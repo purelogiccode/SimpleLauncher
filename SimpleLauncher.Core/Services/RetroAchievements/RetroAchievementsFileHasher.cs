@@ -51,13 +51,16 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
             return null;
         }
 
-        var systemId = _systemMatcher.GetSystemId(systemName);
-        if (systemId <= 0)
+        // Single source of truth: usable console id in range and hash logic known to the
+        // CLI (rejects e.g. "standalone" id 102 and consoles without a FromFile hasher).
+        if (!_systemMatcher.IsSystemSupportedForHashing(systemName))
         {
             _logger.Information(
-                $"[RA File Hasher] No RetroAchievements console ID found for system '{systemName}'. Skipping hashing.");
+                $"[RA File Hasher] System '{systemName}' is not supported for RetroAchievements hashing. Skipping hashing.");
             return null;
         }
+
+        var systemId = _systemMatcher.GetSystemId(systemName);
 
         var toolPath = GetToolExecutablePath();
         if (toolPath == null)
@@ -163,13 +166,15 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (filePaths == null || filePaths.Count == 0) return result;
 
-        var systemId = _systemMatcher.GetSystemId(systemName);
-        if (systemId <= 0)
+        // Single source of truth (same gate as the single-file path above).
+        if (!_systemMatcher.IsSystemSupportedForHashing(systemName))
         {
             _logger.Information(
-                $"[RA File Hasher] No RetroAchievements console ID found for system '{systemName}'. Skipping hashing.");
+                $"[RA File Hasher] System '{systemName}' is not supported for RetroAchievements hashing. Skipping hashing.");
             return result;
         }
+
+        var systemId = _systemMatcher.GetSystemId(systemName);
 
         var toolPath = GetToolExecutablePath();
         if (toolPath == null)

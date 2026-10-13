@@ -30,8 +30,10 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "game boy color", "gbc", "gameboy color", "nintendo gameboy color", "Nintendo - Game Boy Color",
             "Nintendo Game Boy Color"
         ]),
-        ["nintendo entertainment system"] = new RaSystemInfo(7,
-            ["nintendo entertainment system", "nes", "famicom", "nintendo nes", "Nintendo Famicom"]),
+        ["nintendo entertainment system"] = new RaSystemInfo(7, [
+            "nintendo entertainment system", "nes", "famicom", "nintendo nes", "Nintendo Famicom",
+            "Nintendo Family Computer", "Nintendo - Family Computer", "Nintendo FC"
+        ]),
         ["gamecube"] = new RaSystemInfo(16,
         [
             "gamecube", "game cube", "game-cube", "gc", "nintendo gamecube", "nintendo game cube", "nintendo game-cube",
@@ -46,8 +48,9 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             ["nintendo dsi", "nintendo ds-i", "ndsi", "dsi", "nintendo ndsi"]),
         ["famicom disk system"] = new RaSystemInfo(81,
         [
-            "famicom disk system", "fds", "nintendo famicom disk system", "nintendo fds", "Nintendo Family Computer",
-            "Nintendo Family Computer Disk System", "Nintendo - Family Computer", "Nintendo Famicom Disc System", "Nintendo FC"
+            "famicom disk system", "fds", "nintendo famicom disk system", "nintendo fds",
+            "Nintendo Family Computer Disk System", "Nintendo - Family Computer Disk System",
+            "Nintendo Famicom Disc System"
         ]),
         ["wii"] = new RaSystemInfo(19, ["wii", "nintendo wii", "Nintendo Wiiware", "Wiiware"]),
         ["wii u"] = new RaSystemInfo(20,
@@ -76,8 +79,8 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["game gear"] = new RaSystemInfo(15,
             ["game gear", "gamegear", "sega game gear", "sega gamegear", "Sega - Game Gear"]),
         ["saturn"] = new RaSystemInfo(39, ["saturn", "sega saturn"]),
-        ["dreamcast"] = new RaSystemInfo(40, ["dreamcast", "sega dreamcast", "DREAMCAST NAOMI"]),
-        ["naomi"] = new RaSystemInfo(27, ["naomi", "sega naomi"]),
+        ["dreamcast"] = new RaSystemInfo(40, ["dreamcast", "sega dreamcast"]),
+        ["naomi"] = new RaSystemInfo(27, ["naomi", "sega naomi", "DREAMCAST NAOMI"]),
         ["sg-1000"] = new RaSystemInfo(33, ["sg-1000", "sg1000", "sega sg-1000", "sega sg1000"]),
         ["sega pico"] = new RaSystemInfo(68, ["sega pico", "pico"]),
 
@@ -123,7 +126,7 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "neogeo", "neo geo", "neo-geo", "snk neo geo", "snk neogeo", "ARCADE GAME",
             "arcade ra",
             "ARCADE - Multiple Arcade Machine Emulator", "sega model",
-            "sega_Model 2", "@sega_Model 2", "@sega model", "CPS 1", "CPS2", "CPS3", "CPS1", "MAME0143u7"
+            "@sega model", "CPS 1", "CPS2", "CPS3", "CPS1", "MAME0143u7"
         ]),
         ["neo geo pocket"] = new RaSystemInfo(14,
         [
@@ -189,7 +192,8 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
             "playstation vita", "vita", "sony playstation vita", "xbox 360", "xbox360", "x-box 360",
             "microsoft xbox 360", "Microsoft Xbox 360 XBLA", "xbox one", "xboxone", "x-box one", "microsoft xbox one",
             "xbox series x", "xbox series s", "xbox series x/s", "nintendo switch", "switch", "Nintendo - Switch",
-            "sega model 2", "model 2", "sega model 3", "sega_model 3", "model 3", "sega naomi 2", "naomi 2",
+            "sega model 2", "sega_model 2", "@sega_model 2", "model 2",
+            "sega model 3", "sega_model 3", "model 3", "sega naomi 2", "naomi 2",
             "atomiswave",
             "microsoft windows", "windows", "amstrad gx4000", "gx4000", "scummvm", "scumm vm", "scumm-vm",
             "pinball arcade", "pinballarcade", "Arcade - Raine", "Commander Genius", "Matra Alice32", "DVD",
@@ -224,17 +228,21 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         ["Zeebo"] = new RaSystemInfo(70, ["Zeebo"])
     };
 
-    // Systems whose hashing logic is not implemented by the bundled RetroAchievementsSharp
-    // CLI (a 1:1 rcheevos port). Matching is exact and separator-insensitive: substring
-    // matching would wrongly reject supported systems (e.g. "Arcade" vs "SEGA_arcade").
+    // Systems the bundled RetroAchievementsSharp CLI (a 1:1 rcheevos port) cannot hash:
+    // no case for the console id in the CLI's HashEngine.FromFile switch — the source of
+    // truth (e.g. Wii U id 20 → "Unsupported console for file hash: 20"). Also includes
+    // the pseudo-systems with ids above RC_CONSOLE_MAX (hubs/events/standalone) and raw
+    // placeholder names that never map to a console. Matching is exact and
+    // separator-insensitive: substring matching would wrongly reject supported systems
+    // (e.g. "Arcade" vs "SEGA_arcade").
     private static readonly string[] UnsupportedHashLogicSystems =
     [
         "sega pico", "xbox", "xbox360",
-        "atari st", "commodore 64", "amiga", "zx spectrum",
-        "philips cd-i", "sharp x68000", "sharp x1", "oric", "thomson to8", "cassette vision",
-        "super cassette vision", "uzebox", "tic-80", "ti-83", "nokia n-gage", "vic-20", "zx81",
-        "pc-6000", "game & watch", "elektor tv games computer", "interton vc 4000",
-        "arcadia 2001", "fm towns", "hubs", "events", "standalone", "atari 800", "microsoft windows",
+        "atari st", "amiga", "wii u",
+        "philips cd-i", "sharp x68000", "sharp x1", "thomson to8", "cassette vision",
+        "nokia n-gage", "vic-20", "zx81", "pc-6000", "pc-9800",
+        "game & watch", "fm towns", "zeebo",
+        "hubs", "events", "standalone", "atari 800", "microsoft windows",
         "atari 5200", "atari 8-bit"
     ];
 
@@ -307,12 +315,15 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
     }
 
     /// <summary>
-    ///     Gets a sorted list of all official RetroAchievements system names supported by the matcher.
+    ///     Gets a sorted list of the official RetroAchievements system names supported for
+    ///     hashing — the list shown in the hash system-selection dialog. Systems the CLI
+    ///     cannot hash (see <see cref="IsSystemSupportedForHashing" />) are excluded.
     /// </summary>
-    /// <returns>A sorted list of system name strings.</returns>
+    /// <returns>A sorted list of hashable system name strings.</returns>
     public IList<string> GetSupportedSystemNames()
     {
-        return SystemMappings.Keys.OrderBy(static s => s, StringComparer.Ordinal).ToList();
+        return SystemMappings.Keys.Where(IsSystemSupportedForHashing)
+            .OrderBy(static s => s, StringComparer.Ordinal).ToList();
     }
 
     /// <summary>
