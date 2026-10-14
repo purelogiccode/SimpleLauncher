@@ -1,3 +1,4 @@
+using Moq;
 using SimpleLauncher.Core.Services.RetroAchievements;
 using Xunit;
 
@@ -285,6 +286,41 @@ public class RetroAchievementsSystemMatcherTests
     {
         var result = _matcher.IsSystemSupportedForHashing(input);
         Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     Regression (reported on the WPF PlayStation 3 library with 1287 games): a system
+    ///     whose alias resolves to the "unsupported" pseudo-system must be rejected before
+    ///     any console-id lookup — the per-game-card UI calls used to log two Debug lines
+    ///     per game ("Looking up system ID for 'unsupported'").
+    /// </summary>
+    [Fact]
+    public void IsSystemSupportedForHashingUnsupportedPseudoSystemSkipsConsoleIdLookup()
+    {
+        var logger = new Mock<ILogger>();
+        var matcher = new RetroAchievementsSystemMatcher(logger.Object);
+
+        Assert.False(matcher.IsSystemSupportedForHashing("Sony PlayStation 3"));
+        Assert.False(matcher.IsSystemSupportedForHashing("Sony PlayStation 3"));
+
+        logger.Verify(l => l.Debug(It.Is<string>(m => m.Contains("Looking up system ID"))), Times.Never);
+    }
+
+    /// <summary>
+    ///     Hash-support decisions are cached per system name (case-insensitive), so the
+    ///     per-game-card UI calls resolve the console id (and log the lookup) once.
+    /// </summary>
+    [Fact]
+    public void IsSystemSupportedForHashingIsCachedAndLogsTheLookupOnce()
+    {
+        var logger = new Mock<ILogger>();
+        var matcher = new RetroAchievementsSystemMatcher(logger.Object);
+
+        Assert.True(matcher.IsSystemSupportedForHashing("NES"));
+        Assert.True(matcher.IsSystemSupportedForHashing("NES"));
+        Assert.True(matcher.IsSystemSupportedForHashing("nes"));
+
+        logger.Verify(l => l.Debug(It.Is<string>(m => m.Contains("Looking up system ID"))), Times.Once);
     }
 
     /// <summary>

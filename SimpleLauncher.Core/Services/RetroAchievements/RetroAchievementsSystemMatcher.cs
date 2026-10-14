@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
 using SimpleLauncher.Core.Interfaces;
@@ -231,8 +232,8 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
     // Systems the bundled RetroAchievementsSharp CLI (a 1:1 rcheevos port) cannot hash:
     // no case for the console id in the CLI's HashEngine.FromFile switch — the source of
     // truth (e.g. Wii U id 20 → "Unsupported console for file hash: 20"). Also includes
-    // the pseudo-systems with ids above RC_CONSOLE_MAX (hubs/events/standalone) and raw
-    // placeholder names that never map to a console. Matching is exact and
+    // the pseudo-systems with ids above RC_CONSOLE_MAX (hubs/events/standalone/unsupported)
+    // and raw placeholder names that never map to a console. Matching is exact and
     // separator-insensitive: substring matching would wrongly reject supported systems
     // (e.g. "Arcade" vs "SEGA_arcade").
     private static readonly string[] UnsupportedHashLogicSystems =
@@ -242,12 +243,18 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         "philips cd-i", "sharp x68000", "sharp x1", "thomson to8", "cassette vision",
         "nokia n-gage", "vic-20", "zx81", "pc-6000", "pc-9800",
         "game & watch", "fm towns", "zeebo",
-        "hubs", "events", "standalone", "atari 800", "microsoft windows",
+        "hubs", "events", "standalone", "unsupported", "atari 800", "microsoft windows",
         "atari 5200", "atari 8-bit"
     ];
 
     private readonly HashSet<string> _loggedUnmatchedSystems = new(StringComparer.OrdinalIgnoreCase);
     private readonly ILogger _logger;
+
+    // Hash-support decisions are deterministic (the mappings are static) and the UI asks
+    // once per game card, so the result is cached per system name: without it, every game
+    // re-resolved the console id and flooded the log (and wasted work) for systems such as
+    // "Sony PlayStation 3" whose alias resolves to the "unsupported" pseudo-system.
+    private readonly ConcurrentDictionary<string, bool> _hashSupportCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RetroAchievementsSystemMatcher" /> class.
@@ -388,6 +395,14 @@ public class RetroAchievementsSystemMatcher : IRetroAchievementsSystemMatcher
         if (string.IsNullOrWhiteSpace(systemName))
             return false;
 
+        return _hashSupportCache.GetOrAdd(systemName, ComputeHashSupport);
+    }
+
+    /// <summary>
+    ///     Computes the hash-support decision for one system name (cache miss path).
+    /// </summary>
+    private bool ComputeHashSupport(string systemName)
+    {
         var matchedName = GetBestMatchSystemName(systemName);
 
         if (IsUnsupportedHashLogicSystem(matchedName)) return false;
