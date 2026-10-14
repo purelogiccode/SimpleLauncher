@@ -34,6 +34,8 @@ public class MainViewModelQuickActionsTests : IDisposable
     private readonly Mock<ILogger> _logger = new();
     private readonly Mock<IMameDataService> _mameData = new();
     private readonly Mock<IMessageBoxLibraryService> _messageBox = new();
+    private readonly Mock<IRetroAchievementsHashScanner> _raHashScanner = new();
+    private readonly Mock<IRetroAchievementsHashStore> _raHashStore = new();
     private readonly FakeLoadingOverlayHost _loadingHost = new();
     private readonly AvaloniaPaginationService _pagination;
     private readonly string _romsFolder;
@@ -106,8 +108,8 @@ public class MainViewModelQuickActionsTests : IDisposable
             settings,
             _pagination,
             loadingOrchestrator,
-            new Mock<IRetroAchievementsHashScanner>().Object,
-            new Mock<IRetroAchievementsHashStore>().Object,
+            _raHashScanner.Object,
+            _raHashStore.Object,
             new RetroAchievementsManager(),
             _messageBox.Object,
             _mameData.Object,
@@ -290,6 +292,40 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     // ── System information panel (WPF DisplaySystemInformation parity) ──
+
+    [Fact]
+    public async Task ApplyLetterFilterAsync_AfterRetroAchievementsFilter_RestoresCompleteLibrary()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        // Pretend the system has an up-to-date scan that matches no game (the mocked
+        // hash store returns null), so the filter shows an empty RetroAchievements view.
+        _raHashScanner.Setup(s => s.IsScanUpToDate("Test System")).Returns(true);
+        await _viewModel.ShowGamesWithRetroAchievementsCommand.ExecuteAsync(null);
+        Assert.True(_viewModel.IsShowingRetroAchievements);
+        Assert.Empty(_viewModel.Games);
+
+        // WPF parity: a letter button (including "All") loads the complete library of
+        // the current context, so the RetroAchievements view never limits the results.
+        await _viewModel.ApplyLetterFilterAsync("");
+        Assert.False(_viewModel.IsShowingRetroAchievements);
+        Assert.Equal(5, _viewModel.Games.Count);
+
+        await _viewModel.ApplyLetterFilterAsync("B");
+        var titles = _viewModel.Games.Select(static g => Path.GetFileName(g.FilePath)).ToList();
+        Assert.Contains("beyond.zip", titles, StringComparer.OrdinalIgnoreCase);
+        Assert.DoesNotContain("abyss.zip", titles, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ClearSearchTextSilently_ClearsQueryWithoutReloading()
+    {
+        _viewModel.SearchText = "abyss";
+
+        _viewModel.ClearSearchTextSilently();
+
+        Assert.Equal("", _viewModel.SearchText);
+    }
 
     [Fact]
     public void ShowSystemInformation_VisibleUntilLetterFilterLoadsGames()

@@ -1177,14 +1177,21 @@ public partial class MainWindow : Window, IPaginationHost
         LetterFilterBar.Children.Add(button);
     }
 
-    private void LetterFilterButton_Click(string letter, Button _)
+    private async void LetterFilterButton_Click(string letter, Button _)
     {
         try
         {
             Log.Debug("Letter filter selected: '{Letter}'", letter);
             _playSound.PlayNotificationSound();
-            _viewModel.SetLetterFilter(letter);
             UpdateLetterBarSelection(letter);
+
+            // WPF parity: the letter buttons load the complete library of the current
+            // context (exiting a RetroAchievements/Favorites/Search view) and clear the
+            // search box. The VM value is cleared first so the TextChanged handler below
+            // does not restart a search for the emptied box.
+            _viewModel.ClearSearchTextSilently();
+            SearchBox.Text = "";
+            await _viewModel.ApplyLetterFilterAsync(letter);
         }
         catch (Exception ex)
         {

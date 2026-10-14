@@ -510,6 +510,83 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     }
 
     /// <summary>
+    ///     Handles a letter-bar click (WPF TopLetterNumberMenuClickAsync parity): the
+    ///     complete library of the current context — the selected system, or every system
+    ///     when none is selected — is reloaded before the letter is applied, so a previous
+    ///     RetroAchievements / Favorites / Recently Played / search view never limits the
+    ///     results. The search box is cleared like in WPF.
+    /// </summary>
+    public async Task ApplyLetterFilterAsync(string letter)
+    {
+        try
+        {
+            IsSystemInfoVisible = false;
+            LetterFilter = letter ?? "";
+            ClearSearchTextSilently();
+            IsShowingFavorites = false;
+            IsShowingRetroAchievements = false;
+            IsMixedView = string.IsNullOrEmpty(SelectedSystem);
+
+            Log.Debug("Letter filter selected: '{Letter}'", LetterFilter);
+
+            var systems = string.IsNullOrEmpty(SelectedSystem)
+                ? _allSystems
+                : _allSystems
+                    .Where(s => string.Equals(s.SystemName, SelectedSystem, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            // Always prefer the configuration from the system manager (same reason as
+            // NavigateToSystemCoreAsync: the snapshot may still predate an edit).
+            if (!string.IsNullOrEmpty(SelectedSystem))
+            {
+                var current = _systemManager.GetSystem(SelectedSystem);
+                if (current is not null) systems = [current];
+            }
+
+            var games = await RunViewLoadAsync(
+                _localization.GetString("LoadingGames", "Loading Games..."),
+                () =>
+                {
+                    var scanned = ScanGames(systems);
+                    ApplyFavoritesAndHistory(scanned);
+                    return scanned;
+                });
+
+            if (games is null) return; // superseded by a newer view load
+
+            ShowGames(games);
+            StatusText = string.IsNullOrEmpty(LetterFilter)
+                ? _localization.GetString("Status.AllGames", "All Games")
+                : string.Format(_localization.GetString("Filteringby", "Filtering by {0}"), LetterFilter);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to load the library for letter '{Letter}'", letter);
+            StatusText = _localization.GetString("Errorloadinggames", "Error loading games");
+        }
+    }
+
+    /// <summary>
+    ///     Clears the search query without triggering a search reload (the letter buttons
+    ///     replace the search view with the full library of the current context).
+    /// </summary>
+    public void ClearSearchTextSilently()
+    {
+        if (string.IsNullOrEmpty(SearchText)) return;
+
+        CancelPendingSearch();
+        _suppressSearchReload = true;
+        try
+        {
+            SearchText = "";
+        }
+        finally
+        {
+            _suppressSearchReload = false;
+        }
+    }
+
+    /// <summary>
     ///     Displays the selected system's configuration summary in the game browser
     ///     (WPF DisplaySystemInformation parity). Replaced as soon as games are loaded
     ///     (letter filter, search, favorites, …).

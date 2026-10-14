@@ -43,6 +43,7 @@
 - **23 Linux port findings fixed (LB-01…LB-23)** — Case-insensitive ROM/EXE discovery after extraction, backslash archive entry names, execute bits for bundled tools, CHD temp-file cleanup, mount platform guards, updater Zip-Slip comparison, platform-neutral dialog wording, defensive scan-handler gating, and Information-level logging when a release ships no update assets for the current platform.
 
 ## Avalonia Fixes
+- **Letter buttons after a filtered view** — Clicking a letter (or "All") after a RetroAchievements, Favorites, Recently Played or search view now reloads the complete library of the current system (and clears the search box), matching WPF, instead of filtering the already-filtered list.
 - **RetroAchievements hash scan** — The bundled CLI is now invoked through its positional interface (with automatic resume after a file it cannot hash), so fresh scans on a new library no longer store zero hashes; existing scans are versioned and recalculated automatically. Applies to both apps.
 - **System icon size** — Ctrl+Mouse wheel and the zoom buttons now resize the system icons on the system selection screen (50/100/150 px) and remember the choice, matching WPF.
 - **Pages hide the system bar** — Favorites, Play History and Global Search no longer show the top system-selection bar, matching WPF.
