@@ -384,6 +384,9 @@
         <None Update="tools\CHDStudio\win-x64\ReadMe.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="tools\CHDStudio\win-x64\WhatsNew.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="tools\CHDStudio\win-arm64\CHDStudio.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -406,6 +409,9 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\CHDStudio\win-arm64\ReadMe.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\CHDStudio\win-arm64\WhatsNew.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="tools\BatchConvertToCompressedFile\7z_arm64.dll">
@@ -492,10 +498,22 @@
         <None Update="tools\RetroGameCoverDownloader\RetroGameCoverDownloader_arm64.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\RomValidator\7z_arm64.dll">
+        <None Update="tools\RomValidator\7za.exe">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\RomValidator\7z_x64.dll">
+        <None Update="tools\RomValidator\7za_arm64.exe">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RomValidator\RomValidator.xml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RomValidator\LICENSE.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RomValidator\ReadMe.md">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="tools\RomValidator\WhatsNew.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Services\EasyMode\Samples\easymode_arm64.xml">

@@ -73,6 +73,10 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "CHDMounter", "CHDMounter_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "CHDMounter", "README.md"),
 
+        // Obsolete RomValidator helper DLLs; the tool now ships the 7za executables.
+        Path.Combine(AppDirectory, "tools", "RomValidator", "7z_arm64.dll"),
+        Path.Combine(AppDirectory, "tools", "RomValidator", "7z_x64.dll"),
+
         Path.Combine(AppDirectory, "tools", "FindRomCover", "ControlzEx.dll"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "error_user.log"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "FindRomCover.deps.json"),
@@ -136,7 +140,7 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "SimpleZipDrive_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "RetroGameCoverDownloader", "RetroGameCoverDownloader_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "Magick.Native-Q16-arm64.dll"),
-        Path.Combine(AppDirectory, "tools", "RomValidator", "7z_arm64.dll"),
+        Path.Combine(AppDirectory, "tools", "RomValidator", "7za_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive_arm64.exe")
     ];
 
@@ -156,7 +160,7 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "SimpleZipDrive.exe"),
         Path.Combine(AppDirectory, "tools", "RetroGameCoverDownloader", "RetroGameCoverDownloader.exe"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "Magick.Native-Q16-x64.dll"),
-        Path.Combine(AppDirectory, "tools", "RomValidator", "7z_x64.dll"),
+        Path.Combine(AppDirectory, "tools", "RomValidator", "7za.exe"),
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive.exe")
     ];
 
