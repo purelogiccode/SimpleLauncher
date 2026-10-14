@@ -1,13 +1,27 @@
 [![GitHub release](https://img.shields.io/github/v/release/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
-[![Downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleLauncher/total)](https://github.com/purelogiccode/SimpleLauncher/releases)
+[![Latest release downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleLauncher/latest/total)](https://github.com/purelogiccode/SimpleLauncher/releases/latest)
+[![Total downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleLauncher/total)](https://github.com/purelogiccode/SimpleLauncher/releases)
 [![Release date](https://img.shields.io/github/release-date/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
 [![Last commit](https://img.shields.io/github/last-commit/purelogiccode/SimpleLauncher/master)](https://github.com/purelogiccode/SimpleLauncher/commits/master)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/graphs/commit-activity)
+
 [![Stars](https://img.shields.io/github/stars/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/stargazers)
-[![Issues](https://img.shields.io/github/issues/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/issues)
+[![Forks](https://img.shields.io/github/forks/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/forks)
+[![Watchers](https://img.shields.io/github/watchers/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/watchers)
+[![Contributors](https://img.shields.io/github/contributors/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/graphs/contributors)
+[![Open issues](https://img.shields.io/github/issues/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/pulls)
+[![Maintained](https://img.shields.io/badge/Maintained%3F-yes-brightgreen)](https://github.com/purelogiccode/SimpleLauncher/commits/master)
+
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(x64%20%7C%20ARM64)-blue)](https://github.com/purelogiccode/SimpleLauncher/releases)
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download)
+[![Made with C#](https://img.shields.io/badge/Made%20with-C%23-239120)](https://learn.microsoft.com/dotnet/csharp/)
+[![Built with Avalonia](https://img.shields.io/badge/Built%20with-Avalonia-8B44AC)](https://avaloniaui.net/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.txt)
-[![Docs](https://img.shields.io/badge/docs-Pages%20%2B%20Wiki-blue)](https://purelogiccode.github.io/SimpleLauncher/)
+
+[![Docs: GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://purelogiccode.github.io/SimpleLauncher/)
+[![Wiki](https://img.shields.io/badge/docs-GitHub%20Wiki-blue)](https://github.com/purelogiccode/SimpleLauncher/wiki)
+[![Docs deploy](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/docs.yml/badge.svg)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/docs.yml)
 
 # 🎮 Simple Launcher
 
