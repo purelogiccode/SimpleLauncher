@@ -1,13 +1,13 @@
 name: Publish release
 
 # Manual release: packages the Windows WPF + Avalonia bundle for win-x64 and win-arm64 via
-# scripts/package-release.ps1 and the self-contained Linux bundle for linux-x64 and linux-arm64
+# scripts/package-release.ps1 and the framework-dependent Linux bundle for linux-x64 and linux-arm64
 # via scripts/package-release-linux.ps1, uploads the zips as workflow artifacts and
 # creates/updates the GitHub release the in-app updater reads.
 #
 # Assets produced per RID:
 #   release_{version}_{rid}.zip   Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe side by side
-#                                 Linux:   the self-contained SimpleLauncher.Avalonia payload
+#                                 Linux:   the framework-dependent SimpleLauncher.Avalonia payload
 #   updater_{rid}.zip             the standalone updater shared by the apps (Updater.exe / Updater)
 
 on:

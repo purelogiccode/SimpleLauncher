@@ -17,5 +17,6 @@
 - [16 — Updater](16-updater.md)
 - [17 — Release Notes](17-release-notes.md)
 - [18 — Emulator Parameters](18-emulator-parameters.md)
+- [GUI Test Harness](gui-test-harness.md)
 - [Manual Tests](manual-tests.md)
 - [Parameters](parameters.md)

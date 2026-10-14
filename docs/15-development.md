@@ -33,7 +33,7 @@ dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -
 wsl dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 ```
 
-See [14 — Testing](14-testing.md) for test filters and the known slow network test. Tests are
+See [14 — Testing](14-testing.md) for the fast/slow suite split. Tests are
 **not** run by CI (the suites include live endpoints and real app launches); verification stays
 local + WSL2. The GitHub Actions workflows only package releases and deploy the docs — see
 [Continuous integration](#continuous-integration).
@@ -60,6 +60,7 @@ pwsh scripts/package-release.ps1 -Version 5.8.0
 ```
 
 - The bundle places `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other and ships one shared set of content files (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Users choose which app to run.
+- Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`).
 - Both apps are published **framework-dependent** (the **.NET 10 Desktop Runtime** is required on the target machine), so the payload carries no runtime: each is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
 - Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing.
 - Merges the two publish outputs and fails loudly when a shared file has different content (for example `appsettings.json` drift); `AppSettingsFilesAreIdentical` guards the two appsettings sources in the test suite.
@@ -77,11 +78,12 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 ```
 
-- The Avalonia app is published **self-contained single-file** for `net10.0` (Linux users are not
-  expected to install the .NET runtime; the managed assemblies are bundled into the
-  `SimpleLauncher.Avalonia` binary with only the native libraries beside it, mirroring the
-  Windows exes); the standalone `Updater` is a self-contained
-  single file so it can run without a runtime too.
+- The Avalonia app is published **framework-dependent single-file** for `net10.0` (the **.NET 10
+  runtime** is required on Linux; managed assemblies are bundled into the `SimpleLauncher.Avalonia`
+  binary with only the native libraries beside it, mirroring the Windows exes); the standalone
+  `Updater` is framework-dependent single-file as well.
+- Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`,
+  the same helper the Windows script uses).
 - Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`, the other
   architecture's `7zz`); the per-RID tools (`FindRomCover`, `RetroAchievementsSharp`,
   `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target
@@ -96,7 +98,7 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
 - Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
   `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
   verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
-- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 640 Avalonia
+- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 703 Avalonia
   tests pass with `dotnet test -c Debug -f net10.0 -r linux-x64` (Fedora's SDK defaults to the
   `fedora.44-x64` RID, whose apphost pack is not on nuget.org, so the `-r linux-x64` override is
   required to restore/build), and the published app launches and renders through XWayland
@@ -130,7 +132,7 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless test suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (640 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (703 tests via `Avalonia.Headless`).
 
 ## Versioning
 
@@ -175,7 +177,7 @@ suites (they include live endpoints and real app launches; run them locally).
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the self-contained single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
+| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the framework-dependent single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and
@@ -213,9 +215,9 @@ The script maps `docs/README.md` → `Home`, copies all `docs/NN-*.md` as pages,
 
 1. Implement features/fixes; keep `WhatsNew.md` updated with a release section.
 2. Bump version in the places listed under [Versioning](#versioning).
-3. Run the full test suite (minus the slow URL test).
-4. Run **Actions → Publish release** with the new version — it packages the Windows and Linux RIDs (`release_{version}_{rid}.zip` + `updater_{rid}.zip` for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`) and creates the GitHub release. Locally, `pwsh scripts/package-release.ps1 -Version <version>` and `pwsh scripts/package-release-linux.ps1 -Version <version>` produce the same packages. The workflow can also be run with **Create or update the GitHub release** unchecked to only build the zips as workflow artifacts.
-5. The in-app updater and silent update check use the GitHub `releases/latest` API.
+3. Run the fast suites during iteration; run **both slow suites before deploying** (see [14 — Testing](14-testing.md)).
+4. Run **Actions → Publish release** with the new version — it packages the Windows and Linux RIDs (`release_{version}_{rid}.zip` + `updater_{rid}.zip` for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`) and creates the GitHub release. Locally, `pwsh scripts/package-release.ps1 -Version <version>` and `pwsh scripts/package-release-linux.ps1 -Version <version>` produce the same packages. The workflow can also be run with **Create or update the GitHub release** unchecked to only build the zips as workflow artifacts. The optional **release notes** input is written into the release body (for example the current `WhatsNew.md` section).
+5. The in-app updater and silent update check use the GitHub `releases/latest` API, with an automatic fallback to the secondary server (`assets.purelogiccode.com/…/version.txt` + the hosted packages) when GitHub is unreachable or rate-limited (HTTP 403/429). Keep `version.txt` and the hosted packages on that server **in sync with each release** — they are maintained outside this repository.
 
 ## Related docs
 

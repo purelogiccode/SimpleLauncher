@@ -5,12 +5,14 @@
 
 ## Projects
 
-- `SimpleLauncher.Tests` — xUnit (`net10.0-windows`), references `SimpleLauncher` (and transitively `SimpleLauncher.Core`); `InternalsVisibleTo` gives access to internal members.
-- `SimpleLauncher.Avalonia.Tests` — xUnit (`net10.0`, runs on Windows **and** Linux/WSL2), references `SimpleLauncher.Avalonia`; uses `Avalonia.Headless 12.1.1` for window construction tests.
+- `SimpleLauncher.Tests` — xUnit (`net10.0-windows`), references `SimpleLauncher` (and transitively `SimpleLauncher.Core`); `InternalsVisibleTo` gives access to internal members. **Fast suite.**
+- `SimpleLauncher.Avalonia.Tests` — xUnit (`net10.0`, runs on Windows **and** Linux/WSL2), references `SimpleLauncher.Avalonia`; uses `Avalonia.Headless 12.1.1` for window construction tests. **Fast suite.**
+- `SimpleLauncher.SlowTests` — xUnit (`net10.0-windows`), **slow suite**: live GitHub/PureLogicCode endpoint checks, real `SimpleLauncher.exe` app launches for the language checks (no other instance may run), real ZIP/CHD mount integration via Dokan (self-skips cleanly when the images/media or mount tools are absent).
+- `SimpleLauncher.Avalonia.SlowTests` — xUnit (`net10.0`), **slow suite**: cross-platform mount extraction fallback and platform guards.
 - Frameworks: **xUnit 2.9.3**, **Moq 4.20.72**, **Avalonia.Headless 12.1.1**, Serilog `ILogger` mocks; Meziantou analyzer enabled.
-- **~154 WPF test files + 72 Avalonia test files (~226 total)** — **640 Avalonia tests** + **2109 WPF tests** (21 WPF live mount/integration tests require the local `G:`/`X:`/`J:` test drives and self-skip when absent). WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
+- **~154 WPF test files + 72 Avalonia test files (~226 total)** — **703 Avalonia tests** + **2207 WPF tests** in the fast suites, plus **83 WPF slow tests** + **11 Avalonia slow tests**. WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
 - **Linux regression coverage (LB-01 … LB-23)** — the cross-platform suite pins each fixed finding: ZIP/RPCS3/ScummVM temp extraction (`MountZipFilesCrossPlatformTests`), DOSBox CHD/ISO `imgmount` (`DosBoxChdLinuxTests`, `DosBoxIsoLinuxTests`, `Iso9660ImageReaderTests`), emulator pickers (`ExecutableFileFilterTests`) and `CheckPath` on Unix, case-insensitive extraction (`ExtractionServiceTests`, `DosBoxCaseSensitivityTests`), RA emulator-integration gating (`EmulatorConfigHandlerRegistrationTests`), audio decoders/degradation (`PlaySoundEffectsTests`), mount platform guards (`MountPlatformGuardTests`), archive entry normalization + Unix execute bits (`ExtractionServiceTests`), updater case-variant Zip-Slip and missing-asset Information logging (`AvaloniaCheckForUpdatesServiceTests`), invalid-executable errno + separator normalization (`PathHandlingCrossPlatformTests`), multi-track CHD cleanup (`ChdMountStrategyCleanupTests`).
-- **Manual Linux smoke test** — the packaged `linux-x64` bundle (self-contained, from `scripts/package-release-linux.ps1`) was run by hand on **Debian 13 (trixie) x64** (GNOME Wayland/Xwayland): first-run "Welcome" dialog and main window render with no errors (2026-09-24) — see [ManualTests.md](manual-tests.md).
+- **Manual Linux smoke test** — the packaged `linux-x64` bundle (framework-dependent single-file, from `scripts/package-release-linux.ps1`) was run by hand on **Debian 13 (trixie) x64** (GNOME Wayland/Xwayland): first-run "Welcome" dialog and main window render with no errors (2026-09-24) — see [ManualTests.md](manual-tests.md).
 
 ## Test helpers
 
@@ -45,25 +47,22 @@
 ## Running the tests
 
 ```bash
-# WPF — all tests, unfiltered (includes live endpoints and real app launches; ~3 min)
+# WPF — fast suite, unfiltered (~40 s)
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj
+
+# Avalonia — fast suite (headless, runs on Windows and Linux/WSL2, no display required, ~20 s)
+dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj
 
 # WPF — single class
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj \
   --filter "FullyQualifiedName~RetroAchievementsViewModelTests"
 
-# Avalonia — all tests (headless, runs on Windows and Linux/WSL2, no display required)
-dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj
-
-# Avalonia — single class
-dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj \
-  --filter "FullyQualifiedName~RetroAchievementsViewModelTests"
-
-# Both solutions
-dotnet test SimpleLauncher.sln -c Debug
+# Slow suites (only before a deploy or when explicitly asked, ~3.5 min / ~1 s)
+dotnet test SimpleLauncher.SlowTests/SimpleLauncher.SlowTests.csproj
+dotnet test SimpleLauncher.Avalonia.SlowTests/SimpleLauncher.Avalonia.SlowTests.csproj
 ```
 
-> ⚠ **Known slow/live tests (WPF):** `UrlValidationTests.ParametersMdAllUrlsAreReachable` pings every URL in `parameters.md` over the network **without a timeout** — it can take 15+ minutes or hang when a URL is unreachable. `MountZipFilesIntegrationTests` / `MountChdFilesIntegrationTests` require real files on `G:\`, `X:\`, `J:\` drives and fail when missing. All of them run unfiltered in every `dotnet test` (no quarantine — see `AGENTS.md`); a full local run on a machine without that media reports those failures and still exercises everything else.
+> ⚠ **Fast/slow split (no filtering):** the suites are split **by project**, never by `[Trait]`/filter. During iteration run only the two fast suites; the slow suites (live endpoints, real app launches, real ZIP/CHD mounts) run **only before a deploy or when the admin asks**. Every test in a project always runs unfiltered with `dotnet test` — never add a filter, quarantine or runtime skip. Slow tests self-skip cleanly when their media/tools are absent (mount integration needs the Dokan driver and the bundled mount tools).
 
 ## Writing new tests — conventions
 

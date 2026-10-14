@@ -8,15 +8,15 @@
 - **Windows 10 or 11** (x64 or ARM64 — native ARM64 builds are provided).
 - **.NET 10 Desktop Runtime** (the app targets `net10.0-windows`, runtime `10.0.2`).
 - **Dokan** (optional but recommended) — required for on-the-fly mounting of `.iso`, `.xiso`, `.zip`, and universal CHD mounting. The app detects Dokan and shows a specific message when it is missing.
-- **Linux/macOS (Avalonia app):** no .NET install needed for the self-contained release bundles; **`libasound2`** for audio output and the optional **`libsndfile1`** for FLAC/Ogg/Opus sound effects (MP3/WAV need no extra packages). Mounting tools are Windows-only — `.zip`/`.7z`/`.rar` launch extracts to a temp folder, CHD is converted on the fly, and `.iso` is mounted inside DOSBox. **Linux support is beta** (verified on Ubuntu 24.04 x64 and Fedora 44 KDE; please report issues).
+- **Linux (Avalonia app, beta):** install the **.NET 10 runtime** (the Linux bundles are framework-dependent single-file builds); **`libasound2`** for audio output and the optional **`libsndfile1`** for FLAC/Ogg/Opus sound effects (MP3/WAV need no extra packages). Mounting uses **FUSE 3** (`libfuse3` + `/dev/fuse`): ZIP/7z/RAR launches through SimpleZipDrive, Xbox images through SimpleXisoDrive, CHD through CHDMounter — each with automatic extraction/conversion fallbacks; `.iso` is mounted inside DOSBox. **Linux support is beta** (verified on Ubuntu 24.04 x64 and Fedora 44 KDE; please report issues).
 - A writable folder for the app (the launcher refuses to run from a temp folder and detects non-writable installs).
 - Your own **emulators and ROMs** (the launcher ships none).
 
 ## Install
 
-1. Download the latest release zip (`release_{version}_{rid}.zip`) for your platform from the [GitHub releases page](https://github.com/purelogiccode/SimpleLauncher/releases): `win-x64` / `win-arm64` (WPF + Avalonia) or `linux-x64` / `linux-arm64` (self-contained Avalonia).
+1. Download the latest release zip (`release_{version}_{rid}.zip`) for your platform from the [GitHub releases page](https://github.com/purelogiccode/SimpleLauncher/releases): `win-x64` / `win-arm64` (WPF + Avalonia) or `linux-x64` / `linux-arm64` (Avalonia, framework-dependent).
 2. Extract to a folder (e.g. `C:\SimpleLauncher`). Do **not** run from a temporary/Downloads extraction folder.
-3. Run either `SimpleLauncher.exe` (WPF) or `SimpleLauncher.Avalonia.exe` (Avalonia) — both ship in the same zip, next to each other, and share the same content and settings files. Pick whichever you prefer; there is no need to install both. On Linux, extract the `linux-*` zip and run `./SimpleLauncher.Avalonia` — a self-contained single-file binary; the native libraries, `Updater` and the Linux `tools/` binaries ship alongside.
+3. Run either `SimpleLauncher.exe` (WPF) or `SimpleLauncher.Avalonia.exe` (Avalonia) — both ship in the same zip, next to each other, and share the same content and settings files. Pick whichever you prefer; there is no need to install both. On Linux, extract the `linux-*` zip and run `./SimpleLauncher.Avalonia` — a framework-dependent single-file binary (requires the .NET 10 runtime); the native libraries, `Updater`, LICENSE/README/WhatsNew and the Linux `tools/` binaries ship alongside.
 
 On first launch the app:
 

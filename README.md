@@ -1,6 +1,13 @@
 [![GitHub release](https://img.shields.io/github/v/release/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20x64%20%7C%20ARM64-blue)](https://github.com/purelogiccode/SimpleLauncher/releases)
+[![Downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleLauncher/total)](https://github.com/purelogiccode/SimpleLauncher/releases)
+[![Release date](https://img.shields.io/github/release-date/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
+[![Last commit](https://img.shields.io/github/last-commit/purelogiccode/SimpleLauncher/master)](https://github.com/purelogiccode/SimpleLauncher/commits/master)
+[![Stars](https://img.shields.io/github/stars/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/stargazers)
+[![Issues](https://img.shields.io/github/issues/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/issues)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(x64%20%7C%20ARM64)-blue)](https://github.com/purelogiccode/SimpleLauncher/releases)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.txt)
+[![Docs](https://img.shields.io/badge/docs-Pages%20%2B%20Wiki-blue)](https://purelogiccode.github.io/SimpleLauncher/)
 
 # 🎮 Simple Launcher
 
@@ -40,10 +47,10 @@
   - Ares, Azahar, Blastem, Cemu, Daphne, Dolphin, DuckStation, Flycast, MAME, Mednafen, Mesen, PCSX2, Raine, Redream, RetroArch, RPCS3, Sega Model 2, Stella, Supermodel, Xenia, Yumir
 * **Universal CHD Support:** Built-in **CHDMounter** utility brings CHD support to emulators without native support — Dokan/WinFsp on Windows, FUSE 3 on Linux (falls back to on-the-fly conversion when FUSE is unavailable):
   - RPCS3, Xemu, Xenia, Cxbx-Reloaded, Mednafen, PCSX Redux, 4DO, Gens, Blastem, Yabause, Mesen, FinalBurn Neo, FinalBurn Alpha, Raine, CD-i Emulator, Tsugaru
-* **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration (Windows); Xemu also boots compressed Xbox images (`.cso`, `.zar`) through **SimpleXisoDrive**'s virtual `image.iso` mount. On Linux/macOS the Avalonia app extracts archives to a temp folder, mounts CHD images through **CHDMounter**/FUSE when available (otherwise converting them on the fly), and mounts ISOs inside DOSBox — no Dokan needed
+* **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration (Windows); Xbox games in every SimpleXisoDrive container (`.iso`/`.xiso`/`.cso`/`.zar`, plus Xbox-ISO `.chd`) mount through **SimpleXisoDrive** for Xemu (virtual `image.iso`) and Cxbx-Reloaded (mounted `default.xbe`). On Linux the Avalonia app mounts ZIP/7z/RAR launches through **SimpleZipDrive** (FUSE 3) and Xbox images through **SimpleXisoDrive** (FUSE 3), mounts CHD images through **CHDMounter**/FUSE, and keeps temp-extraction and managed conversion as automatic fallbacks — no Dokan needed
 * **Expert Mode:** Granular control over launch parameters, multiple ROM paths per system, and custom environment variables
 * **Format Conversion:** Built-in converters for CHD, RVZ, XISO, 7z/Zip with integrity verification
-* **File Mounting Strategies:** Advanced strategies for XISO, CHD, ZIP, CSO/ZAR-to-image.iso (Xemu), PBP-to-CUE, and CHD-to-CUE conversions
+* **File Mounting Strategies:** Advanced strategies for Xbox images (`.iso`/`.xiso`/`.cso`/`.zar`/`.chd`), CHD (mount or convert), ZIP/7z/RAR (mount or extract), DOSBox `imgmount`, PBP-to-CUE, and CHD-to-CUE conversions
 
 ### 🏆 RetroAchievements (RA) Integration
 * **Rich User Profiles:** View RA stats, recently played games, and global rankings directly in UI
@@ -104,10 +111,10 @@ Simple Launcher includes a comprehensive suite of specialized utilities:
   - CreateBatchFilesForWindowsGames: Windows game launchers
   - CreateBatchFilesForXbox360XBLAGames: Xbox 360 XBLA launchers
 * **Validation & Organization:**
-  - RomValidator: Validate ROMs against No-Intro DAT files
-  - MAME.DatCreator: Create MAME DAT files
-  - SimpleZipDrive: ZIP file mounting utility
-  - SimpleXisoDrive: XISO file mounting utility
+   - RomValidator: Validate ROMs against No-Intro DAT files
+   - MAME.DatCreator: Create MAME DAT files
+   - SimpleZipDrive: ZIP file mounting utility
+   - SimpleXisoDrive: Xbox image mounting utility (XISO/CISO/ZAR/CHD)
 * **File System Tools:**
   - 7z integration for compression/decompression
 
@@ -120,7 +127,7 @@ Simple Launcher includes a comprehensive suite of specialized utilities:
 * **Global Statistics:** View usage statistics and play time across all systems
 * **Image Viewer:** Built-in image viewer for game art and screenshots
 * **Debug Window:** Advanced debugging and error reporting interface
-* **Update System:** Built-in updater with version checking
+* **Update System:** Built-in updater with a resilient update check (GitHub `releases/latest` with multi-source fallback to the secondary server when GitHub is unreachable or rate-limited) and one shared `Updater.exe` that updates either app (WPF or Avalonia) and relaunches the app that started it
 * **Multi-language Support:** 18 languages with localization system
 * **Accessibility Features:** Automation properties, access keys, and high contrast mode
 
@@ -169,6 +176,7 @@ The launcher supports an extensive range of gaming systems including:
 4. **Prerequisites:**
    * Install **Dokan** from [GitHub](https://github.com/dokan-dev/dokany/releases) for on-the-fly file mounting.
    * Ensure you have the [.NET 10 **Desktop** Runtime](https://dotnet.microsoft.com/download) installed (both apps are framework-dependent).
+5. **Linux (beta):** download `release_{version}_linux-x64.zip` (or `linux-arm64`), install the [.NET 10 Runtime](https://dotnet.microsoft.com/download) and `libasound2` (optional: `libsndfile1` for FLAC/Ogg/Opus UI sounds), then run `./SimpleLauncher.Avalonia`. Mounting uses **FUSE 3** (`libfuse3` + `/dev/fuse`) instead of Dokan. Linux support is **beta** — issues are welcome on GitHub.
 
 ---
 
@@ -207,9 +215,9 @@ An **Avalonia-based cross-platform port** (`SimpleLauncher.Avalonia`) is being d
 - **Windows delivery:** ships in the same unified release zip as the WPF app (`SimpleLauncher.Avalonia.exe` next to `SimpleLauncher.exe`); both are framework-dependent single executables that share the same content files and settings. A single `Updater.exe` updates either app.
 - **Port status:** menu bar with full options (language, button size, aspect ratio, view mode, filename preferences, RetroAchievements, donate, about — the emulator config injection and tools menus are Windows-only and hidden elsewhere), per-game context menus (launch, favorites, details, RetroAchievements, copy path/name, show in folder, edit system), 15 utility windows, Favorites / Play History / Global Search pages, RetroAchievements UI (profile / unlocks / progress + settings; the emulator-integration section is Windows-only), tray icon with native menu, F8 global screenshot hotkey (Windows), single dark theme, fully localized UI via the shared JSON packs (18 languages, 2671 keys each, `SimpleLauncher.Core\Localization`)
 - **Linux/macOS specifics:** ZIP/7Z/RAR launch extracts to a temp folder, CHD images mount through the bundled CHDMounter (FUSE 3; needs `libfuse3` + `/dev/fuse` + the .NET 10 runtime) and otherwise convert on the fly (CHDSharp), and ISOs are mounted inside DOSBox — the Windows mounting tools (Dokan, SimpleZipDrive, SimpleXisoDrive) are not used; MP3/WAV UI sounds play with no extra packages (FLAC/Ogg/Opus need the system `libsndfile`, `sudo apt install libsndfile1`)
-- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **640 Avalonia tests** + **2109 WPF tests** passing (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite, unified settings database + legacy migration)
+- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **703 Avalonia tests** + **2207 WPF tests** in the fast suites, plus dedicated slow suites (`SimpleLauncher.SlowTests`, `SimpleLauncher.Avalonia.SlowTests`) for live endpoints, real app launches and mount integration (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite, unified settings database + legacy migration)
 - **Build & test (Windows):** `dotnet build SimpleLauncher.sln -c Debug` · `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (headless, no display required)
-- **Build & test (Linux / WSL2):** `dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (net10.0, runs on Ubuntu 24.04 and Fedora 44) · `dotnet publish -f net10.0 -r linux-x64` / `linux-arm64` for self-contained folders
+- **Build & test (Linux / WSL2):** `dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (net10.0, runs on Ubuntu 24.04 and Fedora 44) · `dotnet publish -f net10.0 -r linux-x64` / `linux-arm64` for framework-dependent single-file bundles (the shipped Linux packages require the .NET 10 runtime)
 
 Development status and the step-by-step plan are tracked in [`References/TODO.md`](References/TODO.md).
 

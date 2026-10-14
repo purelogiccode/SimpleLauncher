@@ -13,6 +13,7 @@
   2. Secondary server `assets.purelogiccode.com/Simple Launcher/Simple Launcher/version.txt` (Cloudflare-hosted) — builds the release/updater URLs from it (`release_{version}_{rid}.zip` / `updater_{rid}.zip`).
 - **Silent check** at startup. If every GitHub source is unreachable (offline, rate-limited, blocked), the check falls back to the secondary server.
 - **Manual check**: About window "Check for Updates".
+- **Rate limiting (investigated 2026-10-14)**: the GitHub REST API allows only **60 unauthenticated requests per hour per IP** (`HTTP 403 "API rate limit exceeded"`). Apps up to 5.6.0 have no fallback, so on a rate-limited/shared IP their check ends in "Error checking for updates" instead of the update window — for example a 5.6.0 run failed exactly this way right after a 5.7.0 run on the same IP. 5.6.1+ fall back to the secondary server on any non-success response, so keeping `version.txt` + the hosted packages in sync (see [15 — Development](15-development.md#release-workflow-from-git-history--whats-new)) is what makes update detection resilient to GitHub rate limits and outages.
 - Version comparison against the current `5.8.0`; new version → prompts to download.
 - **Missing platform assets**: a release is not required to ship every RID — when the latest release has no `release_{version}_{rid}.zip` / `updater_{rid}.zip` for the current platform, the check logs at Information and reports no update (LB-23) instead of an Error (which would also file a bug report).
 
@@ -32,11 +33,11 @@ standalone updater per RID:
   self-extracts them at launch, so the one file runs from either app folder **and** on legacy
   WPF-only installs that never had those natives (which is how the old WPF updater asset name is
   reused for the unified release).
-- On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the self-contained
+- On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the framework-dependent
   single-file `SimpleLauncher.Avalonia` payload (managed assemblies bundled into the binary;
   native libraries such as Skia/HarfBuzz/SQLite ship beside it, same shape as the Windows exes)
-  and the self-contained single-file `Updater`; the ZIP entries
-  carry Unix permission bits (0755 for the executables) — see
+  and the framework-dependent single-file `Updater`; the **.NET 10 runtime** is required, and the
+  ZIP entries carry Unix permission bits (0755 for the executables) — see
   [15 — Development](15-development.md#linux-release-packaging-script).
 
 ## Update install flow

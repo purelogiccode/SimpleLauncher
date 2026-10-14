@@ -112,9 +112,35 @@ def rewrite_wiki_links(text: str, page_names: set[str]) -> str:
     return re.sub(r"\[([^\]]*)\]\(([^)]+)\)", replace, text)
 
 
-def generate_sidebar(page_names: list[str]) -> str:
-    """Generate a wiki _Sidebar.md with the docs in order."""
-    lines = []
+def generate_sidebar(page_names: list[str], docs_dir: str) -> str:
+    """Generate a wiki _Sidebar.md.
+
+    When docs/_sidebar.md exists (the docsify site menu), its labels and order are
+    reused so the wiki menu matches the Pages menu; otherwise a plain list is built
+    from the published page names.
+    """
+    import re
+
+    sidebar_source = os.path.join(docs_dir, "_sidebar.md")
+    lines: list[str] = []
+    if os.path.isfile(sidebar_source):
+        for raw in open(sidebar_source, encoding="utf-8").read().splitlines():
+            match = re.match(r"^\s*-\s+\[([^\]]+)\]\(([^)]+)\)\s*$", raw)
+            if not match:
+                continue
+            label, target = match.group(1), match.group(2)
+            if target.startswith(("http://", "https://", "#", "mailto:")):
+                continue
+            page = target.split("#")[0].removesuffix(".md")
+            if page == "README":
+                page = "Home"
+            if page not in page_names:
+                continue
+            lines.append(f"- [{label}]({page})")
+        if lines:
+            return "\n".join(lines) + "\n"
+
+    # Fallback: auto-generate from the published page names.
     if "Home" in page_names:
         lines.append("- [Home](Home)")
     for page in page_names:
@@ -164,7 +190,7 @@ def main() -> int:
             plan.append(("update" if existing is not None else "add", wiki_name))
 
     # 2. Sidebar
-    sidebar = generate_sidebar(sorted(page_names))
+    sidebar = generate_sidebar(sorted(page_names), docs_dir)
     sidebar_target = os.path.join(wiki_dir, "_Sidebar.md")
     if not os.path.isfile(sidebar_target) or open(sidebar_target, encoding="utf-8").read() != sidebar:
         if not args.dry_run:
