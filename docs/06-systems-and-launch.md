@@ -75,11 +75,11 @@ Ordered by `Priority`; first `IsMatch` wins:
 | `ZipMountStrategy` | 30 | `.zip/.7z/.rar` + RPCS3 / ScummVM / XBLA | Windows: mount archive; load `EBOOT.BIN`, ScummVM auto-detect, or XBLA nested exe. Linux/macOS: extract to a temp directory and launch from there (same search logic) |
 | `DosBoxLaunchStrategy` | 25 | DOSBox-family emulator + directory/archive/ISO/CHD | ISO/CHD mount, archive extract, `.conf/.bat/.exe/.com` detection or `DosBoxFileSelectionWindow`, temp conf, `-conf` append. Windows mounts ISO/CHD as a drive; Linux/macOS `imgmount`s ISO files directly and converts CHD with CHDSharp first |
 | `ChdToCueStrategy` | 25 | `.chd` + 4DO / Raine | `ConvertChdToCueBinAsync` → launch `.cue` → delete temp |
-| `XisoMountStrategy` | 20 | Cxbx + `.iso` | mount XISO → launch mounted `default.xbe` |
-| `XemuMountStrategy` | 20 | Xemu + `.cso/.zar` | Windows-only mount logic: SimpleXisoDrive mounts the image with the virtual `image.iso` option (`MountImageIsoAsync`, `--image-iso`), then xemu is launched with `-dvd_path <drive>\image.iso`; unmounted when xemu exits |
+| `XisoMountStrategy` | 20 | Cxbx + `.iso` / `.xiso` / `.cso` / `.zar` (display name or executable path) | mount through SimpleXisoDrive → launch the mounted `default.xbe` (Cxbx-Reloaded cannot read a raw XISO/CISO/ZArchive) |
+| `XemuMountStrategy` | 20 | Xemu + `.cso/.zar` | SimpleXisoDrive mounts the image with the virtual `image.iso` option (`MountImageIsoAsync`, `--image-iso`) through Dokan (Windows) / FUSE 3 (Linux), then xemu is launched with `-dvd_path <mount>\image.iso`; unmounted when xemu exits |
 | `CommanderGeniusLaunchStrategy` | 20 | Commander Genius + archive | resolve CG data path (Windows: Documents\Commander Genius; Linux/macOS: `~/.CommanderGenius` - LB-11), extract to `games\<zipname>`, `dir="games/<zipname>"` |
 | `PbpToCueStrategy` | 15 | `.pbp` + Mednafen | `ConvertPbpToCueBinAsync` → launch `.cue` → clean temp |
-| `ChdMountStrategy` | 10 | `.chd` (not RetroArch/DOSBox) + 19-emulator list | mount via CHDMounter (Windows Dokan/WinFsp, Linux FUSE 3), find launch file per emulator (EBOOT.BIN/default.xex/image.iso/default.xbe/`.bin`/`.cue`), regular launch; Linux falls back to the managed CHDSharp conversion when the mount is unavailable |
+| `ChdMountStrategy` | 10 | `.chd` (not RetroArch/DOSBox) + 19-emulator list | Xbox-ISO CHDs (xemu/Cxbx-Reloaded) are mounted through SimpleXisoDrive first on Windows and Linux (virtual `image.iso` / mounted `default.xbe`) and fall back to CHDMounter when the Dokan/FUSE driver is unavailable; other emulators mount via CHDMounter (Windows Dokan/WinFsp, Linux FUSE 3), find the launch file per emulator (EBOOT.BIN/default.xex/image.iso/default.xbe/`.bin`/`.cue`), regular launch; Linux falls back to the managed CHDSharp conversion when the mount is unavailable |
 
 ## Extraction (`ExtractionService`)
 

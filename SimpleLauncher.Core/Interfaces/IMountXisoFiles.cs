@@ -21,6 +21,14 @@ public interface IMountXisoFiles
         IMessageBoxLibraryService messageBox);
 
     /// <summary>
+    ///     Whether the platform driver stack the mount needs is available (Dokan on Windows,
+    ///     FUSE 3 on Linux). Callers that have a fallback (for example the Xbox-ISO CHD path
+    ///     of the CHD mount strategy) use this to skip a mount attempt that would only show
+    ///     an error dialog before the fallback runs.
+    /// </summary>
+    bool IsMountBackendAvailable { get; }
+
+    /// <summary>
     ///     Mounts a compressed Xbox image (.cso/.zar) with SimpleXisoDrive's virtual image.iso option
     ///     and returns a disposable drive handle with the mounted image.iso path.
     /// </summary>

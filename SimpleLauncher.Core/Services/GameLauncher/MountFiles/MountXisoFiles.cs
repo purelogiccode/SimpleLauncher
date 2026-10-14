@@ -23,6 +23,16 @@ public class MountXisoFiles : IMountXisoFiles
         _logger = logger;
     }
 
+    /// <inheritdoc />
+    public bool IsMountBackendAvailable
+    {
+        get
+        {
+            if (OperatingSystem.IsWindows()) return DokanValidation.IsDokanInstalled();
+            return OperatingSystem.IsLinux() && FuseValidation.IsFuseAvailable();
+        }
+    }
+
     /// <summary>
     ///     Mounts an XISO file and returns a disposable drive handle with the mounted default.xbe path.
     /// </summary>

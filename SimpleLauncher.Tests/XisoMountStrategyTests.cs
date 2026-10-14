@@ -148,7 +148,54 @@ public class XisoMountStrategyTests
     }
 
     /// <summary>
-    ///     Verifies that <see cref="XisoMountStrategy.IsMatch" /> returns false for non-ISO file extensions.
+    ///     Verifies that Cxbx-Reloaded mounts every Xbox container SimpleXisoDrive can present
+    ///     as a virtual drive (XISO spinoffs, CISO and ZArchive; CHD stays with ChdMountStrategy,
+    ///     which can fall back to CHDMounter).
+    /// </summary>
+    /// <param name="fileName">The game file name to test.</param>
+    [Theory]
+    [InlineData("game.iso")]
+    [InlineData("game.ISO")]
+    [InlineData("game.xiso")]
+    [InlineData("game.XISO")]
+    [InlineData("game.cso")]
+    [InlineData("game.CSO")]
+    [InlineData("game.zar")]
+    [InlineData("game.ZAR")]
+    public void IsMatchCxbxWithMountableXboxImageReturnsTrue(string fileName)
+    {
+        var strategy = CreateStrategy();
+        var context = new LaunchContext
+        {
+            ResolvedFilePath = $@"C:\xbox\{fileName}",
+            EmulatorName = "Cxbx-Reloaded"
+        };
+
+        Assert.True(strategy.IsMatch(context));
+    }
+
+    /// <summary>
+    ///     Verifies that Cxbx-Reloaded is detected through the emulator location when the
+    ///     display name does not contain it (the emulator still needs the mounted
+    ///     default.xbe, not the raw Xbox image).
+    /// </summary>
+    [Fact]
+    public void IsMatchCxbxLocationReturnsTrue()
+    {
+        var strategy = CreateStrategy();
+        var context = new LaunchContext
+        {
+            ResolvedFilePath = @"C:\xbox\game.cso",
+            EmulatorName = "My Xbox Emulator",
+            EmulatorManager = new Emulator { EmulatorLocation = @"C:\Emulators\Cxbx-Reloaded\cxbx.exe" }
+        };
+
+        Assert.True(strategy.IsMatch(context));
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="XisoMountStrategy.IsMatch" /> returns false for file
+    ///     extensions this strategy does not mount (CHD is handled by ChdMountStrategy).
     /// </summary>
     /// <param name="extension">The file extension to test.</param>
     [Theory]

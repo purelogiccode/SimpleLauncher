@@ -26,9 +26,10 @@
 - **Extraction** — Zip-Slip validation fails closed, extraction no longer wipes destination folders (only files written by the failed run are removed), partial files are cleaned up, and locked archives are retried.
 - **Downloads** — User cancellation is honored promptly, downloaded file names are sanitized against path traversal, and failures retry.
 - **Launching** — Launch gating, rename migration, elevation handling, and invalid/missing executable dialogs were repaired; user cancellations and invalid executables are no longer reported as bugs.
+- **Xbox disc images** — xemu and Cxbx-Reloaded open Xbox games in every container the bundled SimpleXisoDrive supports: XISO (`.iso`/`.xiso`), CISO (`.cso`) and ZArchive (`.zar`) mount as virtual drives on Windows (Dokan) and Linux (FUSE 3) — xemu receives the virtual `image.iso`, Cxbx-Reloaded the mounted `default.xbe` (it cannot read a raw Xbox image); Xbox-ISO `.chd` files now prefer SimpleXisoDrive and fall back to CHDMounter when the driver is unavailable.
 - **Updater** — Staged-file swap with rollback safety, path containment checks, safe restart, and retry, so a failed update no longer leaves a half-updated install.
 - **Stability** — Fixed a gamepad-reconnect deadlock, a hash-pipe deadlock, a shutdown stall that left a clickable orphan tray icon, and play-history races (now serialized under lock); debug logging buffers are bounded.
-- **RetroAchievements** — Hardened account handling, system-name matching, favorites/play-history sync, emulator credential injection, hashing and extraction paths.
+- **RetroAchievements** — Hardened account handling, system-name matching, favorites/play-history sync, emulator credential injection, hashing and extraction paths. Hash-support decisions are now resolved and logged once per system instead of once per game card (selecting a PlayStation 3 library no longer floods the log with thousands of lookup lines).
 - **Avalonia fixes** — Edit System help rendering, status bar visibility in the system selection screen, no-credentials panel in the RA window, loading the clicked system card after closing Edit System, in-app path guards, INI encoding, and a window title matching WPF.
 - **Filtering** — Accent-insensitive game filtering restored, and Commander Genius archive deletion fixed.
 
@@ -61,7 +62,7 @@
 
 ## Tooling
 - **PBPSharp** — Replaced the vendored library with the NuGet package **1.1.1**.
-- **Bundled tools** — SimpleZipDrive updated to **3.1.1** (Windows + Linux, x64 and ARM64); refreshed the default game image.
+- **Bundled tools** — CHDStudio updated to **3.9.4** (Windows + Linux, x64 and ARM64, with the bundled `chdman`/`7zz`), RomValidator to **2.9.2** (Windows, x64 and ARM64, now with 7-Zip 26.03 `7za` helpers and the tool's XML docs) and SimpleZipDrive to **3.1.1** (Windows + Linux, x64 and ARM64); refreshed the default game image.
 - **Dependencies** — Meziantou.Analyzer **3.0.264**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**, NLayer **3.0.0** + NLayer.NAudioSupport **3.0.0** (managed MP3 decoding on Linux/macOS).
 - **Zero analyzer warnings** across all projects; both test suites pass.
 

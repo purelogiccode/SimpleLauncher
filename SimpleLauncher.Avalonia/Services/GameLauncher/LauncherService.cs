@@ -263,7 +263,9 @@ public class LauncherService : ILauncherService
                     // Original Xbox images: Cxbx cannot read a raw ISO, so mount it as a
                     // virtual drive (drive stays mounted until the emulator exits, mirroring
                     // the WPF XisoMountStrategy). Emulators like Xemu read the ISO natively.
-                    if (emulatorName.Contains("Cxbx", StringComparison.OrdinalIgnoreCase))
+                    var isCxbx = emulatorName.Contains("Cxbx", StringComparison.OrdinalIgnoreCase) ||
+                                 emulatorLocation.Contains("cxbx", StringComparison.OrdinalIgnoreCase);
+                    if (isCxbx)
                     {
                         loadingStateProvider?.SetLoadingState(true,
                             _localization.GetString("MountingXISO", "Mounting XISO..."));

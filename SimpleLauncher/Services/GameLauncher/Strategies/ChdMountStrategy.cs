@@ -15,6 +15,7 @@ public class ChdMountStrategy : ILaunchStrategy
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly IMountChdFiles _mountChdFiles;
+    private readonly IMountXisoFiles _mountXisoFiles;
     private bool _cDiEmu;
 
     private bool _is4Do;
@@ -43,13 +44,15 @@ public class ChdMountStrategy : ILaunchStrategy
     /// <param name="configuration">The application configuration.</param>
     /// <param name="messageBox">The message box service for user notifications.</param>
     /// <param name="mountChdFiles">The CHD mounting service.</param>
+    /// <param name="mountXisoFiles">The Xbox image mounting service (SimpleXisoDrive; Xbox-ISO CHDs).</param>
     /// <param name="logger">The logger instance.</param>
     public ChdMountStrategy(IConfiguration configuration, IMessageBoxLibraryService messageBox,
-        IMountChdFiles mountChdFiles, ILogger logger)
+        IMountChdFiles mountChdFiles, IMountXisoFiles mountXisoFiles, ILogger logger)
     {
         _configuration = configuration;
         _messageBox = messageBox;
         _mountChdFiles = mountChdFiles;
+        _mountXisoFiles = mountXisoFiles;
         _logger = logger;
     }
 
@@ -106,6 +109,29 @@ public class ChdMountStrategy : ILaunchStrategy
         ResolveEmulatorFlags(context);
 
         var logPath = PathHelper.ResolveLogFilePath(_configuration);
+
+        // Xbox emulators read Xbox-ISO CHDs through the bundled SimpleXisoDrive build
+        // (on-demand hunk decompression; no conversion temp files): the mount hands xemu
+        // the virtual image.iso and Cxbx-Reloaded the mounted default.xbe. When the
+        // platform mount backend is unavailable (no Dokan on Windows, no FUSE 3 on Linux)
+        // or the mount fails, fall through to CHDMounter below.
+        if ((_isXemu || _isCxbxReloaded) && _mountXisoFiles.IsMountBackendAvailable)
+        {
+            await using var mountedXiso = _isXemu
+                ? await _mountXisoFiles.MountImageIsoAsync(context.ResolvedFilePath, _logger, _messageBox)
+                : await _mountXisoFiles.MountAsync(context.ResolvedFilePath, _logger, _messageBox);
+
+            if (mountedXiso.IsMounted)
+            {
+                await launcher.LaunchRegularEmulatorAsync(mountedXiso.MountedPath, context.EmulatorName,
+                    context.SystemManagerService!, context.EmulatorManager!, context.Parameters,
+                    context.WindowContext!, context.LoadingState, context.ResolvedFilePath);
+                return;
+            }
+
+            _logger.Debug(
+                "[ChdMountStrategy] SimpleXisoDrive could not mount the CHD; falling back to CHDMounter.");
+        }
 
         // Get the console alias for CHDMounter based on system and emulator
         var consoleAlias = _mountChdFiles.GetConsoleAliasFromSystemName(context.SystemName, context.EmulatorName,

@@ -113,11 +113,12 @@ public class ChdMountStrategy : ILaunchStrategy
 
         var logPath = PathHelper.ResolveLogFilePath(_configuration);
 
-        // Linux + Xbox emulators: Xbox ISO CHDs mount directly through the bundled
-        // SimpleXisoDrive build (on-demand hunk decompression; no conversion temp files).
-        // Windows keeps the CHDMounter path; other Linux emulators convert or mount via
-        // CHDMounter below.
-        if (OperatingSystem.IsLinux() && (_isXemu || _isCxbxReloaded))
+        // Xbox emulators: Xbox ISO CHDs mount directly through the bundled SimpleXisoDrive
+        // build (on-demand hunk decompression; no conversion temp files) on Windows and
+        // Linux: xemu gets the virtual image.iso, Cxbx-Reloaded the mounted default.xbe.
+        // When the platform mount backend is unavailable or the mount fails, the
+        // CHDMounter/conversion paths below take over.
+        if ((_isXemu || _isCxbxReloaded) && _mountXisoFiles.IsMountBackendAvailable)
         {
             await using var mountedXiso = _isXemu
                 ? await _mountXisoFiles.MountImageIsoAsync(context.ResolvedFilePath, _logger, _messageBox)

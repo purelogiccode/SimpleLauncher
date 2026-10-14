@@ -5,7 +5,10 @@ using SimpleLauncher.Core.Models;
 namespace SimpleLauncher.Core.Services.GameLauncher.Strategies;
 
 /// <summary>
-///     Mounts original Xbox ISO images as virtual drives and launches them with Cxbx-Reloaded.
+///     Mounts Xbox images (XISO <c>.iso</c>/<c>.xiso</c>, CISO <c>.cso</c> and ZArchive
+///     <c>.zar</c>) as virtual drives and launches them with Cxbx-Reloaded. The CHD variant
+///     is handled by <see cref="ChdMountStrategy" />, which prefers SimpleXisoDrive and can
+///     fall back to CHDMounter when the platform mount backend is unavailable.
 /// </summary>
 public class XisoMountStrategy : ILaunchStrategy
 {
@@ -36,8 +39,22 @@ public class XisoMountStrategy : ILaunchStrategy
             return false;
         }
 
-        return context.EmulatorName.Contains("Cxbx", StringComparison.OrdinalIgnoreCase) &&
-               Path.GetExtension(context.ResolvedFilePath).Equals(".iso", StringComparison.OrdinalIgnoreCase);
+        // Match the launcher's Cxbx detection: the display name or the executable path may
+        // identify the emulator (Cxbx-Reloaded cannot read a raw XISO/CISO/ZArchive, it needs
+        // the mounted default.xbe).
+        var isCxbx = context.EmulatorName.Contains("Cxbx", StringComparison.OrdinalIgnoreCase) ||
+                     (context.EmulatorManager?.EmulatorLocation?.Contains("cxbx",
+                         StringComparison.OrdinalIgnoreCase) ?? false);
+        if (!isCxbx) return false;
+
+        // SimpleXisoDrive presents the same virtual drive for every Xbox container (the CISO
+        // and ZArchive trees are decoded/synthesized on demand), so Cxbx-Reloaded can launch
+        // the mounted default.xbe for all of them.
+        var extension = Path.GetExtension(context.ResolvedFilePath);
+        return extension.Equals(".iso", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".xiso", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".cso", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".zar", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <inheritdoc />

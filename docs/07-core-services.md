@@ -37,12 +37,12 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | Class | Purpose |
 |---|---|
 | `GameLauncher\Strategies\DefaultLaunchStrategy` | Fallback strategy (priority 999): bat/lnk/exe/regular emulator launch |
-| `GameLauncher\Strategies\XisoMountStrategy` | Cxbx + `.iso` → mount → `default.xbe` |
-| `GameLauncher\Strategies\XemuMountStrategy` | Xemu + `.cso/.zar` (Windows-only): SimpleXisoDrive `MountImageIsoAsync` (`--image-iso`) → xemu `-dvd_path <drive>\image.iso` |
+| `GameLauncher\Strategies\XisoMountStrategy` | Cxbx + `.iso`/`.xiso`/`.cso`/`.zar` → SimpleXisoDrive mount → `default.xbe` |
+| `GameLauncher\Strategies\XemuMountStrategy` | Xemu + `.cso/.zar` (Dokan on Windows, FUSE 3 on Linux): SimpleXisoDrive `MountImageIsoAsync` (`--image-iso`) → xemu `-dvd_path <mount>\image.iso` |
 | `GameLauncher\Strategies\ZipMountStrategy` | RPCS3/ScummVM/XBLA archive mounting (Windows: SimpleZipDrive; Linux/macOS: temp extraction) |
 | `GameLauncher\MountFiles\MountChdFiles` / `MountChdDrive` | CHDMounter orchestration (Windows: Dokan check, `/a` auto-picked drive, poll 120 s, kill+20 s unmount; Linux: FUSE check, explicit mount point, readiness poll 30 s, silent Information-level fallback to the managed CHDSharp conversion, SIGTERM → SIGKILL → `fusermount3` unmount and mount-point removal on dispose; unknown architectures fall back to the x64 tool name instead of throwing) |
 | `GameLauncher\MountFiles\MountIsoFiles` | PowerShell `Mount-DiskImage` / `Dismount-DiskImage`, EBOOT.BIN discovery |
-| `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive (Dokan), drive letter Z→D, `default.xbe` poll; `MountImageIsoAsync` uses `--image-iso` and polls `image.iso`; platform check first (Linux/macOS → Information "not supported") |
+| `GameLauncher\MountFiles\MountXisoFiles` / `MountXisoDrive` | SimpleXisoDrive: Windows Dokan (drive letter Z→D) / Linux FUSE 3 (launcher-owned mount point), `default.xbe` poll; `MountImageIsoAsync` uses `--image-iso` and polls `image.iso`; `IsMountBackendAvailable` reports whether the Dokan/FUSE driver stack is present so callers with a fallback can skip a failing mount attempt; macOS → Information "not supported" |
 | `GameLauncher\MountFiles\MountZipFiles` | Archive mounting (Windows: zip to virtual drive; Linux/macOS: extract to a temp directory and launch from there) |
 | `GameLauncher\MountFiles\Iso9660ImageReader` | Lists the files of a cooked ISO9660 image (chdman/CHDSharp `extractcd` data track, DVD ISO) — primary 8.3 names, used by the DOSBox CHD fallback on Linux/macOS |
 | `GameLauncher\MountFiles\FindEbootBin`, `FindDefaultXbe`, `FindDefaultXex`, `FindImageIso`, `FindBinFile`, `FindCueFile`, `FileFinderService` | Launch-file discovery inside mounted volumes |
