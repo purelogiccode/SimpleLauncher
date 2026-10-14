@@ -37,22 +37,6 @@ internal static class DialogHelper
             Spacing = 8
         };
 
-        if (yesNo)
-        {
-            var yesButton = new Button { Content = "Yes", Width = 90, IsDefault = true };
-            yesButton.Click += (_, _) => tcs.TrySetResult(true);
-            var noButton = new Button { Content = "No", Width = 90, IsCancel = true };
-            noButton.Click += (_, _) => tcs.TrySetResult(false);
-            buttons.Children.Add(yesButton);
-            buttons.Children.Add(noButton);
-        }
-        else
-        {
-            var okButton = new Button { Content = "OK", Width = 90, IsDefault = true };
-            okButton.Click += (_, _) => tcs.TrySetResult(false);
-            buttons.Children.Add(okButton);
-        }
-
         var dialog = new Window
         {
             Title = title,
@@ -77,11 +61,35 @@ internal static class DialogHelper
             }
         };
 
+        if (yesNo)
+        {
+            buttons.Children.Add(CreateButton("Yes", true, isDefault: true));
+            buttons.Children.Add(CreateButton("No", false, isCancel: true));
+        }
+        else
+        {
+            buttons.Children.Add(CreateButton("OK", false, isDefault: true));
+        }
+
         // Closing via the title-bar X must not leave the await pending forever.
         dialog.Closed += (_, _) => tcs.TrySetResult(false);
 
         await dialog.ShowDialog(owner);
 
         return await tcs.Task;
+
+        // Every button must both record the choice AND close the window: ShowDialog only
+        // returns once the dialog is closed, so setting the result alone left the buttons
+        // appearing dead (the awaited update flow never resumed).
+        Button CreateButton(string content, bool result, bool isDefault = false, bool isCancel = false)
+        {
+            var button = new Button { Content = content, Width = 90, IsDefault = isDefault, IsCancel = isCancel };
+            button.Click += (_, _) =>
+            {
+                tcs.TrySetResult(result);
+                dialog.Close();
+            };
+            return button;
+        }
     }
 }
