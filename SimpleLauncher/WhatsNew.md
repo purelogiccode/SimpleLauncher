@@ -63,7 +63,7 @@
 ## Tooling
 - **PBPSharp** — Replaced the vendored library with the NuGet package **1.1.1**.
 - **Bundled tools** — CHDStudio updated to **3.9.4** (Windows + Linux, x64 and ARM64, with the bundled `chdman`/`7zz`), RomValidator to **2.9.2** (Windows, x64 and ARM64, now with 7-Zip 26.03 `7za` helpers and the tool's XML docs) and SimpleZipDrive to **3.1.1** (Windows + Linux, x64 and ARM64); refreshed the default game image.
-- **Dependencies** — Meziantou.Analyzer **3.0.264**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.401**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**, NLayer **3.0.0** + NLayer.NAudioSupport **3.0.0** (managed MP3 decoding on Linux/macOS).
+- **Dependencies** — Meziantou.Analyzer **3.0.303**, Microsoft.CodeAnalysis.NetAnalyzers **10.0.402**, Microsoft.Extensions.* / Microsoft.Data.Sqlite **10.0.13**, MessagePack **3.1.12**, Microsoft.Extensions.Http.Resilience **10.10.0**, NAudio **3.1.0**, NLayer **3.0.0** + NLayer.NAudioSupport **3.0.0** (managed MP3 decoding on Linux/macOS).
 - **Zero analyzer warnings** across all projects; both test suites pass.
 
 ## Bundled Tools Refresh

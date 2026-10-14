@@ -932,22 +932,22 @@
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="MahApps.Metro" Version="2.4.11" />
         <PackageReference Include="MdXaml" Version="1.27.0" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.299">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.303">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MessagePack" Version="3.1.11" />
-        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401">
+        <PackageReference Include="MessagePack" Version="3.1.12" />
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.402">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
         <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
         <PackageReference Include="NAudio.Core" Version="3.1.0" />
         <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
