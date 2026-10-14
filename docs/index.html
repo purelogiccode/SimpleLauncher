@@ -6,41 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark light">
     <link id="theme-style" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
+    <link rel="stylesheet" href="site.css">
     <script>
         // Apply the saved theme before the page paints to avoid a flash.
+        // "?theme=light" / "?theme=dark" in the URL sets (and persists) the choice too.
         (function () {
+            var requested = new URLSearchParams(location.search).get('theme');
+            if (requested === 'light' || requested === 'dark') {
+                localStorage.setItem('sl-docs-theme', requested);
+            }
             if (localStorage.getItem('sl-docs-theme') === 'light') {
                 document.getElementById('theme-style').href =
                     'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css';
             }
         })();
     </script>
-    <style>
-        #theme-toggle {
-            position: fixed;
-            right: 18px;
-            bottom: 18px;
-            z-index: 40;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid rgba(128, 128, 128, .35);
-            background: #4f4f4f;
-            color: #d8d8d8;
-            font-size: 18px;
-            line-height: 1;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
-            transition: transform .15s ease, background .15s ease;
-        }
-        #theme-toggle:hover { transform: scale(1.08); }
-        body.sl-light #theme-toggle {
-            background: #fff;
-            border-color: #ddd;
-            color: #444;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
-        }
-    </style>
 </head>
 <body>
 <div id="app"></div>
@@ -51,7 +31,8 @@
       loadSidebar: true,
       maxLevel: 3,
       subMaxLevel: 2,
-      search: 'auto'
+      search: 'auto',
+      themeColor: '#58a6ff'
     };
   </script>
 <button id="theme-toggle" type="button" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>

@@ -196,7 +196,7 @@ The site is served from `docs/` via **docsify** (client-side rendering, no build
 2. The `docs.yml` workflow deploys `docs/` on every push to `master` that touches docs (or manually).
 3. URL: `https://purelogiccode.github.io/SimpleLauncher/`.
 
-`docs/index.html` (docsify loader), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
+`docs/index.html` (docsify loader), `docs/site.css` (the dark/light theme), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
 
 - `docs/parameters.md` ← `SimpleLauncher/parameters.md` — refresh it whenever the canonical file changes.
 - `docs/manual-tests.md` ← `ManualTests.md` (repo root) — refresh likewise.
