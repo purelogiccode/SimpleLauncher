@@ -1,0 +1,55 @@
+name: CI
+
+# Build-only continuous integration: verifies that the whole solution compiles on
+# Windows and that the Avalonia net10.0 (Linux) target compiles on Ubuntu.
+# The test suites are intentionally NOT run in CI — they include live endpoints,
+# real app launches and real mounts; run them locally (see AGENTS.md and
+# docs/14-testing.md for the fast/slow split).
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build solution (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build (Debug)
+        run: dotnet build SimpleLauncher.sln -c Debug --nologo
+
+  build-linux:
+    name: Build Avalonia net10.0 (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build (Debug, net10.0)
+        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0 --nologo
