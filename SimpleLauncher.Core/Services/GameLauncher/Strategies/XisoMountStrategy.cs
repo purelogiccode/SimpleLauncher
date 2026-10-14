@@ -7,7 +7,7 @@ namespace SimpleLauncher.Core.Services.GameLauncher.Strategies;
 /// <summary>
 ///     Mounts Xbox images (XISO <c>.iso</c>/<c>.xiso</c>, CISO <c>.cso</c> and ZArchive
 ///     <c>.zar</c>) as virtual drives and launches them with Cxbx-Reloaded. The CHD variant
-///     is handled by <see cref="ChdMountStrategy" />, which prefers SimpleXisoDrive and can
+///     is handled by the app-level CHD mount strategy, which prefers SimpleXisoDrive and can
 ///     fall back to CHDMounter when the platform mount backend is unavailable.
 /// </summary>
 public class XisoMountStrategy : ILaunchStrategy
