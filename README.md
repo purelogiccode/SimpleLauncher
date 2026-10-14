@@ -30,6 +30,14 @@
 
 ---
 
+## 📚 Documentation
+
+- **📖 Documentation site (GitHub Pages)** — [purelogiccode.github.io/SimpleLauncher](https://purelogiccode.github.io/SimpleLauncher/): [Quickstart](https://purelogiccode.github.io/SimpleLauncher/#/03-quickstart) · [Configuration](https://purelogiccode.github.io/SimpleLauncher/#/05-configuration) · [Bundled Tools](https://purelogiccode.github.io/SimpleLauncher/#/11-bundled-tools) · [Updater](https://purelogiccode.github.io/SimpleLauncher/#/16-updater) · [Testing](https://purelogiccode.github.io/SimpleLauncher/#/14-testing) · [Release Notes](https://purelogiccode.github.io/SimpleLauncher/#/17-release-notes)
+- **📚 GitHub Wiki** — [github.com/purelogiccode/SimpleLauncher/wiki](https://github.com/purelogiccode/SimpleLauncher/wiki): the same guides in wiki form, plus the [Emulator Parameters reference](https://github.com/purelogiccode/SimpleLauncher/wiki/parameters) with official emulator download links (the app links to this page too)
+- **📝 Changelog** — [SimpleLauncher/WhatsNew.md](SimpleLauncher/WhatsNew.md), also shown in-app via **Help → Update History**
+
+---
+
 ## 📸 Screenshots
 
 ![System Selection](screenshot.png)
@@ -222,27 +230,10 @@ Simple Launcher is translated into **18 languages**:
 
 ---
 
-## 🪟 Avalonia Cross-Platform Port
-
-An **Avalonia-based cross-platform port** (`SimpleLauncher.Avalonia`) is being developed alongside the WPF app. It reuses all business logic, models, data access, and emulator config handling from `SimpleLauncher.Core`:
-
-- **Platforms:** Windows (x64/ARM64) and Linux (x64/ARM64) — dual-target `net10.0` (Linux) + `net10.0-windows` (Windows). **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE (the `linux-arm64` bundle is structurally verified only) — please report issues on GitHub
-- **Windows delivery:** ships in the same unified release zip as the WPF app (`SimpleLauncher.Avalonia.exe` next to `SimpleLauncher.exe`); both are framework-dependent single executables that share the same content files and settings. A single `Updater.exe` updates either app.
-- **Port status:** menu bar with full options (language, button size, aspect ratio, view mode, filename preferences, RetroAchievements, donate, about — the emulator config injection and tools menus are Windows-only and hidden elsewhere), per-game context menus (launch, favorites, details, RetroAchievements, copy path/name, show in folder, edit system), 15 utility windows, Favorites / Play History / Global Search pages, RetroAchievements UI (profile / unlocks / progress + settings; the emulator-integration section is Windows-only), tray icon with native menu, F8 global screenshot hotkey (Windows), single dark theme, fully localized UI via the shared JSON packs (18 languages, 2671 keys each, `SimpleLauncher.Core\Localization`)
-- **Linux/macOS specifics:** ZIP/7Z/RAR launch extracts to a temp folder, CHD images mount through the bundled CHDMounter (FUSE 3; needs `libfuse3` + `/dev/fuse` + the .NET 10 runtime) and otherwise convert on the fly (CHDSharp), and ISOs are mounted inside DOSBox — the Windows mounting tools (Dokan, SimpleZipDrive, SimpleXisoDrive) are not used; MP3/WAV UI sounds play with no extra packages (FLAC/Ogg/Opus need the system `libsndfile`, `sudo apt install libsndfile1`)
-- **Quality:** 0 warnings / 0 errors on Debug + Release for both target frameworks; **703 Avalonia tests** + **2207 WPF tests** in the fast suites, plus dedicated slow suites (`SimpleLauncher.SlowTests`, `SimpleLauncher.Avalonia.SlowTests`) for live endpoints, real app launches and mount integration (RetroAchievements ViewModels, Headless view smoke for all 44 windows, Delete-System integration, shared-localization suite, unified settings database + legacy migration)
-- **Build & test (Windows):** `dotnet build SimpleLauncher.sln -c Debug` · `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (headless, no display required)
-- **Build & test (Linux / WSL2):** `dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0` · `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (net10.0, runs on Ubuntu 24.04 and Fedora 44) · `dotnet publish -f net10.0 -r linux-x64` / `linux-arm64` for framework-dependent single-file bundles (the shipped Linux packages require the .NET 10 runtime)
-
-Development status and the step-by-step plan are tracked in [`References/TODO.md`](References/TODO.md).
-
----
-
 ## 🤝 Contributing & Support
 
 * **Bug Reports:** Use the built-in **Support Window** to send detailed error reports directly to the developers.
-* **Documentation:** Comprehensive `parameters.md` with official emulator download links and parameter documentation
-* **Wiki:** Check our [GitHub Wiki](https://github.com/purelogiccode/SimpleLauncher/wiki) for advanced parameter guides.
+* **Documentation:** [Documentation site](https://purelogiccode.github.io/SimpleLauncher/) and [GitHub Wiki](https://github.com/purelogiccode/SimpleLauncher/wiki) — guides, bundled-tool usage, and `parameters.md` with official emulator download links.
 * **Donate:** If you find this project useful, consider [supporting the developer](https://www.purelogiccode.com/donate).
 
 **⭐ If you like this project, please give us a star on GitHub! ⭐**
