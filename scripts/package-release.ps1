@@ -21,6 +21,8 @@ one file that also works from a legacy WPF-only install. The updater is the same
 both apps: it receives the target application in its command line (older WPF releases pass
 only the PID and the updater detects the app from the process name).
 
+The payload also carries LICENSE.txt, README.md and WhatsNew.md at its root.
+
 The WPF and Avalonia payloads are merged into one folder. Files that exist in both
 payloads must be byte-identical (the two appsettings.json sources are kept in sync and
 guarded by a unit test); any other content conflict fails the build loudly.
@@ -306,6 +308,31 @@ function Remove-OtherArchitectureFiles {
     Write-Host "Pruned $removed files that do not belong to $Rid."
 }
 
+# Adds the bundle documents (license, readme, release notes) at the payload root so every
+# release zip carries them. WhatsNew.md may already be present from the app publish; it is
+# rewritten from the canonical source to guarantee the release notes match the build.
+function Copy-BundleDocuments {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoDir,
+        [Parameter(Mandatory = $true)][string]$PayloadDir
+    )
+
+    $documents = @(
+        @{ Source = (Join-Path $RepoDir 'LICENSE.txt'); Name = 'LICENSE.txt' },
+        @{ Source = (Join-Path $RepoDir 'README.md'); Name = 'README.md' },
+        @{ Source = (Join-Path $RepoDir 'SimpleLauncher\WhatsNew.md'); Name = 'WhatsNew.md' }
+    )
+
+    foreach ($document in $documents) {
+        if (-not (Test-Path -LiteralPath $document.Source)) {
+            throw "Bundle document not found: $($document.Source)"
+        }
+        Copy-Item -LiteralPath $document.Source -Destination (Join-Path $PayloadDir $document.Name) -Force
+    }
+
+    Write-Host "Added LICENSE.txt, README.md and WhatsNew.md to the payload."
+}
+
 function New-ZipArchive {
     param(
         [Parameter(Mandatory = $true)][string]$SourceDir,
@@ -387,6 +414,7 @@ foreach ($rid in $RuntimeIdentifiers) {
     Remove-UpdaterSidecars -PayloadDir $payloadDir
     Remove-DebugSymbols -PayloadDir $payloadDir
     Remove-OtherArchitectureFiles -PublishDir $payloadDir -Rid $rid
+    Copy-BundleDocuments -RepoDir $repoDir -PayloadDir $payloadDir
 
     $releaseZip = Join-Path $OutputDir "release_${Version}_${rid}.zip"
     New-ZipArchive -SourceDir $payloadDir -ZipPath $releaseZip

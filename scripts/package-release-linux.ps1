@@ -6,19 +6,20 @@ Packages the Linux release artifacts (linux-x64 / linux-arm64) for SimpleLaunche
 .DESCRIPTION
 For every runtime identifier this produces, in the output folder:
 
-  release_{version}_{rid}.zip   the self-contained single-file SimpleLauncher.Avalonia payload
-  updater_{rid}.zip             the standalone Updater binary (self-contained single file)
+  release_{version}_{rid}.zip   the single-file SimpleLauncher.Avalonia payload
+  updater_{rid}.zip             the standalone Updater binary (single file)
 
 The asset names match the ones the app and the updater look up in the release
 (AvaloniaCheckForUpdatesService.ReleaseAssetName / UpdaterAssetName), so the same
 GitHub release serves Windows and Linux without collisions.
 
-The application payload is published self-contained single-file, mirroring the Windows
-binaries (Linux users are not expected to install the .NET runtime, so the payload carries
-it): the managed assemblies are bundled into the SimpleLauncher.Avalonia executable and
-only the native libraries it needs (Skia/HarfBuzz/SQLite) ship beside it. Content files
+The application payload is published framework-dependent single-file, mirroring the Windows
+binaries (the .NET 10 runtime is required on the target machine; the payload does not carry
+it): the managed assemblies are bundled into the SimpleLauncher.Avalonia executable and only
+the native libraries it needs (Skia/HarfBuzz/SQLite) ship beside it. Content files
 (appsettings.json, images, tools, samples) still ship next to the exe, exactly as on
-Windows. Windows-only bundled tools are pruned:
+Windows. The payload also carries LICENSE.txt, README.md and WhatsNew.md. Windows-only
+bundled tools are pruned:
   * tools/**/*.exe and tools/**/*.dll (Windows binaries)
   * the other architecture's 7-Zip binaries
   * the other platform payloads of tools/<tool>/<rid>/ for XISOStudio, CHDStudio, RVZStudio,
@@ -298,6 +299,31 @@ function Set-UnixHostSystem {
     Write-Host "Marked $patched zip entries as created on Unix (permission bits)."
 }
 
+# Adds the bundle documents (license, readme, release notes) at the payload root so every
+# release zip carries them. WhatsNew.md may already be present from the app publish; it is
+# rewritten from the canonical source to guarantee the release notes match the build.
+function Copy-BundleDocuments {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoDir,
+        [Parameter(Mandatory = $true)][string]$PayloadDir
+    )
+
+    $documents = @(
+        @{ Source = (Join-Path $RepoDir 'LICENSE.txt'); Name = 'LICENSE.txt' },
+        @{ Source = (Join-Path $RepoDir 'README.md'); Name = 'README.md' },
+        @{ Source = (Join-Path $RepoDir 'SimpleLauncher\WhatsNew.md'); Name = 'WhatsNew.md' }
+    )
+
+    foreach ($document in $documents) {
+        if (-not (Test-Path -LiteralPath $document.Source)) {
+            throw "Bundle document not found: $($document.Source)"
+        }
+        Copy-Item -LiteralPath $document.Source -Destination (Join-Path $PayloadDir $document.Name) -Force
+    }
+
+    Write-Host "Added LICENSE.txt, README.md and WhatsNew.md to the payload."
+}
+
 function New-LinuxZipArchive {
     param(
         [Parameter(Mandatory = $true)][string]$SourceDir,
@@ -357,36 +383,39 @@ foreach ($rid in $RuntimeIdentifiers) {
     Write-Host ""
     Write-Host "=== SimpleLauncher.Avalonia $Version ($rid) ==="
 
-    # Application: self-contained single file (managed assemblies bundled into the exe;
-    # the native libraries ship beside it — same shape as the Windows binaries). Native
-    # self-extraction stays off so every launch does not pay an extraction penalty.
+    # Application: framework-dependent single file (managed assemblies bundled into the
+    # exe; the native libraries ship beside it — same shape as the Windows binaries). The
+    # .NET 10 runtime is required on the target machine; native self-extraction stays off
+    # so every launch does not pay an extraction penalty.
     Invoke-DotnetPublish @(
         'publish',
         $avaloniaProject,
         '-c', 'Release',
         '-f', 'net10.0',
         '-r', $rid,
-        '--self-contained', 'true',
+        '--self-contained', 'false',
         '-p:PublishSingleFile=true',
         '--nologo',
         '-o', $appPublishDir
     )
 
     Remove-WindowsOnlyFiles -PublishDir $appPublishDir -Rid $rid
+    Copy-BundleDocuments -RepoDir $repoDir -PayloadDir $appPublishDir
 
     $releaseZip = Join-Path $OutputDir "release_${Version}_${rid}.zip"
     New-LinuxZipArchive -SourceDir $appPublishDir -ZipPath $releaseZip -Rid $rid
     [void]$produced.Add($releaseZip)
 
-    # Standalone updater: self-contained single file so it runs on a machine without
-    # the .NET runtime (the app downloads this from the release assets before updating).
+    # Standalone updater: framework-dependent single file (the .NET 10 runtime is required,
+    # matching the app), with the Avalonia natives bundled for self-extraction so it is one
+    # file that can also replace a damaged install.
     Invoke-DotnetPublish @(
         'publish',
         $updaterProject,
         '-c', 'Release',
         '-f', 'net10.0',
         '-r', $rid,
-        '--self-contained', 'true',
+        '--self-contained', 'false',
         '-p:PublishSingleFile=true',
         '-p:IncludeNativeLibrariesForSelfExtract=true',
         '--nologo',
