@@ -31,6 +31,13 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "RAHasher"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForSegaModel3Games"),
         Path.Combine(AppDirectory, "tools", "xbox-iso-vfs"),
+
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "audio"),
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "x64"),
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "arm64"),
+
+        Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "logs"),
+
         Path.Combine(AppDirectory, "resources"),
         Path.Combine(AppDirectory, "de"),
         Path.Combine(Path.GetTempPath(), "SimpleLauncher"),
@@ -87,6 +94,27 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "FindRomCover", "Microsoft.Xaml.Behaviors.dll"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "Newtonsoft.Json.dll"),
         Path.Combine(AppDirectory, "tools", "FindRomCover", "appsettings.json"),
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "mame.dat"),
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "settings.xml"),
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "FindRomCover.exe"),
+        Path.Combine(AppDirectory, "tools", "FindRomCover", "Magick.Native-Q16-x64.dll"),
+
+        Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "7z.dll"),
+        Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "7z_arm64.dll"),
+        Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "LICENSE.txt"),
+        Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "ReadMe.md"),
+        Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "SimpleZipDrive.exe"),
+        Path.Combine(AppDirectory, "tools", "SimpleZipDrive", "WhatsNew.md"),
+
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "LICENSE"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "README.md"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "RetroAchievementsSharp"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "RetroAchievementsSharp.exe"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "RetroAchievementsSharp_arm64"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "RetroAchievementsSharp_arm64.exe"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "THIRD-PARTY-NOTICES.md"),
+
+        Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive.exe"),
 
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForPS3Games", "CreateBatchFilesForPS3Games.deps.json"),
         Path.Combine(AppDirectory, "tools", "CreateBatchFilesForPS3Games", "CreateBatchFilesForPS3Games.dll"),
