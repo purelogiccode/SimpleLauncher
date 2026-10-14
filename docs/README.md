@@ -10,10 +10,10 @@ Companion files: [`ManualTests.md`](manual-tests.md) (manual test checklist for 
 
 ## Reading order
 
-**User-facing:** 01 → 03 → 05 → 18
-**Architecture:** 04 → 02 → 06 → 07
-**Feature deep-dives:** 08 → 09 → 10 → 11 → 12 → 13
-**Maintenance:** 14 → 15 → 16 → 17
+- **User-facing:** 01 → 03 → 05 → 18
+- **Architecture:** 04 → 02 → 06 → 07
+- **Feature deep-dives:** 08 → 09 → 10 → 11 → 12 → 13
+- **Maintenance:** 14 → 15 → 16 → 17
 
 ## Document map
 
