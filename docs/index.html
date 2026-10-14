@@ -4,7 +4,43 @@
     <meta charset="UTF-8">
     <title>Simple Launcher — Documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+    <meta name="color-scheme" content="dark light">
+    <link id="theme-style" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
+    <script>
+        // Apply the saved theme before the page paints to avoid a flash.
+        (function () {
+            if (localStorage.getItem('sl-docs-theme') === 'light') {
+                document.getElementById('theme-style').href =
+                    'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css';
+            }
+        })();
+    </script>
+    <style>
+        #theme-toggle {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 40;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(128, 128, 128, .35);
+            background: #4f4f4f;
+            color: #d8d8d8;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+            transition: transform .15s ease, background .15s ease;
+        }
+        #theme-toggle:hover { transform: scale(1.08); }
+        body.sl-light #theme-toggle {
+            background: #fff;
+            border-color: #ddd;
+            color: #444;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+        }
+    </style>
 </head>
 <body>
 <div id="app"></div>
@@ -18,7 +54,35 @@
       search: 'auto'
     };
   </script>
+<button id="theme-toggle" type="button" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
 <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+<script>
+    (function () {
+        var DARK = 'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css';
+        var LIGHT = 'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css';
+        var link = document.getElementById('theme-style');
+        var btn = document.getElementById('theme-toggle');
+        var dark = localStorage.getItem('sl-docs-theme') !== 'light';
+
+        function apply() {
+            link.href = dark ? DARK : LIGHT;
+            document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+            document.body.classList.toggle('sl-light', !dark);
+            var label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+            btn.textContent = dark ? '☀️' : '🌙';
+            btn.title = label;
+            btn.setAttribute('aria-label', label);
+        }
+
+        btn.addEventListener('click', function () {
+            dark = !dark;
+            localStorage.setItem('sl-docs-theme', dark ? 'dark' : 'light');
+            apply();
+        });
+
+        apply();
+    })();
+</script>
 </body>
 </html>
