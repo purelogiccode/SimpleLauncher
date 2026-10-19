@@ -1,7 +1,8 @@
 name: CI
 
-# Build-only continuous integration: verifies that the whole solution compiles on
-# Windows and that the Avalonia net10.0 (Linux) target compiles on Ubuntu.
+# Continuous integration: compiles the whole solution in Debug and Release on
+# Windows and compiles the cross-platform projects for Linux. Warnings are
+# treated as errors so the "0 warnings / 0 errors" policy is enforced.
 # The test suites are intentionally NOT run in CI — they include live endpoints,
 # real app launches and real mounts; run them locally (see AGENTS.md and
 # docs/14-testing.md for the fast/slow split).
@@ -27,6 +28,7 @@ jobs:
   build-windows:
     name: Build solution (Windows)
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -36,12 +38,16 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build (Debug)
-        run: dotnet build SimpleLauncher.sln -c Debug --nologo
+      - name: Build Debug (warnings as errors)
+        run: dotnet build SimpleLauncher.sln -c Debug --nologo -warnaserror
+
+      - name: Build Release (warnings as errors)
+        run: dotnet build SimpleLauncher.sln -c Release --nologo -warnaserror
 
   build-linux:
     name: Build Avalonia net10.0 (Linux)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -51,5 +57,14 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build (Debug, net10.0)
-        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0 --nologo
+      - name: Build Avalonia Debug (warnings as errors)
+        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0 --nologo -warnaserror
+
+      - name: Build Avalonia Release (warnings as errors)
+        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net10.0 --nologo -warnaserror
+
+      # The app references the updater with ReferenceOutputAssembly=false, so
+      # building the app does not compile it. The Linux release publishes it,
+      # therefore build it explicitly here for both configurations.
+      - name: Build updater (warnings as errors)
+        run: dotnet build SimpleLauncher.Avalonia.Updater/SimpleLauncher.Avalonia.Updater.csproj -c Release -f net10.0 --nologo -warnaserror

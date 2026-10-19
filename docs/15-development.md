@@ -177,7 +177,8 @@ the test suites (they include live endpoints and real app launches; run them loc
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug build on `windows-latest` plus the Avalonia `net10.0` (Linux) build on `ubuntu-latest`. Never runs tests. |
+| `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net10.0` Debug/Release and updater `net10.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. Never runs tests. |
+| `.github/workflows/package-dry-run.yml` | push/PR touching the app projects or packaging scripts (or manual) | Packages all four RIDs with the same scripts as the release workflow, uploads the zips as workflow artifacts and verifies the Linux payload layout/executable bits — without creating a GitHub release. The version is read from `SimpleLauncher/SimpleLauncher.csproj`. |
 | `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the framework-dependent single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
