@@ -65,6 +65,6 @@ jobs:
 
       # The app references the updater with ReferenceOutputAssembly=false, so
       # building the app does not compile it. The Linux release publishes it,
-      # therefore build it explicitly here for both configurations.
+      # therefore build its Release configuration explicitly here.
       - name: Build updater (warnings as errors)
         run: dotnet build SimpleLauncher.Avalonia.Updater/SimpleLauncher.Avalonia.Updater.csproj -c Release -f net10.0 --nologo -warnaserror
