@@ -9,7 +9,6 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// </summary>
 public class WindowSelectionDialogViewModel : ObservableObject
 {
-
     /// <summary>
     ///     Gets the collection of window items.
     /// </summary>

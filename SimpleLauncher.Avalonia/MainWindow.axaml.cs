@@ -1288,6 +1288,7 @@ public partial class MainWindow : Window, IPaginationHost
     ///     System icon size steps mirror the settings whitelist (50/100/150).
     /// </summary>
     private const int SystemIconZoomStep = 50;
+
     private const int MinSystemIconSize = 50;
     private const int MaxSystemIconSize = 150;
 

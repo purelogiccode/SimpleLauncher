@@ -226,7 +226,8 @@ internal static class FuseMountHelper
         }
 
         if (Directory.Exists(directory))
-            logger.Debug($"[FuseMountHelper] WARNING: Mount point '{directory}' still exists after attempting to unmount.");
+            logger.Debug(
+                $"[FuseMountHelper] WARNING: Mount point '{directory}' still exists after attempting to unmount.");
     }
 
     /// <summary>

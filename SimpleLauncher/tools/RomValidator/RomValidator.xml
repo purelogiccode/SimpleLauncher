@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+
 <doc>
     <assembly>
         <name>RomValidator</name>
@@ -6,10 +7,10 @@
     <members>
         <member name="T:RomValidator.AboutWindow">
             <summary>
-            About window that displays application information, version, and useful links.
+                About window that displays application information, version, and useful links.
             </summary>
             <summary>
-            AboutWindow
+                AboutWindow
             </summary>
         </member>
         <member name="P:RomValidator.AboutWindow.BugReportService">
@@ -17,235 +18,243 @@
         </member>
         <member name="M:RomValidator.AboutWindow.#ctor(RomValidator.Interfaces.IBugReportService)">
             <summary>
-            Initializes a new instance of the AboutWindow class.
+                Initializes a new instance of the AboutWindow class.
             </summary>
             <param name="bugReportService">The bug report service for error tracking.</param>
         </member>
         <member name="M:RomValidator.AboutWindow.CloseButton_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the Close button: closes the About window.
+                Handles the Close button: closes the About window.
             </summary>
         </member>
-        <member name="M:RomValidator.AboutWindow.Hyperlink_RequestNavigate(System.Object,System.Windows.Navigation.RequestNavigateEventArgs)">
+        <member
+            name="M:RomValidator.AboutWindow.Hyperlink_RequestNavigate(System.Object,System.Windows.Navigation.RequestNavigateEventArgs)">
             <summary>
-            Handles hyperlink navigation: opens the target URL in the default browser.
+                Handles hyperlink navigation: opens the target URL in the default browser.
             </summary>
         </member>
         <member name="M:RomValidator.AboutWindow.GetApplicationVersion">
             <summary>
-            Gets the currently executing application version from the assembly metadata.
+                Gets the currently executing application version from the assembly metadata.
             </summary>
             <returns>The application version, or "Unknown" when it cannot be determined.</returns>
         </member>
         <member name="M:RomValidator.AboutWindow.InitializeComponent">
             <summary>
-            InitializeComponent
+                InitializeComponent
             </summary>
         </member>
         <member name="T:RomValidator.App">
             <summary>
-            Application class with global exception handling to ensure all bugs are reported.
+                Application class with global exception handling to ensure all bugs are reported.
             </summary>
             <summary>
-            App
+                App
             </summary>
         </member>
         <member name="M:RomValidator.App.#ctor">
             <summary>
-            Initializes a new instance of the App class.
-            Sets up global cancellation tokens, services, and exception handling.
+                Initializes a new instance of the App class.
+                Sets up global cancellation tokens, services, and exception handling.
             </summary>
         </member>
         <member name="M:RomValidator.App.CheckIfRunningFromTempDirectory">
             <summary>
-            Checks if the application is running from a temporary directory or directly from a compressed archive.
-            If so, shows a message and exits to prevent issues with missing files.
+                Checks if the application is running from a temporary directory or directly from a compressed archive.
+                If so, shows a message and exits to prevent issues with missing files.
             </summary>
         </member>
         <member name="M:RomValidator.App.CheckSevenZipFallbackAvailability">
             <summary>
-            Logs whether the bundled 7za fallback executable is available. The fallback is
-            used for archive operations SharpCompress cannot perform (e.g. creating 7z
-            archives or reading archives with unsupported compression methods).
+                Logs whether the bundled 7za fallback executable is available. The fallback is
+                used for archive operations SharpCompress cannot perform (e.g. creating 7z
+                archives or reading archives with unsupported compression methods).
             </summary>
         </member>
         <member name="M:RomValidator.App.InitializeBootstrapLogging">
             <summary>
-            Initializes a minimal debug logger before the services are created, so any
-            initialization failure is captured even if the full logger setup fails.
-            The bootstrap logger is replaced (and disposed) by <see cref="M:RomValidator.App.InitializeLogging"/>.
+                Initializes a minimal debug logger before the services are created, so any
+                initialization failure is captured even if the full logger setup fails.
+                The bootstrap logger is replaced (and disposed) by <see cref="M:RomValidator.App.InitializeLogging" />.
             </summary>
         </member>
         <member name="M:RomValidator.App.InitializeVersionChecker">
             <summary>
-            Initializes the GitHub version checker used for the startup update check.
+                Initializes the GitHub version checker used for the startup update check.
             </summary>
         </member>
         <member name="M:RomValidator.App.InitializeBugReportService">
             <summary>
-            Initializes the bug report service with the API configuration.
+                Initializes the bug report service with the API configuration.
             </summary>
         </member>
         <member name="M:RomValidator.App.InitializeLogging">
             <summary>
-            Initializes Serilog logging with Debug, File, and BugReport sinks.
-            Warning and higher events are forwarded to the bug report API via the custom sink.
+                Initializes Serilog logging with Debug, File, and BugReport sinks.
+                Warning and higher events are forwarded to the bug report API via the custom sink.
             </summary>
         </member>
         <member name="M:RomValidator.App.InitializeApplicationStatsService">
             <summary>
-            Initializes the application stats service to track application usage.
+                Initializes the application stats service to track application usage.
             </summary>
         </member>
         <member name="M:RomValidator.App.SetupGlobalExceptionHandling">
             <summary>
-            Sets up global exception handlers for both UI and non-UI thread exceptions,
-            and registers the application-wide F8 screenshot shortcut.
+                Sets up global exception handlers for both UI and non-UI thread exceptions,
+                and registers the application-wide F8 screenshot shortcut.
             </summary>
         </member>
         <member name="M:RomValidator.App.OnGlobalPreviewKeyDown(System.Object,System.Windows.Input.KeyEventArgs)">
             <summary>
-            Handles the F8 shortcut on any window: captures a screenshot of the active window.
+                Handles the F8 shortcut on any window: captures a screenshot of the active window.
             </summary>
         </member>
         <member name="M:RomValidator.App.RecordApplicationUsage">
             <summary>
-            Records application usage statistics on startup.
+                Records application usage statistics on startup.
             </summary>
         </member>
         <member name="M:RomValidator.App.RecordUsageSafeAsync">
             <summary>
-            Records application usage without allowing failures to escape into the startup path.
+                Records application usage without allowing failures to escape into the startup path.
             </summary>
         </member>
         <member name="M:RomValidator.App.ScheduleUpdateCheck">
             <summary>
-            Schedules the startup update check. StartupUri windows are created after
-            OnStartup returns, so the check runs once the dispatcher is idle and the
-            main window is available.
+                Schedules the startup update check. StartupUri windows are created after
+                OnStartup returns, so the check runs once the dispatcher is idle and the
+                main window is available.
             </summary>
         </member>
         <member name="M:RomValidator.App.CheckForUpdatesSafeAsync">
             <summary>
-            Checks GitHub for a newer release and prompts the user to open the release page.
-            The check is cancelled automatically when the application exits.
+                Checks GitHub for a newer release and prompts the user to open the release page.
+                The check is cancelled automatically when the application exits.
             </summary>
         </member>
-        <member name="M:RomValidator.App.OnDispatcherUnhandledException(System.Object,System.Windows.Threading.DispatcherUnhandledExceptionEventArgs)">
+        <member
+            name="M:RomValidator.App.OnDispatcherUnhandledException(System.Object,System.Windows.Threading.DispatcherUnhandledExceptionEventArgs)">
             <summary>
-            Handles unhandled exceptions from the UI thread (Dispatcher).
+                Handles unhandled exceptions from the UI thread (Dispatcher).
             </summary>
         </member>
-        <member name="M:RomValidator.App.OnAppDomainUnhandledException(System.Object,System.UnhandledExceptionEventArgs)">
+        <member
+            name="M:RomValidator.App.OnAppDomainUnhandledException(System.Object,System.UnhandledExceptionEventArgs)">
             <summary>
-            Handles unhandled exceptions from non-UI threads (AppDomain).
+                Handles unhandled exceptions from non-UI threads (AppDomain).
             </summary>
         </member>
-        <member name="M:RomValidator.App.OnUnobservedTaskException(System.Object,System.Threading.Tasks.UnobservedTaskExceptionEventArgs)">
+        <member
+            name="M:RomValidator.App.OnUnobservedTaskException(System.Object,System.Threading.Tasks.UnobservedTaskExceptionEventArgs)">
             <summary>
-            Handles unobserved task exceptions (TaskScheduler).
+                Handles unobserved task exceptions (TaskScheduler).
             </summary>
         </member>
         <member name="M:RomValidator.App.ShowFatalErrorDialog(System.Exception,System.String)">
             <summary>
-            Shows a user-friendly fatal error dialog.
+                Shows a user-friendly fatal error dialog.
             </summary>
         </member>
         <member name="M:RomValidator.App.GetBugReportService">
             <summary>
-            Gets the global BugReportService instance for use throughout the application.
+                Gets the global BugReportService instance for use throughout the application.
             </summary>
             <returns>The shared bug report service, or null when initialization failed.</returns>
         </member>
         <member name="M:RomValidator.App.OnStartup(System.Windows.StartupEventArgs)">
             <summary>
-            Override OnStartup to record application usage and check for updates.
+                Override OnStartup to record application usage and check for updates.
             </summary>
             <param name="e">The startup event arguments.</param>
         </member>
         <member name="M:RomValidator.App.OnExit(System.Windows.ExitEventArgs)">
             <summary>
-            Override OnExit to clean up the BugReportService and other resources.
+                Override OnExit to clean up the BugReportService and other resources.
             </summary>
             <param name="e">The exit event arguments.</param>
         </member>
         <member name="M:RomValidator.App.CancelAllOperations">
             <summary>
-            Cancels all ongoing operations and initiates application shutdown.
+                Cancels all ongoing operations and initiates application shutdown.
             </summary>
         </member>
         <member name="M:RomValidator.App.InitializeComponent">
             <summary>
-            InitializeComponent
+                InitializeComponent
             </summary>
         </member>
         <member name="M:RomValidator.App.Main">
             <summary>
-            Application Entry Point.
+                Application Entry Point.
             </summary>
         </member>
         <member name="T:RomValidator.DuplicateFilesWindow">
             <summary>
-            Window that lists groups of duplicate files (same hash, different filenames)
-            detected during DAT generation.
+                Window that lists groups of duplicate files (same hash, different filenames)
+                detected during DAT generation.
             </summary>
             <summary>
-            DuplicateFilesWindow
+                DuplicateFilesWindow
             </summary>
         </member>
         <member name="M:RomValidator.DuplicateFilesWindow.#ctor">
             <summary>
-            Initializes a new instance of the DuplicateFilesWindow class.
+                Initializes a new instance of the DuplicateFilesWindow class.
             </summary>
         </member>
-        <member name="M:RomValidator.DuplicateFilesWindow.SetDuplicateData(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.String}},System.String)">
+        <member
+            name="M:RomValidator.DuplicateFilesWindow.SetDuplicateData(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.String}},System.String)">
             <summary>
-            Sets the duplicate file data to display in the window.
+                Sets the duplicate file data to display in the window.
             </summary>
             <param name="hashToFilenames">Dictionary mapping hash values to lists of duplicate filenames.</param>
             <param name="customTitle">Optional custom title for the window.</param>
         </member>
-        <member name="M:RomValidator.DuplicateFilesWindow.CloseButton_Click(System.Object,System.Windows.RoutedEventArgs)">
+        <member
+            name="M:RomValidator.DuplicateFilesWindow.CloseButton_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the Close button: closes the duplicate files window.
+                Handles the Close button: closes the duplicate files window.
             </summary>
         </member>
         <member name="M:RomValidator.DuplicateFilesWindow.InitializeComponent">
             <summary>
-            InitializeComponent
+                InitializeComponent
             </summary>
         </member>
         <member name="T:RomValidator.Interfaces.IApplicationStatsService">
             <summary>
-            Defines a service that records anonymous application usage statistics
-            to the remote Application Stats API.
+                Defines a service that records anonymous application usage statistics
+                to the remote Application Stats API.
             </summary>
         </member>
         <member name="M:RomValidator.Interfaces.IApplicationStatsService.RecordUsageAsync">
             <summary>
-            Records application usage statistics to the remote API.
-            This is called once per application launch to track usage.
+                Records application usage statistics to the remote API.
+                This is called once per application launch to track usage.
             </summary>
             <returns>True if the usage was recorded successfully, false otherwise.</returns>
         </member>
         <member name="T:RomValidator.Interfaces.IBugReportService">
             <summary>
-            Defines a service that submits bug reports (errors, warnings, and exceptions)
-            to the remote bug report API.
+                Defines a service that submits bug reports (errors, warnings, and exceptions)
+                to the remote bug report API.
             </summary>
         </member>
-        <member name="M:RomValidator.Interfaces.IBugReportService.SendBugReportAsync(System.String,System.Exception,System.String)">
+        <member
+            name="M:RomValidator.Interfaces.IBugReportService.SendBugReportAsync(System.String,System.Exception,System.String)">
             <summary>
-            Sends a bug report to the API with comprehensive environment and error details.
+                Sends a bug report to the API with comprehensive environment and error details.
             </summary>
             <param name="context">Context or location where the error occurred.</param>
             <param name="exception">The exception that occurred (optional).</param>
             <param name="additionalInfo">Additional information about the error (optional).</param>
             <returns>True if the report was sent successfully, false otherwise.</returns>
         </member>
-        <member name="M:RomValidator.Interfaces.IBugReportService.SendBugReportAsync(System.String,System.Exception,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Interfaces.IBugReportService.SendBugReportAsync(System.String,System.Exception,System.String,System.Threading.CancellationToken)">
             <summary>
-            Sends a bug report to the API with comprehensive environment and error details.
+                Sends a bug report to the API with comprehensive environment and error details.
             </summary>
             <param name="context">Context or location where the error occurred.</param>
             <param name="exception">The exception that occurred (optional).</param>
@@ -255,27 +264,29 @@
         </member>
         <member name="T:RomValidator.Interfaces.IGitHubVersionChecker">
             <summary>
-            Defines a service that checks the GitHub repository for a newer application release.
+                Defines a service that checks the GitHub repository for a newer application release.
             </summary>
         </member>
-        <member name="M:RomValidator.Interfaces.IGitHubVersionChecker.CheckForNewVersionAsync(System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Interfaces.IGitHubVersionChecker.CheckForNewVersionAsync(System.Threading.CancellationToken)">
             <summary>
-            Checks GitHub for a newer version of the application.
+                Checks GitHub for a newer version of the application.
             </summary>
             <param name="cancellationToken">Cancellation token for the operation.</param>
-            <returns>A tuple containing:
-            - IsNewVersionAvailable: True if a newer version is available;
-            - ReleaseUrl: The URL to the latest release page;
-            - LatestVersionTag: The version tag of the latest release.
+            <returns>
+                A tuple containing:
+                - IsNewVersionAvailable: True if a newer version is available;
+                - ReleaseUrl: The URL to the latest release page;
+                - LatestVersionTag: The version tag of the latest release.
             </returns>
         </member>
         <member name="T:RomValidator.MainWindow">
             <summary>
-            Main application window. Hosts the navigation header, the page frame
-            (Validate ROMs / Generate DAT), and the status bar.
+                Main application window. Hosts the navigation header, the page frame
+                (Validate ROMs / Generate DAT), and the status bar.
             </summary>
             <summary>
-            MainWindow
+                MainWindow
             </summary>
         </member>
         <member name="P:RomValidator.MainWindow.BugReportService">
@@ -283,115 +294,116 @@
         </member>
         <member name="M:RomValidator.MainWindow.#ctor">
             <summary>
-            Initializes a new instance of the MainWindow class.
-            Sets up services, exception handling, and application pages.
+                Initializes a new instance of the MainWindow class.
+                Sets up services, exception handling, and application pages.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.UpdateActivePageIndicator(System.Object)">
             <summary>
-            Highlights the header button that corresponds to the currently displayed page.
+                Highlights the header button that corresponds to the currently displayed page.
             </summary>
             <param name="activePage">The page currently shown in the content frame.</param>
         </member>
-        <member name="M:RomValidator.MainWindow.UpdateStatusBarMessageAsync(System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.MainWindow.UpdateStatusBarMessageAsync(System.String,System.Threading.CancellationToken)">
             <summary>
-            Updates the status bar message asynchronously from any thread.
+                Updates the status bar message asynchronously from any thread.
             </summary>
             <param name="message">The message to display in the status bar.</param>
             <param name="cancellationToken">Cancellation token to stop the operation.</param>
         </member>
         <member name="M:RomValidator.MainWindow.UpdateStatusBarMessage(System.String)">
             <summary>
-            Updates the status bar message synchronously from any thread.
+                Updates the status bar message synchronously from any thread.
             </summary>
             <param name="message">The message to display in the status bar.</param>
         </member>
         <member name="M:RomValidator.MainWindow.ValidateRoms_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the "Validate ROMs" header button: navigates to the validation page.
+                Handles the "Validate ROMs" header button: navigates to the validation page.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.GenerateDat_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the "Generate DAT" header button: navigates to the DAT generation page.
+                Handles the "Generate DAT" header button: navigates to the DAT generation page.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.Donate_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the "Donate" header button: opens the donation page in the default browser.
+                Handles the "Donate" header button: opens the donation page in the default browser.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.About_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the "About" header button: opens the About window.
+                Handles the "About" header button: opens the About window.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.OpenAppData_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the "App Data" header button: opens the per-user data folder in Explorer.
+                Handles the "App Data" header button: opens the per-user data folder in Explorer.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.Exit_Click(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
-            Handles the "Exit" header button: closes the application.
+                Handles the "Exit" header button: closes the application.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.Window_Closing(System.Object,System.ComponentModel.CancelEventArgs)">
             <summary>
-            Handles window closing: disposes resources owned by the main window.
+                Handles window closing: disposes resources owned by the main window.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.Dispose">
             <summary>
-            Disposes of resources used by the MainWindow.
-            Cancels all ongoing operations and disposes of pages and services.
+                Disposes of resources used by the MainWindow.
+                Cancels all ongoing operations and disposes of pages and services.
             </summary>
         </member>
         <member name="M:RomValidator.MainWindow.InitializeComponent">
             <summary>
-            InitializeComponent
+                InitializeComponent
             </summary>
         </member>
         <member name="T:RomValidator.Models.BugReportPayload">
             <summary>
-            Payload for sending bug reports to the API.
-            Matches the API's expected BugReportRequest structure.
+                Payload for sending bug reports to the API.
+                Matches the API's expected BugReportRequest structure.
             </summary>
         </member>
         <member name="P:RomValidator.Models.BugReportPayload.Message">
             <summary>
-            The main message containing all formatted environment and error details.
+                The main message containing all formatted environment and error details.
             </summary>
         </member>
         <member name="P:RomValidator.Models.BugReportPayload.ApplicationName">
             <summary>
-            The name of the application reporting the bug.
+                The name of the application reporting the bug.
             </summary>
         </member>
         <member name="P:RomValidator.Models.BugReportPayload.Version">
             <summary>
-            The application version.
+                The application version.
             </summary>
         </member>
         <member name="P:RomValidator.Models.BugReportPayload.UserInfo">
             <summary>
-            Additional user information about the error.
+                Additional user information about the error.
             </summary>
         </member>
         <member name="P:RomValidator.Models.BugReportPayload.Environment">
             <summary>
-            Context or environment where the error occurred.
+                Context or environment where the error occurred.
             </summary>
         </member>
         <member name="P:RomValidator.Models.BugReportPayload.StackTrace">
             <summary>
-            Stack trace from the exception (if any).
+                Stack trace from the exception (if any).
             </summary>
         </member>
         <member name="T:RomValidator.Models.DuplicateGroup">
             <summary>
-            Represents a group of duplicate files sharing the same hash value.
-            Used for displaying duplicate file information in the UI.
+                Represents a group of duplicate files sharing the same hash value.
+                Used for displaying duplicate file information in the UI.
             </summary>
         </member>
         <member name="P:RomValidator.Models.DuplicateGroup.Hash">
@@ -402,7 +414,7 @@
         </member>
         <member name="T:RomValidator.Models.GameFile">
             <summary>
-            Represents a game file with its calculated hash values and metadata.
+                Represents a game file with its calculated hash values and metadata.
             </summary>
         </member>
         <member name="P:RomValidator.Models.GameFile.FileName">
@@ -431,21 +443,21 @@
         </member>
         <member name="P:RomValidator.Models.GameFile.IsUserError">
             <summary>
-            Gets or sets a value indicating whether the error is caused by the user's file or
-            environment (e.g. a corrupted archive, an unsupported format, or a cloud-only
-            placeholder) rather than an application bug. When true, the error should be shown
-            to the user but must not be sent as a bug report.
+                Gets or sets a value indicating whether the error is caused by the user's file or
+                environment (e.g. a corrupted archive, an unsupported format, or a cloud-only
+                placeholder) rather than an application bug. When true, the error should be shown
+                to the user but must not be sent as a bug report.
             </summary>
         </member>
         <member name="P:RomValidator.Models.GameFile.ArchiveFileName">
             <summary>
-            Gets or sets the original archive file name if this file was extracted from an archive.
-            This is used to properly track the container filename vs the internal ROM filename.
+                Gets or sets the original archive file name if this file was extracted from an archive.
+                This is used to properly track the container filename vs the internal ROM filename.
             </summary>
         </member>
         <member name="T:RomValidator.Models.GitHubAsset">
             <summary>
-            Represents a GitHub release asset for update checking.
+                Represents a GitHub release asset for update checking.
             </summary>
         </member>
         <member name="P:RomValidator.Models.GitHubAsset.Name">
@@ -456,7 +468,7 @@
         </member>
         <member name="T:RomValidator.Models.GitHubRelease">
             <summary>
-            Represents a GitHub release for version checking.
+                Represents a GitHub release for version checking.
             </summary>
         </member>
         <member name="P:RomValidator.Models.GitHubRelease.TagName">
@@ -470,8 +482,8 @@
         </member>
         <member name="T:RomValidator.Models.NoIntro.Datafile">
             <summary>
-            Represents the root element of a No-Intro DAT file.
-            Contains the header and list of games for ROM validation.
+                Represents the root element of a No-Intro DAT file.
+                Contains the header and list of games for ROM validation.
             </summary>
         </member>
         <member name="P:RomValidator.Models.NoIntro.Datafile.Xmlns">
@@ -488,8 +500,8 @@
         </member>
         <member name="T:RomValidator.Models.NoIntro.Game">
             <summary>
-            Represents a game entry in a No-Intro DAT file.
-            Contains metadata about a game including its name, ID, categories, description, and ROMs.
+                Represents a game entry in a No-Intro DAT file.
+                Contains metadata about a game including its name, ID, categories, description, and ROMs.
             </summary>
         </member>
         <member name="P:RomValidator.Models.NoIntro.Game.Name">
@@ -512,8 +524,8 @@
         </member>
         <member name="T:RomValidator.Models.NoIntro.Header">
             <summary>
-            Represents the header section of a No-Intro DAT file.
-            Contains metadata about the DAT file including creator, version, and description.
+                Represents the header section of a No-Intro DAT file.
+                Contains metadata about the DAT file including creator, version, and description.
             </summary>
         </member>
         <member name="P:RomValidator.Models.NoIntro.Header.Id">
@@ -557,7 +569,7 @@
         </member>
         <member name="T:RomValidator.Models.NoIntro.ClrMameProSettings">
             <summary>
-            ClrMamePro settings for No-Intro DAT header
+                ClrMamePro settings for No-Intro DAT header
             </summary>
         </member>
         <member name="P:RomValidator.Models.NoIntro.ClrMameProSettings.ForceNoDump">
@@ -565,8 +577,8 @@
         </member>
         <member name="T:RomValidator.Models.NoIntro.Rom">
             <summary>
-            Represents a ROM entry within a game in a No-Intro DAT file.
-            Contains file metadata including name, size, and hash values for validation.
+                Represents a ROM entry within a game in a No-Intro DAT file.
+                Contains file metadata including name, size, and hash values for validation.
             </summary>
         </member>
         <member name="P:RomValidator.Models.NoIntro.Rom.Name">
@@ -598,89 +610,89 @@
         </member>
         <member name="T:RomValidator.Pages.GenerateDatPage">
             <summary>
-            Page that hashes all files in a folder and exports the results as a
-            No-Intro compliant DAT file, reporting duplicate ROMs along the way.
+                Page that hashes all files in a folder and exports the results as a
+                No-Intro compliant DAT file, reporting duplicate ROMs along the way.
             </summary>
             <summary>
-            GenerateDatPage
+                GenerateDatPage
             </summary>
         </member>
         <member name="M:RomValidator.Pages.GenerateDatPage.#ctor(RomValidator.MainWindow)">
             <summary>
-            Initializes a new instance of the GenerateDatPage class.
+                Initializes a new instance of the GenerateDatPage class.
             </summary>
             <param name="mainWindow">The main window instance for status updates.</param>
         </member>
         <member name="M:RomValidator.Pages.GenerateDatPage.ResetPage">
             <summary>
-            Resets the page to its initial state, clearing all data and stopping ongoing operations.
+                Resets the page to its initial state, clearing all data and stopping ongoing operations.
             </summary>
         </member>
         <member name="M:RomValidator.Pages.GenerateDatPage.Dispose">
             <summary>
-            Disposes of resources used by the GenerateDatPage.
-            Stops timers and cancels ongoing operations.
+                Disposes of resources used by the GenerateDatPage.
+                Stops timers and cancels ongoing operations.
             </summary>
         </member>
         <member name="M:RomValidator.Pages.GenerateDatPage.InitializeComponent">
             <summary>
-            InitializeComponent
+                InitializeComponent
             </summary>
         </member>
         <member name="T:RomValidator.Pages.ValidatePage">
             <summary>
-            Page that validates ROM files in a folder against a No-Intro DAT file.
-            Supports moving, renaming, and deleting files based on the validation result.
+                Page that validates ROM files in a folder against a No-Intro DAT file.
+                Supports moving, renaming, and deleting files based on the validation result.
             </summary>
             <summary>
-            ValidatePage
+                ValidatePage
             </summary>
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.#ctor(RomValidator.MainWindow)">
             <summary>
-            Initializes a new instance of the ValidatePage class.
+                Initializes a new instance of the ValidatePage class.
             </summary>
             <param name="mainWindow">The main window instance for status updates.</param>
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.DetectKnownBinaryFormat(System.String)">
             <summary>
-            Detects whether the given file preview matches a known binary file signature
-            (e.g. a disc/ROM image mistakenly selected as a DAT file). Returns a friendly
-            format name if recognized, otherwise null.
+                Detects whether the given file preview matches a known binary file signature
+                (e.g. a disc/ROM image mistakenly selected as a DAT file). Returns a friendly
+                format name if recognized, otherwise null.
             </summary>
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.LooksLikeBinaryContent(System.String)">
             <summary>
-            Heuristically determines whether the file preview is binary rather than text,
-            by checking for a high proportion of NUL / non-printable control characters
-            and non-ASCII bytes. Compressed/binary DAT files (e.g. RetroAchievements.dat)
-            contain many bytes >= 0x80 that are not control characters, so both are counted.
-            Used to avoid reporting binary files as XML parsing bugs.
+                Heuristically determines whether the file preview is binary rather than text,
+                by checking for a high proportion of NUL / non-printable control characters
+                and non-ASCII bytes. Compressed/binary DAT files (e.g. RetroAchievements.dat)
+                contain many bytes >= 0x80 that are not control characters, so both are counted.
+                Used to avoid reporting binary files as XML parsing bugs.
             </summary>
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.LooksLikeXmlContent(System.String)">
             <summary>
-            Determines whether the file preview looks like XML text at all. Valid XML
-            must start with '&lt;' after an optional BOM and whitespace (e.g. "&lt;?xml",
-            "&lt;datafile", "&lt;!--"). Anything else (e.g. an emulator's playhistory.dat)
-            cannot be a valid DAT file, so it is a user-input mistake rather than an
-            application bug and must not trigger a bug report.
+                Determines whether the file preview looks like XML text at all. Valid XML
+                must start with '&lt;' after an optional BOM and whitespace (e.g. "&lt;?xml",
+                "&lt;datafile", "&lt;!--"). Anything else (e.g. an emulator's playhistory.dat)
+                cannot be a valid DAT file, so it is a user-input mistake rather than an
+                application bug and must not trigger a bug report.
             </summary>
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.HasXmlTextBom(System.String)">
             <summary>
-            Determines whether the preview starts with a UTF-16 or UTF-32 byte order mark.
-            Valid XML may be encoded as UTF-16/UTF-32; because the preview is decoded as
-            Latin-1 those files look binary, so the BOM must be trusted and the content
-            validated by the XML reader instead of the binary heuristics.
+                Determines whether the preview starts with a UTF-16 or UTF-32 byte order mark.
+                Valid XML may be encoded as UTF-16/UTF-32; because the preview is decoded as
+                Latin-1 those files look binary, so the BOM must be trusted and the content
+                validated by the XML reader instead of the binary heuristics.
             </summary>
             <param name="preview">The raw DAT file preview.</param>
             <returns>True when the preview starts with a UTF-16/UTF-32 BOM.</returns>
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.GetArchiveEntryName(System.String,System.String)">
             <summary>
-            Gets the archive entry name for a file extracted into a temporary directory:
-            the path relative to the extraction root, using forward slashes.
+                Gets the archive entry name for a file extracted into a temporary directory:
+                the path relative to the extraction root, using forward slashes.
             </summary>
             <param name="tempDir">The extraction root directory.</param>
             <param name="filePath">The extracted file path.</param>
@@ -688,9 +700,9 @@
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.PrepareArchiveTempDirectory(System.String,System.String)">
             <summary>
-            Prepares a temporary directory with sufficient disk space for archive processing.
-            Tries the default temp path first, then falls back to other drives.
-            Sets <see cref="F:RomValidator.Pages.ValidatePage._diskSpaceExhausted"/> and sends a bug report if no drive has enough space.
+                Prepares a temporary directory with sufficient disk space for archive processing.
+                Tries the default temp path first, then falls back to other drives.
+                Sets <see cref="F:RomValidator.Pages.ValidatePage._diskSpaceExhausted" /> and sends a bug report if no drive has enough space.
             </summary>
             <param name="archivePath">Path to the archive being processed.</param>
             <param name="archiveFileName">Filename of the archive for logging.</param>
@@ -698,26 +710,28 @@
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.Dispose">
             <summary>
-            Disposes of resources used by the ValidatePage.
-            Cancels ongoing operations and cleans up resources.
+                Disposes of resources used by the ValidatePage.
+                Cancels ongoing operations and cleans up resources.
             </summary>
         </member>
-        <member name="M:RomValidator.Pages.ValidatePage.FixArchiveInternalFilenamesAsync(System.String,System.Collections.Generic.List{RomValidator.Models.NoIntro.Rom},System.String)">
+        <member
+            name="M:RomValidator.Pages.ValidatePage.FixArchiveInternalFilenamesAsync(System.String,System.Collections.Generic.List{RomValidator.Models.NoIntro.Rom},System.String)">
             <summary>
-            Checks if files inside an archive have the correct filenames according to the DAT.
-            If the internal filename doesn't match the expected ROM name, renames it.
-            This is called when the outer archive filename already matches the DAT.
+                Checks if files inside an archive have the correct filenames according to the DAT.
+                If the internal filename doesn't match the expected ROM name, renames it.
+                This is called when the outer archive filename already matches the DAT.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <param name="expectedRoms">The expected ROM entries from the DAT file.</param>
             <param name="archiveFileName">The archive file name used for logging.</param>
             <returns>The path to the archive after processing (unchanged when no fix was needed).</returns>
         </member>
-        <member name="M:RomValidator.Pages.ValidatePage.TryExtractArchiveAsync(System.String,System.String,System.String,System.String)">
+        <member
+            name="M:RomValidator.Pages.ValidatePage.TryExtractArchiveAsync(System.String,System.String,System.String,System.String)">
             <summary>
-            Extracts an archive into the specified temporary directory.
-            Corrupt archives are logged at Information level (no bug report) because they
-            are a user-environment condition; disk-full failures are reported.
+                Extracts an archive into the specified temporary directory.
+                Corrupt archives are logged at Information level (no bug report) because they
+                are a user-environment condition; disk-full failures are reported.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <param name="tempDir">The temporary directory to extract into.</param>
@@ -725,13 +739,14 @@
             <param name="operationDescription">Description of the operation for messages.</param>
             <returns>The extracted file paths, or null when extraction failed.</returns>
         </member>
-        <member name="M:RomValidator.Pages.ValidatePage.RepackArchiveAsync(System.String,System.Collections.Generic.List{System.ValueTuple{System.String,System.String}},System.String,System.String)">
+        <member
+            name="M:RomValidator.Pages.ValidatePage.RepackArchiveAsync(System.String,System.Collections.Generic.List{System.ValueTuple{System.String,System.String}},System.String,System.String)">
             <summary>
-            Repacks an archive after its internal files were renamed: renames the extracted
-            files on disk, compresses them into a temporary archive, replaces the original
-            and finalizes the output. Zip archives are created with SharpCompress; 7z
-            archives are created with the 7za fallback; RAR archives are converted to ZIP
-            because RAR creation is not supported.
+                Repacks an archive after its internal files were renamed: renames the extracted
+                files on disk, compresses them into a temporary archive, replaces the original
+                and finalizes the output. Zip archives are created with SharpCompress; 7z
+                archives are created with the 7za fallback; RAR archives are converted to ZIP
+                because RAR creation is not supported.
             </summary>
             <param name="archivePath">Path of the original archive.</param>
             <param name="fileMapping">Mapping of extracted file paths to their desired entry names.</param>
@@ -739,27 +754,30 @@
             <param name="tempDir">Temporary directory used for staging the files.</param>
             <returns>The final archive path (a ZIP path when a RAR was converted).</returns>
         </member>
-        <member name="M:RomValidator.Pages.ValidatePage.CreateArchiveFromRenamedFilesAsync(System.Collections.Generic.List{System.ValueTuple{System.String,System.String}},System.String,System.Boolean,System.String)">
+        <member
+            name="M:RomValidator.Pages.ValidatePage.CreateArchiveFromRenamedFilesAsync(System.Collections.Generic.List{System.ValueTuple{System.String,System.String}},System.String,System.Boolean,System.String)">
             <summary>
-            Creates the repackaged archive with SharpCompress (zip and 7z) and falls back
-            to the bundled 7za executable when SharpCompress cannot create the archive.
+                Creates the repackaged archive with SharpCompress (zip and 7z) and falls back
+                to the bundled 7za executable when SharpCompress cannot create the archive.
             </summary>
             <param name="renamedFiles">Files on disk with their desired entry names.</param>
             <param name="tempArchivePath">Temporary output archive path.</param>
             <param name="is7ZFile">True when the archive is a 7z archive.</param>
             <param name="tempDir">Temporary directory used for staging 7za input files.</param>
         </member>
-        <member name="M:RomValidator.Pages.ValidatePage.DoesInternalFileMatchRomAsync(System.String,RomValidator.Models.NoIntro.Rom)">
+        <member
+            name="M:RomValidator.Pages.ValidatePage.DoesInternalFileMatchRomAsync(System.String,RomValidator.Models.NoIntro.Rom)">
             <summary>
-            Checks if an internal file from an archive matches a ROM entry by computing its hash.
+                Checks if an internal file from an archive matches a ROM entry by computing its hash.
             </summary>
         </member>
-        <member name="M:RomValidator.Pages.ValidatePage.RenameFileInsideArchiveAsync(System.String,RomValidator.Models.NoIntro.Rom)">
+        <member
+            name="M:RomValidator.Pages.ValidatePage.RenameFileInsideArchiveAsync(System.String,RomValidator.Models.NoIntro.Rom)">
             <summary>
-            Renames the file inside an archive to match the target name specified in the DAT entry.
-            For 7z files: extracts contents, renames file, repackages as 7z using the 7za fallback.
-            For zip files: extracts contents, renames file, repackages as zip using SharpCompress.
-            For rar files: extracts contents, renames file, converts to zip using SharpCompress (RAR creation not supported).
+                Renames the file inside an archive to match the target name specified in the DAT entry.
+                For 7z files: extracts contents, renames file, repackages as 7z using the 7za fallback.
+                For zip files: extracts contents, renames file, repackages as zip using SharpCompress.
+                For rar files: extracts contents, renames file, converts to zip using SharpCompress (RAR creation not supported).
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <param name="targetRom">The DAT entry whose hash matched the archive content.</param>
@@ -767,27 +785,28 @@
         </member>
         <member name="M:RomValidator.Pages.ValidatePage.InitializeComponent">
             <summary>
-            InitializeComponent
+                InitializeComponent
             </summary>
         </member>
         <member name="T:RomValidator.Services.ApplicationStatsService">
             <summary>
-            Service for recording application usage statistics to a remote API.
-            Tracks application launches and usage for analytics purposes.
+                Service for recording application usage statistics to a remote API.
+                Tracks application launches and usage for analytics purposes.
             </summary>
         </member>
         <member name="M:RomValidator.Services.ApplicationStatsService.#ctor(System.String,System.String,System.String)">
             <summary>
-            Initializes a new instance of the ApplicationStatsService class.
+                Initializes a new instance of the ApplicationStatsService class.
             </summary>
             <param name="baseUrl">Base URL of the Application Stats API (e.g. https://www.purelogiccode.com/ApplicationStats).</param>
             <param name="apiKey">The API key (Bearer token) used to authenticate with the stats API.</param>
             <param name="applicationId">The unique application identifier used by the stats API.</param>
         </member>
-        <member name="M:RomValidator.Services.ApplicationStatsService.#ctor(System.String,System.String,System.String,System.Net.Http.HttpMessageHandler)">
+        <member
+            name="M:RomValidator.Services.ApplicationStatsService.#ctor(System.String,System.String,System.String,System.Net.Http.HttpMessageHandler)">
             <summary>
-            Initializes a new instance of the ApplicationStatsService class using a custom HTTP handler.
-            Intended for unit tests so network calls can be simulated.
+                Initializes a new instance of the ApplicationStatsService class using a custom HTTP handler.
+                Intended for unit tests so network calls can be simulated.
             </summary>
             <param name="baseUrl">Base URL of the Application Stats API.</param>
             <param name="apiKey">The API key (Bearer token) used to authenticate with the stats API.</param>
@@ -796,22 +815,22 @@
         </member>
         <member name="M:RomValidator.Services.ApplicationStatsService.RecordUsageAsync">
             <summary>
-            Records application usage statistics to the remote API.
-            This method is called once per application launch to track usage.
+                Records application usage statistics to the remote API.
+                This method is called once per application launch to track usage.
             </summary>
             <returns>True if the usage was recorded successfully, false otherwise.</returns>
         </member>
         <member name="M:RomValidator.Services.ApplicationStatsService.Dispose">
             <summary>
-            Disposes of the HTTP client used by the service.
+                Disposes of the HTTP client used by the service.
             </summary>
         </member>
         <member name="T:RomValidator.Services.AppPaths">
             <summary>
-            Central location for the application's folders:
-            the "Screenshot" folder next to the application executable (primary) and the
-            per-user data folder (%LOCALAPPDATA%\ROM Validator) used for logs and as a
-            fallback for screenshots when the application folder is not writable.
+                Central location for the application's folders:
+                the "Screenshot" folder next to the application executable (primary) and the
+                per-user data folder (%LOCALAPPDATA%\ROM Validator) used for logs and as a
+                fallback for screenshots when the application folder is not writable.
             </summary>
         </member>
         <member name="F:RomValidator.Services.AppPaths.ApplicationName">
@@ -825,104 +844,109 @@
         </member>
         <member name="P:RomValidator.Services.AppPaths.ScreenshotsDirectory">
             <summary>
-            Gets the primary folder where F8 screenshots are saved:
-            the "Screenshot" folder inside the application folder.
+                Gets the primary folder where F8 screenshots are saved:
+                the "Screenshot" folder inside the application folder.
             </summary>
         </member>
         <member name="P:RomValidator.Services.AppPaths.FallbackScreenshotsDirectory">
             <summary>
-            Gets the fallback folder where screenshots are saved when the application
-            folder is not writable (e.g. installed under Program Files).
+                Gets the fallback folder where screenshots are saved when the application
+                folder is not writable (e.g. installed under Program Files).
             </summary>
         </member>
         <member name="M:RomValidator.Services.AppPaths.EnsureCreated">
             <summary>
-            Creates the data, logs, and screenshot folders if they do not exist yet.
-            Creation of the primary screenshot folder is best-effort because the
-            application folder may be read-only.
+                Creates the data, logs, and screenshot folders if they do not exist yet.
+                Creation of the primary screenshot folder is best-effort because the
+                application folder may be read-only.
             </summary>
         </member>
         <member name="T:RomValidator.Services.ArchiveService">
             <summary>
-            Archive helpers built on SharpCompress. Reading supports zip, 7z, rar and other
-            common formats; archive creation supports zip and 7z. When SharpCompress cannot
-            create an archive, callers fall back to <see cref="T:RomValidator.Services.SevenZipProcess"/>.
+                Archive helpers built on SharpCompress. Reading supports zip, 7z, rar and other
+                common formats; archive creation supports zip and 7z. When SharpCompress cannot
+                create an archive, callers fall back to <see cref="T:RomValidator.Services.SevenZipProcess" />.
             </summary>
         </member>
         <member name="M:RomValidator.Services.ArchiveService.GetFileEntries(System.String)">
             <summary>
-            Gets the non-directory entries (key and uncompressed size) of an archive.
+                Gets the non-directory entries (key and uncompressed size) of an archive.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <returns>The archive entries with their internal keys and sizes.</returns>
         </member>
         <member name="M:RomValidator.Services.ArchiveService.GetTotalUncompressedSize(System.String)">
             <summary>
-            Calculates the total uncompressed size of all files in an archive.
+                Calculates the total uncompressed size of all files in an archive.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <returns>The total uncompressed size in bytes.</returns>
         </member>
         <member name="M:RomValidator.Services.ArchiveService.ExtractToDirectory(System.String,System.String)">
             <summary>
-            Extracts all files from an archive into the destination directory, preserving
-            the internal folder structure.
+                Extracts all files from an archive into the destination directory, preserving
+                the internal folder structure.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <param name="destinationDirectory">Directory to extract the files into.</param>
         </member>
-        <member name="M:RomValidator.Services.ArchiveService.CreateZipArchive(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.String}},System.String)">
+        <member
+            name="M:RomValidator.Services.ArchiveService.CreateZipArchive(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.String}},System.String)">
             <summary>
-            Creates a zip archive from the specified files. Entry names are taken from the
-            provided mapping and may differ from the file names on disk.
+                Creates a zip archive from the specified files. Entry names are taken from the
+                provided mapping and may differ from the file names on disk.
             </summary>
             <param name="entries">The files to include with their desired entry names.</param>
             <param name="outputPath">The zip file to create.</param>
         </member>
-        <member name="M:RomValidator.Services.ArchiveService.Create7ZArchive(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.String}},System.String)">
+        <member
+            name="M:RomValidator.Services.ArchiveService.Create7ZArchive(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.String,System.String}},System.String)">
             <summary>
-            Creates a 7z archive from the specified files. Entry names are taken from the
-            provided mapping and may differ from the file names on disk.
+                Creates a 7z archive from the specified files. Entry names are taken from the
+                provided mapping and may differ from the file names on disk.
             </summary>
             <param name="entries">The files to include with their desired entry names.</param>
             <param name="outputPath">The 7z file to create.</param>
         </member>
         <member name="T:RomValidator.Services.BugReportService">
             <summary>
-            Service for reporting bugs to the bug report API.
-            This service ensures all exceptions are captured with detailed environment and error information.
+                Service for reporting bugs to the bug report API.
+                This service ensures all exceptions are captured with detailed environment and error information.
             </summary>
         </member>
         <member name="M:RomValidator.Services.BugReportService.#ctor(System.String,System.String,System.String)">
             <summary>
-            Initializes a new instance of the BugReportService class.
+                Initializes a new instance of the BugReportService class.
             </summary>
             <param name="apiUrl">The URL of the bug report API endpoint.</param>
             <param name="apiKey">The API key for authentication.</param>
             <param name="applicationName">The name of the application for bug reporting.</param>
         </member>
-        <member name="M:RomValidator.Services.BugReportService.#ctor(System.String,System.String,System.String,System.Net.Http.HttpMessageHandler)">
+        <member
+            name="M:RomValidator.Services.BugReportService.#ctor(System.String,System.String,System.String,System.Net.Http.HttpMessageHandler)">
             <summary>
-            Initializes a new instance of the BugReportService class using a custom HTTP handler.
-            Intended for unit tests so network calls can be simulated.
+                Initializes a new instance of the BugReportService class using a custom HTTP handler.
+                Intended for unit tests so network calls can be simulated.
             </summary>
             <param name="apiUrl">The URL of the bug report API endpoint.</param>
             <param name="apiKey">The API key for authentication.</param>
             <param name="applicationName">The name of the application for bug reporting.</param>
             <param name="httpMessageHandler">The HTTP message handler used to send requests.</param>
         </member>
-        <member name="M:RomValidator.Services.BugReportService.SendBugReportAsync(System.String,System.Exception,System.String)">
+        <member
+            name="M:RomValidator.Services.BugReportService.SendBugReportAsync(System.String,System.Exception,System.String)">
             <summary>
-            Sends a bug report to the API with comprehensive environment and error details.
+                Sends a bug report to the API with comprehensive environment and error details.
             </summary>
             <param name="context">Context or location where the error occurred.</param>
             <param name="exception">The exception that occurred (optional).</param>
             <param name="additionalInfo">Additional information about the error (optional).</param>
             <returns>True if the report was sent successfully, false otherwise.</returns>
         </member>
-        <member name="M:RomValidator.Services.BugReportService.SendBugReportAsync(System.String,System.Exception,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.BugReportService.SendBugReportAsync(System.String,System.Exception,System.String,System.Threading.CancellationToken)">
             <summary>
-            Sends a bug report to the API with comprehensive environment and error details.
+                Sends a bug report to the API with comprehensive environment and error details.
             </summary>
             <param name="context">Context or location where the error occurred.</param>
             <param name="exception">The exception that occurred (optional).</param>
@@ -930,10 +954,11 @@
             <param name="cancellationToken">Cancellation token for the operation.</param>
             <returns>True if the report was sent successfully, false otherwise.</returns>
         </member>
-        <member name="M:RomValidator.Services.BugReportService.BuildBugReportMessage(System.String,System.Exception,System.String)">
+        <member
+            name="M:RomValidator.Services.BugReportService.BuildBugReportMessage(System.String,System.Exception,System.String)">
             <summary>
-            Builds a comprehensive bug report message with all required sections:
-            environment details, error details, and exception details.
+                Builds a comprehensive bug report message with all required sections:
+                environment details, error details, and exception details.
             </summary>
             <param name="context">Context or location where the error occurred.</param>
             <param name="exception">The exception that occurred (optional).</param>
@@ -942,87 +967,87 @@
         </member>
         <member name="M:RomValidator.Services.BugReportService.BuildExceptionDetails(System.Exception)">
             <summary>
-            Builds detailed exception information including inner exceptions.
+                Builds detailed exception information including inner exceptions.
             </summary>
             <param name="exception">The exception to describe.</param>
             <returns>A formatted multi-line description of the exception chain.</returns>
         </member>
         <member name="M:RomValidator.Services.BugReportService.GetApplicationVersion">
             <summary>
-            Gets the application version from the executing assembly.
+                Gets the application version from the executing assembly.
             </summary>
             <returns>The application version, or "Unknown" when it cannot be determined.</returns>
         </member>
         <member name="M:RomValidator.Services.BugReportService.GetOsVersionLabel">
             <summary>
-            Gets the platform-specific label for the operating system version line
-            (e.g. "Windows Version", "Linux Version", "MacOSX Version").
+                Gets the platform-specific label for the operating system version line
+                (e.g. "Windows Version", "Linux Version", "MacOSX Version").
             </summary>
             <returns>The platform-specific version label.</returns>
         </member>
         <member name="M:RomValidator.Services.BugReportService.GetWindowsVersion">
             <summary>
-            Gets detailed operating system version information, including Windows display
-            version and build number when available.
+                Gets detailed operating system version information, including Windows display
+                version and build number when available.
             </summary>
             <returns>A human-readable operating system description.</returns>
         </member>
         <member name="M:RomValidator.Services.BugReportService.Dispose">
             <summary>
-            Disposes of the HTTP client used by the service.
+                Disposes of the HTTP client used by the service.
             </summary>
         </member>
         <member name="T:RomValidator.Services.BugReportSink">
             <summary>
-            A Serilog sink that forwards Warning, Error, and Fatal log events to the bug report API.
-            Each event is submitted via <see cref="T:RomValidator.Interfaces.IBugReportService"/> with full environment and
-            exception details. Protected against recursion so a failure inside the sink does not
-            trigger another bug report.
+                A Serilog sink that forwards Warning, Error, and Fatal log events to the bug report API.
+                Each event is submitted via <see cref="T:RomValidator.Interfaces.IBugReportService" /> with full environment and
+                exception details. Protected against recursion so a failure inside the sink does not
+                trigger another bug report.
             </summary>
         </member>
         <member name="M:RomValidator.Services.BugReportSink.#ctor(RomValidator.Interfaces.IBugReportService)">
             <summary>
-            Initializes a new instance of the BugReportSink class.
+                Initializes a new instance of the BugReportSink class.
             </summary>
             <param name="bugReportService">The service used to submit forwarded log events.</param>
         </member>
         <member name="M:RomValidator.Services.BugReportSink.Emit(Serilog.Events.LogEvent)">
             <summary>
-            Forwards the log event to the bug report API when it is Warning level or higher.
+                Forwards the log event to the bug report API when it is Warning level or higher.
             </summary>
             <param name="logEvent">The Serilog event to forward.</param>
         </member>
         <member name="P:RomValidator.Services.BugReportSink.IsSendInFlight">
             <summary>
-            Gets a value indicating whether a bug report send is currently in flight.
-            Exposed for tests so they can wait until the gate has been released.
+                Gets a value indicating whether a bug report send is currently in flight.
+                Exposed for tests so they can wait until the gate has been released.
             </summary>
         </member>
         <member name="M:RomValidator.Services.BugReportSink.Dispose">
             <summary>
-            Releases resources used by the sink. The sink holds no unmanaged resources.
+                Releases resources used by the sink. The sink holds no unmanaged resources.
             </summary>
         </member>
         <member name="T:RomValidator.Services.Crc32Algorithm">
             <summary>
-            Implements a 32-bit CRC (Cyclic Redundancy Check) hash algorithm.
-            Compatible with System.Security.Cryptography.HashAlgorithm for use in hashing operations.
+                Implements a 32-bit CRC (Cyclic Redundancy Check) hash algorithm.
+                Compatible with System.Security.Cryptography.HashAlgorithm for use in hashing operations.
             </summary>
         </member>
         <member name="M:RomValidator.Services.Crc32Algorithm.#ctor">
             <summary>
-            Initializes a new instance of the Crc32Algorithm class.
-            Sets the hash size to 32 bits and initializes the algorithm state.
+                Initializes a new instance of the Crc32Algorithm class.
+                Sets the hash size to 32 bits and initializes the algorithm state.
             </summary>
         </member>
         <member name="M:RomValidator.Services.Crc32Algorithm.Initialize">
             <summary>
-            Initializes the CRC32 algorithm state.
+                Initializes the CRC32 algorithm state.
             </summary>
         </member>
         <member name="M:RomValidator.Services.Crc32Algorithm.HashCore(System.Byte[],System.Int32,System.Int32)">
             <summary>
-            Routes data written to the object into the CRC32 hash algorithm for computing the hash.
+                Routes data written to the object into the CRC32 hash algorithm for computing the hash.
             </summary>
             <param name="array">The input to compute the hash code for.</param>
             <param name="ibStart">The offset into the byte array from which to begin using data.</param>
@@ -1030,111 +1055,118 @@
         </member>
         <member name="M:RomValidator.Services.Crc32Algorithm.HashFinal">
             <summary>
-            Finalizes the CRC32 hash computation after the last data is processed by the cryptographic hash algorithm.
+                Finalizes the CRC32 hash computation after the last data is processed by the cryptographic hash algorithm.
             </summary>
             <returns>The computed CRC32 hash code.</returns>
         </member>
         <member name="T:RomValidator.Services.FileSystemHelper">
             <summary>
-            Provides shared helpers for detecting common file-system error conditions.
+                Provides shared helpers for detecting common file-system error conditions.
             </summary>
         </member>
         <member name="M:RomValidator.Services.FileSystemHelper.IsDiskFullError(System.Exception)">
             <summary>
-            Determines whether an exception indicates that the disk is full.
+                Determines whether an exception indicates that the disk is full.
             </summary>
             <param name="exception">The exception to inspect.</param>
             <returns>True when the exception represents a disk-full condition.</returns>
         </member>
         <member name="T:RomValidator.Services.GitHubVersionChecker">
             <summary>
-            Service for checking GitHub releases to determine if a newer version of the application is available.
-            Provides version comparison and update notification functionality.
+                Service for checking GitHub releases to determine if a newer version of the application is available.
+                Provides version comparison and update notification functionality.
             </summary>
         </member>
         <member name="M:RomValidator.Services.GitHubVersionChecker.#ctor(System.String,System.String)">
             <summary>
-            Initializes a new instance of the GitHubVersionChecker class.
+                Initializes a new instance of the GitHubVersionChecker class.
             </summary>
             <param name="repoOwner">The GitHub repository owner (username or organization).</param>
             <param name="repoName">The name of the GitHub repository.</param>
         </member>
-        <member name="M:RomValidator.Services.GitHubVersionChecker.#ctor(System.String,System.String,System.Net.Http.HttpMessageHandler)">
+        <member
+            name="M:RomValidator.Services.GitHubVersionChecker.#ctor(System.String,System.String,System.Net.Http.HttpMessageHandler)">
             <summary>
-            Initializes a new instance of the GitHubVersionChecker class using a custom HTTP handler.
-            Intended for unit tests so network calls can be simulated.
+                Initializes a new instance of the GitHubVersionChecker class using a custom HTTP handler.
+                Intended for unit tests so network calls can be simulated.
             </summary>
             <param name="repoOwner">The GitHub repository owner (username or organization).</param>
             <param name="repoName">The name of the GitHub repository.</param>
             <param name="httpMessageHandler">The HTTP message handler used to send requests.</param>
         </member>
-        <member name="M:RomValidator.Services.GitHubVersionChecker.CheckForNewVersionAsync(System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.GitHubVersionChecker.CheckForNewVersionAsync(System.Threading.CancellationToken)">
             <summary>
-            Checks GitHub for a newer version of the application.
+                Checks GitHub for a newer version of the application.
             </summary>
             <param name="cancellationToken">Cancellation token for the operation.</param>
-            <returns>A tuple containing:
-            - IsNewVersionAvailable: True if a newer version is available;
-            - ReleaseUrl: The URL to the latest release page;
-            - LatestVersionTag: The version tag of the latest release.
+            <returns>
+                A tuple containing:
+                - IsNewVersionAvailable: True if a newer version is available;
+                - ReleaseUrl: The URL to the latest release page;
+                - LatestVersionTag: The version tag of the latest release.
             </returns>
         </member>
         <member name="M:RomValidator.Services.GitHubVersionChecker.ParseVersionTag(System.String)">
             <summary>
-            Parses a GitHub release tag (e.g. "v1.2.3" or "release_1.2.3") into a <see cref="T:System.Version"/>.
+                Parses a GitHub release tag (e.g. "v1.2.3" or "release_1.2.3") into a <see cref="T:System.Version" />.
             </summary>
             <param name="tagName">The raw tag name from the GitHub release.</param>
             <returns>The parsed version, or null when the tag is not a valid version.</returns>
         </member>
         <member name="M:RomValidator.Services.GitHubVersionChecker.GetCurrentApplicationVersion">
             <summary>
-            Gets the currently executing application version from the assembly metadata.
+                Gets the currently executing application version from the assembly metadata.
             </summary>
             <returns>The current application version, or null when it cannot be determined.</returns>
         </member>
         <member name="M:RomValidator.Services.GitHubVersionChecker.Dispose">
             <summary>
-            Disposes of the HTTP client used by the service.
+                Disposes of the HTTP client used by the service.
             </summary>
         </member>
         <member name="T:RomValidator.Services.HashCalculator">
             <summary>
-            Provides static methods for calculating hash values (CRC32, MD5, SHA1, SHA256) for files and archives.
-            Supports both regular files and archive formats (ZIP, 7Z, RAR) using SharpCompress,
-            with the 7za command-line tool as a fallback for archives SharpCompress cannot read.
+                Provides static methods for calculating hash values (CRC32, MD5, SHA1, SHA256) for files and archives.
+                Supports both regular files and archive formats (ZIP, 7Z, RAR) using SharpCompress,
+                with the 7za command-line tool as a fallback for archives SharpCompress cannot read.
             </summary>
         </member>
-        <member name="M:RomValidator.Services.HashCalculator.CalculateHashesAsync(System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.HashCalculator.CalculateHashesAsync(System.String,System.Threading.CancellationToken)">
             <summary>
-            Calculates hash values (CRC32, MD5, SHA1, SHA256) for a file or archive.
-            Supports both regular files and archive formats (ZIP, 7Z, RAR).
-            </summary>
-            <param name="filePath">The path to the file or archive to process.</param>
-            <param name="cancellationToken">Cancellation token to stop the operation.</param>
-            <returns>A list of <see cref="T:RomValidator.Models.GameFile"/> objects containing hash results for each file.</returns>
-        </member>
-        <member name="M:RomValidator.Services.HashCalculator.CalculateHashesCoreAsync(System.String,System.Threading.CancellationToken)">
-            <summary>
-            Core hash calculation implementation shared by the public entry point.
+                Calculates hash values (CRC32, MD5, SHA1, SHA256) for a file or archive.
+                Supports both regular files and archive formats (ZIP, 7Z, RAR).
             </summary>
             <param name="filePath">The path to the file or archive to process.</param>
             <param name="cancellationToken">Cancellation token to stop the operation.</param>
-            <returns>A list of <see cref="T:RomValidator.Models.GameFile"/> objects containing hash results for each file.</returns>
+            <returns>A list of <see cref="T:RomValidator.Models.GameFile" /> objects containing hash results for each file.</returns>
         </member>
-        <member name="M:RomValidator.Services.HashCalculator.CalculateArchiveHashesAsync(System.IO.FileInfo,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.HashCalculator.CalculateHashesCoreAsync(System.String,System.Threading.CancellationToken)">
             <summary>
-            Calculates hashes for every file inside an archive using SharpCompress. When the
-            archive cannot be read by SharpCompress, the 7za fallback is attempted before
-            returning an error entry.
+                Core hash calculation implementation shared by the public entry point.
+            </summary>
+            <param name="filePath">The path to the file or archive to process.</param>
+            <param name="cancellationToken">Cancellation token to stop the operation.</param>
+            <returns>A list of <see cref="T:RomValidator.Models.GameFile" /> objects containing hash results for each file.</returns>
+        </member>
+        <member
+            name="M:RomValidator.Services.HashCalculator.CalculateArchiveHashesAsync(System.IO.FileInfo,System.String,System.Threading.CancellationToken)">
+            <summary>
+                Calculates hashes for every file inside an archive using SharpCompress. When the
+                archive cannot be read by SharpCompress, the 7za fallback is attempted before
+                returning an error entry.
             </summary>
             <param name="fileInfo">Information about the archive file.</param>
             <param name="filePath">The path to the archive file.</param>
             <param name="cancellationToken">Cancellation token to stop the operation.</param>
-            <returns>A list of <see cref="T:RomValidator.Models.GameFile"/> objects, one per archive entry.</returns>
+            <returns>A list of <see cref="T:RomValidator.Models.GameFile" /> objects, one per archive entry.</returns>
         </member>
-        <member name="M:RomValidator.Services.HashCalculator.TryCalculateArchiveHashesWithSevenZipAsync(System.IO.FileInfo,System.String,System.Exception,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.HashCalculator.TryCalculateArchiveHashesWithSevenZipAsync(System.IO.FileInfo,System.String,System.Exception,System.Threading.CancellationToken)">
             <summary>
-            Extracts an archive with 7za and calculates hashes for the extracted files.
+                Extracts an archive with 7za and calculates hashes for the extracted files.
             </summary>
             <param name="fileInfo">Information about the archive file.</param>
             <param name="filePath">The path to the archive file.</param>
@@ -1142,80 +1174,81 @@
             <param name="cancellationToken">Cancellation token to stop the operation.</param>
             <returns>The hash results, or null when the fallback could not read the archive.</returns>
         </member>
-        <member name="M:RomValidator.Services.HashCalculator.CreateArchiveErrorGameFile(System.String,System.Int64,System.String)">
+        <member
+            name="M:RomValidator.Services.HashCalculator.CreateArchiveErrorGameFile(System.String,System.Int64,System.String)">
             <summary>
-            Creates an error result for an archive or archive entry.
+                Creates an error result for an archive or archive entry.
             </summary>
             <param name="fileName">The archive or entry name.</param>
             <param name="fileSize">The uncompressed size in bytes.</param>
             <param name="errorMessage">The user-facing error message.</param>
-            <returns>A <see cref="T:RomValidator.Models.GameFile"/> marked with error hashes.</returns>
+            <returns>A <see cref="T:RomValidator.Models.GameFile" /> marked with error hashes.</returns>
         </member>
         <member name="M:RomValidator.Services.HashCalculator.GetFileSizeSafe(System.IO.FileInfo)">
             <summary>
-            Safely reads the file length, returning 0 when the file no longer exists or
-            the length cannot be read (e.g. the path is a directory). This prevents the
-            error-handling path itself from throwing.
+                Safely reads the file length, returning 0 when the file no longer exists or
+                the length cannot be read (e.g. the path is a directory). This prevents the
+                error-handling path itself from throwing.
             </summary>
             <param name="fileInfo">The file information to inspect.</param>
             <returns>The file size in bytes, or 0 when unavailable.</returns>
         </member>
         <member name="M:RomValidator.Services.HashCalculator.IsArchiveFile(System.String)">
             <summary>
-            Determines whether the specified file name has a supported archive extension
-            (.zip, .7z, or .rar).
+                Determines whether the specified file name has a supported archive extension
+                (.zip, .7z, or .rar).
             </summary>
             <param name="fileName">The file name (or path) to test.</param>
             <returns>True when the file is treated as an archive.</returns>
         </member>
         <member name="M:RomValidator.Services.HashCalculator.MyRegex">
             <remarks>
-            Pattern:<br/>
-            <code>\\.(zip|7z|rar)$</code><br/>
-            Options:<br/>
-            <code>RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture</code><br/>
-            Explanation:<br/>
-            <code>
-            ○ Match '.'.<br/>
-            ○ Match with 3 alternative expressions.<br/>
-                ○ Match a sequence of expressions.<br/>
-                    ○ Match a character in the set [Zz].<br/>
-                    ○ Match a character in the set [Ii\u0130].<br/>
-                    ○ Match a character in the set [Pp].<br/>
-                ○ Match a sequence of expressions.<br/>
-                    ○ Match '7'.<br/>
-                    ○ Match a character in the set [Zz].<br/>
-                ○ Match a sequence of expressions.<br/>
-                    ○ Match a character in the set [Rr].<br/>
-                    ○ Match a character in the set [Aa].<br/>
-                    ○ Match a character in the set [Rr].<br/>
-            ○ Match if at the end of the string or if before an ending newline.<br/>
-            </code>
+                Pattern:<br />
+                <code>\\.(zip|7z|rar)$</code><br />
+                Options:<br />
+                <code>RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture</code><br />
+                Explanation:<br />
+                <code>
+                    ○ Match '.'.<br />
+                    ○ Match with 3 alternative expressions.<br />
+                    ○ Match a sequence of expressions.<br />
+                    ○ Match a character in the set [Zz].<br />
+                    ○ Match a character in the set [Ii\u0130].<br />
+                    ○ Match a character in the set [Pp].<br />
+                    ○ Match a sequence of expressions.<br />
+                    ○ Match '7'.<br />
+                    ○ Match a character in the set [Zz].<br />
+                    ○ Match a sequence of expressions.<br />
+                    ○ Match a character in the set [Rr].<br />
+                    ○ Match a character in the set [Aa].<br />
+                    ○ Match a character in the set [Rr].<br />
+                    ○ Match if at the end of the string or if before an ending newline.<br />
+                </code>
             </remarks>
         </member>
         <member name="T:RomValidator.Services.LoggerService">
             <summary>
-            Facade over Serilog that preserves the existing call-site API while routing
-            Warning and higher events to the bug report API through a custom sink.
-            All logging in the application goes through this class.
+                Facade over Serilog that preserves the existing call-site API while routing
+                Warning and higher events to the bug report API through a custom sink.
+                All logging in the application goes through this class.
             </summary>
         </member>
         <member name="M:RomValidator.Services.LoggerService.Initialize(Serilog.ILogger)">
             <summary>
-            Initializes the logger facade with the configured Serilog logger.
+                Initializes the logger facade with the configured Serilog logger.
             </summary>
             <param name="logger">The Serilog logger that receives all log events.</param>
         </member>
         <member name="M:RomValidator.Services.LoggerService.LogError(System.String,System.String)">
             <summary>
-            Logs an error message for the specified component.
+                Logs an error message for the specified component.
             </summary>
             <param name="component">The component or area that produced the error.</param>
             <param name="message">The error message.</param>
         </member>
         <member name="M:RomValidator.Services.LoggerService.LogException(System.String,System.Exception,System.String)">
             <summary>
-            Logs an exception with optional context for the specified component.
+                Logs an exception with optional context for the specified component.
             </summary>
             <param name="component">The component or area that produced the exception.</param>
             <param name="exception">The exception to log.</param>
@@ -1223,31 +1256,32 @@
         </member>
         <member name="M:RomValidator.Services.LoggerService.LogWarning(System.String,System.String)">
             <summary>
-            Logs a warning message for the specified component.
-            Warnings are forwarded to the bug report API.
+                Logs a warning message for the specified component.
+                Warnings are forwarded to the bug report API.
             </summary>
             <param name="component">The component or area that produced the warning.</param>
             <param name="message">The warning message.</param>
         </member>
         <member name="M:RomValidator.Services.LoggerService.LogInfo(System.String,System.String)">
             <summary>
-            Logs an informational message for the specified component.
+                Logs an informational message for the specified component.
             </summary>
             <param name="component">The component or area that produced the message.</param>
             <param name="message">The informational message.</param>
         </member>
         <member name="M:RomValidator.Services.LoggerService.LogDebug(System.String,System.String)">
             <summary>
-            Logs a debug message for the specified component.
-            Debug logging is only compiled into DEBUG builds.
+                Logs a debug message for the specified component.
+                Debug logging is only compiled into DEBUG builds.
             </summary>
             <param name="component">The component or area that produced the message.</param>
             <param name="message">The debug message.</param>
         </member>
-        <member name="M:RomValidator.Services.LoggerService.Write(Serilog.Events.LogEventLevel,System.String,System.String,System.Exception)">
+        <member
+            name="M:RomValidator.Services.LoggerService.Write(Serilog.Events.LogEventLevel,System.String,System.String,System.Exception)">
             <summary>
-            Writes the event to the underlying Serilog logger. Never throws so logging
-            failures cannot crash the application.
+                Writes the event to the underlying Serilog logger. Never throws so logging
+                failures cannot crash the application.
             </summary>
             <param name="level">The severity level of the event.</param>
             <param name="component">The component attached to the event.</param>
@@ -1256,71 +1290,73 @@
         </member>
         <member name="T:RomValidator.Services.ScreenshotService">
             <summary>
-            Service that captures screenshots of the active application window.
-            Screenshots are saved to the "Screenshot" folder inside the application folder;
-            when that folder is not writable (e.g. the app is installed under Program Files),
-            they fall back to %LOCALAPPDATA%\ROM Validator\Screenshot.
+                Service that captures screenshots of the active application window.
+                Screenshots are saved to the "Screenshot" folder inside the application folder;
+                when that folder is not writable (e.g. the app is installed under Program Files),
+                they fall back to %LOCALAPPDATA%\ROM Validator\Screenshot.
             </summary>
         </member>
         <member name="M:RomValidator.Services.ScreenshotService.CaptureActiveWindowScreenshot">
             <summary>
-            Captures a screenshot of the currently active application window (or the main
-            window when no window reports itself as active) and saves it as a PNG file.
+                Captures a screenshot of the currently active application window (or the main
+                window when no window reports itself as active) and saves it as a PNG file.
             </summary>
             <returns>The full path of the saved screenshot, or null when capture failed.</returns>
         </member>
         <member name="M:RomValidator.Services.ScreenshotService.CaptureWindowScreenshot(System.Windows.Window)">
             <summary>
-            Captures a screenshot of the specified window and saves it as a PNG file.
+                Captures a screenshot of the specified window and saves it as a PNG file.
             </summary>
             <param name="window">The window to capture.</param>
             <returns>The full path of the saved screenshot.</returns>
         </member>
         <member name="M:RomValidator.Services.ScreenshotService.GetActiveWindow">
             <summary>
-            Returns the currently active application window, falling back to the main window.
+                Returns the currently active application window, falling back to the main window.
             </summary>
             <returns>The active window, or null when no window is available.</returns>
         </member>
         <member name="M:RomValidator.Services.ScreenshotService.SaveWindowToPng(System.Windows.Window,System.String)">
             <summary>
-            Renders the specified window to a PNG file at the window's actual DPI.
+                Renders the specified window to a PNG file at the window's actual DPI.
             </summary>
             <param name="window">The window to render.</param>
             <param name="filePath">The destination PNG file path.</param>
         </member>
         <member name="T:RomValidator.Services.SevenZipProcess">
             <summary>
-            Fallback archive helper that invokes the standalone 7-Zip command-line tool
-            (7za.exe or 7za_arm64.exe) for operations SharpCompress cannot perform, such as
-            creating 7z archives or reading archives with unsupported compression methods.
+                Fallback archive helper that invokes the standalone 7-Zip command-line tool
+                (7za.exe or 7za_arm64.exe) for operations SharpCompress cannot perform, such as
+                creating 7z archives or reading archives with unsupported compression methods.
             </summary>
         </member>
         <member name="M:RomValidator.Services.SevenZipProcess.GetExecutablePath">
             <summary>
-            Gets the 7za executable matching the current process architecture, or null
-            when no executable is present next to the application.
+                Gets the 7za executable matching the current process architecture, or null
+                when no executable is present next to the application.
             </summary>
             <returns>The full path to the 7za executable, or null when it is missing.</returns>
         </member>
         <member name="P:RomValidator.Services.SevenZipProcess.IsAvailable">
             <summary>
-            Gets a value indicating whether a 7za fallback executable is available.
+                Gets a value indicating whether a 7za fallback executable is available.
             </summary>
         </member>
-        <member name="M:RomValidator.Services.SevenZipProcess.ExtractArchiveAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.SevenZipProcess.ExtractArchiveAsync(System.String,System.String,System.Threading.CancellationToken)">
             <summary>
-            Extracts an archive to the destination directory using 7za.
+                Extracts an archive to the destination directory using 7za.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <param name="destinationDirectory">Directory to extract the files into.</param>
             <param name="cancellationToken">Cancellation token to stop the operation.</param>
             <returns>True when extraction succeeded.</returns>
         </member>
-        <member name="M:RomValidator.Services.SevenZipProcess.CreateArchiveAsync(System.String,System.String,System.Boolean,System.Threading.CancellationToken)">
+        <member
+            name="M:RomValidator.Services.SevenZipProcess.CreateArchiveAsync(System.String,System.String,System.Boolean,System.Threading.CancellationToken)">
             <summary>
-            Creates an archive containing every file in the staging directory (entry
-            names are the file names at the root of the staging directory) using 7za.
+                Creates an archive containing every file in the staging directory (entry
+                names are the file names at the root of the staging directory) using 7za.
             </summary>
             <param name="stagingDirectory">Directory containing the files to archive.</param>
             <param name="outputArchivePath">The archive file to create.</param>
@@ -1330,67 +1366,68 @@
         </member>
         <member name="M:RomValidator.Services.SevenZipProcess.GetUncompressedSize(System.String)">
             <summary>
-            Gets the total uncompressed size of an archive using 7za (fallback for
-            archives SharpCompress cannot read).
+                Gets the total uncompressed size of an archive using 7za (fallback for
+                archives SharpCompress cannot read).
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <returns>The total size in bytes, or null when it cannot be determined.</returns>
         </member>
         <member name="M:RomValidator.Services.SevenZipProcess.ParseUncompressedSize(System.String)">
             <summary>
-            Parses the total uncompressed size from 7za "l -slt" output.
+                Parses the total uncompressed size from 7za "l -slt" output.
             </summary>
             <param name="listingOutput">The raw standard output of "7za l -slt".</param>
             <returns>The summed uncompressed size of all non-directory entries.</returns>
         </member>
         <member name="T:RomValidator.Services.TempDirectoryHelper">
             <summary>
-            Helper class for managing temporary directories with automatic cleanup.
+                Helper class for managing temporary directories with automatic cleanup.
             </summary>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.CreateTempDirectory(System.String)">
             <summary>
-            Creates a temporary directory with a unique name.
+                Creates a temporary directory with a unique name.
             </summary>
             <param name="prefix">Prefix for the directory name.</param>
             <returns>The full path to the created temporary directory.</returns>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.CleanupTempDirectoryAsync(System.String)">
             <summary>
-            Safely deletes a temporary directory with retry logic and background fallback.
-            Logs warnings instead of throwing on failure.
+                Safely deletes a temporary directory with retry logic and background fallback.
+                Logs warnings instead of throwing on failure.
             </summary>
             <param name="tempDir">Path to the temporary directory to delete.</param>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.FallbackCleanupAsync(System.String)">
             <summary>
-            Fallback deletion after the retry loop is exhausted. Runs on a thread-pool thread
-            so the blocking GC and recursive delete never freeze the UI thread.
+                Fallback deletion after the retry loop is exhausted. Runs on a thread-pool thread
+                so the blocking GC and recursive delete never freeze the UI thread.
             </summary>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.ShutdownCleanup">
             <summary>
-            Best-effort shutdown cleanup: stops the background retry timer and attempts to
-            delete any directories still pending. Failures are ignored (process is exiting).
+                Best-effort shutdown cleanup: stops the background retry timer and attempts to
+                delete any directories still pending. Failures are ignored (process is exiting).
             </summary>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.CleanupAllTrackedDirectoriesAsync">
             <summary>
-            Cleans up all tracked temporary directories that have not yet been removed.
+                Cleans up all tracked temporary directories that have not yet been removed.
             </summary>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.GetAvailableFreeSpace(System.String)">
             <summary>
-            Gets the available free space for the drive containing the specified path.
+                Gets the available free space for the drive containing the specified path.
             </summary>
             <param name="path">A path on the drive to check.</param>
             <returns>The available free space in bytes, or null if the drive cannot be accessed.</returns>
         </member>
-        <member name="M:RomValidator.Services.TempDirectoryHelper.FindTempDirectoryWithSpace(System.Int64,System.String,System.String@)">
+        <member
+            name="M:RomValidator.Services.TempDirectoryHelper.FindTempDirectoryWithSpace(System.Int64,System.String,System.String@)">
             <summary>
-            Finds or creates a temporary directory with sufficient free space.
-            Tries the default temp path first, then the drive containing the context file,
-            then all other available drives.
+                Finds or creates a temporary directory with sufficient free space.
+                Tries the default temp path first, then the drive containing the context file,
+                then all other available drives.
             </summary>
             <param name="requiredBytes">Minimum required free space in bytes.</param>
             <param name="contextPath">A file path whose drive should be preferred as a fallback.</param>
@@ -1399,25 +1436,26 @@
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.GetArchiveUncompressedSize(System.String)">
             <summary>
-            Calculates the total uncompressed size of all files inside an archive.
+                Calculates the total uncompressed size of all files inside an archive.
             </summary>
             <param name="archivePath">Path to the archive file.</param>
             <returns>Total uncompressed size in bytes. Returns 0 if the archive cannot be read.</returns>
         </member>
         <member name="M:RomValidator.Services.TempDirectoryHelper.FormatBytes(System.Int64)">
             <summary>
-            Formats a byte count into a human-readable string.
+                Formats a byte count into a human-readable string.
             </summary>
             <param name="bytes">Number of bytes.</param>
             <returns>Human-readable string such as "1.5 GB".</returns>
         </member>
-        <member name="M:RomValidator.Services.TempDirectoryHelper.CreateTempDirectoryInPath(System.String,System.String)">
+        <member
+            name="M:RomValidator.Services.TempDirectoryHelper.CreateTempDirectoryInPath(System.String,System.String)">
             <summary>
-            Creates a temporary directory inside a specific path.
+                Creates a temporary directory inside a specific path.
             </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.MyRegex_0">
-            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the MyRegex method.</summary>
+            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex" />-derived type for the MyRegex method.</summary>
         </member>
         <member name="F:System.Text.RegularExpressions.Generated.MyRegex_0.Instance">
             <summary>Cached, thread-safe singleton instance.</summary>
@@ -1426,32 +1464,42 @@
             <summary>Initializes the instance.</summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory">
-            <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+            <summary>
+                Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner" />
+                instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex" />.
+            </summary>
         </member>
         <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.CreateInstance">
-            <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+            <summary>
+                Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner" /> used by methods on
+                <see cref="T:System.Text.RegularExpressions.Regex" />.
+            </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner">
             <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
-            <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
+        <member
+            name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+            <summary>Scan the <paramref name="inputSpan" /> starting from base.runtextstart for the next match.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
-            <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
+        <member
+            name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Search <paramref name="inputSpan" /> starting from base.runtextpos for the next location a match could possibly start.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if a possible match was found; false if no more matches are possible.</returns>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
-            <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
+        <member
+            name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Determine whether <paramref name="inputSpan" /> at base.runtextpos is a match for the regular expression.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.Utilities">
-            <summary>Helper methods used by generated <see cref="T:System.Text.RegularExpressions.Regex"/>-derived implementations.</summary>
+            <summary>Helper methods used by generated <see cref="T:System.Text.RegularExpressions.Regex" />-derived implementations.</summary>
         </member>
-        <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_indexOfAnyStrings_OrdinalIgnoreCase_7EB5C794ABE0A7E9D1C37C5124D485CEDF78FFFC88443C9A712E0857CB003640">
+        <member
+            name="F:System.Text.RegularExpressions.Generated.Utilities.s_indexOfAnyStrings_OrdinalIgnoreCase_7EB5C794ABE0A7E9D1C37C5124D485CEDF78FFFC88443C9A712E0857CB003640">
             <summary>Supports searching for the specified strings.</summary>
         </member>
     </members>

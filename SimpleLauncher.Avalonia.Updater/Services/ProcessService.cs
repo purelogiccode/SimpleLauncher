@@ -341,8 +341,8 @@ internal class ProcessService
         {
             var fullPath = Path.GetFullPath(appDirectory);
             var tempRoot = Path.GetFullPath(Path.GetTempPath())
-                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
-                Path.DirectorySeparatorChar;
+                               .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                           Path.DirectorySeparatorChar;
             if (!fullPath.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase))
                 return false;
 

@@ -510,7 +510,7 @@ public partial class CheckForUpdatesService
             {
                 // Notify developer
                 _logger.Error(
-                    new ArgumentException("Current or latest version string is null or empty.",
+                    new ArgumentException(@"Current or latest version string is null or empty.",
                         nameof(currentVersion)), "Invalid version string for comparison");
                 return false;
             }
@@ -522,7 +522,7 @@ public partial class CheckForUpdatesService
             {
                 // Notify developer
                 _logger.Error(
-                    new ArgumentException("Normalized version string is null or empty after regex replace.",
+                    new ArgumentException(@"Normalized version string is null or empty after regex replace.",
                         nameof(latestVersion)), "Invalid version string after normalization");
                 return false;
             }

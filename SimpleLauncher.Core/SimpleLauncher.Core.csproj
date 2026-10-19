@@ -30,7 +30,7 @@
         <PackageReference Include="CHDSharp" Version="1.5.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.312">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.313">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -111,7 +111,7 @@
         <PackageReference Include="NLayer.NAudioSupport" Version="3.0.0" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-      <PackageReference Include="NAudio.WinMM" Version="3.2.0" />
+        <PackageReference Include="NAudio.WinMM" Version="3.2.0" />
     </ItemGroup>
 
     <!-- net10.0 is the Linux/macOS TFM; the WINDOWS symbol is defined only for

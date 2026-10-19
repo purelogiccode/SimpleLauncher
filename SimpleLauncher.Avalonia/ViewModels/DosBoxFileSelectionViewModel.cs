@@ -10,7 +10,6 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// </summary>
 public partial class DosBoxFileSelectionViewModel : ObservableObject
 {
-
     /// <summary>
     ///     Gets the collection of file items.
     /// </summary>

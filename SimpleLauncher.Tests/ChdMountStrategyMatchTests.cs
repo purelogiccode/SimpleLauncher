@@ -418,8 +418,8 @@ public class ChdMountStrategyMatchTests
         mountChd.Verify(m => m.MountAsync(@"C:\roms\game.chd", It.IsAny<string?>(), logger.Object,
             messageBox.Object), Times.Once);
         launcher.Verify(l => l.LaunchRegularEmulatorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
-            It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ISystemManager>(), It.IsAny<Emulator>(),
+                It.IsAny<string>(), It.IsAny<IWindowContext>(), It.IsAny<ILoadingState?>(), It.IsAny<string?>()),
             Times.Never);
     }
 }

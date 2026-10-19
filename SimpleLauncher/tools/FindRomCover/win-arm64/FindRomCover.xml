@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+
 <doc>
     <assembly>
         <name>FindRomCover</name>
@@ -11,13 +12,13 @@
         </member>
         <member name="M:FindRomCover.AboutWindow.#ctor">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.AboutWindow"/> class and displays
+                Initializes a new instance of the <see cref="T:FindRomCover.AboutWindow" /> class and displays
                 the running application version.
             </summary>
         </member>
         <member name="M:FindRomCover.AboutWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -26,9 +27,10 @@
                 Window that runs an AI-assisted batch fill for the missing covers of an image folder.
             </summary>
         </member>
-        <member name="M:FindRomCover.AiBatchWindow.#ctor(FindRomCover.Managers.SettingsManager,System.Collections.Generic.IEnumerable{FindRomCover.Models.MissingImageItem},System.String,System.Action{System.String},System.String,System.Action{System.String})">
+        <member
+            name="M:FindRomCover.AiBatchWindow.#ctor(FindRomCover.Managers.SettingsManager,System.Collections.Generic.IEnumerable{FindRomCover.Models.MissingImageItem},System.String,System.Action{System.String},System.String,System.Action{System.String})">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.AiBatchWindow"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.AiBatchWindow" /> class.
             </summary>
             <param name="settings">The settings manager that configures the AI requests.</param>
             <param name="items">The missing cover items to process.</param>
@@ -44,7 +46,7 @@
         </member>
         <member name="M:FindRomCover.AiBatchWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -55,13 +57,13 @@
         </member>
         <member name="M:FindRomCover.AiSettingsWindow.#ctor(FindRomCover.Managers.SettingsManager)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.AiSettingsWindow"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.AiSettingsWindow" /> class.
             </summary>
             <param name="settingsManager">The settings manager whose AI options are edited.</param>
         </member>
         <member name="M:FindRomCover.AiSettingsWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -70,7 +72,8 @@
                 Google Custom Search image provider used to fetch candidate cover images.
             </summary>
         </member>
-        <member name="M:FindRomCover.ApiProvider.Google.BuildRequestUrl(System.String,FindRomCover.Managers.SettingsManager)">
+        <member
+            name="M:FindRomCover.ApiProvider.Google.BuildRequestUrl(System.String,FindRomCover.Managers.SettingsManager)">
             <summary>
                 Builds the Google Custom Search image request URL for the given query.
             </summary>
@@ -78,7 +81,8 @@
             <param name="settingsManager">The settings manager that supplies the Google API key.</param>
             <returns>The fully encoded request URL.</returns>
         </member>
-        <member name="M:FindRomCover.ApiProvider.Google.DeserializeResponse(System.String,System.Text.Json.JsonSerializerOptions)">
+        <member
+            name="M:FindRomCover.ApiProvider.Google.DeserializeResponse(System.String,System.Text.Json.JsonSerializerOptions)">
             <summary>
                 Deserializes a Google Custom Search JSON response.
             </summary>
@@ -93,7 +97,8 @@
             <param name="searchResults">The search results to map; may be <c>null</c>.</param>
             <returns>The mapped list of <see cref="T:FindRomCover.Models.ImageData" /> entries; empty when there are no results.</returns>
         </member>
-        <member name="M:FindRomCover.ApiProvider.Google.FetchImagesFromGoogleAsync(System.String,FindRomCover.Managers.SettingsManager,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.ApiProvider.Google.FetchImagesFromGoogleAsync(System.String,FindRomCover.Managers.SettingsManager,System.Threading.CancellationToken)">
             <summary>
                 Fetches candidate cover images from the Google Custom Search API.
             </summary>
@@ -123,13 +128,13 @@
         </member>
         <member name="M:FindRomCover.ApiSettingsWindow.#ctor(FindRomCover.Managers.SettingsManager)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.ApiSettingsWindow"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.ApiSettingsWindow" /> class.
             </summary>
             <param name="settingsManager">The settings manager whose Google API key is edited.</param>
         </member>
         <member name="M:FindRomCover.ApiSettingsWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -141,28 +146,28 @@
         </member>
         <member name="P:FindRomCover.App.ServiceProvider">
             <summary>
-                Gets the application service provider, or <see langword="null"/> before startup completes.
+                Gets the application service provider, or <see langword="null" /> before startup completes.
             </summary>
         </member>
         <member name="P:FindRomCover.App.SettingsManager">
             <summary>
-                Gets the settings manager resolved from <see cref="P:FindRomCover.App.ServiceProvider"/>.
+                Gets the settings manager resolved from <see cref="P:FindRomCover.App.ServiceProvider" />.
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when the service provider is not initialized.</exception>
         </member>
         <member name="P:FindRomCover.App.LogWindow">
             <summary>
-                Gets the debug/log window created during startup, or <see langword="null"/> when it is closed.
+                Gets the debug/log window created during startup, or <see langword="null" /> when it is closed.
             </summary>
         </member>
         <member name="P:FindRomCover.App.StartupImageFolderPath">
             <summary>
-                Gets the image folder passed on the command line, or <see langword="null"/> when none was given.
+                Gets the image folder passed on the command line, or <see langword="null" /> when none was given.
             </summary>
         </member>
         <member name="P:FindRomCover.App.StartupRomFolderPath">
             <summary>
-                Gets the ROM folder passed on the command line, or <see langword="null"/> when none was given.
+                Gets the ROM folder passed on the command line, or <see langword="null" /> when none was given.
             </summary>
         </member>
         <member name="P:FindRomCover.App.AudioService">
@@ -328,19 +333,19 @@
             </summary>
         </member>
         <member name="F:FindRomCover.Controls.ProgressRing.IsActiveProperty">
-            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.IsActive"/>.</summary>
+            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.IsActive" />.</summary>
         </member>
         <member name="F:FindRomCover.Controls.ProgressRing.StrokeThicknessProperty">
-            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.StrokeThickness"/>.</summary>
+            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.StrokeThickness" />.</summary>
         </member>
         <member name="F:FindRomCover.Controls.ProgressRing.StrokeProperty">
-            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.Stroke"/>.</summary>
+            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.Stroke" />.</summary>
         </member>
         <member name="F:FindRomCover.Controls.ProgressRing.TrackBrushProperty">
-            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.TrackBrush"/>.</summary>
+            <summary>Styled property that backs <see cref="P:FindRomCover.Controls.ProgressRing.TrackBrush" />.</summary>
         </member>
         <member name="M:FindRomCover.Controls.ProgressRing.#ctor">
-            <summary>Initializes a new instance of the <see cref="T:FindRomCover.Controls.ProgressRing"/> class and starts its animation timer setup.</summary>
+            <summary>Initializes a new instance of the <see cref="T:FindRomCover.Controls.ProgressRing" /> class and starts its animation timer setup.</summary>
         </member>
         <member name="P:FindRomCover.Controls.ProgressRing.IsActive">
             <summary>Gets or sets a value indicating whether the ring is spinning.</summary>
@@ -354,20 +359,24 @@
         <member name="P:FindRomCover.Controls.ProgressRing.TrackBrush">
             <summary>Gets or sets the brush used to draw the background track.</summary>
         </member>
-        <member name="M:FindRomCover.Controls.ProgressRing.OnPropertyChanged(Avalonia.AvaloniaPropertyChangedEventArgs)">
+        <member
+            name="M:FindRomCover.Controls.ProgressRing.OnPropertyChanged(Avalonia.AvaloniaPropertyChangedEventArgs)">
             <summary>
-                Starts or stops the animation timer when the <see cref="P:FindRomCover.Controls.ProgressRing.IsActive" /> property changes.
+                Starts or stops the animation timer when the
+                <see cref="P:FindRomCover.Controls.ProgressRing.IsActive" /> property changes.
             </summary>
             <param name="change">The property change arguments.</param>
         </member>
-        <member name="M:FindRomCover.Controls.ProgressRing.OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs)">
+        <member
+            name="M:FindRomCover.Controls.ProgressRing.OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs)">
             <summary>
                 Stops the animation timer when the control is detached from the visual tree so
                 an active ring does not stay rooted after its window is gone.
             </summary>
             <param name="e">The detach event arguments.</param>
         </member>
-        <member name="M:FindRomCover.Controls.ProgressRing.OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs)">
+        <member
+            name="M:FindRomCover.Controls.ProgressRing.OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs)">
             <summary>
                 Resumes the animation timer when the control is reattached to the visual tree
                 while still active (tab switch, template re-realization, ...).
@@ -385,7 +394,7 @@
         </member>
         <member name="M:FindRomCover.DebugWindow.#ctor">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.DebugWindow"/> class and populates it with
+                Initializes a new instance of the <see cref="T:FindRomCover.DebugWindow" /> class and populates it with
                 the current log messages.
             </summary>
         </member>
@@ -396,7 +405,7 @@
         </member>
         <member name="M:FindRomCover.DebugWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -417,7 +426,8 @@
                 image for a ROM and to verify a candidate image.
             </summary>
         </member>
-        <member name="M:FindRomCover.Interfaces.IVisionModelClient.PickBestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken,FindRomCover.Models.AiPickKind)">
+        <member
+            name="M:FindRomCover.Interfaces.IVisionModelClient.PickBestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken,FindRomCover.Models.AiPickKind)">
             <summary>
                 Asks the model to pick the best matching image for the given game.
             </summary>
@@ -429,7 +439,8 @@
             <param name="kind">Whether the candidates are local files or remote URLs.</param>
             <returns>The pick result, or <see langword="null" /> when the model returned nothing usable.</returns>
         </member>
-        <member name="M:FindRomCover.Interfaces.IVisionModelClient.VerifyAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,FindRomCover.Models.VisionImageInput,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Interfaces.IVisionModelClient.VerifyAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,FindRomCover.Models.VisionImageInput,System.Threading.CancellationToken)">
             <summary>
                 Asks the model to verify that an image actually matches the given game.
             </summary>
@@ -455,9 +466,10 @@
                 search and the AI-assisted pick of API results.
             </summary>
         </member>
-        <member name="M:FindRomCover.MainWindow.#ctor(FindRomCover.Managers.SettingsManager,System.String,System.String)">
+        <member
+            name="M:FindRomCover.MainWindow.#ctor(FindRomCover.Managers.SettingsManager,System.String,System.String)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.MainWindow"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.MainWindow" /> class.
             </summary>
             <param name="settingsManager">The settings manager backing the window.</param>
             <param name="startupImageFolder">Optional image folder passed on the command line.</param>
@@ -598,14 +610,14 @@
         <member name="M:FindRomCover.MainWindow.LoadApiThumbnailAsync(FindRomCover.Models.ImageData)">
             <summary>
                 Downloads the remote thumbnail with the app's HttpClient (browser user-agent,
-                bounded timeout) and shows it via <see cref="P:FindRomCover.Models.ImageData.ImageSource"/>. The UI
+                bounded timeout) and shows it via <see cref="P:FindRomCover.Models.ImageData.ImageSource" />. The UI
                 never touches the raw remote URL directly, so hosts that block no-User-Agent
                 requests still display thumbnails and the UI thread is not blocked by network I/O.
             </summary>
         </member>
         <member name="M:FindRomCover.MainWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -631,14 +643,16 @@
             </summary>
             <param name="filePath">The path of the SQLite settings database file.</param>
         </member>
-        <member name="M:FindRomCover.Managers.SettingsDatabase.TryLoadAll(System.Collections.Generic.Dictionary{System.String,System.String}@)">
+        <member
+            name="M:FindRomCover.Managers.SettingsDatabase.TryLoadAll(System.Collections.Generic.Dictionary{System.String,System.String}@)">
             <summary>
                 Reads all key-value pairs from the settings database.
             </summary>
             <param name="values">Receives the stored key-value pairs; empty when the load fails.</param>
             <returns><c>true</c> if the database was read successfully; otherwise <c>false</c>.</returns>
         </member>
-        <member name="M:FindRomCover.Managers.SettingsDatabase.SaveAll(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+        <member
+            name="M:FindRomCover.Managers.SettingsDatabase.SaveAll(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
             <summary>
                 Inserts or updates all supplied key-value pairs in the settings database.
             </summary>
@@ -676,7 +690,8 @@
         </member>
         <member name="P:FindRomCover.Managers.SettingsManager.CurrentInstance">
             <summary>
-                Gets the most recently created <see cref="T:FindRomCover.Managers.SettingsManager" /> instance, or <c>null</c> when none exists.
+                Gets the most recently created <see cref="T:FindRomCover.Managers.SettingsManager" /> instance, or
+                <c>null</c> when none exists.
             </summary>
         </member>
         <member name="P:FindRomCover.Managers.SettingsManager.SimilarityThreshold">
@@ -731,7 +746,9 @@
         </member>
         <member name="P:FindRomCover.Managers.SettingsManager.ThumbnailSize">
             <summary>
-                Gets or sets the square thumbnail size; setting it updates both <see cref="P:FindRomCover.Managers.SettingsManager.ImageWidth" /> and <see cref="P:FindRomCover.Managers.SettingsManager.ImageHeight" />.
+                Gets or sets the square thumbnail size; setting it updates both
+                <see cref="P:FindRomCover.Managers.SettingsManager.ImageWidth" /> and
+                <see cref="P:FindRomCover.Managers.SettingsManager.ImageHeight" />.
             </summary>
         </member>
         <member name="P:FindRomCover.Managers.SettingsManager.BaseTheme">
@@ -907,9 +924,13 @@
             <param name="SearchName">Search name used to look for candidate images.</param>
             <param name="Outcome">Outcome describing what happened to the item.</param>
             <param name="Message">Human-readable detail about the outcome.</param>
-            <param name="SavedPath">Path associated with the outcome: the saved cover for filled results, the existing cover for skipped results, or the intended target for other outcomes; <see langword="null" /> when no path applies.</param>
+            <param name="SavedPath">
+                Path associated with the outcome: the saved cover for filled results, the existing cover for skipped results, or the intended target for other outcomes;
+                <see langword="null" /> when no path applies.
+            </param>
         </member>
-        <member name="M:FindRomCover.Models.AiBatchItemResult.#ctor(System.String,System.String,FindRomCover.Models.AiBatchOutcome,System.String,System.String)">
+        <member
+            name="M:FindRomCover.Models.AiBatchItemResult.#ctor(System.String,System.String,FindRomCover.Models.AiBatchOutcome,System.String,System.String)">
             <summary>
                 Result of processing a single ROM during an AI batch fill run.
             </summary>
@@ -917,7 +938,10 @@
             <param name="SearchName">Search name used to look for candidate images.</param>
             <param name="Outcome">Outcome describing what happened to the item.</param>
             <param name="Message">Human-readable detail about the outcome.</param>
-            <param name="SavedPath">Path associated with the outcome: the saved cover for filled results, the existing cover for skipped results, or the intended target for other outcomes; <see langword="null" /> when no path applies.</param>
+            <param name="SavedPath">
+                Path associated with the outcome: the saved cover for filled results, the existing cover for skipped results, or the intended target for other outcomes;
+                <see langword="null" /> when no path applies.
+            </param>
         </member>
         <member name="P:FindRomCover.Models.AiBatchItemResult.RomName">
             <summary>Name of the ROM the result belongs to.</summary>
@@ -932,7 +956,10 @@
             <summary>Human-readable detail about the outcome.</summary>
         </member>
         <member name="P:FindRomCover.Models.AiBatchItemResult.SavedPath">
-            <summary>Path associated with the outcome: the saved cover for filled results, the existing cover for skipped results, or the intended target for other outcomes; <see langword="null" /> when no path applies.</summary>
+            <summary>
+                Path associated with the outcome: the saved cover for filled results, the existing cover for skipped results, or the intended target for other outcomes;
+                <see langword="null" /> when no path applies.
+            </summary>
         </member>
         <member name="T:FindRomCover.Models.AiBatchOutcome">
             <summary>
@@ -989,7 +1016,10 @@
             <summary>Short explanation of the choice.</summary>
         </member>
         <member name="P:FindRomCover.Models.AiPickResult.HasPick">
-            <summary>Whether the model selected a candidate (<see cref="P:FindRomCover.Models.AiPickResult.BestIndex" /> is non-negative).</summary>
+            <summary>
+                Whether the model selected a candidate (
+                <see cref="P:FindRomCover.Models.AiPickResult.BestIndex" /> is non-negative).
+            </summary>
         </member>
         <member name="T:FindRomCover.Models.AiVerificationResult">
             <summary>
@@ -1023,7 +1053,8 @@
             <param name="VerifyOnSave">Whether saved covers are verified by the AI.</param>
             <param name="CandidateThreshold">Minimum local similarity score (0-100) for a candidate to be sent to the model.</param>
         </member>
-        <member name="M:FindRomCover.Models.AiVisionOptions.#ctor(System.Boolean,System.String,System.String,System.String,System.String,System.Int32,System.Int32,System.Int32,System.Double,System.Boolean,System.Boolean,System.Boolean,System.Double)">
+        <member
+            name="M:FindRomCover.Models.AiVisionOptions.#ctor(System.Boolean,System.String,System.String,System.String,System.String,System.Int32,System.Int32,System.Int32,System.Double,System.Boolean,System.Boolean,System.Boolean,System.Double)">
             <summary>
                 Immutable snapshot of the AI vision settings used for a request.
             </summary>
@@ -1297,7 +1328,8 @@
             <param name="Exception">The underlying exception, when one was raised.</param>
             <param name="LogContext">Additional context written to the log on failure.</param>
         </member>
-        <member name="M:FindRomCover.Models.ImageSaveResult.#ctor(System.Boolean,System.String,System.String,FindRomCover.Models.MessageIcon,System.Exception,System.String)">
+        <member
+            name="M:FindRomCover.Models.ImageSaveResult.#ctor(System.Boolean,System.String,System.String,FindRomCover.Models.MessageIcon,System.Exception,System.String)">
             <summary>
                 Result of an image conversion/save operation performed by
                 <see cref="T:FindRomCover.Services.ImageProcessor" />.
@@ -1625,7 +1657,8 @@
             <param name="Image">Prepared image payload.</param>
             <param name="SourceIndex">Zero-based index of the source candidate this input was built from.</param>
         </member>
-        <member name="M:FindRomCover.Models.VisionImageInput.#ctor(System.String,FindRomCover.Models.PreparedVisionImage,System.Int32)">
+        <member
+            name="M:FindRomCover.Models.VisionImageInput.#ctor(System.String,FindRomCover.Models.PreparedVisionImage,System.Int32)">
             <summary>
                 A prepared image candidate sent to an AI vision model.
             </summary>
@@ -1677,7 +1710,7 @@
             <summary>
                 Creates the configured Avalonia application builder.
             </summary>
-            <returns>The configured <see cref="T:Avalonia.AppBuilder"/> instance.</returns>
+            <returns>The configured <see cref="T:Avalonia.AppBuilder" /> instance.</returns>
         </member>
         <member name="T:FindRomCover.Services.Ai.AiAssistService">
             <summary>
@@ -1685,12 +1718,13 @@
                 calls the configured vision model, caches verdicts, and verifies covers on save.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiAssistService.#ctor(FindRomCover.Managers.SettingsManager,FindRomCover.Interfaces.IVisionModelClient,FindRomCover.Services.Ai.AiVerdictCache,System.Net.Http.HttpClient)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiAssistService.#ctor(FindRomCover.Managers.SettingsManager,FindRomCover.Interfaces.IVisionModelClient,FindRomCover.Services.Ai.AiVerdictCache,System.Net.Http.HttpClient)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiAssistService"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiAssistService" /> class.
             </summary>
             <param name="settings">The settings manager providing the AI options.</param>
-            <param name="client">An optional pre-built vision model client; when <see langword="null"/>, one is created per request and owned by this service.</param>
+            <param name="client">An optional pre-built vision model client; when <see langword="null" />, one is created per request and owned by this service.</param>
             <param name="cache">The verdict cache to use; defaults to the shared instance.</param>
             <param name="imageHttpClient">The HTTP client used for image downloads; defaults to the shared helper client.</param>
         </member>
@@ -1699,7 +1733,8 @@
                 Gets a value indicating whether AI assistance is enabled and this instance has not been disposed.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiAssistService.PickBestAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiAssistService.PickBestAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Threading.CancellationToken)">
             <summary>
                 Picks the best local candidate image for the given game using the vision model.
             </summary>
@@ -1707,9 +1742,10 @@
             <param name="searchName">The search name used as an alternate title.</param>
             <param name="candidates">The local candidate images to consider.</param>
             <param name="cancellationToken">A token that cancels the operation.</param>
-            <returns>The pick verdict, or <see langword="null"/> when AI assistance is disabled or no candidate qualifies.</returns>
+            <returns>The pick verdict, or <see langword="null" /> when AI assistance is disabled or no candidate qualifies.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiAssistService.PickBestForApiAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiAssistService.PickBestForApiAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Threading.CancellationToken)">
             <summary>
                 Picks the best cover among remote API search results using the vision model.
             </summary>
@@ -1717,9 +1753,10 @@
             <param name="searchName">The search name used as an alternate title.</param>
             <param name="candidates">The remote candidate images to consider.</param>
             <param name="cancellationToken">A token that cancels the operation.</param>
-            <returns>The pick verdict, or <see langword="null"/> when AI assistance is disabled or no image could be prepared.</returns>
+            <returns>The pick verdict, or <see langword="null" /> when AI assistance is disabled or no image could be prepared.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiAssistService.VerifyAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiAssistService.VerifyAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
             <summary>
                 Verifies that the image at the given path is cover art for the specified game.
             </summary>
@@ -1727,7 +1764,7 @@
             <param name="searchName">The search name used as an alternate title.</param>
             <param name="imagePath">The path of the image to verify.</param>
             <param name="cancellationToken">A token that cancels the operation.</param>
-            <returns>The verification verdict, or <see langword="null"/> when verification is disabled or the image cannot be prepared.</returns>
+            <returns>The verification verdict, or <see langword="null" /> when verification is disabled or the image cannot be prepared.</returns>
         </member>
         <member name="M:FindRomCover.Services.Ai.AiAssistService.Dispose">
             <summary>
@@ -1736,16 +1773,18 @@
                 still release it while the owner shuts down.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiAssistService.PrepareLocalCandidates(System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Int32,System.Int32)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiAssistService.PrepareLocalCandidates(System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Int32,System.Int32)">
             <summary>
-                Prepares up to <paramref name="maxCandidates"/> existing local images for a vision request.
+                Prepares up to <paramref name="maxCandidates" /> existing local images for a vision request.
             </summary>
             <param name="candidates">The candidate images to prepare.</param>
             <param name="maxCandidates">The maximum number of candidates to prepare.</param>
             <param name="maxDimension">The maximum image dimension in pixels.</param>
             <returns>The prepared image inputs whose source indexes refer to the supplied candidate list.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiAssistService.PrepareRemoteCandidatesAsync(System.Net.Http.HttpClient,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Int32,System.Int32,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiAssistService.PrepareRemoteCandidatesAsync(System.Net.Http.HttpClient,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.ImageData},System.Int32,System.Int32,System.Threading.CancellationToken)">
             <summary>
                 Downloads and prepares remote candidate images, preferring thumbnails and falling back to full images.
             </summary>
@@ -1761,9 +1800,10 @@
                 Runs AI-assisted cover selection over a batch of missing-image items and saves accepted covers.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiBatchFillService.#ctor(FindRomCover.Managers.SettingsManager,FindRomCover.Services.Ai.AiAssistService,System.Action{System.String},FindRomCover.Services.Ai.AiQueryHistory,System.Action{System.String})">
+        <member
+            name="M:FindRomCover.Services.Ai.AiBatchFillService.#ctor(FindRomCover.Managers.SettingsManager,FindRomCover.Services.Ai.AiAssistService,System.Action{System.String},FindRomCover.Services.Ai.AiQueryHistory,System.Action{System.String})">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiBatchFillService"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiBatchFillService" /> class.
             </summary>
             <param name="settings">The settings manager providing thresholds and API keys.</param>
             <param name="aiAssist">The AI assist service used for picking and verifying covers.</param>
@@ -1771,7 +1811,8 @@
             <param name="queryHistory">The query history used to skip previously queried items; defaults to a new instance.</param>
             <param name="unregisterExpectedFile">An optional callback invoked when a write fails so the file watcher can react again.</param>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiBatchFillService.RunAsync(System.Collections.Generic.IReadOnlyList{FindRomCover.Models.MissingImageItem},System.String,System.Boolean,System.String,System.IProgress{FindRomCover.Models.AiBatchItemResult},System.Threading.CancellationToken,System.Boolean)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiBatchFillService.RunAsync(System.Collections.Generic.IReadOnlyList{FindRomCover.Models.MissingImageItem},System.String,System.Boolean,System.String,System.IProgress{FindRomCover.Models.AiBatchItemResult},System.Threading.CancellationToken,System.Boolean)">
             <summary>
                 Processes each missing-image item in sequence, reporting progress and collecting results.
             </summary>
@@ -1784,13 +1825,14 @@
             <param name="skipPreviouslyQueried">Whether to skip items marked in the query history.</param>
             <returns>The per-item results in input order.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiBatchFillService.IsUsablePick(FindRomCover.Models.AiPickResult,System.Int32)">
+        <member
+            name="M:FindRomCover.Services.Ai.AiBatchFillService.IsUsablePick(FindRomCover.Models.AiPickResult,System.Int32)">
             <summary>
                 Determines whether the pick selects a valid candidate and meets the configured confidence threshold.
             </summary>
             <param name="pick">The pick verdict to evaluate.</param>
             <param name="candidateCount">The number of candidates the pick was made against.</param>
-            <returns><see langword="true"/> when the pick is usable; otherwise <see langword="false"/>.</returns>
+            <returns><see langword="true" /> when the pick is usable; otherwise <see langword="false" />.</returns>
         </member>
         <member name="T:FindRomCover.Services.Ai.AiQueryHistory">
             <summary>
@@ -1800,9 +1842,12 @@
         </member>
         <member name="M:FindRomCover.Services.Ai.AiQueryHistory.#ctor(System.String,System.Nullable{System.TimeSpan})">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiQueryHistory"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiQueryHistory" /> class.
             </summary>
-            <param name="filePath">The database file path; defaults to <see cref="P:FindRomCover.Services.Ai.AiQueryHistory.DefaultFilePath"/>.</param>
+            <param name="filePath">
+                The database file path; defaults to
+                <see cref="P:FindRomCover.Services.Ai.AiQueryHistory.DefaultFilePath" />.
+            </param>
             <param name="ttl">How long entries remain valid; defaults to 180 days.</param>
         </member>
         <member name="P:FindRomCover.Services.Ai.AiQueryHistory.DefaultFilePath">
@@ -1818,7 +1863,8 @@
         <member name="M:FindRomCover.Services.Ai.AiQueryHistory.GetQueriedPathSet">
             <summary>
                 Returns the normalized paths of all non-expired entries using a single query.
-                Prefer this over calling <see cref="M:FindRomCover.Services.Ai.AiQueryHistory.WasQueried(System.String)"/> per item for large lists.
+                Prefer this over calling
+                <see cref="M:FindRomCover.Services.Ai.AiQueryHistory.WasQueried(System.String)" /> per item for large lists.
             </summary>
         </member>
         <member name="M:FindRomCover.Services.Ai.AiQueryHistory.WasQueried(System.String)">
@@ -1826,7 +1872,10 @@
                 Determines whether the target path has a non-expired entry, deleting the entry when it has expired.
             </summary>
             <param name="targetPath">The target cover file path to check.</param>
-            <returns><see langword="true"/> when the path was queried within the time-to-live; otherwise <see langword="false"/>.</returns>
+            <returns>
+                <see langword="true" /> when the path was queried within the time-to-live; otherwise
+                <see langword="false" />.
+            </returns>
         </member>
         <member name="M:FindRomCover.Services.Ai.AiQueryHistory.MarkQueried(System.String,System.String)">
             <summary>
@@ -1861,12 +1910,16 @@
         </member>
         <member name="M:FindRomCover.Services.Ai.AiVerdictCache.#ctor(System.String,System.Nullable{System.TimeSpan})">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiVerdictCache"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AiVerdictCache" /> class.
             </summary>
-            <param name="filePath">The cache file path; defaults to <see cref="P:FindRomCover.Services.Ai.AiVerdictCache.DefaultFilePath"/>.</param>
+            <param name="filePath">
+                The cache file path; defaults to
+                <see cref="P:FindRomCover.Services.Ai.AiVerdictCache.DefaultFilePath" />.
+            </param>
             <param name="ttl">How long entries remain valid; defaults to 30 days.</param>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AiVerdictCache.GetShared(System.String,System.Nullable{System.TimeSpan})">
+        <member
+            name="M:FindRomCover.Services.Ai.AiVerdictCache.GetShared(System.String,System.Nullable{System.TimeSpan})">
             <summary>
                 Returns the single process-wide instance for the given file path so that
                 concurrent writers (main window, batch window) never read-modify-write over
@@ -1884,8 +1937,8 @@
             </summary>
             <typeparam name="T">The cached payload type.</typeparam>
             <param name="key">The cache key.</param>
-            <param name="value">The cached value when found; otherwise <see langword="null"/>.</param>
-            <returns><see langword="true"/> when a valid cached value was found; otherwise <see langword="false"/>.</returns>
+            <param name="value">The cached value when found; otherwise <see langword="null" />.</param>
+            <returns><see langword="true" /> when a valid cached value was found; otherwise <see langword="false" />.</returns>
         </member>
         <member name="M:FindRomCover.Services.Ai.AiVerdictCache.Set``1(System.String,``0)">
             <summary>
@@ -1905,12 +1958,14 @@
                 Initializes a new instance using a dedicated default HTTP client owned by this instance.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AnthropicVisionClient.#ctor(System.Net.Http.HttpClient,System.Boolean)">
+        <member
+            name="M:FindRomCover.Services.Ai.AnthropicVisionClient.#ctor(System.Net.Http.HttpClient,System.Boolean)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AnthropicVisionClient"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.AnthropicVisionClient" />
+                class.
             </summary>
             <param name="httpClient">The HTTP client used to send requests.</param>
-            <param name="ownsClient">Whether this instance disposes <paramref name="httpClient"/>.</param>
+            <param name="ownsClient">Whether this instance disposes <paramref name="httpClient" />.</param>
         </member>
         <member name="P:FindRomCover.Services.Ai.AnthropicVisionClient.OwnsClient">
             <summary>
@@ -1922,7 +1977,8 @@
                 Disposes the underlying HTTP client when this instance owns it.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AnthropicVisionClient.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.AnthropicVisionClient.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
             <summary>
                 Sends a request to the Anthropic Messages API and returns the assistant text.
             </summary>
@@ -1940,7 +1996,8 @@
             <param name="baseUrl">The provider base URL.</param>
             <returns>The absolute messages endpoint URL.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.AnthropicVisionClient.BuildRequestBody(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
+        <member
+            name="M:FindRomCover.Services.Ai.AnthropicVisionClient.BuildRequestBody(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
             <summary>
                 Serializes the Anthropic request payload, embedding each image as base64 JPEG data.
             </summary>
@@ -1969,10 +2026,10 @@
         </member>
         <member name="M:FindRomCover.Services.Ai.GeminiVisionClient.#ctor(System.Net.Http.HttpClient,System.Boolean)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.GeminiVisionClient"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.GeminiVisionClient" /> class.
             </summary>
             <param name="httpClient">The HTTP client used to send requests.</param>
-            <param name="ownsClient">Whether this instance disposes <paramref name="httpClient"/>.</param>
+            <param name="ownsClient">Whether this instance disposes <paramref name="httpClient" />.</param>
         </member>
         <member name="P:FindRomCover.Services.Ai.GeminiVisionClient.OwnsClient">
             <summary>
@@ -1984,7 +2041,8 @@
                 Disposes the underlying HTTP client when this instance owns it.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.GeminiVisionClient.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.GeminiVisionClient.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
             <summary>
                 Sends a generateContent request to the Gemini API and returns the model text.
             </summary>
@@ -1995,7 +2053,8 @@
             <param name="cancellationToken">A token that cancels the operation.</param>
             <returns>The concatenated text content of the response.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.GeminiVisionClient.BuildGenerateContentUrl(System.String,System.String)">
+        <member
+            name="M:FindRomCover.Services.Ai.GeminiVisionClient.BuildGenerateContentUrl(System.String,System.String)">
             <summary>
                 Builds the Gemini generateContent endpoint URL, stripping any "models/" prefix from the model identifier.
             </summary>
@@ -2003,7 +2062,8 @@
             <param name="model">The configured model identifier.</param>
             <returns>The absolute generateContent endpoint URL.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.GeminiVisionClient.BuildRequestBody(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
+        <member
+            name="M:FindRomCover.Services.Ai.GeminiVisionClient.BuildRequestBody(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
             <summary>
                 Serializes the Gemini request payload with the system instruction and inline base64 JPEG images.
             </summary>
@@ -2030,12 +2090,14 @@
                 Initializes a new instance using a dedicated default HTTP client owned by this instance.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.#ctor(System.Net.Http.HttpClient,System.Boolean)">
+        <member
+            name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.#ctor(System.Net.Http.HttpClient,System.Boolean)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient"/> class.
+                Initializes a new instance of the
+                <see cref="T:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient" /> class.
             </summary>
             <param name="httpClient">The HTTP client used to send requests.</param>
-            <param name="ownsClient">Whether this instance disposes <paramref name="httpClient"/>.</param>
+            <param name="ownsClient">Whether this instance disposes <paramref name="httpClient" />.</param>
         </member>
         <member name="P:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.OwnsClient">
             <summary>
@@ -2047,7 +2109,8 @@
                 Disposes the underlying HTTP client when this instance owns it.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
             <summary>
                 Sends a chat completion request to the configured endpoint and returns the assistant text.
             </summary>
@@ -2058,7 +2121,8 @@
             <param name="cancellationToken">A token that cancels the operation.</param>
             <returns>The assistant text.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.BuildRequestBody(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
+        <member
+            name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.BuildRequestBody(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
             <summary>
                 Serializes the chat completion payload with base64 data-URL images and provider-appropriate token limits.
             </summary>
@@ -2068,13 +2132,17 @@
             <param name="images">The prepared candidate images to attach.</param>
             <returns>The JSON request body.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.IsOpenAiReasoningModel(FindRomCover.Models.AiVisionOptions)">
+        <member
+            name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.IsOpenAiReasoningModel(FindRomCover.Models.AiVisionOptions)">
             <summary>
                 Determines whether the configured model is an OpenAI reasoning model (o-series or gpt-5*)
                 that rejects temperature and max_tokens.
             </summary>
             <param name="options">The AI vision options providing the provider and model.</param>
-            <returns><see langword="true"/> when the model needs reasoning-model request parameters; otherwise <see langword="false"/>.</returns>
+            <returns>
+                <see langword="true" /> when the model needs reasoning-model request parameters; otherwise
+                <see langword="false" />.
+            </returns>
         </member>
         <member name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.BuildChatCompletionsUrl(System.String)">
             <summary>
@@ -2090,7 +2158,8 @@
             <param name="responseJson">The raw JSON response body.</param>
             <returns>The assistant text.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.BuildErrorMessage(System.Net.HttpStatusCode,System.String)">
+        <member
+            name="M:FindRomCover.Services.Ai.OpenAiCompatibleVisionClient.BuildErrorMessage(System.Net.HttpStatusCode,System.String)">
             <summary>
                 Builds a user-facing error message from a failed HTTP response.
             </summary>
@@ -2154,7 +2223,8 @@
                 Fetches and parses the list of models exposed by an AI provider, flagging the vision-capable ones.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelCatalog.FetchModelsAsync(FindRomCover.Models.AiVisionOptions,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelCatalog.FetchModelsAsync(FindRomCover.Models.AiVisionOptions,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
             <summary>
                 Fetches the provider's model list and parses it into vision model information.
             </summary>
@@ -2182,7 +2252,10 @@
                 Heuristically determines whether a model identifier refers to a vision-capable model.
             </summary>
             <param name="modelId">The model identifier to inspect.</param>
-            <returns><see langword="true"/> when the identifier matches known vision model patterns; otherwise <see langword="false"/>.</returns>
+            <returns>
+                <see langword="true" /> when the identifier matches known vision model patterns; otherwise
+                <see langword="false" />.
+            </returns>
         </member>
         <member name="T:FindRomCover.Services.Ai.VisionModelClientBase">
             <summary>
@@ -2205,7 +2278,8 @@
                 The message used when a model consumed its entire output budget without producing an answer.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.PickBestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken,FindRomCover.Models.AiPickKind)">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelClientBase.PickBestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken,FindRomCover.Models.AiPickKind)">
             <summary>
                 Asks the model to pick the best cover-art candidate for the given game.
             </summary>
@@ -2217,7 +2291,8 @@
             <param name="kind">Whether this is a local pick or an API fallback pick.</param>
             <returns>The pick verdict parsed from the model response.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.VerifyAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,FindRomCover.Models.VisionImageInput,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelClientBase.VerifyAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,FindRomCover.Models.VisionImageInput,System.Threading.CancellationToken)">
             <summary>
                 Asks the model whether the given image is cover art for the given game.
             </summary>
@@ -2238,7 +2313,8 @@
                 Releases resources held by derived clients; the base implementation does nothing.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelClientBase.SendRequestAsync(FindRomCover.Models.AiVisionOptions,System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput},System.Threading.CancellationToken)">
             <summary>
                 Sends a provider-specific request and returns the raw assistant text.
             </summary>
@@ -2249,7 +2325,8 @@
             <param name="cancellationToken">A token that cancels the operation.</param>
             <returns>The raw text content returned by the provider.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.BuildPickPrompt(System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelClientBase.BuildPickPrompt(System.String,System.String,System.Collections.Generic.IReadOnlyList{FindRomCover.Models.VisionImageInput})">
             <summary>
                 Builds the user prompt listing the game titles and numbered candidate images.
             </summary>
@@ -2281,7 +2358,8 @@
             <param name="content">The raw model response text.</param>
             <returns>The parsed verification result with a normalized confidence.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.BuildHttpErrorMessage(System.Net.HttpStatusCode,System.String)">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelClientBase.BuildHttpErrorMessage(System.Net.HttpStatusCode,System.String)">
             <summary>
                 Builds a user-facing error message for a failed provider response.
             </summary>
@@ -2298,12 +2376,14 @@
         </member>
         <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.Truncate(System.String)">
             <summary>
-                Truncates error text to <see cref="F:FindRomCover.Services.Ai.VisionModelClientBase.MaxErrorDetailLength"/> characters.
+                Truncates error text to
+                <see cref="F:FindRomCover.Services.Ai.VisionModelClientBase.MaxErrorDetailLength" /> characters.
             </summary>
             <param name="text">The text to truncate.</param>
             <returns>The truncated text, or an empty string when the input is blank.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Ai.VisionModelClientBase.ApplyAuthHeaders(System.Net.Http.HttpRequestMessage,FindRomCover.Models.AiVisionOptions)">
+        <member
+            name="M:FindRomCover.Services.Ai.VisionModelClientBase.ApplyAuthHeaders(System.Net.Http.HttpRequestMessage,FindRomCover.Models.AiVisionOptions)">
             <summary>
                 Applies provider-specific authentication and identification headers to a request.
             </summary>
@@ -2384,7 +2464,8 @@
                 <see cref="F:FindRomCover.Services.LogService.TransientErrorPropertyName" />.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.BugReportSink.IsTransientWatcherError(Serilog.Events.LogEvent,System.Exception,System.String)">
+        <member
+            name="M:FindRomCover.Services.BugReportSink.IsTransientWatcherError(Serilog.Events.LogEvent,System.Exception,System.String)">
             <summary>
                 FileSystemWatcher infrastructure failures (buffer overflow, access denied,
                 drive disconnected, AV lock, ...) are environmental — not application bugs.
@@ -2398,7 +2479,8 @@
                 and exposes the similarity collection builder used by the main window.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.ButtonFactory.CreateSimilarImagesCollectionAsync(System.String,System.String,System.Double,System.String,System.Threading.CancellationToken,System.Action{FindRomCover.Models.ImageData},System.Boolean)">
+        <member
+            name="M:FindRomCover.Services.ButtonFactory.CreateSimilarImagesCollectionAsync(System.String,System.String,System.Double,System.String,System.Threading.CancellationToken,System.Action{FindRomCover.Models.ImageData},System.Boolean)">
             <summary>
                 Calculates similarity for the images in a folder and loads the best matches for display.
             </summary>
@@ -2411,7 +2493,8 @@
             <param name="ignoreBracketedText">True to strip bracketed annotations from names before comparing.</param>
             <returns>The similarity result containing matched images and processing errors.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ButtonFactory.CreateContextMenu(System.String,System.Action{System.String},Avalonia.Controls.ContextMenu)">
+        <member
+            name="M:FindRomCover.Services.ButtonFactory.CreateContextMenu(System.String,System.Action{System.String},Avalonia.Controls.ContextMenu)">
             <summary>
                 Builds or reuses the context menu for a cover image with actions to use, copy,
                 reveal, and open the image file.
@@ -2442,7 +2525,8 @@
                 availability checks to caller-supplied callbacks.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.DelegateCommand.#ctor(System.Action{System.Object},System.Func{System.Object,System.Boolean})">
+        <member
+            name="M:FindRomCover.Services.DelegateCommand.#ctor(System.Action{System.Object},System.Func{System.Object,System.Boolean})">
             <summary>
                 Initializes a new instance of the <see cref="T:FindRomCover.Services.DelegateCommand" /> class.
             </summary>
@@ -2463,7 +2547,10 @@
             <param name="parameter">The command parameter.</param>
         </member>
         <member name="E:FindRomCover.Services.DelegateCommand.CanExecuteChanged">
-            <summary>Raised when the result of <see cref="M:FindRomCover.Services.DelegateCommand.CanExecute(System.Object)" /> may have changed.</summary>
+            <summary>
+                Raised when the result of
+                <see cref="M:FindRomCover.Services.DelegateCommand.CanExecute(System.Object)" /> may have changed.
+            </summary>
         </member>
         <member name="M:FindRomCover.Services.DelegateCommand.RaiseCanExecuteChanged">
             <summary>Raises the <see cref="E:FindRomCover.Services.DelegateCommand.CanExecuteChanged" /> event.</summary>
@@ -2480,7 +2567,8 @@
                 application: themed window, icon glyph and Yes/No or OK buttons.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.Dialogs.ShowMessage(Avalonia.Controls.Window,System.String,System.String,FindRomCover.Models.MessageIcon)">
+        <member
+            name="M:FindRomCover.Services.Dialogs.ShowMessage(Avalonia.Controls.Window,System.String,System.String,FindRomCover.Models.MessageIcon)">
             <summary>
                 Shows a message dialog with an OK button without waiting for it to close.
             </summary>
@@ -2489,7 +2577,8 @@
             <param name="title">The dialog title.</param>
             <param name="icon">The icon to display.</param>
         </member>
-        <member name="M:FindRomCover.Services.Dialogs.ShowMessageAsync(Avalonia.Controls.Window,System.String,System.String,FindRomCover.Models.MessageIcon)">
+        <member
+            name="M:FindRomCover.Services.Dialogs.ShowMessageAsync(Avalonia.Controls.Window,System.String,System.String,FindRomCover.Models.MessageIcon)">
             <summary>
                 Shows a modal message dialog with an OK button.
             </summary>
@@ -2499,7 +2588,8 @@
             <param name="icon">The icon to display.</param>
             <returns>The button the user pressed.</returns>
         </member>
-        <member name="M:FindRomCover.Services.Dialogs.ShowQuestionAsync(Avalonia.Controls.Window,System.String,System.String,FindRomCover.Models.MessageIcon)">
+        <member
+            name="M:FindRomCover.Services.Dialogs.ShowQuestionAsync(Avalonia.Controls.Window,System.String,System.String,FindRomCover.Models.MessageIcon)">
             <summary>
                 Shows a modal question dialog with Yes and No buttons.
             </summary>
@@ -2507,9 +2597,13 @@
             <param name="message">The message body.</param>
             <param name="title">The dialog title.</param>
             <param name="icon">The icon to display.</param>
-            <returns><see cref="F:FindRomCover.Models.MessageResult.Yes" /> or <see cref="F:FindRomCover.Models.MessageResult.No" />.</returns>
+            <returns>
+                <see cref="F:FindRomCover.Models.MessageResult.Yes" /> or
+                <see cref="F:FindRomCover.Models.MessageResult.No" />.
+            </returns>
         </member>
-        <member name="M:FindRomCover.Services.Dialogs.ShowInputAsync(Avalonia.Controls.Window,System.String,System.String)">
+        <member
+            name="M:FindRomCover.Services.Dialogs.ShowInputAsync(Avalonia.Controls.Window,System.String,System.String)">
             <summary>
                 Shows a modal input dialog with a single text box.
             </summary>
@@ -2536,7 +2630,8 @@
         </member>
         <member name="F:FindRomCover.Services.ErrorLogger.DisposeLock">
             <summary>
-                Guards <see cref="M:FindRomCover.Services.ErrorLogger.Dispose" /> and <see cref="F:FindRomCover.Services.ErrorLogger.IsDisposed" />. Exposed for tests.
+                Guards <see cref="M:FindRomCover.Services.ErrorLogger.Dispose" /> and
+                <see cref="F:FindRomCover.Services.ErrorLogger.IsDisposed" />. Exposed for tests.
             </summary>
         </member>
         <member name="F:FindRomCover.Services.ErrorLogger.ApiLogFilePath">
@@ -2555,12 +2650,16 @@
         </member>
         <member name="P:FindRomCover.Services.ErrorLogger.PendingOperations">
             <summary>
-                Number of <see cref="M:FindRomCover.Services.ErrorLogger.LogAsync(System.Exception,System.String,System.Int32)" /> operations currently in flight. Exposed for tests.
+                Number of
+                <see cref="M:FindRomCover.Services.ErrorLogger.LogAsync(System.Exception,System.String,System.Int32)" />
+                operations currently in flight. Exposed for tests.
             </summary>
         </member>
         <member name="M:FindRomCover.Services.ErrorLogger.Dispose">
             <summary>
-                Marks the logger as disposed. Subsequent <see cref="M:FindRomCover.Services.ErrorLogger.LogAsync(System.Exception,System.String,System.Int32)" /> calls return
+                Marks the logger as disposed. Subsequent
+                <see cref="M:FindRomCover.Services.ErrorLogger.LogAsync(System.Exception,System.String,System.Int32)" />
+                calls return
                 immediately. Idempotent.
             </summary>
         </member>
@@ -2591,7 +2690,10 @@
             <summary>
                 Gets the lazily created shared HTTP client.
             </summary>
-            <exception cref="T:System.ObjectDisposedException">Thrown after <see cref="M:FindRomCover.Services.HttpClientHelper.Dispose" /> has been called.</exception>
+            <exception cref="T:System.ObjectDisposedException">
+                Thrown after
+                <see cref="M:FindRomCover.Services.HttpClientHelper.Dispose" /> has been called.
+            </exception>
         </member>
         <member name="M:FindRomCover.Services.HttpClientHelper.Dispose">
             <summary>
@@ -2673,10 +2775,12 @@
         <member name="F:FindRomCover.Services.ImageLoader.DefaultRetryDelayMilliseconds">
             <summary>Default delay, in milliseconds, between load attempts.</summary>
         </member>
-        <member name="M:FindRomCover.Services.ImageLoader.LoadImageToMemoryAsync(System.String,System.Threading.CancellationToken,System.Int32,System.Int32)">
+        <member
+            name="M:FindRomCover.Services.ImageLoader.LoadImageToMemoryAsync(System.String,System.Threading.CancellationToken,System.Int32,System.Int32)">
             <summary>
                 Loads and normalizes an image file to PNG bytes. UI heads convert the bytes
-                to their own bitmap type via <see cref="M:FindRomCover.Services.ImageSources.FromPngBytes(System.Byte[])" />.
+                to their own bitmap type via
+                <see cref="M:FindRomCover.Services.ImageSources.FromPngBytes(System.Byte[])" />.
             </summary>
         </member>
         <member name="T:FindRomCover.Services.ImageProcessor">
@@ -2698,7 +2802,8 @@
             <param name="fileName">The file name (without directory) to inspect.</param>
             <returns>True when the name looks like an orphaned temp file; otherwise false.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageProcessor.ConvertAndSaveImageAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageProcessor.ConvertAndSaveImageAsync(System.String,System.String,System.Threading.CancellationToken)">
             <summary>
                 Converts the source image to PNG and saves it at the target path.
             </summary>
@@ -2726,7 +2831,8 @@
         <member name="F:FindRomCover.Services.ImageSaveService.BrowserUserAgent">
             <summary>Browser-like User-Agent header used for image downloads.</summary>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.Threading.CancellationToken)">
             <summary>
                 Downloads an image from the given URL and saves it as a PNG file at the specified path.
             </summary>
@@ -2735,7 +2841,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if the download and save was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
             <summary>
                 Downloads an image and saves it as PNG, falling back to a second URL (for example a
                 provider-hosted thumbnail) when the primary URL cannot be downloaded.
@@ -2747,7 +2854,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if the download and save was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.String,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.String,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
             <summary>
                 Downloads an image and saves it as PNG using the supplied HTTP client, falling back to
                 a second URL when the primary download fails.
@@ -2759,7 +2867,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if the download and save was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.String,System.Int32,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.DownloadAndSaveImageAsync(System.String,System.String,System.String,System.Int32,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
             <summary>
                 Downloads an image and saves it as PNG using the supplied HTTP client, falling back to
                 a second URL and rejecting images narrower than the minimum width.
@@ -2772,7 +2881,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if the download and save was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.TryDownloadAndSaveAsync(System.String,System.String,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.TryDownloadAndSaveAsync(System.String,System.String,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
             <summary>
                 Attempts to download a single image URL and save it as PNG using the supplied HTTP client.
             </summary>
@@ -2782,7 +2892,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if the download and save was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.TryDownloadAndSaveAsync(System.String,System.String,System.Int32,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.TryDownloadAndSaveAsync(System.String,System.String,System.Int32,System.Net.Http.HttpClient,System.Threading.CancellationToken)">
             <summary>
                 Attempts to download a single image URL and save it as PNG, validating the payload and
                 rejecting images narrower than the minimum width.
@@ -2794,7 +2905,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if the download and save was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.ConvertStreamToPngAndSaveAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.ConvertStreamToPngAndSaveAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)">
             <summary>
                 Converts an image from a source stream to a PNG format at a destination path.
                 Preserves the aspect ratio, dimensions, and transparency using Magick.NET.
@@ -2804,7 +2916,8 @@
             <param name="cancellationToken">A token to cancel the operation.</param>
             <returns>True if conversion was successful, false otherwise.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.ConvertStreamToPngAndSaveAsync(System.IO.Stream,System.String,System.Int32,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.ConvertStreamToPngAndSaveAsync(System.IO.Stream,System.String,System.Int32,System.Threading.CancellationToken)">
             <summary>
                 Converts an image from a source stream to a PNG format at a destination path.
                 Preserves the aspect ratio, dimensions, and transparency using Magick.NET.
@@ -2821,9 +2934,10 @@
                 (antivirus, cloud-sync clients) with linear backoff.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.ImageSaveService.ReadAllBytesBoundedAsync(System.IO.Stream,System.Int32,System.Threading.CancellationToken)">
+        <member
+            name="M:FindRomCover.Services.ImageSaveService.ReadAllBytesBoundedAsync(System.IO.Stream,System.Int32,System.Threading.CancellationToken)">
             <summary>
-                Reads the stream fully but aborts (returns null) once <paramref name="maxBytes"/>
+                Reads the stream fully but aborts (returns null) once <paramref name="maxBytes" />
                 is exceeded, so a hostile or broken server can never OOM the process.
             </summary>
         </member>
@@ -2932,7 +3046,8 @@
         <member name="M:FindRomCover.Services.LogService.Warning(System.String)">
             <summary>
                 Writes a warning-level message. Warnings are forwarded to the bug report API
-                unless marked as transient (see <see cref="M:FindRomCover.Services.LogService.WarningTransient(System.String)" />).
+                unless marked as transient (see
+                <see cref="M:FindRomCover.Services.LogService.WarningTransient(System.String)" />).
             </summary>
             <param name="message">The message to log.</param>
         </member>
@@ -2978,9 +3093,9 @@
             <summary>
                 Logs an error raised while processing a user file in the image-folder watcher
                 (corrupt image, locked file, dropped file, ...). These are environmental
-                per-file failures, not application bugs — the <see cref="T:FindRomCover.Services.BugReportSink"/>
+                per-file failures, not application bugs — the <see cref="T:FindRomCover.Services.BugReportSink" />
                 suppresses automatic bug reports for events marked with
-                <see cref="F:FindRomCover.Services.LogService.WatcherErrorPropertyName"/>.
+                <see cref="F:FindRomCover.Services.LogService.WatcherErrorPropertyName" />.
             </summary>
             <param name="ex">The exception raised while processing the file.</param>
             <param name="message">The context message.</param>
@@ -3009,7 +3124,8 @@
                 rendered message and exception, matching the layout of the log files.
             </summary>
         </member>
-        <member name="M:FindRomCover.Services.MessageTextTemplateFormatter.Format(Serilog.Events.LogEvent,System.IO.TextWriter)">
+        <member
+            name="M:FindRomCover.Services.MessageTextTemplateFormatter.Format(Serilog.Events.LogEvent,System.IO.TextWriter)">
             <summary>
                 Writes the formatted event to the given writer.
             </summary>
@@ -3023,9 +3139,15 @@
             </summary>
         </member>
         <member name="P:FindRomCover.Services.NgramIndex.FileCount">
-            <summary>Gets the number of files added by the last <see cref="M:FindRomCover.Services.NgramIndex.Build(System.Collections.Generic.IEnumerable{System.String},System.Func{System.String,System.String})" /> call.</summary>
+            <summary>
+                Gets the number of files added by the last
+                <see
+                    cref="M:FindRomCover.Services.NgramIndex.Build(System.Collections.Generic.IEnumerable{System.String},System.Func{System.String,System.String})" />
+                call.
+            </summary>
         </member>
-        <member name="M:FindRomCover.Services.NgramIndex.Build(System.Collections.Generic.IEnumerable{System.String},System.Func{System.String,System.String})">
+        <member
+            name="M:FindRomCover.Services.NgramIndex.Build(System.Collections.Generic.IEnumerable{System.String},System.Func{System.String,System.String})">
             <summary>
                 Rebuilds the index from the supplied image file paths.
             </summary>
@@ -3063,7 +3185,8 @@
             </summary>
             <returns>The candidate folders, in priority order.</returns>
         </member>
-        <member name="M:FindRomCover.Services.ScreenshotService.SaveScreenshot(System.Action{System.String},System.DateTime,System.Collections.Generic.IReadOnlyList{System.String})">
+        <member
+            name="M:FindRomCover.Services.ScreenshotService.SaveScreenshot(System.Action{System.String},System.DateTime,System.Collections.Generic.IReadOnlyList{System.String})">
             <summary>
                 Saves a screenshot using the supplied write delegate, falling back to the
                 per-user application data folder when the application folder is not writable.
@@ -3105,27 +3228,27 @@
         </member>
         <member name="M:FindRomCover.Services.SearchQueryHelper.MyRegex">
             <remarks>
-            Pattern:<br/>
-            <code>\\s*(\\(.*?\\)|\\[.*?\\]|\\{.*?\\})</code><br/>
-            Options:<br/>
-            <code>RegexOptions.ExplicitCapture</code><br/>
-            Explanation:<br/>
-            <code>
-            ○ Match a whitespace character atomically any number of times.<br/>
-            ○ Match with 3 alternative expressions, atomically.<br/>
-                ○ Match a sequence of expressions.<br/>
-                    ○ Match '('.<br/>
-                    ○ Match a character other than '\n' lazily any number of times.<br/>
-                    ○ Match ')'.<br/>
-                ○ Match a sequence of expressions.<br/>
-                    ○ Match '['.<br/>
-                    ○ Match a character other than '\n' lazily any number of times.<br/>
-                    ○ Match ']'.<br/>
-                ○ Match a sequence of expressions.<br/>
-                    ○ Match '{'.<br/>
-                    ○ Match a character other than '\n' lazily any number of times.<br/>
-                    ○ Match '}'.<br/>
-            </code>
+                Pattern:<br />
+                <code>\\s*(\\(.*?\\)|\\[.*?\\]|\\{.*?\\})</code><br />
+                Options:<br />
+                <code>RegexOptions.ExplicitCapture</code><br />
+                Explanation:<br />
+                <code>
+                    ○ Match a whitespace character atomically any number of times.<br />
+                    ○ Match with 3 alternative expressions, atomically.<br />
+                    ○ Match a sequence of expressions.<br />
+                    ○ Match '('.<br />
+                    ○ Match a character other than '\n' lazily any number of times.<br />
+                    ○ Match ')'.<br />
+                    ○ Match a sequence of expressions.<br />
+                    ○ Match '['.<br />
+                    ○ Match a character other than '\n' lazily any number of times.<br />
+                    ○ Match ']'.<br />
+                    ○ Match a sequence of expressions.<br />
+                    ○ Match '{'.<br />
+                    ○ Match a character other than '\n' lazily any number of times.<br />
+                    ○ Match '}'.<br />
+                </code>
             </remarks>
         </member>
         <member name="T:FindRomCover.Services.SimilarityCalculator">
@@ -3137,7 +3260,8 @@
         <member name="F:FindRomCover.Services.SimilarityCalculator.DefaultMaxImagesToLoad">
             <summary>Default maximum number of candidate images loaded for display.</summary>
         </member>
-        <member name="M:FindRomCover.Services.SimilarityCalculator.CalculateSimilarityAsync(System.String,System.String,System.Double,System.String,System.Threading.CancellationToken,System.Int32,System.Action{FindRomCover.Models.ImageData},System.Boolean)">
+        <member
+            name="M:FindRomCover.Services.SimilarityCalculator.CalculateSimilarityAsync(System.String,System.String,System.Double,System.String,System.Threading.CancellationToken,System.Int32,System.Action{FindRomCover.Models.ImageData},System.Boolean)">
             <summary>
                 Finds images whose names are similar to the selected file and loads the best
                 matches for display.
@@ -3152,7 +3276,8 @@
             <param name="ignoreBracketedText">True to strip bracketed annotations from names before comparing.</param>
             <returns>The similarity result containing matched images and processing errors.</returns>
         </member>
-        <member name="M:FindRomCover.Services.SimilarityCalculator.FindTopCandidatesAsync(System.String,System.String,System.Double,System.String,System.Threading.CancellationToken,System.Int32,System.Boolean)">
+        <member
+            name="M:FindRomCover.Services.SimilarityCalculator.FindTopCandidatesAsync(System.String,System.String,System.Double,System.String,System.Threading.CancellationToken,System.Int32,System.Boolean)">
             <summary>
                 Finds the top matching images for the selected file without loading them for display.
             </summary>
@@ -3174,7 +3299,8 @@
             <param name="fileName">The filename to clean.</param>
             <returns>The filename with balanced bracketed groups removed, or the original name when nothing remains.</returns>
         </member>
-        <member name="M:FindRomCover.Services.SimilarityCalculator.CalculateLevenshteinSimilarity(System.String,System.String,System.Double)">
+        <member
+            name="M:FindRomCover.Services.SimilarityCalculator.CalculateLevenshteinSimilarity(System.String,System.String,System.Double)">
             <summary>
                 Calculates the Levenshtein similarity percentage between two names.
             </summary>
@@ -3183,7 +3309,8 @@
             <param name="similarityThreshold">Optional early-exit threshold (0-100); 0 disables the shortcut.</param>
             <returns>The similarity as a percentage from 0 to 100.</returns>
         </member>
-        <member name="M:FindRomCover.Services.SimilarityCalculator.CalculateJaccardIndex(System.Collections.Generic.HashSet{System.String},System.String,System.Int32)">
+        <member
+            name="M:FindRomCover.Services.SimilarityCalculator.CalculateJaccardIndex(System.Collections.Generic.HashSet{System.String},System.String,System.Int32)">
             <summary>
                 Calculates the Jaccard index percentage between a prepared n-gram set and another string.
             </summary>
@@ -3200,7 +3327,8 @@
             <param name="n">The n-gram size.</param>
             <returns>The set of n-grams, or an empty set for empty input or non-positive sizes.</returns>
         </member>
-        <member name="M:FindRomCover.Services.SimilarityCalculator.CalculateJaroWinklerDistance(System.String,System.String)">
+        <member
+            name="M:FindRomCover.Services.SimilarityCalculator.CalculateJaroWinklerDistance(System.String,System.String)">
             <summary>
                 Calculates the Jaro-Winkler similarity percentage between two names.
             </summary>
@@ -3270,7 +3398,8 @@
             <param name="currentVersion">The version currently running.</param>
             <returns>The parsed update information.</returns>
         </member>
-        <member name="M:FindRomCover.Services.UpdateCheckService.GetStringOrEmpty(System.Text.Json.JsonElement,System.String)">
+        <member
+            name="M:FindRomCover.Services.UpdateCheckService.GetStringOrEmpty(System.Text.Json.JsonElement,System.String)">
             <summary>
                 Reads a string property from a JSON object, returning an empty string when the
                 property is missing, null or not a string (GetString would otherwise throw).
@@ -3325,13 +3454,13 @@
         </member>
         <member name="M:FindRomCover.SettingsWindow.#ctor(FindRomCover.Managers.SettingsManager)">
             <summary>
-                Initializes a new instance of the <see cref="T:FindRomCover.SettingsWindow"/> class.
+                Initializes a new instance of the <see cref="T:FindRomCover.SettingsWindow" /> class.
             </summary>
             <param name="settingsManager">The settings manager whose supported extensions are edited.</param>
         </member>
         <member name="M:FindRomCover.SettingsWindow.InitializeComponent(System.Boolean)">
             <summary>
-            Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
+                Wires up the controls and optionally loads XAML markup and attaches dev tools (if Avalonia.Diagnostics package is referenced).
             </summary>
             <param name="loadXaml">Should the XAML be loaded into the component.</param>
         </member>
@@ -3356,7 +3485,7 @@
             <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.MyRegex_0">
-            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the MyRegex method.</summary>
+            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex" />-derived type for the MyRegex method.</summary>
         </member>
         <member name="F:System.Text.RegularExpressions.Generated.MyRegex_0.Instance">
             <summary>Cached, thread-safe singleton instance.</summary>
@@ -3365,32 +3494,42 @@
             <summary>Initializes the instance.</summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory">
-            <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+            <summary>
+                Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner" />
+                instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex" />.
+            </summary>
         </member>
         <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.CreateInstance">
-            <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+            <summary>
+                Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner" /> used by methods on
+                <see cref="T:System.Text.RegularExpressions.Regex" />.
+            </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner">
             <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
-            <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
+        <member
+            name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+            <summary>Scan the <paramref name="inputSpan" /> starting from base.runtextstart for the next match.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
-            <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
+        <member
+            name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Search <paramref name="inputSpan" /> starting from base.runtextpos for the next location a match could possibly start.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if a possible match was found; false if no more matches are possible.</returns>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
-            <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
+        <member
+            name="M:System.Text.RegularExpressions.Generated.MyRegex_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Determine whether <paramref name="inputSpan" /> at base.runtextpos is a match for the regular expression.</summary>
             <param name="inputSpan">The text being scanned by the regular expression.</param>
             <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.Utilities">
-            <summary>Helper methods used by generated <see cref="T:System.Text.RegularExpressions.Regex"/>-derived implementations.</summary>
+            <summary>Helper methods used by generated <see cref="T:System.Text.RegularExpressions.Regex" />-derived implementations.</summary>
         </member>
-        <member name="M:System.Text.RegularExpressions.Generated.Utilities.IndexOfNonAsciiOrAny_94C38E80BB759E8AA5BFD03A0D89FB2801501FF204521CCBAE86587FAA7F6E23(System.ReadOnlySpan{System.Char})">
+        <member
+            name="M:System.Text.RegularExpressions.Generated.Utilities.IndexOfNonAsciiOrAny_94C38E80BB759E8AA5BFD03A0D89FB2801501FF204521CCBAE86587FAA7F6E23(System.ReadOnlySpan{System.Char})">
             <summary>Finds the next index of any character that matches a character in the set [([{\s].</summary>
         </member>
         <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_ascii_FFC1FFFFFEFEFFFFFFFFFFF7FFFFFFF7">

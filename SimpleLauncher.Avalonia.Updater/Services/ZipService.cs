@@ -312,6 +312,7 @@ internal class ZipService
                         ClearReadOnlyAttribute(backupPath);
                         File.Delete(backupPath);
                     }
+
                     await MoveFileWithRetryAsync(finalPath, backupPath, relativePath, cancellationToken);
 
                     // Record the backup before moving the staged file into place: if that
