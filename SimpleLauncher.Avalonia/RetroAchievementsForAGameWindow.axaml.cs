@@ -1003,11 +1003,8 @@ public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
             await Task.Yield();
 
             // Set default dates if not already set
-            if (FromDatePicker.SelectedDate == null)
-                FromDatePicker.SelectedDate = new DateTimeOffset(DateTime.Today.AddMonths(-1)); // Default to last month
-
-            if (ToDatePicker.SelectedDate == null)
-                ToDatePicker.SelectedDate = new DateTimeOffset(DateTime.Today); // Default to today
+            FromDatePicker.SelectedDate ??= new DateTimeOffset(DateTime.Today.AddMonths(-1)); // Default to last month
+            ToDatePicker.SelectedDate ??= new DateTimeOffset(DateTime.Today); // Default to today
 
             var fromDate = FromDatePicker.SelectedDate?.DateTime ?? DateTime.Today.AddMonths(-1);
             var toDate = ToDatePicker.SelectedDate?.DateTime ?? DateTime.Today;

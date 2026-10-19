@@ -193,10 +193,9 @@ public partial class RetroAchievementsViewModel : ObservableObject
                     ? _resourceProvider.GetString("RaGenericYes", "Yes")
                     : _resourceProvider.GetString("RaGenericNo", "No");
 
-                if (recentlyPlayedGames is { Count: > 0 })
-                    RecentlyPlayedGames = new ObservableCollection<RaRecentlyPlayedGame>(recentlyPlayedGames);
-                else
-                    RecentlyPlayedGames = null;
+                RecentlyPlayedGames = recentlyPlayedGames is { Count: > 0 }
+                    ? new ObservableCollection<RaRecentlyPlayedGame>(recentlyPlayedGames)
+                    : null;
 
                 NoProfileVisible = false;
             }

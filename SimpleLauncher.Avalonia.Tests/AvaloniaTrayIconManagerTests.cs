@@ -86,7 +86,7 @@ public class AvaloniaTrayIconManagerTests
         try
         {
             HeadlessAvalonia.RunOnUiThread(() => manager.Initialize(window));
-            HeadlessAvalonia.RunOnUiThread(() => window.Hide());
+            HeadlessAvalonia.RunOnUiThread(window.Hide);
 
             RaiseClicked();
 

@@ -40,7 +40,6 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly string _logFolder;
     private bool _disposed;
-    private readonly Task _processTask;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="BugReportApiSink" /> class and starts the background queue processor.
@@ -49,7 +48,7 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
     public BugReportApiSink(string logFolder)
     {
         _logFolder = logFolder;
-        _processTask = ProcessQueueAsync(_cts.Token);
+        _ = ProcessQueueAsync(_cts.Token);
     }
 
     /// <summary>

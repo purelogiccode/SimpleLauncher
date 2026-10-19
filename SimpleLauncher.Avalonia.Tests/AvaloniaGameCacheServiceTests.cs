@@ -193,7 +193,7 @@ public class AvaloniaGameCacheServiceTests
         {
             scanStarted.SetResult();
             releaseScan.Task.Wait(TimeSpan.FromSeconds(30));
-            return (IEnumerable<string>)["mario.zip"];
+            return ["mario.zip"];
         }));
 
         Assert.True(await Task.Run(() => scanStarted.Task.Wait(TimeSpan.FromSeconds(30))));
@@ -223,7 +223,7 @@ public class AvaloniaGameCacheServiceTests
         {
             scanStarted.SetResult();
             releaseScan.Task.Wait(TimeSpan.FromSeconds(30));
-            return (IEnumerable<string>)["stale.zip"];
+            return ["stale.zip"];
         }));
 
         Assert.True(await Task.Run(() => scanStarted.Task.Wait(TimeSpan.FromSeconds(30))));
@@ -239,7 +239,7 @@ public class AvaloniaGameCacheServiceTests
         Assert.False(cache.IsPopulated("NES"));
 
         // The next call rescans and caches the fresh list.
-        var fresh = cache.GetCachedOrScan(system, _ => (IEnumerable<string>)["fresh.zip"]);
+        var fresh = cache.GetCachedOrScan(system, _ => ["fresh.zip"]);
         Assert.Equal("fresh.zip", Assert.Single(fresh));
         Assert.True(cache.IsPopulated("NES"));
     }

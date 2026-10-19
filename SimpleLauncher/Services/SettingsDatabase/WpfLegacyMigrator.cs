@@ -603,7 +603,7 @@ public static class WpfLegacyMigrator
             if (!File.Exists(settingsPath))
                 continue;
 
-            var candidate = new SettingsManagerService(configuration, logger, credentialProtector, null);
+            var candidate = new SettingsManagerService(configuration, logger, credentialProtector);
 
             // Explicit path (no DataFileLocation side effects): when the file is
             // corrupt the untouched defaults are returned with Loaded=false, and unlike
@@ -614,7 +614,7 @@ public static class WpfLegacyMigrator
             readOk = false;
         }
 
-        return (new SettingsManagerService(configuration, logger, credentialProtector, null), false);
+        return (new SettingsManagerService(configuration, logger, credentialProtector), false);
     }
 
     /// <summary>
@@ -628,7 +628,7 @@ public static class WpfLegacyMigrator
         ILogger logger,
         ICredentialProtector credentialProtector)
     {
-        var defaults = new SettingsManagerService(configuration, logger, credentialProtector, null);
+        var defaults = new SettingsManagerService(configuration, logger, credentialProtector);
         return DictionaryContentEqual(defaults.ExportAppSettings(), loaded.ExportAppSettings())
                && DictionaryContentEqual(defaults.ExportEmulatorSettings(), loaded.ExportEmulatorSettings())
                && defaults.ExportSystemPlayTimes().SequenceEqual(loaded.ExportSystemPlayTimes());

@@ -459,11 +459,9 @@ internal class UpdateService
     private void OnExtractionProgressChanged(object? sender, EventArgs<ExtractionProgressInfo> e)
     {
         var info = e.Value;
-        string statusText;
-        if (info.CurrentFile != null)
-            statusText = $"Extracting ({info.ExtractedCount}): {info.CurrentFile}";
-        else
-            statusText = "Extraction complete";
+        var statusText = info.CurrentFile != null
+            ? $"Extracting ({info.ExtractedCount}): {info.CurrentFile}"
+            : "Extraction complete";
 
         ExtractionProgressChanged?.Invoke(this, new ExtractionProgressEventArgs
         {

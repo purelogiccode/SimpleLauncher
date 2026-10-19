@@ -17,7 +17,6 @@ namespace SimpleLauncher.Services.GameFileLoadingOrchestrator;
 public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
 {
     private readonly FavoritesManager _favoritesManager;
-    private readonly IFindCoverImageService _findCoverImage;
     private readonly IGameCacheService _gameCacheService;
     private readonly IGameFilterService _gameFilterService;
     private readonly IGameItemRenderService _gameItemRenderService;
@@ -41,7 +40,6 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         IGetListOfFilesService getListOfFiles,
         FavoritesManager favoritesManager,
         RetroAchievementsService retroAchievementsService,
-        IFindCoverImageService findCoverImage,
         IGameItemRenderService gameItemRenderService,
         SettingsManagerService settings,
         IUpdateStatusBar updateStatusBarService,
@@ -55,7 +53,6 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         _getListOfFiles = getListOfFiles;
         _favoritesManager = favoritesManager;
         _retroAchievementsService = retroAchievementsService;
-        _findCoverImage = findCoverImage;
         _gameItemRenderService = gameItemRenderService;
         _settings = settings;
         _updateStatusBarService = updateStatusBarService;

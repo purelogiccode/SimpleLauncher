@@ -1403,14 +1403,9 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
             ShowGames(favorites);
 
-            if (string.IsNullOrEmpty(SelectedSystem))
-            {
-                StatusText = _localization.GetString("Status.Favorites", "Favorites");
-            }
-            else
-            {
-                StatusText = $"{_localization.GetString("Status.Favorites", "Favorites")} — {SelectedSystem}";
-            }
+            StatusText = string.IsNullOrEmpty(SelectedSystem)
+                ? _localization.GetString("Status.Favorites", "Favorites")
+                : $"{_localization.GetString("Status.Favorites", "Favorites")} - {SelectedSystem}";
         }
         catch (Exception ex)
         {
@@ -1518,7 +1513,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         game.IsFavorite = isNowFavorite;
         Log.Information("Favorite {Action}: {Game}", isNowFavorite ? "added" : "removed", game.DisplayTitle);
 
-        var favoriteName = Path.GetFileName(game.FilePath) ?? game.FilePath;
+        var favoriteName = Path.GetFileName(game.FilePath);
         if (isNowFavorite)
             _favoritePaths.Add(favoriteName);
         else
@@ -1657,7 +1652,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                     system.SystemName,
                     system.SystemImageFolder);
 
-                var fileNameWithoutExt = Path.GetFileNameWithoutExtension(file) ?? file;
+                var fileNameWithoutExt = Path.GetFileNameWithoutExtension(file);
                 var machineDescription = _mameData.Lookup.TryGetValue(fileNameWithoutExt, out var desc) ? desc : "";
                 var folderPath = Path.GetDirectoryName(file) ?? "";
 
@@ -1693,7 +1688,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private string GetDisplayTitle(string filePath)
     {
-        var name = Path.GetFileNameWithoutExtension(filePath) ?? filePath;
+        var name = Path.GetFileNameWithoutExtension(filePath);
 
         return _settings.FilenameDisplayMode switch
         {

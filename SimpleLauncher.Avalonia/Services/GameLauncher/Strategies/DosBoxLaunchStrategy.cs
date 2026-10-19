@@ -160,11 +160,9 @@ public class DosBoxLaunchStrategy : ILaunchStrategy
                         _logger.Debug($"[DosBoxLaunchStrategy] User selected file: {selectedFile}");
                     }
 
-                    string confPath;
-                    if (Path.GetExtension(selectedFile).Equals(".conf", StringComparison.OrdinalIgnoreCase))
-                        confPath = selectedFile;
-                    else
-                        confPath = GenerateTempConf(workingDir, selectedFile);
+                    var confPath = Path.GetExtension(selectedFile).Equals(".conf", StringComparison.OrdinalIgnoreCase)
+                        ? selectedFile
+                        : GenerateTempConf(workingDir, selectedFile);
 
                     var launchParameters = BuildLaunchParameters(context.Parameters);
 

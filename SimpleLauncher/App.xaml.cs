@@ -361,9 +361,8 @@ public partial class App : IDisposable
         serviceCollection.AddSingleton<IFindCoverImageService>(static sp =>
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
-            var logger = sp.GetRequiredService<ILogger>();
             var settings = sp.GetRequiredService<SettingsManagerService>();
-            return new FindCoverImageService(configuration, logger, settings);
+            return new FindCoverImageService(configuration, settings);
         });
         serviceCollection.AddSingleton<IImageLoader, WpfImageLoader>();
         serviceCollection.AddSingleton<IMenuCheckMarkService, MenuCheckMarkService>();

@@ -127,7 +127,7 @@ public partial class FavoritesSectionViewModel : ObservableObject
                         var storedName = favorite.FileName ?? "";
                         var systemName = favorite.SystemName ?? "";
                         var system = _systemManager.GetSystem(systemName);
-                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(storedName) ?? storedName;
+                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(storedName);
 
                         // Resolve the stored file name to a full path inside the system
                         // folders (the WPF favorites page shows FileName from the resolved

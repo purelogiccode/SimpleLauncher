@@ -363,14 +363,14 @@ public sealed class UnifiedSettingsDatabaseTests : IDisposable
         var logger = TestDependencies.Logger();
         var protector = new WindowsCredentialProtector();
 
-        var source = new SettingsManagerService(config, logger.Object, protector, null, useUnifiedDatabase: true);
+        var source = new SettingsManagerService(config, logger.Object, protector, useUnifiedDatabase: true);
         source.ThumbnailSize = 500;
         source.Language = "de";
         source.Mame.Video = "bgfx";
         source.UpdateSystemPlayTime("SNES", TimeSpan.FromMinutes(30));
         source.SaveToDatabase(_dbPath);
 
-        var target = new SettingsManagerService(config, logger.Object, protector, null, useUnifiedDatabase: true);
+        var target = new SettingsManagerService(config, logger.Object, protector, useUnifiedDatabase: true);
         target.LoadFromDatabase(_dbPath);
 
         Assert.Equal(500, target.ThumbnailSize);

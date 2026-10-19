@@ -41,16 +41,14 @@ public partial class UpdateLogWindow : Window
                 }
                 catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
                 {
-                    // Window closed mid-log — drop the message.
+                    // Window closed mid-log - drop the message.
                 }
             }).GetTask();
-            return;
         }
         catch
         {
-            // Dispatcher shut down — drop the message.
+            // Dispatcher shut down - drop the message.
             await Task.CompletedTask;
-            return;
         }
     }
 }

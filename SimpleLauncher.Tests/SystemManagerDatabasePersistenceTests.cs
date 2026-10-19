@@ -76,7 +76,7 @@ public class SystemManagerDatabasePersistenceTests : IDisposable
         UnifiedTestDatabase.SeedSystems(
         [
             BuildSystem("NES", @"C:\roms\nes", "Mesen"),
-            BuildSystem("Arcade", @"C:\roms\arcade", "MAME")
+            BuildSystem("Arcade", @"C:\roms\arcade")
         ]);
 
         var loaded = SystemManagerService.LoadSystemManagers(_configuration, _logErrors);

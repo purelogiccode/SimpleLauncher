@@ -15,7 +15,6 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly RetroAchievementsService _raService;
-    private readonly IResourceProvider _resourceProvider;
     private readonly SettingsManagerService _settings;
     [ObservableProperty] public partial string ApiKey { get; set; }
 
@@ -28,17 +27,15 @@ public partial class RetroAchievementsSettingsViewModel : ObservableObject
     /// <param name="logErrors">The logger instance.</param>
     /// <param name="messageBox">The message box service.</param>
     /// <param name="raService">The RetroAchievements service.</param>
-    /// <param name="resourceProvider">The resource provider for localized strings.</param>
     /// <param name="configurator">The emulator configurator service for RetroAchievements integration.</param>
     public RetroAchievementsSettingsViewModel(SettingsManagerService settings, ILogger logErrors,
-        IMessageBoxLibraryService messageBox, RetroAchievementsService raService, IResourceProvider resourceProvider,
+        IMessageBoxLibraryService messageBox, RetroAchievementsService raService,
         IRetroAchievementsEmulatorConfiguratorService configurator)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _logger = logErrors;
         _messageBox = messageBox;
         _raService = raService;
-        _resourceProvider = resourceProvider;
         _configurator = configurator;
         Username = _settings.RaUsername;
         ApiKey = _settings.RaApiKey;

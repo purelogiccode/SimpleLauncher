@@ -41,14 +41,13 @@ public class RetroAchievementsSettingsViewModelTests
         settings.RaPassword = initialPassword ?? "";
         settings.RaToken = initialToken ?? "";
 
-        var rp = TestDependencies.ResourceProvider();
         var httpClient = TestDependencies.HttpClientWith(httpResponder);
         var factory = TestDependencies.HttpFactory(httpClient);
         var manager = new RetroAchievementsManager();
         var raService = new RetroAchievementsService(factory.Object, manager, Config, logger.Object);
         var configurator = new Mock<IRetroAchievementsEmulatorConfiguratorService>();
         var vm = new RetroAchievementsSettingsViewModel(settings, logger.Object, messageBox.Object, raService,
-            rp.Object, configurator.Object);
+            configurator.Object);
         return (vm, settings, messageBox, configurator, logger);
     }
 

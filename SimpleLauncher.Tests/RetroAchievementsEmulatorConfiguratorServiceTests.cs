@@ -83,7 +83,7 @@ public class RetroAchievementsEmulatorConfiguratorServiceTests : IDisposable
     private static void AssertNoUtf8Bom(string path)
     {
         var bytes = File.ReadAllBytes(path);
-        var hasBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+        var hasBom = bytes is [0xEF, 0xBB, 0xBF, ..];
         Assert.False(hasBom, $"'{path}' must not start with a UTF-8 BOM");
     }
 }

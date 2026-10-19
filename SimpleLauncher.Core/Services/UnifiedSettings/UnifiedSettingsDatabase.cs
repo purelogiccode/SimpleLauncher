@@ -134,9 +134,7 @@ public static class UnifiedSettingsDatabase
     /// </summary>
     public static bool IsValidDatabase(string? dbPath = null)
     {
-        return TryGetSchemaVersion(dbPath ?? GetDatabasePath()) is { } schemaVersion &&
-               schemaVersion >= 1 &&
-               schemaVersion <= CurrentSchemaVersion;
+        return TryGetSchemaVersion(dbPath ?? GetDatabasePath()) is >= 1 and <= CurrentSchemaVersion;
     }
 
     /// <summary>
@@ -274,8 +272,7 @@ public static class UnifiedSettingsDatabase
         // Schema-version-gated structural upgrades (schema 1 -> 2): case-insensitive
         // keys and the composite play-history key. Fresh databases (no stored version)
         // already use the canonical DDL above and skip the rebuilds.
-        if (ReadStoredSchemaVersion(connection, transaction) is { } existingVersion &&
-            existingVersion < CurrentSchemaVersion)
+        if (ReadStoredSchemaVersion(connection, transaction) is < CurrentSchemaVersion)
         {
             UpgradeSchemaToVersion2(connection, transaction);
         }

@@ -329,7 +329,7 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
 
                 // Image Matching
                 var romFileBaseNames =
-                    new HashSet<string>(allRomFiles.Select(static f => Path.GetFileNameWithoutExtension(f) ?? ""),
+                    new HashSet<string>(allRomFiles.Select(static f => Path.GetFileNameWithoutExtension(f)),
                         StringComparer.OrdinalIgnoreCase);
                 var systemImageFolder = systemManager.SystemImageFolder;
                 var resolvedImagePath = string.IsNullOrEmpty(systemImageFolder)

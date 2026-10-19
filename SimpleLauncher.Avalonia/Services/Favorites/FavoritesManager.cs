@@ -395,7 +395,7 @@ public class FavoritesManager
     {
         if (string.IsNullOrEmpty(fileName)) return "";
 
-        return Path.GetFileName(fileName) ?? fileName;
+        return Path.GetFileName(fileName);
     }
 
     /// <summary>

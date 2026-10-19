@@ -375,15 +375,9 @@ public partial class CheckForUpdatesService
             // If we reach here, ShutdownForUpdateAsync returned without killing the process
             // (the update failed — an error was already shown to the user)
             logWindow.Log("Updater.exe launch failed.");
-            if (!string.IsNullOrEmpty(releasePackageUrl))
-            {
-                logWindow.Log($"Please download the update package manually from: {releasePackageUrl}");
-            }
-            else
-            {
-                logWindow.Log(
-                    $"The update package URL was not found. Please visit the GitHub releases page for {RepoOwners[0]}/{RepoName}.");
-            }
+            logWindow.Log(!string.IsNullOrEmpty(releasePackageUrl)
+                ? $"Please download the update package manually from: {releasePackageUrl}"
+                : $"The update package URL was not found. Please visit the GitHub releases page for {RepoOwners[0]}/{RepoName}.");
         }
         catch (Exception ex)
         {
@@ -516,7 +510,7 @@ public partial class CheckForUpdatesService
             {
                 // Notify developer
                 _logger.Error(
-                    new ArgumentException(@"Current or latest version string is null or empty.",
+                    new ArgumentException("Current or latest version string is null or empty.",
                         nameof(currentVersion)), "Invalid version string for comparison");
                 return false;
             }
@@ -528,7 +522,7 @@ public partial class CheckForUpdatesService
             {
                 // Notify developer
                 _logger.Error(
-                    new ArgumentException(@"Normalized version string is null or empty after regex replace.",
+                    new ArgumentException("Normalized version string is null or empty after regex replace.",
                         nameof(latestVersion)), "Invalid version string after normalization");
                 return false;
             }

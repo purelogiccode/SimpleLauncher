@@ -98,10 +98,10 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
 
             // Drain both pipes concurrently: discarding them can deadlock once the
             // child fills the pipe buffer while we block in WaitForExitAsync (CORE-04).
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(SingleFileTimeout);
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(timeoutCts.Token);
+            var stderrTask = process.StandardError.ReadToEndAsync(timeoutCts.Token);
             await process.WaitForExitAsync(timeoutCts.Token);
             await stderrTask;
 
@@ -263,11 +263,11 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
 
             // Drain both pipes concurrently: discarding them can deadlock once the
             // child fills the pipe buffer while we block in WaitForExitAsync (CORE-04).
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
-
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(BatchTimeout);
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(timeoutCts.Token);
+            var stderrTask = process.StandardError.ReadToEndAsync(timeoutCts.Token);
+
             await process.WaitForExitAsync(timeoutCts.Token);
             await stderrTask;
 

@@ -165,7 +165,7 @@ public class GameListFactory(
                 {
                     // Notify developer
                     _logger.Error(
-                        new ArgumentException(@"selectedItem.FilePath is null or empty.", nameof(selectedItem)),
+                        new ArgumentException("selectedItem.FilePath is null or empty.", nameof(selectedItem)),
                         "Selected item has an invalid file path. Cannot load preview");
 
                     _mainWindow.PreviewImage.Source = null; // Clear preview

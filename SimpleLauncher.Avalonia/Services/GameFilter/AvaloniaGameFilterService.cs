@@ -11,16 +11,13 @@ namespace SimpleLauncher.Avalonia.Services.GameFilter;
 /// </summary>
 public class AvaloniaGameFilterService
 {
-    private readonly IFindCoverImageService _findCoverImage;
     private readonly IMameDataService _mameData;
     private readonly SettingsManagerService _settings;
 
     public AvaloniaGameFilterService(
-        IFindCoverImageService findCoverImage,
         SettingsManagerService settings,
         IMameDataService mameData)
     {
-        _findCoverImage = findCoverImage;
         _settings = settings;
         _mameData = mameData;
     }

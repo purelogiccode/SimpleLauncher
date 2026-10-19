@@ -614,7 +614,7 @@ public static class AvaloniaLegacyMigrator
             if (!File.Exists(settingsPath))
                 continue;
 
-            var candidate = new SettingsManagerService(configuration, logger, credentialProtector, null);
+            var candidate = new SettingsManagerService(configuration, logger, credentialProtector);
 
             // Explicit path (no DataFileLocation side effects): when the file is
             // corrupt the untouched defaults are returned with Loaded=false, and unlike
@@ -625,7 +625,7 @@ public static class AvaloniaLegacyMigrator
             readOk = false;
         }
 
-        return (new SettingsManagerService(configuration, logger, credentialProtector, null), false);
+        return (new SettingsManagerService(configuration, logger, credentialProtector), false);
     }
 
     /// <summary>
@@ -639,7 +639,7 @@ public static class AvaloniaLegacyMigrator
         ILogger logger,
         ICredentialProtector credentialProtector)
     {
-        var defaults = new SettingsManagerService(configuration, logger, credentialProtector, null);
+        var defaults = new SettingsManagerService(configuration, logger, credentialProtector);
         return DictionaryContentEqual(defaults.ExportAppSettings(), loaded.ExportAppSettings())
                && DictionaryContentEqual(defaults.ExportEmulatorSettings(), loaded.ExportEmulatorSettings())
                && defaults.ExportSystemPlayTimes().SequenceEqual(loaded.ExportSystemPlayTimes());
@@ -679,7 +679,7 @@ public static class AvaloniaLegacyMigrator
             {
                 // Null message box: corruption dialogs are skipped during migration.
                 // Explicit path: no cache, no database reads, no file rewrites.
-                var service = new SystemManagerService(configuration, null);
+                var service = new SystemManagerService(configuration);
                 var loaded = service.LoadSystemsFromPath(systemXmlPath, out var partial);
                 if (partial)
                     recoveredPartial = true;

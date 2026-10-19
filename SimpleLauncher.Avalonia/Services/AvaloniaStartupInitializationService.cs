@@ -188,10 +188,9 @@ public class AvaloniaStartupInitializationService
             _gamePadController.DeadZoneX = _settings.DeadZoneX;
             _gamePadController.DeadZoneY = _settings.DeadZoneY;
 
-            if (_settings.EnableGamePadNavigation)
-                _ = _gamePadController.StartAsync();
-            else
-                _ = _gamePadController.StopAsync();
+            _ = _settings.EnableGamePadNavigation
+                ? _gamePadController.StartAsync()
+                : _gamePadController.StopAsync();
 
             _logger.Debug("GamePadController was initialized. Navigation enabled: {Enabled}",
                 _settings.EnableGamePadNavigation);

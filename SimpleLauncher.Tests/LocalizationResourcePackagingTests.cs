@@ -30,7 +30,7 @@ public class LocalizationResourcePackagingTests
         {
             var expectedResource = ResourcePrefix + code + ".json";
             Assert.True(
-                embeddedNames.Contains(expectedResource, StringComparer.OrdinalIgnoreCase),
+                embeddedNames.Contains(expectedResource),
                 $"'{expectedResource}' is NOT embedded in the assembly. " +
                 "Check SimpleLauncher.csproj: the shared pack needs to match the " +
                 "<Resource Include=\"..\\SimpleLauncher.Core\\Localization\\strings.*.json\" /> entry.");

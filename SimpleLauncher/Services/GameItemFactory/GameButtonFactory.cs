@@ -120,18 +120,10 @@ internal partial class GameButtonFactory(
     {
         var isDirectory = Directory.Exists(entityPath);
 
-        string fileNameWithoutExtension;
-
         var fileNameWithExtension = Path.GetFileName(entityPath); // Folder name
-        if (isDirectory)
-        {
-            // Folder name
-            fileNameWithoutExtension = fileNameWithExtension;
-        }
-        else
-        {
-            fileNameWithoutExtension = Path.GetFileNameWithoutExtension(entityPath);
-        }
+        var fileNameWithoutExtension = isDirectory
+            ? fileNameWithExtension
+            : Path.GetFileNameWithoutExtension(entityPath);
 
         var selectedSystemName = systemName;
         var selectedSystemManager = systemManager ?? throw new ArgumentNullException(nameof(systemManager));

@@ -56,10 +56,9 @@ public partial class MainWindow
         var conversionType = (ConversionTypeComboBox.SelectedItem as ComboBoxItem)?.Content
             .ToString();
 
-        if (string.Equals(conversionType, "XML to Binary", StringComparison.Ordinal))
-            dialog.Filter = "XML files (*.xml)|*.xml|All files (*.*)|*.*";
-        else
-            dialog.Filter = "DAT files (*.dat)|*.dat|All files (*.*)|*.*";
+        dialog.Filter = string.Equals(conversionType, "XML to Binary", StringComparison.Ordinal)
+            ? "XML files (*.xml)|*.xml|All files (*.*)|*.*"
+            : "DAT files (*.dat)|*.dat|All files (*.*)|*.*";
 
         if (dialog.ShowDialog() != true) return;
 

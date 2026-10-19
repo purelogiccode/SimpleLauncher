@@ -607,7 +607,6 @@ public class DownloadManager : IDisposable
 
         var buffer = new byte[8192];
         var totalBytesRead = 0L;
-        int bytesRead;
         var lastProgressUpdate = DateTime.Now;
 
         // The resilience pipeline wraps only SendAsync, so a connection that dies while the body
@@ -618,6 +617,7 @@ public class DownloadManager : IDisposable
         while (true)
         {
             stallCts.CancelAfter(StallTimeout);
+            int bytesRead;
             try
             {
                 bytesRead = await contentStream.ReadAsync(buffer, stallCts.Token);
@@ -749,7 +749,7 @@ public class DownloadManager : IDisposable
             if (Uri.TryCreate(downloadUrl, UriKind.Absolute, out var uri))
             {
                 var name = Path.GetFileName(uri.AbsolutePath);
-                name = Uri.UnescapeDataString(name ?? string.Empty).Trim();
+                name = Uri.UnescapeDataString(name).Trim();
                 if (!string.IsNullOrEmpty(name))
                     return name;
             }

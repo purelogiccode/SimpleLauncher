@@ -99,7 +99,7 @@ public class UiResetServiceTests
     {
         var isUpdatingSequence = new List<bool>();
         _host.SetupSet(h => h.IsUiUpdating = It.IsAny<bool>())
-            .Callback<bool>(v => isUpdatingSequence.Add(v));
+            .Callback<bool>(isUpdatingSequence.Add);
 
         // IsUiUpdating getter returns false initially, then true during body
         var getSequence = new Queue<bool>([false, true]);

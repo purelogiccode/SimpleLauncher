@@ -44,14 +44,13 @@ public partial class DetectMissingResourceProviderKeysTests
         var providerKeys = CollectResourceProviderKeys(simpleLauncherPath);
 
         Dictionary<string, int> duplicateKeys;
-        Dictionary<string, string> existingEntries;
         Dictionary<string, string> keysWithDefaults;
         List<string> keysWithoutDefaults;
 
         // The WPF and Avalonia suites both auto-fix this shared file; serialize the mutation.
         using (LocalizationResourceFile.AcquireFileLock())
         {
-            existingEntries = LocalizationResourceFile.ReadEntriesByKey(stringsEnPath);
+            var existingEntries = LocalizationResourceFile.ReadEntriesByKey(stringsEnPath);
 
             // Step 1: Detect and report duplicate keys, rewriting the deduplicated pack if found.
             duplicateKeys = DetectDuplicateKeys(stringsEnPath);

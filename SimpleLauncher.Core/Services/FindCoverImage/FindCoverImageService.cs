@@ -19,20 +19,17 @@ public class FindCoverImageService : IFindCoverImageService
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", "default.png");
 
     private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
     private readonly SettingsManagerService _settings;
 
     /// <summary>
     ///     Initializes a new instance of the FindCoverImageService class.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <param name="logErrors">The log errors.</param>
     /// <param name="settings">The settings manager for reading dynamic matching preferences.</param>
-    public FindCoverImageService(IConfiguration configuration, ILogger logErrors,
+    public FindCoverImageService(IConfiguration configuration,
         SettingsManagerService settings)
     {
         _configuration = configuration;
-        _logger = logErrors;
         _settings = settings;
     }
 
@@ -51,7 +48,7 @@ public class FindCoverImageService : IFindCoverImageService
         // ROM-derived name: strip any directory components so "../../evil" cannot
         // escape the image folder via Path.Combine (CORE-30).
         fileNameWithoutExtension =
-            Path.GetFileName(fileNameWithoutExtension ?? string.Empty) ?? string.Empty;
+            Path.GetFileName(fileNameWithoutExtension ?? string.Empty);
 
         string resolvedImageFolder;
         if (string.IsNullOrEmpty(systemImageFolder))

@@ -98,6 +98,6 @@ public class RightClickContext(
     /// <summary>Gets the loading state provider for overlay display.</summary>
     public ILoadingState LoadingStateProvider { get; } = loadingStateProvider
                                                          ?? mainWindow as ILoadingState ?? throw new ArgumentException(
-                                                             $@"{mainWindow.GetType().Name} does not implement {nameof(ILoadingState)}.",
+                                                             $"{mainWindow.GetType().Name} does not implement {nameof(ILoadingState)}.",
                                                              nameof(mainWindow));
 }

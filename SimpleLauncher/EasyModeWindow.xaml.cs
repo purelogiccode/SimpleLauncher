@@ -1244,11 +1244,9 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
                     return;
                 }
 
-                string systemFolderRaw;
-                if (!string.IsNullOrWhiteSpace(SystemFolderTextBox.Text))
-                    systemFolderRaw = SystemFolderTextBox.Text;
-                else
-                    systemFolderRaw = Path.Combine("%BASEFOLDER%", "roms", selectedSystem.SystemName);
+                var systemFolderRaw = !string.IsNullOrWhiteSpace(SystemFolderTextBox.Text)
+                    ? SystemFolderTextBox.Text
+                    : Path.Combine("%BASEFOLDER%", "roms", selectedSystem.SystemName);
 
                 var systemImageFolderRaw = selectedSystem.SystemImageFolder;
 

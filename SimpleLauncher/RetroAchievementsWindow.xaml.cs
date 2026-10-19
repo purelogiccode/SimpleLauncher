@@ -193,10 +193,9 @@ public partial class RetroAchievementsWindow : ILoadingState
             UserProfileWallActive.Text = _viewModel.ProfileWallActive;
 
             // Update WPF-specific UI (profile image as BitmapImage)
-            if (_viewModel.ProfileImageUrl != null)
-                UserProfilePic.Source = new BitmapImage(new Uri(_viewModel.ProfileImageUrl));
-            else
-                UserProfilePic.Source = null;
+            UserProfilePic.Source = _viewModel.ProfileImageUrl != null
+                ? new BitmapImage(new Uri(_viewModel.ProfileImageUrl))
+                : null;
 
             // Bind recently played games
             UserProfileRecentlyPlayed.ItemsSource = _viewModel.RecentlyPlayedGames;

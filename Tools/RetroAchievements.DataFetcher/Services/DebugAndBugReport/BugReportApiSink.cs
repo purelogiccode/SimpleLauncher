@@ -40,7 +40,6 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
     private readonly string _logFolder;
     private bool _disposed;
-    private readonly Task _processTask;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="BugReportApiSink" /> class.
@@ -49,7 +48,7 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     public BugReportApiSink(string logFolder)
     {
         _logFolder = logFolder;
-        _processTask = ProcessQueueAsync(_cts.Token);
+        _ = ProcessQueueAsync(_cts.Token);
     }
 
     /// <summary>

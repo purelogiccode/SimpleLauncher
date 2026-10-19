@@ -28,7 +28,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [Key(2)]
     public long TotalPlayTime
     {
-        get => field;
+        get;
         set
         {
             if (field != value)
@@ -46,7 +46,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [Key(3)]
     public int TimesPlayed
     {
-        get => field;
+        get;
         set
         {
             if (field == value) return;
@@ -62,7 +62,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [Key(4)]
     public string LastPlayDate
     {
-        get => field;
+        get;
         set
         {
             if (string.Equals(field, value, StringComparison.Ordinal)) return;
@@ -78,7 +78,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [Key(5)]
     public string LastPlayTime
     {
-        get => field;
+        get;
         set
         {
             if (string.Equals(field, value, StringComparison.Ordinal)) return;
@@ -94,7 +94,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [IgnoreMember]
     public string MachineDescription
     {
-        get => field;
+        get;
         set
         {
             if (string.Equals(field, value, StringComparison.Ordinal)) return;
@@ -116,7 +116,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [IgnoreMember]
     public string CoverImage
     {
-        get => field;
+        get;
         set
         {
             if (string.Equals(field, value, StringComparison.Ordinal)) return;
@@ -132,7 +132,7 @@ public class PlayHistoryItem : INotifyPropertyChanged
     [IgnoreMember]
     public string DefaultEmulator
     {
-        get => field;
+        get;
         set
         {
             if (string.Equals(field, value, StringComparison.Ordinal)) return;

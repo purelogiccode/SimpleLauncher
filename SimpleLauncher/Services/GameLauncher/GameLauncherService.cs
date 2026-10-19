@@ -1757,10 +1757,9 @@ public partial class GameLauncherService : ILauncherService
             _logger.Debug(
                 "[CheckForExitCodeWithErrorAnyAsync] MAME unknown option in INI detected. Restoring mame.ini from sample");
             var restored = MameConfigurationService.RestoreMameIniFromSample(psi.FileName, _logger);
-            if (restored)
-                _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] mame.ini restored successfully. User should retry");
-            else
-                _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Failed to restore mame.ini from sample");
+            _logger.Debug(restored
+                ? "[CheckForExitCodeWithErrorAnyAsync] mame.ini restored successfully. User should retry"
+                : "[CheckForExitCodeWithErrorAnyAsync] Failed to restore mame.ini from sample");
 
             return;
         }
@@ -1818,7 +1817,7 @@ public partial class GameLauncherService : ILauncherService
         // The emulator died on startup with STATUS_DLL_NOT_FOUND (bugs 67810-67812:
         // RetroArch with a missing system DLL): user environment, not an app bug —
         // Information only, so it never files a bug report.
-        if (process.HasExited && process.ExitCode == StatusDllNotFound)
+        if (process is { HasExited: true, ExitCode: StatusDllNotFound })
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Emulator missing system DLL error");
             _logger.Information(contextMessage);
@@ -1839,7 +1838,7 @@ public partial class GameLauncherService : ILauncherService
         // narrow-char conversion failed — user path/environment, not an app bug —
         // Information only, so it never files a bug report.
         const int errorNoUnicodeTranslation = 1113;
-        if ((process.HasExited && process.ExitCode == errorNoUnicodeTranslation) ||
+        if (process is { HasExited: true, ExitCode: errorNoUnicodeTranslation } ||
             combinedOutput.Contains("No mapping for the Unicode character", StringComparison.OrdinalIgnoreCase))
         {
             _logger.Debug("[CheckForExitCodeWithErrorAnyAsync] Emulator Unicode/ANSI code page conversion error");
@@ -1925,7 +1924,7 @@ public partial class GameLauncherService : ILauncherService
         // exit code such as 0xC0000425, bugs #68224/#68223): an emulator-side crash, not an
         // app bug — Information only, so it never files a bug report.
         var combinedOutput = output + "\n" + error;
-        var isAccessViolation = (process.HasExited && process.ExitCode == MemoryAccessViolation) ||
+        var isAccessViolation = process is { HasExited: true, ExitCode: MemoryAccessViolation } ||
                                 combinedOutput.Contains("Access violation", StringComparison.OrdinalIgnoreCase);
         if (!isAccessViolation) return Task.CompletedTask;
 
@@ -2068,6 +2067,6 @@ public partial class GameLauncherService : ILauncherService
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",
         Justification = "Capturing group is needed to extract the URL")]
-    [GeneratedRegex(@"URL=(.+)", RegexOptions.IgnoreCase, 1000, "pt-BR")]
+    [GeneratedRegex("URL=(.+)", RegexOptions.IgnoreCase, 1000, "pt-BR")]
     private static partial Regex MyRegex();
 }

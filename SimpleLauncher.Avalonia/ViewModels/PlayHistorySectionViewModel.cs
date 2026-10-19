@@ -230,7 +230,7 @@ public partial class PlayHistorySectionViewModel : ObservableObject
 
     private PlayHistoryItem CreateProcessedItem(PlayHistoryItem source)
     {
-        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(source.FileName) ?? source.FileName;
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(source.FileName);
         var systemManager = _systemManager.GetSystem(source.SystemName);
 
         return new PlayHistoryItem

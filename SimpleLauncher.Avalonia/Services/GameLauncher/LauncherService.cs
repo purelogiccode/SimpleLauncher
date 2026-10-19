@@ -1626,10 +1626,9 @@ public class LauncherService : ILauncherService
             {
                 Log.Debug("MAME unknown option in INI detected. Attempting to restore mame.ini from sample");
                 var restored = MameConfigurationService.RestoreMameIniFromSample(emulatorPath, Log.Logger);
-                if (restored)
-                    Log.Debug("mame.ini restored successfully. User should retry");
-                else
-                    Log.Debug("Failed to restore mame.ini from sample");
+                Log.Debug(restored
+                    ? "mame.ini restored successfully. User should retry"
+                    : "Failed to restore mame.ini from sample");
 
                 return;
             }

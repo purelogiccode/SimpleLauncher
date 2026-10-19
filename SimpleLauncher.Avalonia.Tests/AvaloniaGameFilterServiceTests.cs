@@ -16,7 +16,6 @@ public class AvaloniaGameFilterServiceTests
         var settings = TestDependencies.Settings();
         settings.ShowGames = showGames;
         return new AvaloniaGameFilterService(
-            new Mock<IFindCoverImageService>().Object,
             settings,
             new Mock<IMameDataService>().Object);
     }

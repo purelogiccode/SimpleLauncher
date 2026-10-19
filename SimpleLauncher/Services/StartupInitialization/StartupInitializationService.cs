@@ -188,10 +188,9 @@ public class StartupInitializationService
     private void InitializeGamePad()
     {
         _gamePadController.ErrorLogger = (ex, msg) => _logger.Error(ex, msg);
-        if (_settings.EnableGamePadNavigation)
-            _ = _gamePadController.StartAsync();
-        else
-            _ = _gamePadController.StopAsync();
+        _ = _settings.EnableGamePadNavigation
+            ? _gamePadController.StartAsync()
+            : _gamePadController.StopAsync();
 
         _gamePadController.DeadZoneX = _settings.DeadZoneX;
         _gamePadController.DeadZoneY = _settings.DeadZoneY;

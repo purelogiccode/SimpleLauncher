@@ -111,7 +111,7 @@ public class AvaloniaViewSmokeTests
         // Wrap in a ServiceProvider that Moq would also satisfy GetRequiredService
         var prop = typeof(App).GetProperty("ServiceProvider", BindingFlags.Static | BindingFlags.Public);
         var setter = prop!.GetSetMethod(true)!;
-        setter.Invoke(null, new object[] { provider });
+        setter.Invoke(null, [provider]);
     }
 
     private static Window ConstructWindow(Type windowType)
@@ -168,58 +168,58 @@ public class AvaloniaViewSmokeTests
 
     public static IEnumerable<object[]> WindowTypes()
     {
-        yield return new object[] { typeof(AboutWindow) };
-        yield return new object[] { typeof(DebugWindow) };
-        yield return new object[] { typeof(SupportWindow) };
-        yield return new object[] { typeof(GlobalStatsWindow) };
-        yield return new object[] { typeof(FlashOverlayWindow) };
-        yield return new object[] { typeof(DosBoxFileSelectionWindow) };
-        yield return new object[] { typeof(DownloadImagePackWindow) };
-        yield return new object[] { typeof(ImageViewerWindow) };
-        yield return new object[] { typeof(UpdateHistoryWindow) };
-        yield return new object[] { typeof(UpdateLogWindow) };
-        yield return new object[] { typeof(WindowSelectionDialogWindow) };
-        yield return new object[] { typeof(RomHistoryWindow) };
-        yield return new object[] { typeof(SetFuzzyMatchingWindow) };
-        yield return new object[] { typeof(SetGamepadDeadZoneWindow) };
-        yield return new object[] { typeof(SetLinksWindow) };
-        yield return new object[] { typeof(SoundConfigurationWindow) };
-        yield return new object[] { typeof(EasyModeWindow) };
-        yield return new object[] { typeof(SystemSelectionWindow) };
-        yield return new object[] { typeof(PreferencesWindow) };
+        yield return [typeof(AboutWindow)];
+        yield return [typeof(DebugWindow)];
+        yield return [typeof(SupportWindow)];
+        yield return [typeof(GlobalStatsWindow)];
+        yield return [typeof(FlashOverlayWindow)];
+        yield return [typeof(DosBoxFileSelectionWindow)];
+        yield return [typeof(DownloadImagePackWindow)];
+        yield return [typeof(ImageViewerWindow)];
+        yield return [typeof(UpdateHistoryWindow)];
+        yield return [typeof(UpdateLogWindow)];
+        yield return [typeof(WindowSelectionDialogWindow)];
+        yield return [typeof(RomHistoryWindow)];
+        yield return [typeof(SetFuzzyMatchingWindow)];
+        yield return [typeof(SetGamepadDeadZoneWindow)];
+        yield return [typeof(SetLinksWindow)];
+        yield return [typeof(SoundConfigurationWindow)];
+        yield return [typeof(EasyModeWindow)];
+        yield return [typeof(SystemSelectionWindow)];
+        yield return [typeof(PreferencesWindow)];
         // GameDetailWindow and MainWindow require a fully-wired MainViewModel (DI-heavy) — XAML is still
         // validated via the generic path, but we smoke-test only the type existence here to avoid
         // ViewModel NullReference noise. Their XAML was already exercised via the Inject windows and
         // other complex windows above (they share the same resource keys and converters).
-        yield return new object[] { typeof(RetroAchievementsWindow) };
-        yield return new object[] { typeof(RetroAchievementsSettingsWindow) };
-        yield return new object[] { typeof(RetroAchievementsForAGameWindow) };
-        yield return new object[] { typeof(EditSystemWindow) };
+        yield return [typeof(RetroAchievementsWindow)];
+        yield return [typeof(RetroAchievementsSettingsWindow)];
+        yield return [typeof(RetroAchievementsForAGameWindow)];
+        yield return [typeof(EditSystemWindow)];
     }
 
     public static IEnumerable<object[]> InjectWindowTypes()
     {
-        yield return new object[] { typeof(InjectAresConfigWindow) };
-        yield return new object[] { typeof(InjectAzaharConfigWindow) };
-        yield return new object[] { typeof(InjectBlastemConfigWindow) };
-        yield return new object[] { typeof(InjectCemuConfigWindow) };
-        yield return new object[] { typeof(InjectDaphneConfigWindow) };
-        yield return new object[] { typeof(InjectDolphinConfigWindow) };
-        yield return new object[] { typeof(InjectDuckStationConfigWindow) };
-        yield return new object[] { typeof(InjectFlycastConfigWindow) };
-        yield return new object[] { typeof(InjectMameConfigWindow) };
-        yield return new object[] { typeof(InjectMednafenConfigWindow) };
-        yield return new object[] { typeof(InjectMesenConfigWindow) };
-        yield return new object[] { typeof(InjectPcsx2ConfigWindow) };
-        yield return new object[] { typeof(InjectRaineConfigWindow) };
-        yield return new object[] { typeof(InjectRedreamConfigWindow) };
-        yield return new object[] { typeof(InjectRetroArchConfigWindow) };
-        yield return new object[] { typeof(InjectRpcs3ConfigWindow) };
-        yield return new object[] { typeof(InjectSegaModel2ConfigWindow) };
-        yield return new object[] { typeof(InjectStellaConfigWindow) };
-        yield return new object[] { typeof(InjectSupermodelConfigWindow) };
-        yield return new object[] { typeof(InjectXeniaConfigWindow) };
-        yield return new object[] { typeof(InjectYumirConfigWindow) };
+        yield return [typeof(InjectAresConfigWindow)];
+        yield return [typeof(InjectAzaharConfigWindow)];
+        yield return [typeof(InjectBlastemConfigWindow)];
+        yield return [typeof(InjectCemuConfigWindow)];
+        yield return [typeof(InjectDaphneConfigWindow)];
+        yield return [typeof(InjectDolphinConfigWindow)];
+        yield return [typeof(InjectDuckStationConfigWindow)];
+        yield return [typeof(InjectFlycastConfigWindow)];
+        yield return [typeof(InjectMameConfigWindow)];
+        yield return [typeof(InjectMednafenConfigWindow)];
+        yield return [typeof(InjectMesenConfigWindow)];
+        yield return [typeof(InjectPcsx2ConfigWindow)];
+        yield return [typeof(InjectRaineConfigWindow)];
+        yield return [typeof(InjectRedreamConfigWindow)];
+        yield return [typeof(InjectRetroArchConfigWindow)];
+        yield return [typeof(InjectRpcs3ConfigWindow)];
+        yield return [typeof(InjectSegaModel2ConfigWindow)];
+        yield return [typeof(InjectStellaConfigWindow)];
+        yield return [typeof(InjectSupermodelConfigWindow)];
+        yield return [typeof(InjectXeniaConfigWindow)];
+        yield return [typeof(InjectYumirConfigWindow)];
     }
 
     [Theory]

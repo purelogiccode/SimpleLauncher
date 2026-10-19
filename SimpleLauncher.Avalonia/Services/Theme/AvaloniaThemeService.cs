@@ -53,7 +53,7 @@ public static class AvaloniaThemeService
 
     // Color resource keys defined in Themes/DarkTheme.axaml (surfaces, text, borders, etc.)
     private static readonly string[] PaletteKeys =
-    {
+    [
         "BgPrimaryColor", "BgSecondaryColor", "BgTertiaryColor", "BgQuaternaryColor",
         "TextPrimaryColor", "TextSecondaryColor", "TextMutedColor",
         "BorderSubtleColor", "BorderNormalColor",
@@ -61,7 +61,7 @@ public static class AvaloniaThemeService
         "OverlayProcessingColor", "LinkColor", "ShadowColor",
         "NotificationInfoColor", "NotificationSuccessColor", "NotificationWarningColor",
         "NotificationErrorColor", "FavoriteHeartColor", "SelectionBackgroundColor"
-    };
+    ];
 
     private static readonly Dictionary<string, string> DarkPalette = new(StringComparer.OrdinalIgnoreCase)
     {

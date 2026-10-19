@@ -62,7 +62,7 @@ public sealed class EasyModeAddSystemReproTests : IDisposable
         };
 
         await SystemManagerService.AddOrUpdateSystemFromEasyModeAsync(
-            easyPreset, _gamesFolder, config, logger.Object, null);
+            easyPreset, _gamesFolder, config, logger.Object);
 
         var manager = new SystemManagerService(config);
         var systems = manager.LoadSystems();

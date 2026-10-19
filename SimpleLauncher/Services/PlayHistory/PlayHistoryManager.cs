@@ -276,10 +276,9 @@ public class PlayHistoryManager
                 newDateStr = dateTime.ToString(IsoDateFormat, CultureInfo.InvariantCulture);
 
                 // Try to parse time part separately
-                if (TimeSpan.TryParse(timeStr, out var timeSpan))
-                    newTimeStr = timeSpan.ToString(IsoTimeFormat, CultureInfo.InvariantCulture);
-                else
-                    newTimeStr = "00:00:00"; // Default if time can't be parsed
+                newTimeStr = TimeSpan.TryParse(timeStr, out var timeSpan)
+                    ? timeSpan.ToString(IsoTimeFormat, CultureInfo.InvariantCulture)
+                    : "00:00:00"; // Default if time can't be parsed
 
                 return true;
             }

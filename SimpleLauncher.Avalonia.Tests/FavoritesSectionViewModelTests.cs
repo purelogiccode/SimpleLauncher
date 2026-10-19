@@ -101,7 +101,7 @@ public class FavoritesSectionViewModelTests : IDisposable
             new RetroAchievementsManager(),
             _messageBox.Object,
             _mameData.Object,
-            new AvaloniaGameFilterService(new Mock<IFindCoverImageService>().Object, settings, _mameData.Object),
+            new AvaloniaGameFilterService(settings, _mameData.Object),
             new AvaloniaLoadingOverlayService(new PlaySoundEffects(settings, _logger.Object)),
             new LocalizationService());
         _mainViewModel.ConfigurePagination(1_000_000);

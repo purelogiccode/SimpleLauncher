@@ -32,7 +32,7 @@ public class AvaloniaPaginationServiceTests
     [Fact]
     public void ApplyPagination_UnderThreshold_ReturnsAllFilesAndDisablesButtons()
     {
-        var (service, host) = Create(10, 10);
+        var (service, host) = Create();
         var files = Files(8);
 
         var result = service.ApplyPagination(files);
@@ -47,7 +47,7 @@ public class AvaloniaPaginationServiceTests
     [Fact]
     public void ApplyPagination_OverThreshold_ReturnsFirstPageAndEnablesNext()
     {
-        var (service, host) = Create(10, 10);
+        var (service, host) = Create();
 
         var result = service.ApplyPagination(Files(25));
 
@@ -79,7 +79,7 @@ public class AvaloniaPaginationServiceTests
     [Fact]
     public void ApplyPagination_ListShrinksBelowCurrentPage_ClampsToLastPage()
     {
-        var (service, host) = Create(10, 10);
+        var (service, host) = Create();
         service.ApplyPagination(Files(25));
         service.GoToNextPage();
         service.GoToNextPage();
@@ -97,7 +97,7 @@ public class AvaloniaPaginationServiceTests
     [Fact]
     public void GoToNextPage_OnLastPage_DoesNotMove()
     {
-        var (service, _) = Create(10, 10);
+        var (service, _) = Create();
         service.ApplyPagination(Files(25));
 
         service.GoToNextPage(); // page 2
@@ -112,7 +112,7 @@ public class AvaloniaPaginationServiceTests
     [Fact]
     public void GoToPreviousPage_OnFirstPage_DoesNotMove()
     {
-        var (service, _) = Create(10, 10);
+        var (service, _) = Create();
 
         Assert.False(service.CanGoPrev());
         service.GoToPreviousPage();

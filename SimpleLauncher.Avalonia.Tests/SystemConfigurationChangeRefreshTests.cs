@@ -72,7 +72,7 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
             new RetroAchievementsManager(),
             _messageBox.Object,
             mameData.Object,
-            new AvaloniaGameFilterService(new Mock<IFindCoverImageService>().Object, settings, mameData.Object),
+            new AvaloniaGameFilterService(settings, mameData.Object),
             new AvaloniaLoadingOverlayService(new PlaySoundEffects(settings, _logger.Object)),
             new LocalizationService());
 

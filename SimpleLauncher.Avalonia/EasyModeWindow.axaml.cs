@@ -31,7 +31,7 @@ public partial class EasyModeWindow : Window, IDisposable
             localization.GetString("ClickHereIfTheLoadingScreenIsStuckToReturnToTheMainMenu"));
 
         // Set up the close callback so the ViewModel can request window close after successful add
-        _viewModel.RequestClose = () => Dispatcher.UIThread.InvokeAsync(() => Close());
+        _viewModel.RequestClose = () => Dispatcher.UIThread.InvokeAsync(Close);
 
         // Subscribe to IsLoading for overlay visibility.
         // Handler stored in a field so it can be unsubscribed in Dispose().

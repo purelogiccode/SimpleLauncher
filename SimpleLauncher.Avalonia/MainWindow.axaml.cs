@@ -172,9 +172,9 @@ public partial class MainWindow : Window, IPaginationHost
         // XAML KeyDown wiring never saw it and Enter did not launch from these grids.
         // Subscribe with handledEventsToo so Delete (remove) and Enter (launch) both work.
         FavoritesDataGrid.AddHandler(KeyDownEvent,
-            (o, e) => o = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
+            (_, e) => _ = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
         PlayHistoryDataGrid.AddHandler(KeyDownEvent,
-            (o, e) => o = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
+            (_, e) => _ = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
 
         // Populate system data from system.xml (sidebar + top System ComboBox)
         PopulateSidebarFromSystemXml();
@@ -334,7 +334,7 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Live library refresh: when a watched ROM folder changes on disk, reload the
         // current view on the UI thread (same debounced behavior as the WPF app).
-        _gameFilesChangedHandler = (o, e) =>
+        _gameFilesChangedHandler = (_, e) =>
         {
             try
             {
@@ -353,7 +353,7 @@ public partial class MainWindow : Window, IPaginationHost
                     // The affected system's cached file list is stale — drop it so the
                     // refresh below re-scans that system's folders from disk.
                     _viewModel.InvalidateGameFileCacheForSystem(e.Value);
-                    o = RefreshCurrentViewSafelyAsync();
+                    _ = RefreshCurrentViewSafelyAsync();
                     RefreshSidebarCounts();
                     ShowToast(_localization.GetString("GameLibrary", "Game Library"),
                         _localization.GetString("Toast.Refreshed", "Game list reloaded."));
@@ -1656,7 +1656,7 @@ public partial class MainWindow : Window, IPaginationHost
         string? fileNameWithExtensionOverride = null, Action? onFavoriteRemoved = null)
     {
         var sp = App.ServiceProvider;
-        var fileNameWithExtension = fileNameWithExtensionOverride ?? Path.GetFileName(filePath) ?? filePath;
+        var fileNameWithExtension = fileNameWithExtensionOverride ?? Path.GetFileName(filePath);
         var safeFilePath = filePath ?? "";
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(safeFilePath);
         return new AvaloniaRightClickContext(
@@ -2772,7 +2772,7 @@ public partial class MainWindow : Window, IPaginationHost
                     ? _localization.GetString("Created", "Created")
                     : _localization.GetString("SystemUpdated", "Updated");
                 var scanCompleteTitle = _localization.GetString("ScanComplete", "Scan Complete");
-                if (result.GamesFound == 0 && !result.SystemWasCreated)
+                if (result is { GamesFound: 0, SystemWasCreated: false })
                 {
                     var noGames = _localization.GetString("NoPcGamesFound", "No PC games were found on this system.");
                     _viewModel.StatusText = noGames;

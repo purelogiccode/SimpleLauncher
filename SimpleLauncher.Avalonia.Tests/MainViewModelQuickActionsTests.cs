@@ -113,7 +113,7 @@ public class MainViewModelQuickActionsTests : IDisposable
             new RetroAchievementsManager(),
             _messageBox.Object,
             _mameData.Object,
-            new AvaloniaGameFilterService(new Mock<IFindCoverImageService>().Object, settings, _mameData.Object),
+            new AvaloniaGameFilterService(settings, _mameData.Object),
             loadingOverlay,
             new LocalizationService());
 
