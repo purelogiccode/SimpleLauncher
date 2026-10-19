@@ -105,12 +105,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          unzip -q artifacts/release_*_linux-x64.zip -d app
-          test -x app/SimpleLauncher.Avalonia
-          test -f app/appsettings.json
-          test -f app/LICENSE.txt
+          for rid in linux-x64 linux-arm64; do
+            unzip -q artifacts/release_*_${rid}.zip -d "app-${rid}"
+            test -x "app-${rid}/SimpleLauncher.Avalonia"
+            test -f "app-${rid}/appsettings.json"
+            test -f "app-${rid}/LICENSE.txt"
 
-          unzip -q artifacts/updater_linux-x64.zip -d updater
-          test -x updater/Updater
+            unzip -q "artifacts/updater_${rid}.zip" -d "updater-${rid}"
+            test -x "updater-${rid}/Updater"
+          done
 
-          echo "Linux payload layout and permissions are correct."
+          echo "Linux payload layout and permissions are correct for both RIDs."

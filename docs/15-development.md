@@ -182,6 +182,10 @@ the test suites (they include live endpoints and real app launches; run them loc
 | `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the framework-dependent single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
+`master` requires the two build checks from `ci.yml` for pull-request merges (direct pushes are
+still allowed). The required contexts are the job names **Build solution (Windows)** and
+**Build Avalonia net10.0 (Linux)** — keep them stable when editing the workflow.
+
 To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and
 push, then run **Actions → Publish release → Run workflow** with the new version.
 
