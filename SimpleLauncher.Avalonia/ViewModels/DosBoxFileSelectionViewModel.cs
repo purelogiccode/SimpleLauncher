@@ -10,8 +10,6 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// </summary>
 public partial class DosBoxFileSelectionViewModel : ObservableObject
 {
-    private bool _isLaunchEnabled;
-    private DosBoxFileItem? _selectedItem;
 
     /// <summary>
     ///     Gets the collection of file items.
@@ -23,10 +21,10 @@ public partial class DosBoxFileSelectionViewModel : ObservableObject
     /// </summary>
     public DosBoxFileItem? SelectedItem
     {
-        get => _selectedItem;
+        get;
         set
         {
-            if (SetProperty(ref _selectedItem, value)) IsLaunchEnabled = value != null;
+            if (SetProperty(ref field, value)) IsLaunchEnabled = value != null;
         }
     }
 
@@ -35,8 +33,8 @@ public partial class DosBoxFileSelectionViewModel : ObservableObject
     /// </summary>
     public bool IsLaunchEnabled
     {
-        get => _isLaunchEnabled;
-        private set => SetProperty(ref _isLaunchEnabled, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     /// <summary>

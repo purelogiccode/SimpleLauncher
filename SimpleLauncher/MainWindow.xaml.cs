@@ -102,15 +102,8 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
 
     private bool _playHistoryMigrated;
 
-    /// <summary>
-    ///     Gets or sets the play time display string for the current game.
-    /// </summary>
-    private string _playTime = "";
-
     private string _selectedImageFolder = "";
     private List<string> _selectedRomFolders = [];
-
-    private string? _selectedSystem = "";
 
     private List<SystemManager> _systemManagers = null!;
     private bool _wasControllerRunningBeforeDeactivation;
@@ -295,23 +288,26 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
     /// </summary>
     public string? SelectedSystem
     {
-        get => _selectedSystem;
+        get;
         set
         {
-            _selectedSystem = value;
+            field = value;
             OnPropertyChanged(nameof(SelectedSystem));
         }
-    }
+    } = "";
 
+    /// <summary>
+    ///     Gets or sets the play time display string for the current game.
+    /// </summary>
     public string PlayTime
     {
-        get => _playTime;
+        get;
         set
         {
-            _playTime = value;
+            field = value;
             OnPropertyChanged(nameof(PlayTime));
         }
-    }
+    } = "";
 
     // IUiOrchestratorHost implementation
     ScrollViewer IUiOrchestratorHost.Scroller => Scroller;

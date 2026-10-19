@@ -37,8 +37,6 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
     private string? _currentDownloadType;
     private bool _disposed;
 
-    // Backing field for DownloadStatus property
-    private string _downloadStatus = "";
     private Button? _emergencyReturnButton;
     private EasyModeManager? _manager;
 
@@ -260,15 +258,15 @@ internal partial class EasyModeWindow : IDisposable, INotifyPropertyChanged, ILo
 
     public string DownloadStatus
     {
-        get => _downloadStatus;
+        get;
         set
         {
-            if (string.Equals(_downloadStatus, value, StringComparison.Ordinal)) return;
+            if (string.Equals(field, value, StringComparison.Ordinal)) return;
 
-            _downloadStatus = value;
+            field = value;
             OnPropertyChanged();
         }
-    }
+    } = "";
 
     /// <summary>
     ///     Disposes of resources used by the window.

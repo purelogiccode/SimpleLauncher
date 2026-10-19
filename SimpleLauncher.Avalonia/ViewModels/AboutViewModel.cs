@@ -16,9 +16,7 @@ public partial class AboutViewModel : ObservableObject
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly AvaloniaCheckForUpdatesService _updateChecker;
-    private string _appVersion = "";
 
-    private bool _isCheckingForUpdates;
 
     /// <summary>Initializes a new instance of the <see cref="AboutViewModel" />.</summary>
     /// <param name="logErrors">The logger instance.</param>
@@ -44,9 +42,9 @@ public partial class AboutViewModel : ObservableObject
     /// </summary>
     public string AppVersion
     {
-        get => _appVersion;
-        private set => SetProperty(ref _appVersion, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>
     ///     Gets the path to the application logo image.
@@ -58,10 +56,10 @@ public partial class AboutViewModel : ObservableObject
     /// </summary>
     public bool IsCheckingForUpdates
     {
-        get => _isCheckingForUpdates;
+        get;
         private set
         {
-            if (SetProperty(ref _isCheckingForUpdates, value)) CheckForUpdatesCommand.NotifyCanExecuteChanged();
+            if (SetProperty(ref field, value)) CheckForUpdatesCommand.NotifyCanExecuteChanged();
         }
     }
 

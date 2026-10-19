@@ -12,7 +12,6 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 public partial class SystemSelectionViewModel : ObservableObject
 {
     private readonly IRetroAchievementsSystemMatcher _systemMatcher;
-    private string? _selectedSystem;
 
     /// <summary>Initializes a new instance of the <see cref="SystemSelectionViewModel" /> class.</summary>
     /// <param name="systemMatcher">The RetroAchievements system matcher for retrieving supported system names.</param>
@@ -31,8 +30,8 @@ public partial class SystemSelectionViewModel : ObservableObject
     /// </summary>
     public string? SelectedSystem
     {
-        get => _selectedSystem;
-        set => SetProperty(ref _selectedSystem, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>Initializes the system list and pre-selects the system matching the current guess.</summary>

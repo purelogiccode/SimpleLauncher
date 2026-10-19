@@ -7,15 +7,14 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// </summary>
 public class FlashOverlayViewModel : ObservableObject
 {
-    private double _opacity;
 
     /// <summary>
     ///     Gets or sets the opacity of the flash rectangle.
     /// </summary>
     public double Opacity
     {
-        get => _opacity;
-        set => SetProperty(ref _opacity, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>

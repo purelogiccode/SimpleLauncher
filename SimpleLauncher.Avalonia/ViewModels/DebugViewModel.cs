@@ -32,7 +32,6 @@ public partial class DebugViewModel : ObservableObject
     private readonly StringBuilder _logBuilder = new();
     private readonly Lock _logLock = new();
     private readonly Queue<string> _pendingMessages = new();
-    private string _logText = "";
     private bool _flushScheduled;
 
     /// <summary>Initializes a new instance of the <see cref="DebugViewModel" /> and connects to the debug window sink.</summary>
@@ -47,9 +46,9 @@ public partial class DebugViewModel : ObservableObject
     /// <summary>Gets the full log text for display or clipboard operations.</summary>
     public string LogText
     {
-        get => _logText;
-        private set => SetProperty(ref _logText, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>Gets whether there are log messages that can be cleared.</summary>
     public bool CanClearLog => LogMessages.Count > 0;

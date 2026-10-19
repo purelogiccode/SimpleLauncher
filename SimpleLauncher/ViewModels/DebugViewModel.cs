@@ -13,7 +13,6 @@ public partial class DebugViewModel : ObservableObject
 {
     private const int MaxMessageCount = 5000;
     private readonly Lock _logLock = new();
-    private string _logText = "";
 
     /// <summary>Initializes a new instance of the <see cref="DebugViewModel" /> and connects to the debug window sink.</summary>
     public DebugViewModel()
@@ -27,9 +26,9 @@ public partial class DebugViewModel : ObservableObject
     /// <summary>Gets the full log text for display or clipboard operations.</summary>
     public string LogText
     {
-        get => _logText;
-        private set => SetProperty(ref _logText, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>Gets whether there are log messages that can be cleared.</summary>
     public bool CanClearLog => LogMessages.Count > 0;

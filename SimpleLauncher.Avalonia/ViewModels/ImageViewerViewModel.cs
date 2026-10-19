@@ -17,8 +17,6 @@ public class ImageViewerViewModel : ObservableObject
 
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;
-    private string _errorMessage = "";
-    private Bitmap? _imageSource;
 
     /// <summary>Initializes a new instance of the <see cref="ImageViewerViewModel" />.</summary>
     /// <param name="logErrors">The logger instance.</param>
@@ -34,8 +32,8 @@ public class ImageViewerViewModel : ObservableObject
     /// </summary>
     public Bitmap? ImageSource
     {
-        get => _imageSource;
-        private set => SetProperty(ref _imageSource, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -43,9 +41,9 @@ public class ImageViewerViewModel : ObservableObject
     /// </summary>
     public string ErrorMessage
     {
-        get => _errorMessage;
-        private set => SetProperty(ref _errorMessage, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>
     ///     Loads an image from a file path.
@@ -125,7 +123,7 @@ public class ImageViewerViewModel : ObservableObject
     /// </summary>
     private void ReplaceImageSource(Bitmap? bitmap)
     {
-        var old = _imageSource;
+        var old = ImageSource;
         ImageSource = bitmap;
         try
         {

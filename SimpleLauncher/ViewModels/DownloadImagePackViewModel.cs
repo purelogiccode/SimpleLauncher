@@ -26,18 +26,8 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
     private readonly IResourceProvider _resourceProvider;
     private readonly IServiceScope _scope;
     private volatile bool _disposed;
-    private bool _isLoading;
-
-    private bool _isOperationInProgress;
-    private bool _isStopEnabled;
-    private bool _isSystemDropdownEnabled = true;
-    private string _loadingMessage = "";
     private EasyModeManager? _manager;
     private int _operationInProgressFlag;
-    private double _progressPercentage;
-
-    private string _selectedSystemName = "";
-    private string _statusMessage = "";
 
     /// <summary>Initializes a new instance of the <see cref="DownloadImagePackViewModel" />.</summary>
     /// <param name="playSoundEffects">The sound effects service.</param>
@@ -74,10 +64,10 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
     /// <summary>Gets whether a download or extraction operation is currently in progress.</summary>
     public bool IsOperationInProgress
     {
-        get => _isOperationInProgress;
+        get;
         private set
         {
-            if (SetProperty(ref _isOperationInProgress, value))
+            if (SetProperty(ref field, value))
             {
                 OnPropertyChanged(nameof(IsMainContentEnabled));
                 DownloadImagePackCommand.NotifyCanExecuteChanged();
@@ -88,31 +78,31 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
     /// <summary>Gets whether the stop button is enabled.</summary>
     public bool IsStopEnabled
     {
-        get => _isStopEnabled;
-        private set => SetProperty(ref _isStopEnabled, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     /// <summary>Gets the current download progress percentage (0-100).</summary>
     public double ProgressPercentage
     {
-        get => _progressPercentage;
-        private set => SetProperty(ref _progressPercentage, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     /// <summary>Gets the current status message displayed to the user.</summary>
     public string StatusMessage
     {
-        get => _statusMessage;
-        private set => SetProperty(ref _statusMessage, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>Gets whether a loading indicator should be shown.</summary>
     public bool IsLoading
     {
-        get => _isLoading;
+        get;
         private set
         {
-            if (SetProperty(ref _isLoading, value))
+            if (SetProperty(ref field, value))
                 OnPropertyChanged(nameof(IsMainContentEnabled));
         }
     }
@@ -120,26 +110,26 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
     /// <summary>Gets the message displayed during loading.</summary>
     public string LoadingMessage
     {
-        get => _loadingMessage;
-        private set => SetProperty(ref _loadingMessage, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>Gets whether the system selection dropdown is enabled.</summary>
     public bool IsSystemDropdownEnabled
     {
-        get => _isSystemDropdownEnabled;
-        private set => SetProperty(ref _isSystemDropdownEnabled, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = true;
 
     /// <summary>Gets or sets the currently selected system name.</summary>
     public string SelectedSystemName
     {
-        get => _selectedSystemName;
+        get;
         set
         {
-            if (SetProperty(ref _selectedSystemName, value)) OnSystemSelectionChanged();
+            if (SetProperty(ref field, value)) OnSystemSelectionChanged();
         }
-    }
+    } = "";
 
     /// <summary>Gets whether the main content area is enabled (no operation or loading in progress).</summary>
     public bool IsMainContentEnabled => !IsOperationInProgress && !IsLoading;

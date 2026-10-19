@@ -9,7 +9,6 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// </summary>
 public class WindowSelectionDialogViewModel : ObservableObject
 {
-    private WindowItem? _selectedItem;
 
     /// <summary>
     ///     Gets the collection of window items.
@@ -21,10 +20,10 @@ public class WindowSelectionDialogViewModel : ObservableObject
     /// </summary>
     public WindowItem? SelectedItem
     {
-        get => _selectedItem;
+        get;
         set
         {
-            if (SetProperty(ref _selectedItem, value) && value != null)
+            if (SetProperty(ref field, value) && value != null)
             {
                 SelectedWindowHandle = value.Handle;
                 DialogResultRequested?.Invoke(this, new EventArgs<bool?>(true));

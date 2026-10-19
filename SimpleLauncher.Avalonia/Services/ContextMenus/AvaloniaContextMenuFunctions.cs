@@ -39,17 +39,14 @@ public class AvaloniaContextMenuFunctions(
     private readonly IMameDataService _mameData = mameData;
     private readonly IMessageBoxLibraryService _messageBox = messageBox;
     private readonly PlaySoundEffects _playSoundEffects = playSoundEffects;
-    private IRetroAchievementsHasherTool? _raHasherTool;
-    private RetroAchievementsManager? _raManager;
-    private IRetroAchievementsSystemMatcher? _raSystemMatcher;
 
     private RetroAchievementsManager RaManager =>
-        _raManager ??= App.ServiceProvider.GetRequiredService<RetroAchievementsManager>();
+        field ??= App.ServiceProvider.GetRequiredService<RetroAchievementsManager>();
 
     private IRetroAchievementsHasherTool RaHasherTool =>
-        _raHasherTool ??= App.ServiceProvider.GetRequiredService<IRetroAchievementsHasherTool>();
+        field ??= App.ServiceProvider.GetRequiredService<IRetroAchievementsHasherTool>();
 
-    private IRetroAchievementsSystemMatcher RaSystemMatcher => _raSystemMatcher ??=
+    private IRetroAchievementsSystemMatcher RaSystemMatcher => field ??=
         App.ServiceProvider.GetRequiredService<IRetroAchievementsSystemMatcher>();
 
     private string GetStatus(string key, string fallback)

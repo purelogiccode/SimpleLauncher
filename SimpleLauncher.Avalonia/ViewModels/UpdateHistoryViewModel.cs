@@ -11,7 +11,6 @@ public class UpdateHistoryViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IResourceProvider _resourceProvider;
-    private string _markdownContent = "";
 
     /// <summary>Initializes a new instance of the <see cref="UpdateHistoryViewModel" /> class.</summary>
     /// <param name="logErrors">The logger for recording errors.</param>
@@ -25,9 +24,9 @@ public class UpdateHistoryViewModel : ObservableObject
     /// <summary>Gets the content of the update history to display.</summary>
     public string MarkdownContent
     {
-        get => _markdownContent;
-        private set => SetProperty(ref _markdownContent, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>Asynchronously loads the update history content from the whatsnew.md file.</summary>
     /// <returns>A task representing the asynchronous initialization operation.</returns>

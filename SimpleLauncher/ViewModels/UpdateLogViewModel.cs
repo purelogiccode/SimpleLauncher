@@ -10,16 +10,15 @@ namespace SimpleLauncher.ViewModels;
 public class UpdateLogViewModel : ObservableObject
 {
     private readonly StringBuilder _logBuilder = new();
-    private string _logText = "";
 
     /// <summary>
     ///     Gets the log text content.
     /// </summary>
     public string LogText
     {
-        get => _logText;
-        private set => SetProperty(ref _logText, value);
-    }
+        get;
+        private set => SetProperty(ref field, value);
+    } = "";
 
     /// <summary>
     ///     Appends a message to the log.
