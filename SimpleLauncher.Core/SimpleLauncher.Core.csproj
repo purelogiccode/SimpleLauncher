@@ -27,16 +27,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CHDSharp" Version="1.4.3" />
+        <PackageReference Include="CHDSharp" Version="1.5.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.303">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.312">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="MessagePack" Version="3.1.12" />
-        <PackageReference Include="NAudio.Alsa" Version="3.1.0" />
-        <PackageReference Include="NAudio.SoundFile" Version="3.1.0" />
+        <PackageReference Include="NAudio.Alsa" Version="3.2.0" />
+        <PackageReference Include="NAudio.SoundFile" Version="3.2.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.402">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -48,15 +48,15 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.13" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
-        <PackageReference Include="NAudio.Core" Version="3.1.0" />
-        <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
+        <PackageReference Include="NAudio.Core" Version="3.2.0" />
+        <PackageReference Include="NAudio.Wasapi" Version="3.2.0" />
         <PackageReference Include="PBPSharp" Version="1.1.4" />
         <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="SharpCompress" Version="0.50.5" />
+        <PackageReference Include="SharpCompress" Version="0.50.6" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
         <PackageReference Include="Tomlyn" Version="2.10.1" />
@@ -94,10 +94,6 @@
         </AssemblyAttribute>
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-        <PackageReference Include="NAudio.WinMM" Version="3.1.0" />
-    </ItemGroup>
-
     <!-- Linux/macOS gamepad input; the bindings bundle the native SDL2 binaries for the
          linux/osx/win RIDs (Windows keeps the SharpDX/XInput path, so it is not referenced
          there and no SDL2 payload ships in the Windows release). -->
@@ -113,6 +109,9 @@
     <ItemGroup>
         <PackageReference Include="NLayer" Version="3.0.0" />
         <PackageReference Include="NLayer.NAudioSupport" Version="3.0.0" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+      <PackageReference Include="NAudio.WinMM" Version="3.2.0" />
     </ItemGroup>
 
     <!-- net10.0 is the Linux/macOS TFM; the WINDOWS symbol is defined only for
