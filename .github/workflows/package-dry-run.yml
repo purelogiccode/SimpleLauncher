@@ -1,0 +1,116 @@
+name: Package dry run
+
+# Packages all four RIDs exactly like the release workflow, but never creates or
+# updates a GitHub release. It exists to validate the packaging scripts and the
+# Linux ZIP permissions in CI (and can be dispatched manually before a release).
+#
+# The version is read from the canonical SimpleLauncher.csproj, so this workflow
+# never needs a version input and can never publish a version that is not
+# consistent across the projects and manifests.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/package-dry-run.yml'
+      - 'global.json'
+      - 'scripts/package-release.ps1'
+      - 'scripts/package-release-linux.ps1'
+      - 'SimpleLauncher.sln'
+      - 'SimpleLauncher/**'
+      - 'SimpleLauncher.Core/**'
+      - 'SimpleLauncher.Avalonia/**'
+      - 'SimpleLauncher.Avalonia.Updater/**'
+  pull_request:
+    paths:
+      - '.github/workflows/package-dry-run.yml'
+      - 'global.json'
+      - 'scripts/package-release.ps1'
+      - 'scripts/package-release-linux.ps1'
+      - 'SimpleLauncher.sln'
+      - 'SimpleLauncher/**'
+      - 'SimpleLauncher.Core/**'
+      - 'SimpleLauncher.Avalonia/**'
+      - 'SimpleLauncher.Avalonia.Updater/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-dry-run-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Package all RIDs (no release)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read the canonical version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher/SimpleLauncher.csproj' -Raw
+          $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+              throw "Unexpected version '$version' in SimpleLauncher.csproj."
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Package Windows release (no GitHub release)
+        shell: pwsh
+        run: >
+          ./scripts/package-release.ps1
+          -Version $env:VERSION
+          -OutputDir '${{ github.workspace }}/artifacts/release'
+          -WorkDir '${{ runner.temp }}/sl-publish'
+
+      - name: Package Linux release (no GitHub release)
+        shell: pwsh
+        run: >
+          ./scripts/package-release-linux.ps1
+          -Version $env:VERSION
+          -OutputDir '${{ github.workspace }}/artifacts/release'
+          -WorkDir '${{ runner.temp }}/sl-publish-linux'
+
+      - name: Upload packages as workflow artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: simplelauncher-dry-run
+          path: artifacts/release/*.zip
+          retention-days: 7
+
+  verify-linux:
+    name: Verify Linux packages
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v7
+        with:
+          name: simplelauncher-dry-run
+          path: artifacts
+
+      - name: Check the ZIP layout and executable bits
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -q artifacts/release_*_linux-x64.zip -d app
+          test -x app/SimpleLauncher.Avalonia
+          test -f app/appsettings.json
+          test -f app/LICENSE.txt
+
+          unzip -q artifacts/updater_linux-x64.zip -d updater
+          test -x updater/Updater
+
+          echo "Linux payload layout and permissions are correct."

@@ -28,8 +28,13 @@ disk.
 
 - **CI scope**: GitHub Actions builds, packages releases and deploys docs — it never runs tests.
   - `.github/workflows/ci.yml` — build-only on pushes to `master` (non-docs paths) and PRs: full
-    `SimpleLauncher.sln` Debug build on `windows-latest` + Avalonia `net10.0` build on
-    `ubuntu-latest`. **Never add tests to it.**
+    `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia `net10.0`
+    Debug/Release and the updater `net10.0` build on `ubuntu-latest`. Builds pass
+    `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.**
+  - `.github/workflows/package-dry-run.yml` — packages all four RIDs exactly like the release
+    workflow (version read from `SimpleLauncher.csproj`), uploads the zips and verifies the Linux
+    executable bits on `ubuntu-latest`, but **never creates or updates a GitHub release**. Runs on
+    PRs/pushes touching the app projects or packaging scripts, and on manual dispatch.
   - `.github/workflows/release.yml` — manual (`workflow_dispatch`); packages the unified WPF +
     Avalonia bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1` and the
     framework-dependent Linux bundle for `linux-x64` / `linux-arm64` via
