@@ -1120,7 +1120,8 @@ parameter-suggestion dialogs — pre-existing behavior, not a regression.
      `9f684574`.
    - `dotnet test` at the time: Avalonia **696/696**, WPF **2122/2122** (2026-09-28); the 2026-10-13
      state is Avalonia **701/701**, WPF **2182/2182** and the slow suites 83/83 + 11/11.
-   - `AGENTS.md` is gitignored (local-only, updated with the resume state); everything tracked is
+   - `AGENTS.md` is tracked (durable repo rules); the machine-specific VM harness and resume state
+     stay local in the gitignored `AGENTS.local.md` and in this file; everything tracked is
      committed - nothing to commit before starting the next session.
 
 ## 7. Cost
