@@ -85,6 +85,7 @@ public class App : Application, IDisposable
 {
     private EventWaitHandle? _instanceSignal;
     private bool _isFirstInstance;
+    private bool _ownsSingleInstanceMutex;
 
     private Mutex? _singleInstanceMutex;
     private FileStream? _singleInstanceLock;
@@ -95,6 +96,30 @@ public class App : Application, IDisposable
     public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
     #region IDisposable
+
+    /// <summary>
+    ///     Releases the single-instance mutex only when this thread actually owns it.
+    ///     A losing instance (or one that opened an existing mutex) does not own it, and
+    ///     <see cref="Mutex.ReleaseMutex" /> would throw <see cref="ApplicationException" />;
+    ///     that race is benign and must not be reported as a bug (bug #68430).
+    /// </summary>
+    private void ReleaseSingleInstanceMutex()
+    {
+        if (!_ownsSingleInstanceMutex || _singleInstanceMutex is null) return;
+
+        try
+        {
+            _singleInstanceMutex.ReleaseMutex();
+        }
+        catch (Exception ex) when (ex is ApplicationException or ObjectDisposedException or InvalidOperationException)
+        {
+            Log.Debug(ex, "Single-instance mutex was not owned at exit; ignoring release failure");
+        }
+        finally
+        {
+            _ownsSingleInstanceMutex = false;
+        }
+    }
 
     /// <summary>
     ///     Cleans up the single-instance mutex and event handle, and disposes the tray icon.
@@ -157,6 +182,7 @@ public class App : Application, IDisposable
             Log.Debug(ex, "Error disposing the game file watcher service");
         }
 
+        ReleaseSingleInstanceMutex();
         _singleInstanceMutex?.Dispose();
         _instanceSignal?.Dispose();
         _singleInstanceLock?.Dispose();
@@ -220,28 +246,39 @@ public class App : Application, IDisposable
 
             if (OperatingSystem.IsWindows())
             {
-                // The named mutex still guards against the WPF app (which shares it); the named
-                // event lets a second launch bring the running instance to the foreground.
-                try
+                // Only the instance that is allowed to run (or the fallback that needs the
+                // mutex verdict because the lock file was unavailable) creates the mutex.
+                // A process that already lost the lock-file race must NOT create/own it:
+                // disposing an owned named mutex makes it abandoned, and the winner (WPF)
+                // would then throw on exit calling ReleaseMutex (#68430).
+                if (_isFirstInstance || lockFileUnavailable)
                 {
-                    _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
+                    try
+                    {
+                        _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
 
-                    // The lock file is authoritative when it was acquired: during a simultaneous
-                    // double launch the losing process may create the mutex before it exits, and
-                    // that must not flip the lock-file winner's verdict (or both would quit).
-                    if (lockFileUnavailable) _isFirstInstance = mutexCreatedNew;
-                }
-                catch (AbandonedMutexException)
-                {
-                    // The mutex was abandoned by a previous instance (e.g., due to a crash).
-                    // We successfully acquired it; the lock-file verdict still decides whether
-                    // this is the first instance.
-                    Log.Debug(
-                        "Mutex was abandoned by a previous instance, but successfully acquired by this instance");
-                }
-                catch (Exception ex)
-                {
-                    Log.Debug(ex, "Failed to create or acquire the single-instance mutex");
+                        // Initial ownership is granted only when this call creates the mutex;
+                        // when the mutex already exists the constructor does not acquire it.
+                        _ownsSingleInstanceMutex = mutexCreatedNew;
+
+                        // The lock file is authoritative when it was acquired: during a simultaneous
+                        // double launch the losing process may create the mutex before it exits, and
+                        // that must not flip the lock-file winner's verdict (or both would quit).
+                        if (lockFileUnavailable) _isFirstInstance = mutexCreatedNew;
+                    }
+                    catch (AbandonedMutexException)
+                    {
+                        // The mutex was abandoned by a previous instance (e.g., due to a crash).
+                        // We successfully acquired it; the lock-file verdict still decides whether
+                        // this is the first instance.
+                        _ownsSingleInstanceMutex = true;
+                        Log.Debug(
+                            "Mutex was abandoned by a previous instance, but successfully acquired by this instance");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Debug(ex, "Failed to create or acquire the single-instance mutex");
+                    }
                 }
 
                 _instanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, SingleInstance.EventName);
@@ -275,6 +312,10 @@ public class App : Application, IDisposable
                     // once the main loop is pumping (same clean-exit path as closing the main window).
                     Dispatcher.UIThread.Post(() => nonFirstInstanceLifetime.Shutdown());
                 }
+
+                // A losing instance must not leave an owned named mutex abandoned for the
+                // running instance (which would then fail to release it on exit, #68430).
+                ReleaseSingleInstanceMutex();
 
                 return;
             }

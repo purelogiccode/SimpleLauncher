@@ -224,9 +224,13 @@ public partial class MainWindow : Window
                 if (!_updateService.RestartMainApplication(targetAppProcessName))
                 {
                     Log("Update installed, but the application could not be restarted automatically.");
+                    var restartHint = ProcessService.IsArchiveTempDirectory(AppDirectory)
+                        ? "\n\nSimple Launcher appears to be running from a temporary archive folder " +
+                          "(WinRAR/7-Zip). Extract the release ZIP to a permanent folder and start it from there."
+                        : string.Empty;
                     await DialogHelper.ShowMessageAsync(this,
                         "Update installed successfully, but Simple Launcher could not be restarted automatically.\n\n" +
-                        "Please start it manually.",
+                        "Please start it manually." + restartHint,
                         "Restart Failed");
                 }
 

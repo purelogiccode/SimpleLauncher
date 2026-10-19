@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace SimpleLauncher.Avalonia.Updater.Services;
@@ -300,12 +301,63 @@ internal class ProcessService
 
             return true;
         }
+        catch (Win32Exception ex)
+        {
+            // Starting the updated app can fail with "Access is denied" when the install
+            // folder is protected (antivirus/Controlled Folder Access) or when the app was
+            // launched straight from an archive viewer's temporary folder that is being
+            // deleted (bug #68272). That is an expected environment condition — guidance
+            // for the user, no bug report.
+            var hint = IsArchiveTempDirectory(appDirectory)
+                ? "\n\nSimple Launcher appears to be running from a temporary archive folder " +
+                  "(WinRAR/7-Zip). Extract the release ZIP to a permanent folder, then start it from there."
+                : "\n\nThe updater may need permission to start programs in the install folder.";
+            Log.Information(ex, "Failed to restart the application (Win32 error {ErrorCode})",
+                ex.NativeErrorCode);
+            LogMessage?.Invoke(this,
+                new EventArgs<string>($"Failed to restart the main application: {ex.Message}{hint}"));
+            return false;
+        }
         catch (Exception ex)
         {
             // Fire-and-forget async bug report with exception logging
             _ = ReportBugFireAndForgetAsync(ex, $"Failed to restart application: {executableName}");
 
             LogMessage?.Invoke(this, new EventArgs<string>($"Failed to restart the main application: {ex.Message}"));
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Detects the known temporary extraction folders of archive viewers: WinRAR
+    ///     (<c>%TEMP%\Rar$EXa…rartemp</c>), 7-Zip (<c>%TEMP%\7zO…</c>) and the Windows
+    ///     shell's zip preview extraction (<c>%TEMP%\Temp?_*.zip\…</c>). The viewer deletes
+    ///     the folder when the app exits, so a self-update installed there is lost and the
+    ///     restart fails with "Access is denied" (bug #68272).
+    /// </summary>
+    internal static bool IsArchiveTempDirectory(string appDirectory)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(appDirectory);
+            var tempRoot = Path.GetFullPath(Path.GetTempPath())
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                Path.DirectorySeparatorChar;
+            if (!fullPath.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var relative = fullPath[tempRoot.Length..];
+            if (relative.Length == 0)
+                return false;
+
+            var topLevel = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
+            return topLevel.StartsWith("Rar$", StringComparison.OrdinalIgnoreCase) ||
+                   topLevel.StartsWith("7zO", StringComparison.OrdinalIgnoreCase) ||
+                   (topLevel.StartsWith("Temp", StringComparison.OrdinalIgnoreCase) &&
+                    topLevel.Contains(".zip", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
             return false;
         }
     }

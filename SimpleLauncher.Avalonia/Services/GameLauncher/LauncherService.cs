@@ -612,8 +612,11 @@ public class LauncherService : ILauncherService
                 }
                 catch (Exception ex)
                 {
+                    // Defer logging until the exception is classified below: expected
+                    // OS/user-environment conditions (elevation required, policy block,
+                    // invalid executable) must not be logged as Error, which would send
+                    // a false bug report (#68419).
                     launchException = ex;
-                    Log.Error(ex, "Failed to launch emulator process {EmulatorPath}", resolvedEmulatorPath);
                 }
             });
 
@@ -645,17 +648,22 @@ public class LauncherService : ILauncherService
                     {
                         // User cancelled the operation (e.g., clicked Cancel on the UAC
                         // prompt) — do nothing and don't offer the AI fix.
+                        Log.Information(win32Ex, "User cancelled the emulator launch (UAC prompt)");
                         return;
                     }
                     else if (CheckApplicationControlPolicyService.IsInvalidExecutableFormat(win32Ex))
                     {
                         // Expected user-error condition (the file is not a valid executable for
                         // this OS platform): not a bug, don't log as error or offer the AI fix.
+                        Log.Information(win32Ex, "Invalid executable format launching emulator");
                         await _messageBox.InvalidExecutableFileMessageBoxAsync();
                         return;
                     }
                 }
 
+                // Genuinely unexpected launch failure: report it (and offer the AI fix).
+                Log.Error(launchException, "Failed to launch emulator process {EmulatorPath}",
+                    resolvedEmulatorPath);
                 await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
 
                 // Offer the AI parameter fix (ported from the original launcher)

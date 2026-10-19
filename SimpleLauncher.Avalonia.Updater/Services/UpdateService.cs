@@ -101,6 +101,27 @@ internal class UpdateService
             };
         }
 
+        // Self-updating from an archive viewer's temporary extraction cannot work: the
+        // viewer deletes the folder when the app closes, and the restart then fails with
+        // "Access is denied" (bug #68272). Refuse early with actionable guidance instead
+        // of installing a doomed copy and reporting a crash on restart.
+        if (ProcessService.IsArchiveTempDirectory(_appDirectory))
+        {
+            Log.Information(
+                "Automatic update skipped: application directory is an archive viewer's temporary folder: {Directory}",
+                _appDirectory);
+            return new UpdateResult
+            {
+                Success = false,
+                RequiresManualUpdate = true,
+                ErrorMessage =
+                    "Simple Launcher is running from a temporary folder created by an archive viewer " +
+                    "(WinRAR/7-Zip). Updates cannot be installed there because the folder is deleted when " +
+                    "the viewer closes.\n\nExtract the release ZIP to a permanent folder first, then update " +
+                    "from there.\n\nWould you like to open the releases page to get a fresh ZIP?"
+            };
+        }
+
         if (!NetworkInterface.GetIsNetworkAvailable())
         {
             return new UpdateResult
@@ -203,12 +224,24 @@ internal class UpdateService
             }
             // InvalidOperationException is excluded here because it typically indicates the UI (Dispatcher)
             // has been shut down (e.g., window closed), which is a normal application lifecycle event
-            // during update and not a bug that needs reporting. Other exceptions during extraction
-            // are genuine errors that should be reported.
+            // during update and not a bug that needs reporting.
+            // Permission/IPC/environment problems while swapping files (access denied, a lock that
+            // did not clear, a full/temporarily unavailable volume) are expected conditions of
+            // updating a live installation (bugs #67442-#67445, #68287/#68288) and stay at
+            // Information level so they are never reported as bugs. Other exceptions during
+            // extraction are genuine errors that should be reported.
             catch (Exception ex) when (ex is not InvalidOperationException and not OperationCanceledException)
             {
-                Log.Error(ex, "Error extracting ZIP archive");
-                await BugReportService.ReportBugAsync(ex, "Error extracting ZIP archive");
+                if (ex is IOException or UnauthorizedAccessException)
+                {
+                    Log.Information(ex, "Error extracting ZIP archive");
+                }
+                else
+                {
+                    Log.Error(ex, "Error extracting ZIP archive");
+                    await BugReportService.ReportBugAsync(ex, "Error extracting ZIP archive");
+                }
+
                 throw;
             }
             finally

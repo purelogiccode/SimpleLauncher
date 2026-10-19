@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
@@ -101,7 +102,7 @@ public class MountXisoFiles : IMountXisoFiles
         {
             var errorMessage = $"{Path.GetFileName(toolRelativePath)} not found. Cannot mount ISO.";
             _logger.Debug($"[MountXisoFiles.MountAsync] Error: {errorMessage}");
-            logErrors.Warning(errorMessage);
+            logErrors.Information(errorMessage);
             await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
             return new MountXisoDrive(logErrors, _logger);
         }
@@ -111,7 +112,7 @@ public class MountXisoFiles : IMountXisoFiles
         {
             const string errorMessage = "No available drive letters found to mount the ISO.";
             _logger.Debug($"[MountXisoFiles.MountAsync] Error: {errorMessage}");
-            logErrors.Warning(errorMessage);
+            logErrors.Information(errorMessage);
             await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
             return new MountXisoDrive(logErrors, _logger);
         }
@@ -120,6 +121,14 @@ public class MountXisoFiles : IMountXisoFiles
         var expectedPath = $"{driveLetter.Value}:\\{expectedFileName}";
         var driveRoot = $"{driveLetter.Value}:\\";
 
+        // Redirect the tool's console output: when SimpleXisoDrive exits with code 1 the
+        // reason (invalid/unsupported image, Dokan failure) is only in that output, and it
+        // is what makes bug reports #68434-#68437 diagnosable. The console window itself is
+        // kept (CreateNoWindow=false): the tool's key-press watcher needs a console, and
+        // hiding it made the mount lifecycle depend on whether a console can be allocated.
+        var mountStdout = new StringBuilder();
+        var mountStderr = new StringBuilder();
+
         var psiMount = new ProcessStartInfo
         {
             FileName = resolvedToolPath,
@@ -127,8 +136,8 @@ public class MountXisoFiles : IMountXisoFiles
             WindowStyle = ProcessWindowStyle.Normal,
             UseShellExecute = false,
             CreateNoWindow = false,
-            RedirectStandardOutput = false,
-            RedirectStandardError = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
             WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
         };
 
@@ -138,21 +147,28 @@ public class MountXisoFiles : IMountXisoFiles
         var mountProcess = new Process { StartInfo = psiMount, EnableRaisingEvents = true };
         var toolName = Path.GetFileName(toolRelativePath);
 
+        mountProcess.OutputDataReceived += (_, e) => AppendCapped(mountStdout, e.Data);
+        mountProcess.ErrorDataReceived += (_, e) => AppendCapped(mountStderr, e.Data);
+
         try
         {
             if (!mountProcess.Start()) throw new InvalidOperationException($"Failed to start the {toolName} process.");
 
-            _logger.Debug($"[MountXisoFiles.MountAsync] {toolName} process started (ID: {mountProcess.Id}).");
+            mountProcess.BeginOutputReadLine();
+            mountProcess.BeginErrorReadLine();
 
-            var mountSuccessful = await WaitForDriveMountAsync(expectedPath, driveRoot, mountProcess, toolName,
-                mountProcess.Id, logErrors);
+            var processId = mountProcess.Id;
+            _logger.Debug($"[MountXisoFiles.MountAsync] {toolName} process started (ID: {processId}).");
 
-            if (!mountSuccessful)
+            var mountResult = await WaitForDriveMountAsync(expectedPath, driveRoot, mountProcess, toolName,
+                processId, logErrors, mountStdout, mountStderr);
+
+            if (!mountResult.MountSuccessful)
             {
                 if (!mountProcess.HasExited) mountProcess.Kill(true);
 
                 mountProcess.Dispose();
-                await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync();
+                await messageBox.ThereWasAnErrorMountingTheFileMessageBoxAsync(mountResult.ExitCode);
                 return new MountXisoDrive(logErrors, _logger);
             }
 
@@ -290,8 +306,9 @@ public class MountXisoFiles : IMountXisoFiles
         }
     }
 
-    private async Task<bool> WaitForDriveMountAsync(string defaultXbePath, string driveRoot, Process mountProcess,
-        string toolName, int processId, ILogger logErrors)
+    private async Task<MountWaitResult> WaitForDriveMountAsync(string defaultXbePath, string driveRoot,
+        Process mountProcess, string toolName, int processId, ILogger logErrors,
+        StringBuilder stdoutBuffer, StringBuilder stderrBuffer)
     {
         const int maxRetries = 240;
         const int pollIntervalMs = 500;
@@ -306,7 +323,7 @@ public class MountXisoFiles : IMountXisoFiles
             {
                 _logger.Debug(
                     $"[MountXisoFiles.WaitForDriveMountAsync] Found '{defaultXbePath}' after {retryCount * pollIntervalMs / 1000.0:F1} seconds. Mount successful!");
-                return true;
+                return new MountWaitResult(true, null);
             }
 
             if (Directory.Exists(driveRoot))
@@ -317,22 +334,59 @@ public class MountXisoFiles : IMountXisoFiles
 
             if (mountProcess.HasExited)
             {
+                var exitCode = mountProcess.ExitCode;
+                var diagnostics = FormatToolDiagnostics(stdoutBuffer, stderrBuffer);
                 _logger.Debug(
-                    $"[MountXisoFiles.WaitForDriveMountAsync] Mount process {toolName} (ID: {processId}) exited prematurely during polling. Exit Code: {mountProcess.ExitCode}.");
+                    $"[MountXisoFiles.WaitForDriveMountAsync] Mount process {toolName} (ID: {processId}) exited prematurely during polling. Exit Code: {exitCode}.{diagnostics}");
                 var contextMessage =
-                    $"Failed to mount ISO. The mounting tool '{toolName}' exited prematurely with code {mountProcess.ExitCode}.";
-                logErrors.Warning(contextMessage);
-                return false;
+                    $"Failed to mount ISO. The mounting tool '{toolName}' exited prematurely with code {exitCode}.{diagnostics}";
+
+                // Expected user/environment condition (invalid or unsupported image, missing
+                // Dokan, busy drive letter): Information level so it is never bug-reported.
+                logErrors.Information(contextMessage);
+                return new MountWaitResult(false, exitCode);
             }
 
             retryCount++;
             await Task.Delay(pollIntervalMs);
         }
 
+        var timeoutDiagnostics = FormatToolDiagnostics(stdoutBuffer, stderrBuffer);
         _logger.Debug(
-            $"[MountXisoFiles.WaitForDriveMountAsync] Timed out waiting for '{defaultXbePath}' after {maxRetries * pollIntervalMs / 1000} seconds.");
-        var timeoutContextMessage = $"Timed out waiting for the ISO to mount to '{driveRoot}'.";
-        logErrors.Warning(timeoutContextMessage);
-        return false;
+            $"[MountXisoFiles.WaitForDriveMountAsync] Timed out waiting for '{defaultXbePath}' after {maxRetries * pollIntervalMs / 1000} seconds.{timeoutDiagnostics}");
+        var timeoutContextMessage =
+            $"Timed out waiting for the ISO to mount to '{driveRoot}'.{timeoutDiagnostics}";
+
+        // A mount that never appears within the bounded wait (slow network/AV, unsupported
+        // image) is an expected condition, not a bug.
+        logErrors.Information(timeoutContextMessage);
+        return new MountWaitResult(false, null);
     }
+
+    /// <summary>
+    ///     Adds a console line to a bounded buffer (the tool can be chatty while it runs).
+    /// </summary>
+    private static void AppendCapped(StringBuilder buffer, string? line)
+    {
+        const int maxCharacters = 4096;
+        if (string.IsNullOrEmpty(line) || buffer.Length >= maxCharacters) return;
+
+        buffer.AppendLine(line);
+        if (buffer.Length > maxCharacters) buffer.Length = maxCharacters;
+    }
+
+    /// <summary>
+    ///     Formats the captured tool output for the log: stderr first (the actual error),
+    ///     then stdout when stderr is empty.
+    /// </summary>
+    private static string FormatToolDiagnostics(StringBuilder stdoutBuffer, StringBuilder stderrBuffer)
+    {
+        var stderr = stderrBuffer.ToString().Trim();
+        if (!string.IsNullOrEmpty(stderr)) return $" Tool error output: {stderr}";
+
+        var stdout = stdoutBuffer.ToString().Trim();
+        return string.IsNullOrEmpty(stdout) ? string.Empty : $" Tool output: {stdout}";
+    }
+
+    private readonly record struct MountWaitResult(bool MountSuccessful, int? ExitCode);
 }

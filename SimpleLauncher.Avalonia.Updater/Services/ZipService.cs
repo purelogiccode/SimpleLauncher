@@ -74,7 +74,6 @@ internal class ZipService
                           ".update-staging";
         var stagingRootFullPath = EnsureTrailingSeparator(Path.GetFullPath(stagingRoot));
         CleanupDirectoryQuietly(stagingRoot);
-        CleanupStaleBackups(appDirectoryFullPath);
         Directory.CreateDirectory(stagingRoot);
 
         try
@@ -260,6 +259,12 @@ internal class ZipService
                 $"only {DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
         }
 
+        // Recover .updbak files left by a previously interrupted swap for exactly the
+        // files this update replaces. The old drive-wide recursive search could abort on
+        // protected system directories (e.g. "D:\System Volume Information", bugs
+        // #68274/#68441) and was unbounded when the app directory is a drive root.
+        RecoverPreviousBackups(stagedFiles, appDirectoryFullPath);
+
         // Wait for any live file that is still held open (the application not fully exited
         // yet, an antivirus scan, a second instance) to be released before the swap — a
         // locked file aborted the update with "used by another process" (bugs #67442-67445).
@@ -303,7 +308,10 @@ internal class ZipService
                     ClearReadOnlyAttribute(finalPath);
                     backupPath = finalPath + ".updbak";
                     if (File.Exists(backupPath))
+                    {
+                        ClearReadOnlyAttribute(backupPath);
                         File.Delete(backupPath);
+                    }
                     await MoveFileWithRetryAsync(finalPath, backupPath, relativePath, cancellationToken);
 
                     // Record the backup before moving the staged file into place: if that
@@ -337,9 +345,16 @@ internal class ZipService
                 try
                 {
                     if (File.Exists(finalPath))
+                    {
+                        ClearReadOnlyAttribute(finalPath);
                         File.Delete(finalPath);
+                    }
+
                     if (backupPath != null && File.Exists(backupPath))
+                    {
+                        ClearReadOnlyAttribute(backupPath);
                         File.Move(backupPath, finalPath);
+                    }
                 }
                 catch (Exception rollbackEx)
                 {
@@ -361,7 +376,9 @@ internal class ZipService
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "Failed to delete update backup file: {BackupPath}", backupPath);
+                // Best effort: a leftover .updbak is harmless and is recovered/removed by
+                // the next update. Expected environment condition (AV/OneDrive lock).
+                Log.Information(ex, "Failed to delete update backup file: {BackupPath}", backupPath);
             }
         }
 
@@ -443,10 +460,12 @@ internal class ZipService
     }
 
     /// <summary>
-    ///     Moves a file with retry logic for locked files (same-volume moves are atomic).
-    ///     UPD-21: only transient file LOCK errors are retried — deterministic failures
-    ///     (disk full, ACL, path too long) throw immediately with their real cause
-    ///     instead of burning retries and blaming locks.
+    ///     Moves a file with retry logic for locked or transiently-denied files (same-volume
+    ///     moves are atomic). UPD-21: file LOCK errors and access denials caused by a closing
+    ///     handle / antivirus / OneDrive filter are retried; deterministic failures (disk
+    ///     full, path too long) throw immediately with their real cause. The read-only
+    ///     attribute is cleared on both ends first — extracted installs frequently carry
+    ///     read-only files (bugs #68287/#68288), and the swap must be able to replace them.
     /// </summary>
     private async Task MoveFileWithRetryAsync(string sourcePath, string destinationPath, string entryKey,
         CancellationToken cancellationToken)
@@ -454,6 +473,9 @@ internal class ZipService
         for (var attempt = 1; attempt <= FileWriteRetryAttempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            ClearReadOnlyAttribute(sourcePath);
+            ClearReadOnlyAttribute(destinationPath);
 
             try
             {
@@ -483,11 +505,21 @@ internal class ZipService
             }
             catch (UnauthorizedAccessException ex)
             {
-                // UPD-21: ACL denials are deterministic — fail fast with the real cause.
-                throw new IOException(
-                    $"Cannot move file '{entryKey}': access denied. " +
-                    "Check the install folder permissions and run the updater with sufficient rights.",
-                    ex);
+                // Access denied while a swap is in flight is often transient: an antivirus
+                // scan, the closing application or OneDrive still holds/filters the file.
+                // Retry; only a persistent denial becomes the actionable permissions error.
+                if (attempt >= FileWriteRetryAttempts)
+                {
+                    throw new IOException(
+                        $"Cannot move file '{entryKey}': access denied. " +
+                        "Check the install folder permissions and run the updater with sufficient rights.",
+                        ex);
+                }
+
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>(
+                        $"File access denied ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs * attempt}ms..."));
+                await Task.Delay(FileWriteRetryDelayMs * attempt, cancellationToken);
             }
         }
     }
@@ -598,7 +630,11 @@ internal class ZipService
     }
 
     /// <summary>
-    ///     Deletes a staging directory quietly (leftovers from a crashed run).
+    ///     Deletes a staging directory quietly (leftovers from a crashed run). Read-only
+    ///     files that survive from a previous extraction would make the recursive delete
+    ///     fail with access denied on Windows (bug #68416), so their attributes are cleared
+    ///     first. A directory still locked by OneDrive/antivirus is an expected environment
+    ///     condition — logged at Information, never reported as a bug.
     /// </summary>
     private void CleanupDirectoryQuietly(string directory)
     {
@@ -606,53 +642,77 @@ internal class ZipService
         {
             if (Directory.Exists(directory))
             {
+                ClearReadOnlyAttributesRecursively(directory);
                 Directory.Delete(directory, true);
                 LogMessage?.Invoke(this, new EventArgs<string>("Removed stale update staging directory."));
             }
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Failed to clean staging directory: {Directory}", directory);
+            Log.Information(ex, "Failed to clean staging directory: {Directory}", directory);
         }
     }
 
     /// <summary>
-    ///     Recovers <c>.updbak</c> files left by a previously interrupted swap.
-    ///     When the live file exists the backup is orphaned (the swap completed) and is
-    ///     deleted; when the live file is missing the backup is the only remaining copy
-    ///     of the original and is restored instead of being destroyed.
+    ///     Clears the read-only attribute of every file in a directory tree (best effort).
+    ///     Inaccessible subdirectories (system/OneDrive metadata) are skipped so the caller
+    ///     still gets a chance to delete the remaining tree.
     /// </summary>
-    private static void CleanupStaleBackups(string appDirectoryFullPath)
+    private static void ClearReadOnlyAttributesRecursively(string directory)
     {
-        try
+        var options = new EnumerationOptions
         {
-            var root = appDirectoryFullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (!Directory.Exists(root))
-                return;
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        };
 
-            foreach (var backup in Directory.EnumerateFiles(root, "*.updbak", SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(directory, "*", options))
+            ClearReadOnlyAttribute(file);
+    }
+
+    /// <summary>
+    ///     Recovers <c>.updbak</c> files left by a previously interrupted swap of the files
+    ///     this update is about to replace: when the live file exists the backup is
+    ///     orphaned (the swap completed) and is deleted; when the live file is missing the
+    ///     backup is the only remaining copy of the original and is restored instead of
+    ///     being destroyed. Only the exact destinations of the staged payload are probed,
+    ///     so protected system directories can never abort the update (bugs #68274/#68441).
+    /// </summary>
+    private void RecoverPreviousBackups(
+        List<(string RelativePath, string StagedPath, UnixFileMode? ArchiveMode)> stagedFiles,
+        string appDirectoryFullPath)
+    {
+        foreach (var (relativePath, _, _) in stagedFiles)
+        {
+            var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
+            if (!finalPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                continue; // the swap re-validates containment before touching the file
+
+            var backupPath = finalPath + ".updbak";
+            try
             {
-                try
-                {
-                    var livePath = backup[..^".updbak".Length];
-                    if (!File.Exists(livePath))
-                    {
-                        File.Move(backup, livePath);
-                        Log.Information("Restored a file left by an interrupted update: {LivePath}", livePath);
-                        continue;
-                    }
+                if (!File.Exists(backupPath))
+                    continue;
 
-                    File.Delete(backup);
-                }
-                catch (Exception ex)
+                if (!File.Exists(finalPath))
                 {
-                    Log.Warning(ex, "Failed to delete stale update backup: {Backup}", backup);
+                    ClearReadOnlyAttribute(backupPath);
+                    File.Move(backupPath, finalPath);
+                    Log.Information("Restored a file left by an interrupted update: {LivePath}", finalPath);
+                }
+                else
+                {
+                    ClearReadOnlyAttribute(backupPath);
+                    File.Delete(backupPath);
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to enumerate stale update backups");
+            catch (Exception ex)
+            {
+                // Expected environment condition (antivirus/OneDrive lock, ACL): the swap
+                // below reports the real error if the file is actually in the way.
+                Log.Information(ex, "Could not clean up a stale update backup: {BackupPath}", backupPath);
+            }
         }
     }
 
@@ -772,12 +832,20 @@ internal class ZipService
             }
             catch (UnauthorizedAccessException ex)
             {
-                // UPD-21: ACL/read-only denials are deterministic — fail fast with
-                // the real cause instead of burning ~7.5s of retries.
-                throw new IOException(
-                    $"Cannot write file '{entryKey}': access denied. " +
-                    "Check the install folder permissions and run the updater with sufficient rights.",
-                    ex);
+                // A transient denial (antivirus/OneDrive filter, handle closing) is retried;
+                // only a persistent one is surfaced with the actionable permissions error.
+                if (attempt >= FileWriteRetryAttempts)
+                {
+                    throw new IOException(
+                        $"Cannot write file '{entryKey}': access denied. " +
+                        "Check the install folder permissions and run the updater with sufficient rights.",
+                        ex);
+                }
+
+                LogMessage?.Invoke(this,
+                    new EventArgs<string>(
+                        $"File access denied ({attempt}/{FileWriteRetryAttempts}): {entryKey} - retrying in {FileWriteRetryDelayMs * attempt}ms..."));
+                await Task.Delay(FileWriteRetryDelayMs * attempt, cancellationToken);
             }
         }
     }

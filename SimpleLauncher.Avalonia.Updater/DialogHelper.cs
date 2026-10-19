@@ -74,7 +74,39 @@ internal static class DialogHelper
         // Closing via the title-bar X must not leave the await pending forever.
         dialog.Closed += (_, _) => tcs.TrySetResult(false);
 
-        await dialog.ShowDialog(owner);
+        // The owner can already be disposed when the user closed the updater while the
+        // update was still running (e.g. the restart-failed notice after a successful
+        // install, bug #68273): ShowDialog throws ObjectDisposedException from
+        // SetWindowStartupLocation while reading the owner's screens. Fall back to an
+        // ownerless window instead of failing the whole update flow.
+        if (owner.IsVisible)
+        {
+            try
+            {
+                await dialog.ShowDialog(owner);
+                return await tcs.Task;
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                Log.Debug(ex, "Updater dialog owner was already closed; showing the dialog without an owner");
+            }
+        }
+
+        if (!dialog.IsVisible)
+        {
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            try
+            {
+                dialog.Show();
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                // The UI is already gone (shutdown in progress): don't let a notice about
+                // the update mask the real result.
+                Log.Debug(ex, "Could not show the updater dialog; the UI is shutting down");
+                return false;
+            }
+        }
 
         return await tcs.Task;
 

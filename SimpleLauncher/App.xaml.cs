@@ -100,6 +100,7 @@ public partial class App : IDisposable
     private const int SwRestore = 9;
     private EventWaitHandle _instanceSignal = null!;
     private bool _isFirstInstance;
+    private bool _ownsSingleInstanceMutex;
 
     private Mutex _singleInstanceMutex = null!;
     private FileStream? _singleInstanceLock;
@@ -115,9 +116,36 @@ public partial class App : IDisposable
     public void Dispose()
     {
         _instanceSignal?.Dispose();
+        ReleaseSingleInstanceMutex();
         _singleInstanceMutex?.Dispose();
         _singleInstanceLock?.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    ///     Releases the single-instance mutex only when this thread actually owns it.
+    ///     A losing instance (or one that opened an existing mutex) does not own it, and
+    ///     <see cref="Mutex.ReleaseMutex" /> would throw <see cref="ApplicationException" />;
+    ///     that race is benign and must not be reported as a bug (bug #68430).
+    /// </summary>
+    private void ReleaseSingleInstanceMutex()
+    {
+        if (!_ownsSingleInstanceMutex || _singleInstanceMutex is null) return;
+
+        try
+        {
+            _singleInstanceMutex.ReleaseMutex();
+        }
+        catch (Exception ex) when (ex is ApplicationException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Not a bug: ownership can be lost when a concurrent launch created/disposed
+            // the named mutex first. The process is exiting either way.
+            Log.Debug(ex, "Single-instance mutex was not owned at exit; ignoring release failure");
+        }
+        finally
+        {
+            _ownsSingleInstanceMutex = false;
+        }
     }
 
     /// <summary>
@@ -609,37 +637,50 @@ public partial class App : IDisposable
             _singleInstanceLock = singleInstanceLock;
             _isFirstInstance = singleInstanceLock is not null;
 
-            try
+            // Only the instance that is allowed to run (or the fallback that needs the mutex
+            // verdict because the lock file was unavailable) creates the mutex. A process
+            // that already lost the lock-file race must NOT create/own it: disposing an
+            // owned named mutex makes it abandoned, and the winner would then throw on exit
+            // calling ReleaseMutex from a thread that does not own it (bug #68430).
+            if (_isFirstInstance || lockFileUnavailable)
             {
-                // The named mutex also guards against the Avalonia app (which shares it).
-                _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
+                try
+                {
+                    // The named mutex also guards against the Avalonia app (which shares it).
+                    _singleInstanceMutex = new Mutex(true, SingleInstance.MutexName, out var mutexCreatedNew);
 
-                // The lock file is authoritative when it was acquired: during a simultaneous
-                // double launch the losing process may create the mutex before it exits, and
-                // that must not flip the lock-file winner's verdict (or both would quit).
-                if (lockFileUnavailable) _isFirstInstance = mutexCreatedNew;
-            }
-            catch (AbandonedMutexException)
-            {
-                // The mutex was abandoned by a previous instance (e.g., due to a crash).
-                // We successfully acquired it; the lock-file verdict still decides whether
-                // this is the first instance.
-                Log.Logger.Debug(
-                    "Mutex was abandoned by a previous instance, but successfully acquired by this instance");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to create or acquire single instance mutex");
-                ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
-                return;
-            }
-            catch (IOException ex)
-            {
-                ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to create or acquire single instance mutex");
-                ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
-                return;
+                    // Initial ownership is granted only when this call creates the mutex;
+                    // when the mutex already exists the constructor does not acquire it.
+                    _ownsSingleInstanceMutex = mutexCreatedNew;
+
+                    // The lock file is authoritative when it was acquired: during a simultaneous
+                    // double launch the losing process may create the mutex before it exits, and
+                    // that must not flip the lock-file winner's verdict (or both would quit).
+                    if (lockFileUnavailable) _isFirstInstance = mutexCreatedNew;
+                }
+                catch (AbandonedMutexException)
+                {
+                    // The mutex was abandoned by a previous instance (e.g., due to a crash).
+                    // We successfully acquired it; the lock-file verdict still decides whether
+                    // this is the first instance.
+                    _ownsSingleInstanceMutex = true;
+                    Log.Logger.Debug(
+                        "Mutex was abandoned by a previous instance, but successfully acquired by this instance");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    ServiceProvider.GetRequiredService<ILogger>()
+                        .Error(ex, "Failed to create or acquire single instance mutex");
+                    ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
+                    return;
+                }
+                catch (IOException ex)
+                {
+                    ServiceProvider.GetRequiredService<ILogger>()
+                        .Error(ex, "Failed to create or acquire single instance mutex");
+                    ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
+                    return;
+                }
             }
 
             // After attempting to acquire the mutex (and handling AbandonedMutexException),
@@ -662,6 +703,9 @@ public partial class App : IDisposable
                     RestoreExistingWindow();
                 }
 
+                // Release before disposing when this process owns it: disposing an owned
+                // named mutex while another process holds a handle marks it abandoned.
+                ReleaseSingleInstanceMutex();
                 _singleInstanceMutex?.Dispose();
 
                 // WPF's Application.Shutdown() is not enough here: when it is called before
@@ -993,39 +1037,12 @@ public partial class App : IDisposable
             ServiceProvider.GetRequiredService<ILogger>().Error(ex, "Failed to dispose gamepad resources");
         }
 
-        // Release the mutex if this was the first instance and the mutex was successfully created
-        // The new instance (started with --restarting) didn't acquire the mutex, so _isFirstInstance will be false,
-        // and it won't try to release it.
-        if (_isFirstInstance)
-        {
-            try
-            {
-                _singleInstanceMutex.ReleaseMutex();
-            }
-            catch (ApplicationException ex)
-            {
-                // Notify developer
-                ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to release single instance mutex on exit");
-            }
-            catch (ObjectDisposedException ex)
-            {
-                // Notify developer
-                ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to release single instance mutex on exit");
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Notify developer
-                ServiceProvider.GetRequiredService<ILogger>()
-                    .Error(ex, "Failed to release single instance mutex on exit");
-            }
-            finally
-            {
-                _singleInstanceMutex?.Dispose();
-            }
-        }
-
+        // Release the mutex only when this thread actually owns it, then dispose it.
+        // A losing/second instance never owned it, and a simultaneous launch can make
+        // this process open an existing mutex without acquiring it; calling
+        // ReleaseMutex from a non-owning thread throws ApplicationException (#68430).
+        ReleaseSingleInstanceMutex();
+        _singleInstanceMutex?.Dispose();
         DebugWindow.ShutdownWindow();
         Log.CloseAndFlush();
         Dispose();
