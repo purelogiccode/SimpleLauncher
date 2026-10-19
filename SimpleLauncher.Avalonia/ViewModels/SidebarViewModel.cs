@@ -29,7 +29,7 @@ public class SidebarViewModel
         foreach (var system in systems)
         {
             var iconPath = imageResolver is not null
-                ? imageResolver.ResolveSystemIconAsync(system.SystemName).GetAwaiter().GetResult()
+                ? imageResolver.ResolveSystemIcon(system.SystemName)
                 : ExactPngIcon(system.SystemName);
 
             Systems.Add(new SidebarSystemItem

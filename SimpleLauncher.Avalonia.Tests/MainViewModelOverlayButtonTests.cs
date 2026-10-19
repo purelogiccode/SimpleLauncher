@@ -38,6 +38,7 @@ public class MainViewModelOverlayButtonTests : IDisposable
     private readonly SettingsManagerService _settings;
     private readonly string _systemXmlPath;
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"SL_OverlayTest_{Guid.NewGuid():N}");
+    private readonly AvaloniaGameCacheService _gameCache = new();
     private readonly MainViewModel _viewModel;
 
     public MainViewModelOverlayButtonTests()
@@ -93,7 +94,7 @@ public class MainViewModelOverlayButtonTests : IDisposable
         var systemManager = new SystemManagerService(_config);
         UnifiedTestDatabase.SeedSystemsFromXml(systemManager, _systemXmlPath);
         var loadingOrchestrator = new AvaloniaGameFileLoadingOrchestrator(
-            new AvaloniaGameCacheService(), _logger.Object);
+            _gameCache, _logger.Object);
 
         var loadingOverlay = new AvaloniaLoadingOverlayService(new PlaySoundEffects(settings, _logger.Object));
         loadingOverlay.Initialize(_loadingHost);
@@ -121,6 +122,27 @@ public class MainViewModelOverlayButtonTests : IDisposable
 
         // Paginate only above 1 million games so the test views are never sliced.
         _viewModel.ConfigurePagination(1_000_000);
+    }
+
+    /// <summary>
+    ///     Startup shows the system-selection grid before the library is scanned. The
+    ///     initial InitializeAsync call must therefore not enumerate the ROM folders; the
+    ///     counts are computed on demand by RefreshSystemCountsAsync (background refresh
+    ///     after the grid is visible).
+    /// </summary>
+    [Fact]
+    public async Task InitializeAsync_WithoutGameCounts_DoesNotScanRomFolders()
+    {
+        await _viewModel.InitializeAsync(includeGameCounts: false);
+
+        Assert.Equal(0, _gameCache.CachedSystemCount);
+        Assert.Empty(_viewModel.SystemGameCounts);
+
+        await _viewModel.RefreshSystemCountsAsync();
+
+        Assert.Equal(2, _gameCache.CachedSystemCount);
+        Assert.Equal(2, _viewModel.SystemGameCounts["Nintendo NES"]);
+        Assert.Equal(1, _viewModel.SystemGameCounts["Test System"]);
     }
 
     public void Dispose()

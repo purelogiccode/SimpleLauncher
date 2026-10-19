@@ -176,8 +176,11 @@ public partial class MainWindow : Window, IPaginationHost
         PlayHistoryDataGrid.AddHandler(KeyDownEvent,
             (_, e) => _ = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
 
-        // Populate system data from system.xml (sidebar + top System ComboBox)
-        PopulateSidebarFromSystemXml();
+        // Populate the top System ComboBox before the window shows. The sidebar and its
+        // icons are filled by ShowSystemSelectionScreenAsync after the window opens:
+        // resolving every system icon here delayed the first frame and was not visible
+        // on the startup screen.
+        _systemSelectionOrchestrator.LoadOrReloadSystemManager();
 
         // NOTE: no initial System ComboBox selection here — selecting a system would
         // fire SystemComboBox_SelectionChanged synchronously and trigger a full library
@@ -408,23 +411,40 @@ public partial class MainWindow : Window, IPaginationHost
 
             InitializeThemeMenu();
 
-            await _viewModel.InitializeAsync();
+            // Load the system list only: InitializeAsync's default count pass scans
+            // every configured ROM folder, which delayed the system-selection grid on
+            // large libraries. The grid only needs the cheap system list; the counts
+            // refresh in the background once the grid is visible (WPF shows the grid
+            // first and scans a system only when it is opened).
+            var startupStopwatch = Stopwatch.StartNew();
+            await _viewModel.InitializeAsync(includeGameCounts: false);
+            Log.Debug("System list loaded in {ElapsedMilliseconds} ms", startupStopwatch.ElapsedMilliseconds);
             RefreshSidebarCounts();
 
             var systems = _systemManagerService.LoadSystems();
 
-            // Start watching all configured ROM folders (debounced live refresh)
-            _fileWatcher.StartWatchingForSystems(systems);
-
             // First-run experience (parity with WPF MainWindow.HandleLoadedAsync):
             // if no systems are configured yet, try to auto-discover Windows Store
             // games and, failing that, offer Easy Mode to bootstrap configuration.
-            if (systems.Count == 0) await RunFirstRunExperienceAsync();
+            if (systems.Count == 0)
+            {
+                await RunFirstRunExperienceAsync();
+                systems = _systemManagerService.LoadSystems(); // first-run may have added one
+            }
 
             // WPF parity: show system selection screen at startup instead of
             // the All Games browser. User picks a system from the grid to begin.
+            startupStopwatch.Restart();
             await ShowSystemSelectionScreenAsync();
+            Log.Debug("System selection grid shown in {ElapsedMilliseconds} ms",
+                startupStopwatch.ElapsedMilliseconds);
             Log.Debug("DisplaySystemSelectionScreenAsync called");
+
+            // Neither of these is needed to draw the system list: scan the ROM folders
+            // for the sidebar count badges in the background and start the live-refresh
+            // watchers after the grid is on screen.
+            _ = RefreshSystemCountsInBackgroundAsync();
+            _fileWatcher.StartWatchingForSystems(systems);
         }
         catch (Exception ex)
         {
@@ -570,6 +590,24 @@ public partial class MainWindow : Window, IPaginationHost
     public void RefreshSidebarCounts()
     {
         _viewModel.Sidebar.RefreshCounts(_viewModel.SystemGameCounts);
+    }
+
+    /// <summary>
+    ///     Refreshes the sidebar count badges in the background after the system-selection
+    ///     grid is visible. The scan enumerates every system's ROM folders, so it must
+    ///     never delay the first frame (see Window_Opened).
+    /// </summary>
+    private async Task RefreshSystemCountsInBackgroundAsync()
+    {
+        try
+        {
+            await _viewModel.RefreshSystemCountsAsync();
+            RefreshSidebarCounts();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to refresh the sidebar game counts");
+        }
     }
 
     #region Keyboard Shortcuts
@@ -2880,8 +2918,12 @@ public partial class MainWindow : Window, IPaginationHost
         }
 
         // Rebuild sidebar data so icon paths are resolved
+        var populateStopwatch = Stopwatch.StartNew();
         _viewModel.PopulateSidebar(systems);
         _viewModel.Sidebar.RefreshCounts(_viewModel.SystemGameCounts);
+        Log.Debug("Sidebar icon paths resolved in {ElapsedMilliseconds} ms",
+            populateStopwatch.ElapsedMilliseconds);
+        populateStopwatch.Restart();
 
         var systemImageSize = _settings.ThumbnailSizeForSystem;
 
@@ -2987,6 +3029,9 @@ public partial class MainWindow : Window, IPaginationHost
 
             SystemSelectionWrapPanel.Children.Add(systemButton);
         }
+
+        Log.Debug("System selection cards built in {ElapsedMilliseconds} ms",
+            populateStopwatch.ElapsedMilliseconds);
 
         await Task.CompletedTask;
     }

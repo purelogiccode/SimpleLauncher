@@ -15,8 +15,13 @@ public class SystemImageResolverService : ISystemImageResolverService
 {
     private static readonly string[] DefaultImageExtensions = [".png", ".jpg", ".jpeg"];
 
+    private const int ImageFileCacheMilliseconds = 2000;
+
     private readonly IConfiguration _configuration;
+    private readonly Lock _imageFilesLock = new();
     private readonly SettingsManagerService _settings;
+    private List<string>? _imageFilesCache;
+    private long _imageFilesCacheTimestamp;
 
     /// <summary>
     ///     Initializes a new instance of the SystemImageResolverService with the specified dependencies.
@@ -43,7 +48,13 @@ public class SystemImageResolverService : ISystemImageResolverService
     /// <inheritdoc />
     public Task<string?> ResolveSystemIconAsync(string systemName)
     {
-        return Task.FromResult(FindBestMatch(systemName));
+        return Task.FromResult(ResolveSystemIcon(systemName));
+    }
+
+    /// <inheritdoc />
+    public string? ResolveSystemIcon(string systemName)
+    {
+        return FindBestMatch(systemName);
     }
 
     /// <summary>
@@ -102,7 +113,7 @@ public class SystemImageResolverService : ISystemImageResolverService
 
         if (!enableFuzzyMatching) return null;
 
-        var filesInImageFolder = GetImageFiles(systemImageFolder, imageExtensions).ToList();
+        var filesInImageFolder = GetImageFiles(systemImageFolder, imageExtensions);
 
         string? bestMatchPath = null;
         double highestSimilarity = 0;
@@ -133,9 +144,29 @@ public class SystemImageResolverService : ISystemImageResolverService
         return bestMatchPath != null && highestSimilarity >= similarityThreshold ? bestMatchPath : null;
     }
 
-    private static IEnumerable<string> GetImageFiles(string systemImageFolder, string[] imageExtensions)
+    /// <summary>
+    ///     Returns the image files in the system-image folder. The raw directory listing is
+    ///     cached briefly (2 s): one grid build resolves every configured system, and each
+    ///     resolution would otherwise re-enumerate the folder twice (annotation stripping
+    ///     and fuzzy matching). A short lifetime still picks up icons dropped in at runtime.
+    /// </summary>
+    private List<string> GetImageFiles(string systemImageFolder, string[] imageExtensions)
     {
-        return Directory.GetFiles(systemImageFolder)
-            .Where(f => imageExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+        List<string> files;
+        lock (_imageFilesLock)
+        {
+            var now = Environment.TickCount64;
+            if (_imageFilesCache is null || now - _imageFilesCacheTimestamp > ImageFileCacheMilliseconds)
+            {
+                _imageFilesCache = Directory.GetFiles(systemImageFolder).ToList();
+                _imageFilesCacheTimestamp = now;
+            }
+
+            files = _imageFilesCache;
+        }
+
+        return files
+            .Where(f => imageExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
     }
 }

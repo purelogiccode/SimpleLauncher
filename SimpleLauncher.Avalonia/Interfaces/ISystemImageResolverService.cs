@@ -24,4 +24,12 @@ public interface ISystemImageResolverService
     /// <param name="systemName">The system name to resolve the icon for.</param>
     /// <returns>The matched image path, or null when nothing matches.</returns>
     Task<string?> ResolveSystemIconAsync(string systemName);
+
+    /// <summary>
+    ///     Synchronous variant of <see cref="ResolveSystemIconAsync" /> used by the sidebar
+    ///     (the resolution is local file-system work and runs on the UI thread anyway).
+    /// </summary>
+    /// <param name="systemName">The system name to resolve the icon for.</param>
+    /// <returns>The matched image path, or null when nothing matches.</returns>
+    string? ResolveSystemIcon(string systemName);
 }

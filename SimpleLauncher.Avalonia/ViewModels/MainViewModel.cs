@@ -1093,7 +1093,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     Heavy work (file enumeration + cover checks) runs on the thread pool;
     ///     UI-bound properties are updated on the captured UI context.
     /// </summary>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(bool includeGameCounts = true)
     {
         SetLoadingState(true, _localization.GetString("Loadingsystems", "Loading systems..."));
         try
@@ -1115,15 +1115,15 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             // WPF parity: do not build the full cross-system game list at startup.
             // The window opens on the system-selection screen; per-system scanning
             // happens only when a system (or All Games) is selected by the user.
-            var (systems, counts) = await Task.Run(() =>
-            {
-                var loadedSystems = _systemManager.LoadSystems();
-                var loadedCounts = ComputeSystemCounts(loadedSystems);
-                return (loadedSystems, loadedCounts);
-            });
+            // The system list itself comes from the (cached) unified database and is
+            // cheap; scanning every ROM folder for the count badges is not. Callers that
+            // show the system-selection grid first pass includeGameCounts: false and
+            // refresh the counts in the background once the grid is visible.
+            var systems = await Task.Run(() => _systemManager.LoadSystems());
 
             _allSystems = systems;
-            SystemGameCounts = counts;
+            if (includeGameCounts)
+                SystemGameCounts = await Task.Run(() => ComputeSystemCounts(systems));
             Log.Information("Game library initialized: {SystemCount} system(s)", systems.Count);
             IsShowingFavorites = false;
             IsShowingRetroAchievements = false;
@@ -1143,6 +1143,28 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         finally
         {
             SetLoadingState(false);
+        }
+    }
+
+    /// <summary>
+    ///     Computes the per-system game counts (a disk scan of every system's folders)
+    ///     and stores them for the sidebar badges. Called after the system-selection
+    ///     grid is already visible so startup never waits for a full library scan
+    ///     (WPF shows the grid first and scans only when a system is opened).
+    /// </summary>
+    public async Task RefreshSystemCountsAsync()
+    {
+        if (_allSystems.Count == 0) return;
+
+        var systems = _allSystems;
+        try
+        {
+            SystemGameCounts = await Task.Run(() => ComputeSystemCounts(systems));
+            Log.Debug("System game counts refreshed for {SystemCount} system(s)", systems.Count);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to refresh system game counts");
         }
     }
 
