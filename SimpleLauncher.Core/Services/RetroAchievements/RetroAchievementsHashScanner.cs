@@ -171,7 +171,11 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
 
             try
             {
-                await scanTask;
+                // Background scan: never resume on the caller's context. RunScanAsync is
+                // started from the UI thread; without this, its completion (flag release)
+                // is posted to the UI thread, and a shutdown that blocks that thread in
+                // CancelScanAndWaitAsync(...).GetResult() would never observe completion.
+                await scanTask.ConfigureAwait(false);
                 return true;
             }
             catch (OperationCanceledException)
@@ -210,7 +214,12 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
 
         try
         {
-            await scanTask.WaitAsync(timeout);
+            // ConfigureAwait(false) is required: App.OnExit (WPF) and App.Dispose
+            // (Avalonia) block the UI thread on this method with GetResult(). With the
+            // default capture, the continuation would be posted back to that blocked UI
+            // thread, so the timeout could never resume the method and the process would
+            // linger after the tray Exit command.
+            await scanTask.WaitAsync(timeout).ConfigureAwait(false);
             _logger.Debug("[RA Hash Scanner] Hash scan finished cleanly during shutdown");
         }
         catch (TimeoutException)

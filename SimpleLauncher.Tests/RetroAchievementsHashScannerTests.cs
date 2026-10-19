@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Reflection;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.RetroAchievements;
@@ -355,6 +356,66 @@ public class RetroAchievementsHashScannerTests : IDisposable
 
         Assert.False(_scanner.IsScanning);
         Assert.False(await scanTask);
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="RetroAchievementsHashScanner.CancelScanAndWaitAsync" />
+    ///     completes even when the caller blocks its own synchronization context with
+    ///     <c>GetAwaiter().GetResult()</c>. App shutdown calls it that way on the UI thread
+    ///     (WPF App.OnExit, Avalonia App.Dispose): without <c>ConfigureAwait(false)</c> the
+    ///     continuation is posted back to the blocked UI thread, so the app never exits
+    ///     (the process lingers in Task Manager after the tray Exit command).
+    /// </summary>
+    [Fact]
+    public void CancelScanAndWaitAsync_DoesNotDeadlockWhenCallerBlocksItsSynchronizationContext()
+    {
+        // A scan that never completes: WaitAsync's timeout determines the return, and the
+        // continuation must not need the caller's (blocked) context to resume.
+        var neverCompletingScan = new TaskCompletionSource<bool>().Task;
+        typeof(RetroAchievementsHashScanner)
+            .GetField("_runningScanTask", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(_scanner, neverCompletingScan);
+
+        var finished = new ManualResetEventSlim(false);
+        Exception? error = null;
+
+        var thread = new Thread(() =>
+        {
+            SynchronizationContext.SetSynchronizationContext(new NeverPumpingSynchronizationContext());
+            try
+            {
+                _scanner.CancelScanAndWaitAsync(TimeSpan.FromMilliseconds(250)).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                error = ex;
+            }
+            finally
+            {
+                finished.Set();
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "CancelScanDeadlockTest"
+        };
+        thread.Start();
+
+        Assert.True(finished.Wait(TimeSpan.FromSeconds(5)),
+            "CancelScanAndWaitAsync deadlocked on the caller's synchronization context");
+        Assert.Null(error);
+    }
+
+    /// <summary>
+    ///     A synchronization context that drops posted continuations, simulating a UI thread
+    ///     blocked in a synchronous wait (its message pump cannot run).
+    /// </summary>
+    private sealed class NeverPumpingSynchronizationContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            // Deliberately dropped: the calling thread is blocked and never pumps.
+        }
     }
 
     /// <summary>
