@@ -123,6 +123,9 @@ pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
   their public URLs, then updates `version.txt` **last**, so clients never see a version before
   its assets exist.
 - `-DryRun` prints the plan; `-ReleaseDir` selects a non-default package folder.
+- The manual `release.yml` workflow runs this publisher automatically after creating/updating the
+  GitHub release, using the `R2_*` repository secrets. Local/manual releases still run the script
+  explicitly.
 
 ### Publish the Avalonia app (multi-targeted)
 

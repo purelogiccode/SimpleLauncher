@@ -120,15 +120,16 @@ The in-app update fallback (`https://assets.purelogiccode.com/Simple%20Launcher/
 is served from the Cloudflare R2 bucket `simplelauncher-thumbnails` under the prefix
 `Simple Launcher/Simple Launcher/`.
 
-- After packaging a release, publish the fallback copy with:
+- After local packaging, publish the fallback copy with:
   `pwsh scripts/publish-fallback-r2.ps1 -Version <version>`
 - The script uploads the four `release_{version}_{rid}.zip` and four `updater_{rid}.zip` assets,
   verifies their public URLs, and updates `version.txt` **last** — never update `version.txt`
   before all bundles exist.
 - R2 credentials live in the gitignored `AGENTS.local.md` `R2_*` block (or environment
   variables); never commit them. `-DryRun` prints the upload plan without touching R2.
-- `release.yml` publishes the GitHub release; this step is the separate secondary-server copy
-  used by the updater when GitHub is unreachable or rate-limited.
+- The manual `release.yml` workflow runs the publisher automatically after creating/updating the
+  GitHub release, using the `R2_*` repository secrets. Local/manual releases still require the
+  script to be run explicitly.
 
 ## 🖥️ Linux VM GUI test harness (AT-SPI + vision)
 

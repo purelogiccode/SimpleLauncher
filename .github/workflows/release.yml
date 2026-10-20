@@ -2,8 +2,9 @@ name: Publish release
 
 # Manual release: packages the Windows WPF + Avalonia bundle for win-x64 and win-arm64 via
 # scripts/package-release.ps1 and the framework-dependent Linux bundle for linux-x64 and linux-arm64
-# via scripts/package-release-linux.ps1, uploads the zips as workflow artifacts and
-# creates/updates the GitHub release the in-app updater reads.
+# via scripts/package-release-linux.ps1, uploads the zips as workflow artifacts,
+# creates/updates the GitHub release the in-app updater reads, and mirrors the same
+# assets to the Cloudflare R2 download fallback with scripts/publish-fallback-r2.ps1.
 #
 # Assets produced per RID:
 #   release_{version}_{rid}.zip   Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe side by side
@@ -103,3 +104,19 @@ jobs:
           }
 
           gh release upload $tag $assets --clobber
+
+      - name: Publish download fallback to Cloudflare R2
+        if: ${{ inputs.create_release }}
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PREFIX: ${{ secrets.R2_PREFIX }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+        run: >
+          ./scripts/publish-fallback-r2.ps1
+          -Version $env:VERSION
+          -ReleaseDir '${{ github.workspace }}/artifacts/release'
