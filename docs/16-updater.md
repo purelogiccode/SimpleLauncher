@@ -14,7 +14,7 @@
 - **Silent check** at startup. If every GitHub source is unreachable (offline, rate-limited, blocked), the check falls back to the secondary server.
 - **Manual check**: About window "Check for Updates".
 - **Rate limiting (investigated 2026-10-14)**: the GitHub REST API allows only **60 unauthenticated requests per hour per IP** (`HTTP 403 "API rate limit exceeded"`). Apps up to 5.6.0 have no fallback, so on a rate-limited/shared IP their check ends in "Error checking for updates" instead of the update window — for example a 5.6.0 run failed exactly this way right after a 5.7.0 run on the same IP. 5.6.1+ fall back to the secondary server on any non-success response, so keeping `version.txt` + the hosted packages in sync (see [15 — Development](15-development.md#release-workflow-from-git-history--whats-new)) is what makes update detection resilient to GitHub rate limits and outages.
-- Version comparison against the current `5.8.0`; new version → prompts to download.
+- Version comparison against the current `5.8.1`; new version → prompts to download.
 - **Missing platform assets**: a release is not required to ship every RID — when the latest release has no `release_{version}_{rid}.zip` / `updater_{rid}.zip` for the current platform, the check logs at Information and reports no update (LB-23) instead of an Error (which would also file a bug report).
 
 ## Update assets
@@ -85,6 +85,23 @@ its live mode and a file added by the update receives the mode carried by the re
   application not fully exited, an antivirus scan, a second instance) to be released. A file that
   stays locked aborts the update with a manual-update prompt and an Information log — an expected
   user condition, never a bug report (#67442-67445).
+- **Read-only files and transient denials (5.8.1)**: the swap clears the read-only attribute on
+  both ends before every move/write and retries access-denied failures (antivirus/OneDrive
+  filters, a closing handle) with backoff; only a persistent denial surfaces the actionable
+  permissions error (#68287/#68288).
+- **Interrupted swaps (5.8.1)**: a previous run's `.updbak` files are now recovered only for the
+  exact destinations of the staged payload, instead of recursively scanning the whole install
+  drive. Protected system folders (for example `D:\System Volume Information`) can no longer abort
+  the update, and a missing live file is restored from its backup before the new swap
+  (#68274/#68441). Staging cleanup clears read-only leftovers and stays at Information level
+  (#68416).
+- **Archive-viewer folders (5.8.1)**: if the app runs from WinRAR/7-Zip/Explorer zip temporary
+  extraction, the updater refuses to install (the viewer deletes the folder when the app exits)
+  and tells the user to extract the release ZIP to a permanent folder first (#68272). A restart
+  `Win32Exception` "access denied" is classified as an expected environment condition with the
+  same guidance, not a bug report.
+- **Closed updater window (5.8.1)**: if the user closes the updater window mid-update, notices
+  fall back to an ownerless dialog instead of throwing from `ShowDialog` (#68273).
 
 Behavior parity with the dropped WPF updater is intentional: same Serilog setup (rolling warning
 file + bug-report sink) and launch stats, same progress/log window with a Cancel button, the same

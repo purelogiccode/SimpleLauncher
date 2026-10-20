@@ -2,7 +2,20 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
-## 5.8.0 — 2026-10-14 (current)
+## 5.8.1 — 2026-10-19 (current)
+
+- **Faster Avalonia startup**: the system-selection grid is shown before the ROM folders are scanned; sidebar count badges refresh in the background and system icons resolve synchronously with a short directory cache.
+- **Shutdown deadlock**: exiting while a RetroAchievements hash scan was running no longer leaves the process alive — the shutdown wait resumes on the thread pool instead of the blocked UI thread.
+- **Single-instance guard**: the shared named mutex is created and owned only by the instance allowed to run, and released only by its owner, so simultaneous WPF/Avalonia launches no longer abandon it or throw `ApplicationException` on exit (#68430).
+- **Updater hardening**: interrupted `.updbak` swaps are recovered only for the staged payload's own destinations (never by scanning the install drive), read-only files are replaced and transient access denials retried, archive-viewer temp folders are refused with extract-first guidance, restart access-denied is treated as an expected condition, and a closed updater window falls back to an ownerless dialog (#68272–#68441).
+- **XISO mount diagnostics**: SimpleXisoDrive stdout/stderr and its exit code are captured (thread-safely) and reported at Information level, so unsupported images and missing drivers no longer generate duplicate bug reports (#68434–#68437).
+- **Avalonia launcher**: launch exceptions are classified before logging, keeping elevation-required, UAC-cancel and invalid-executable conditions out of bug reports (#68419).
+- **Code quality**: third InspectCode cleanup batch (unused dependencies/parameters removed, design-time types and typed binding paths in XAML, field-backed properties, ISO9660 root-record validation tightened); builds remain at zero warnings.
+- **Dependencies**: Meziantou.Analyzer 3.0.314, NAudio 3.3.0, SharpCompress 0.50.6, CHDSharp 1.5.0, Markdown.Avalonia 12.0.2, Microsoft.Extensions.Http.Resilience 10.11.0.
+- **CI & docs**: CI now builds Debug **and** Release with `-warnaserror`, compiles the Linux updater, and a four-RID packaging dry run verifies the zips and Linux executable bits; the Pages site and wiki share one side menu and the dark/light theme.
+- **Tests**: 2208 WPF + 704 Avalonia fast tests; 83 WPF + 11 Avalonia slow tests.
+
+## 5.8.0 — 2026-10-14
 
 - **Unified Windows release**: one zip ships `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) side by side with a single shared `Updater.exe` that relaunches whichever app started it; single-instance guard shared across both apps.
 - **Unified SQLite settings database** (`settings.dat`, WPF + Avalonia): favorites, play history, app/emulator settings, per-system play times and system configs in one store; automatic legacy migration (`settings.xml`, `system.xml`, `favorites.dat`, `playhistory.dat`) with verification + `.bak` shelving, merge into an existing database, read-only recovery, and cross-app rename/delete consistency.

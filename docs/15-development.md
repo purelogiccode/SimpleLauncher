@@ -54,8 +54,8 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 `scripts/package-release.ps1` reproduces the unified release artifacts (also used by CI):
 
 ```powershell
-pwsh scripts/package-release.ps1 -Version 5.8.0
-# -> artifacts\release\release_5.8.0_win-x64.zip, release_5.8.0_win-arm64.zip
+pwsh scripts/package-release.ps1 -Version 5.8.1
+# -> artifacts\release\release_5.8.1_win-x64.zip, release_5.8.1_win-arm64.zip
 # -> artifacts\release\updater_win-x64.zip, updater_win-arm64.zip
 ```
 
@@ -73,8 +73,8 @@ pwsh scripts/package-release.ps1 -Version 5.8.0
 asset names the in-app updater looks up in the GitHub release):
 
 ```powershell
-pwsh scripts/package-release-linux.ps1 -Version 5.8.0
-# -> artifacts\release\release_5.8.0_linux-x64.zip, release_5.8.0_linux-arm64.zip
+pwsh scripts/package-release-linux.ps1 -Version 5.8.1
+# -> artifacts\release\release_5.8.1_linux-x64.zip, release_5.8.1_linux-arm64.zip
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 ```
 
@@ -98,7 +98,7 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.0
 - Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
   `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
   verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
-- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 703 Avalonia
+- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 704 Avalonia
   tests pass with `dotnet test -c Debug -f net10.0 -r linux-x64` (Fedora's SDK defaults to the
   `fedora.44-x64` RID, whose apphost pack is not on nuget.org, so the `-r linux-x64` override is
   required to restore/build), and the published app launches and renders through XWayland
@@ -132,11 +132,11 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (703 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (704 tests via `Avalonia.Headless`).
 
 ## Versioning
 
-Version `5.8.0` must stay in sync across:
+Version `5.8.1` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)
@@ -145,6 +145,10 @@ Version `5.8.0` must stay in sync across:
 - `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (same three, matching the WPF app)
 - `SimpleLauncher.Avalonia\app.manifest` (`assemblyIdentity version`)
 - `SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj` (`Version`, matching the WPF app)
+
+The test projects (`SimpleLauncher.Tests`, `SimpleLauncher.Avalonia.Tests`, `SimpleLauncher.SlowTests`,
+`SimpleLauncher.Avalonia.SlowTests`) and `SimpleLauncher.ResourceTranslator` carry the same version
+metadata for diagnostics; keep them aligned when bumping.
 
 `VersionConsistencyTests` enforces the manifests, the Avalonia csproj/manifest and the shared
 `appsettings.json` in local runs; `scripts/package-release.ps1` validates all of the above when
@@ -163,7 +167,7 @@ packaging. Bump all of them together.
 
 ## Static analysis & code style
 
-- **Meziantou.Analyzer 3.0.259**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.401** and **Roslynator.Analyzers 5.0.0** (all `PrivateAssets`).
+- **Meziantou.Analyzer 3.0.314**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.402** and **Roslynator.Analyzers 5.0.1** (all `PrivateAssets`).
 - `Nullable` enabled everywhere; `LangVersion 14`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
 - `NoWarn` in app: `NU1903;CS0436`.
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).
@@ -201,7 +205,7 @@ The site is served from `docs/` via **docsify** (client-side rendering, no build
 2. The `docs.yml` workflow deploys `docs/` on every push to `master` that touches docs (or manually).
 3. URL: `https://purelogiccode.github.io/SimpleLauncher/`.
 
-`docs/index.html` (docsify loader), `docs/site.css` (the dark/light theme), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
+`docs/index.html` (docsify loader), `docs/site.css` (the dark/light theme), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. `docs/_sidebar.md` is the **single source for both side menus**: docsify reads it directly, and the wiki sync preserves its headings, group labels and order when it writes `_Sidebar.md`. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
 
 - `docs/parameters.md` ← `SimpleLauncher/parameters.md` — refresh it whenever the canonical file changes.
 - `docs/manual-tests.md` ← `ManualTests.md` (repo root) — refresh likewise.

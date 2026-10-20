@@ -99,10 +99,17 @@ sequenceDiagram
 ```
 
 The shared single-instance guard lives in `SimpleLauncher.Core/SingleInstance.cs`: both apps use
-the same named mutex + event. Launching a second copy of **either** app signals the running
-instance (which restores and foregrounds its window) and then exits immediately — including a
-WPF copy launched while the Avalonia app is running, and vice versa. `--restarting` bypasses the
-guard so the update/reinstall restart cannot be mistaken for a second launch.
+the same named mutex + event, plus a per-user lock file that is authoritative on every platform.
+Launching a second copy of **either** app signals the running instance (which restores and
+foregrounds its window) and then exits immediately — including a WPF copy launched while the
+Avalonia app is running, and vice versa. `--restarting` bypasses the guard so the
+update/reinstall restart cannot be mistaken for a second launch.
+
+The named mutex is created and acquired **only** by the instance that is allowed to run (the
+lock-file winner, or the fallback when the lock file is unavailable), and it is released only by
+the thread that owns it. A process that already lost the lock-file race no longer creates or
+disposes an owned mutex, so a simultaneous double launch cannot leave the winner with an
+abandoned mutex that throws `ApplicationException` on exit (#68430).
 
 **Loading-overlay invariant (both apps):** every `SetLoadingState(true)` / overlay-show call must
 be paired with a close **inside a `finally`**, so exceptions and early returns can never leave the

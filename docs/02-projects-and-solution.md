@@ -10,9 +10,9 @@
 | `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
 | `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
 | `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (and transitively Core) |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (640 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (704 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
-| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux/macOS). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux/macOS get native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
+| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux, x64/ARM64). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in the shared packs (`SimpleLauncher.Core\Localization\strings.*.json`) via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
 | `Tools\Mame.DatCreator` | WPF tool | Builds `mame.dat` (MessagePack) from MAME `-listxml` + software lists |
 | `Tools\RetroAchievements.DataFetcher` | CLI tool | Fetches the RA game database into `RetroAchievements.dat` |
@@ -33,13 +33,13 @@ Key properties:
 <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
 <ApplicationManifest>app.manifest</ApplicationManifest>
 <StartupObject>SimpleLauncher.App</StartupObject>
-<AssemblyVersion>/<FileVersion>/<Version>5.8.0</Version>
+<AssemblyVersion>/<FileVersion>/<Version>5.8.1</Version>
 <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 <RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
 <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 ```
 
-- **Versioning:** `5.8.0`; kept consistent with Core, tests and `app.manifest` (`VersionConsistencyTests` enforces it).
+- **Versioning:** `5.8.1`; kept consistent with Core, tests and `app.manifest` (`VersionConsistencyTests` enforces it).
 - **`InternalsVisibleTo("SimpleLauncher.Tests")`** — tests reach internal members.
 - **Copy-to-output payloads** (`<None Update=... CopyToOutputDirectory>`):
   - `appsettings.json` (Always), `WhatsNew.md` (PreserveNewest), `mame.dat` (Always), system images `images\systems\*.png` (Always), `audio\*.mp3`.
@@ -54,12 +54,12 @@ Key properties:
 |---|---|---|
 | MahApps.Metro | 2.4.11 | UI theme/controls |
 | CommunityToolkit.Mvvm | 8.4.2 | ViewModels (ObservableObject, RelayCommand) |
-| MessagePack | 3.1.8 | Binary data files |
-| Microsoft.Extensions.* | 10.0.12 | Configuration, DI, HTTP, resilience |
-| Microsoft.Extensions.Http.Resilience | 10.10.0 | Polly retry policy on downloads |
-| Microsoft.Data.Sqlite / SourceGear.sqlite3 | 10.0.12 / 3.53.4 | SQLite (unified `settings.dat`, Amazon scan, Stella settings) |
-| SharpCompress | 0.50.4 | Archive extraction |
-| NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.1.0 | UI sound effects (Windows + Linux/macOS) |
+| MessagePack | 3.1.12 | Binary data files |
+| Microsoft.Extensions.* | 10.0.13 | Configuration, DI, HTTP, resilience |
+| Microsoft.Extensions.Http.Resilience | 10.11.0 | Polly retry policy on downloads |
+| Microsoft.Data.Sqlite / SourceGear.sqlite3 | 10.0.13 / 3.53.4 | SQLite (unified `settings.dat`, Amazon scan, Stella settings) |
+| SharpCompress | 0.50.6 | Archive extraction |
+| NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.3.0 | UI sound effects (Windows + Linux/macOS) |
 | NLayer + NLayer.NAudioSupport | 3.0.0 | Managed MP3 decoding on Linux/macOS (`net10.0` TFM only; no libsndfile needed) |
 | SharpDX + XInput + DirectInput | 4.2.0 | Gamepad input (Windows) |
 | InputSimulatorCore | 1.0.5 | Mouse simulation from gamepad (Windows) |
@@ -67,13 +67,13 @@ Key properties:
 | Serilog (+ Sinks.Async/Debug/File) | 4.4.0 | Logging |
 | Tomlyn | 2.10.1 | TOML parsing (Xenia, Yumir configs) |
 | YamlDotNet | 18.1.0 | YAML parsing (RPCS3 config) |
-| PBPSharp | 1.1.1 | PBP disc extraction (NuGet package replacing the old vendored copy) |
-| Meziantou.Analyzer | 3.0.259 | Static analysis (PrivateAssets) |
-| Microsoft.CodeAnalysis.NetAnalyzers | 10.0.401 | Static analysis |
+| PBPSharp | 1.1.4 | PBP disc extraction (NuGet package replacing the old vendored copy) |
+| Meziantou.Analyzer | 3.0.314 | Static analysis (PrivateAssets) |
+| Microsoft.CodeAnalysis.NetAnalyzers | 10.0.402 | Static analysis |
 
 ## `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (the library)
 
-Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 14`, `DebugType=embedded`, version `5.8.0`.
+Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 14`, `DebugType=embedded`, version `5.8.1`.
 
 - **`InternalsVisibleTo`:** `SimpleLauncher.Tests`, `SimpleLauncher`, `SimpleLauncher.New`, `SimpleLauncher.Avalonia`, `SimpleLauncher.New.Tests`.
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog` — so every Core service takes a Serilog `ILogger` by convention.
@@ -82,7 +82,7 @@ Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangV
 
 ## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the cross-platform port)
 
-Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.1`, `UseWindowsForms=False`, version synced to the WPF app (5.8.0), `StartupObject = SimpleLauncher.Avalonia.Program`.
+Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.4`, `UseWindowsForms=False`, version synced to the WPF app (5.8.1), `StartupObject = SimpleLauncher.Avalonia.Program`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
 - **Windows-only services** (`#if WINDOWS`, `net10.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).

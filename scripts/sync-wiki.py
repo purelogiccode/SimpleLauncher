@@ -115,32 +115,30 @@ def rewrite_wiki_links(text: str, page_names: set[str]) -> str:
 def generate_sidebar(page_names: list[str], docs_dir: str) -> str:
     """Generate a wiki _Sidebar.md.
 
-    When docs/_sidebar.md exists (the docsify site menu), its labels and order are
-    reused so the wiki menu matches the Pages menu; otherwise a plain list is built
-    from the published page names.
+    When docs/_sidebar.md exists (the docsify site menu), it is the single source
+    for both menus: its headings, group labels, order and nesting are preserved and
+    only the markdown links are rewritten to the flat wiki namespace, so the GitHub
+    wiki sidebar looks the same as the GitHub Pages one. Otherwise a plain list is
+    built from the published page names.
     """
-    import re
-
     sidebar_source = os.path.join(docs_dir, "_sidebar.md")
-    lines: list[str] = []
     if os.path.isfile(sidebar_source):
-        for raw in open(sidebar_source, encoding="utf-8").read().splitlines():
-            match = re.match(r"^\s*-\s+\[([^\]]+)\]\(([^)]+)\)\s*$", raw)
-            if not match:
-                continue
-            label, target = match.group(1), match.group(2)
-            if target.startswith(("http://", "https://", "#", "mailto:")):
-                continue
-            page = target.split("#")[0].removesuffix(".md")
-            if page == "README":
-                page = "Home"
-            if page not in page_names:
-                continue
-            lines.append(f"- [{label}]({page})")
-        if lines:
+        text = open(sidebar_source, encoding="utf-8").read()
+        text = rewrite_wiki_links(text, page_names)
+
+        # Keep the menu's headings, group labels, blank separators and indentation.
+        # Links to pages that are not published in the wiki were already degraded to
+        # plain labels by the rewriter, so they cannot point at a missing page.
+        lines = text.splitlines()
+        while lines and not lines[0].strip():
+            lines.pop(0)
+        while lines and not lines[-1].strip():
+            lines.pop()
+        if any(line.lstrip().startswith("- [") for line in lines):
             return "\n".join(lines) + "\n"
 
     # Fallback: auto-generate from the published page names.
+    lines = []
     if "Home" in page_names:
         lines.append("- [Home](Home)")
     for page in page_names:

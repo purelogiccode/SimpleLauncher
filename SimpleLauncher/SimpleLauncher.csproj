@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net10.0-windows</TargetFramework>
         <RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
@@ -29,10 +29,10 @@
         <PackageIcon>icon\icon2.png</PackageIcon>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <AssemblyVersion>5.8.0</AssemblyVersion>
-        <FileVersion>5.8.0</FileVersion>
+        <AssemblyVersion>5.8.1</AssemblyVersion>
+        <FileVersion>5.8.1</FileVersion>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-        <Version>5.8.0</Version>
+        <Version>5.8.1</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <PackageProjectUrl>https://github.com/purelogiccode/SimpleLauncher</PackageProjectUrl>
         <UseWindowsForms>False</UseWindowsForms>

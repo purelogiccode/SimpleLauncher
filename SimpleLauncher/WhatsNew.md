@@ -1,3 +1,38 @@
+# Release 5.8.1
+*2026-10-19*
+---
+
+## Faster Avalonia Startup
+- **System list first** — The Avalonia app now shows the system-selection grid before scanning any ROM folder instead of blocking the first frame on the full library count.
+- **Background counts** — Sidebar game-count badges are calculated after the grid is visible, and system icons resolve synchronously with a short directory cache (one listing instead of two per system).
+
+## Stability & Single Instance
+- **Shutdown deadlock fixed** — Exiting while a RetroAchievements hash scan is running no longer leaves the process in Task Manager: the shutdown wait resumes on the thread pool instead of the blocked UI thread.
+- **Single-instance ownership** — The shared WPF/Avalonia named mutex is now created and owned only by the instance that is allowed to run, and released only by its owner. Simultaneous launches can no longer abandon it or throw `ApplicationException` on exit (bug #68430).
+
+## Updater Hardening
+- **Interrupted updates recover only what they touched** — Leftover `.updbak` files are probed only at the destinations of the staged payload instead of recursively scanning the install drive, so protected folders such as `D:\System Volume Information` can no longer abort an update (bugs #68274/#68441).
+- **Read-only and transient denials** — The swap clears read-only attributes on both ends and retries access-denied failures caused by antivirus/OneDrive filters or a closing handle, with actionable guidance only when the denial persists (bugs #68287/#68288).
+- **Archive-viewer folders** — Running from a WinRAR/7-Zip/Explorer zip temporary folder is detected and the update is refused with extract-first guidance instead of installing a doomed copy (bug #68272). A restart access-denied is classified as an expected condition, not a bug report.
+- **Closed updater window** — Notices fall back to an ownerless dialog when the updater window was closed during the update (bug #68273).
+- **Staging cleanup** — Read-only leftovers no longer make the recursive staging cleanup fail, and the condition is logged at Information level (bug #68416).
+
+## Mounting & Launch Diagnostics
+- **XISO mount output** — SimpleXisoDrive stdout/stderr and its exit code are captured (thread-safely) and included in mount diagnostics at Information level, so unsupported images and missing drivers no longer produce duplicate bug reports (bugs #68434–#68437).
+- **Avalonia launcher classification** — Launch exceptions are classified before logging: elevation required, UAC cancelled and invalid executables stay out of bug reports (bug #68419).
+- **ISO 9660 root record** — The primary-volume root-directory record validation was tightened (a one-byte record length can never overrun the 2048-byte sector).
+
+## Code Quality & Dependencies
+- **Third InspectCode batch** — Removed unused dependencies and parameters, replaced XAML design-time placeholders with real design-time types and typed binding paths, used field-backed properties, and kept every project at **zero analyzer warnings**.
+- **Dependencies** — Meziantou.Analyzer **3.0.314**, NAudio **3.3.0**, SharpCompress **0.50.6**, CHDSharp **1.5.0**, Markdown.Avalonia **12.0.2**, Microsoft.Extensions.Http.Resilience **10.11.0**, Avalonia **12.1.4**.
+
+## CI, Documentation & Tests
+- **CI** — GitHub Actions now builds the solution in Debug **and** Release with `-warnaserror`, compiles the Linux updater, and a new **Package dry run** workflow packages all four RIDs and verifies the Linux ZIP layout and executable bits without creating a release. Tests still run locally only (the fast/slow split is by project).
+- **Documentation** — The Pages site and the GitHub wiki share one source and one labeled side menu; the site gained a persisted dark/light theme.
+- **Tests** — 2,208 WPF and 704 Avalonia fast tests pass, plus the 83 WPF and 11 Avalonia slow tests.
+
+---
+
 # Release 5.8.0
 *2026-10-14*
 ---

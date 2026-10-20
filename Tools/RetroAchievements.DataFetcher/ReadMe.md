@@ -1,3 +1,8 @@
+[![CI](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download)
+[![RetroAchievements](https://img.shields.io/badge/API-RetroAchievements-0057B8)](https://retroachievements.org/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](../../LICENSE.txt)
+
 # RetroAchievements Data Fetcher
 
 A .NET console application designed to fetch game and console data from the RetroAchievements.org API. It stores the retrieved information in both human-readable JSON and efficient MessagePack binary formats, making it suitable for integration into other applications that require a local cache of RetroAchievements data.

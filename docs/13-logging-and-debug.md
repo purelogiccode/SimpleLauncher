@@ -35,7 +35,7 @@ The **Support Window** (`SupportWindow` + `SupportViewModel`) is the user-facing
 Project policy: expected environment/user conditions are logged at **Information**, never Warning/Error, so they are not forwarded to the bug-report API. Current examples:
 
 - **Audio** — missing `libsndfile`/`libasound`, no usable audio device, or a corrupt/unsupported sound file (`PlaySoundEffects.IsExpectedPlaybackFailure`; MP3/WAV use managed decoders, so the built-in sounds work without native packages).
-- **Mounting** — mounting Windows-only disc/archive images ("not supported on this platform") on Linux/macOS.
+- **Mounting** — mounting Windows-only disc/archive images ("not supported on this platform") on Linux/macOS; SimpleXisoDrive exiting before the virtual drive appears or timing out (its captured stderr/stdout and exit code are included in the Information log so unsupported images and missing drivers stay diagnosable); SimpleZipDrive/CHDMounter FUSE conditions with automatic extraction/conversion fallbacks.
 - **Launching** — invalid/unlaunchable executables (Windows codes 193/216, Unix errno 8/13) and user-canceled elevation prompts.
 - **Updates** — GitHub 403/429, download timeouts after retry, updater "process not found", a GitHub release without assets for the current platform (LB-23).
 - **Settings database** — a `settings.dat` written by a newer app build (downgrade): migration and saves fail safe at Information, leaving the database and the legacy files untouched (`NewerSchemaVersionException`).

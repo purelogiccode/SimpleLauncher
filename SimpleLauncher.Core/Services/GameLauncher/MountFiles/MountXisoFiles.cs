@@ -128,6 +128,10 @@ public class MountXisoFiles : IMountXisoFiles
         // hiding it made the mount lifecycle depend on whether a console can be allocated.
         var mountStdout = new StringBuilder();
         var mountStderr = new StringBuilder();
+        // The tool's OutputDataReceived/ErrorDataReceived handlers run on thread-pool
+        // threads while the mount poller reads the buffers for diagnostics; StringBuilder
+        // is not thread-safe, so every access is serialized through this gate.
+        var mountOutputLock = new object();
 
         var psiMount = new ProcessStartInfo
         {
@@ -147,8 +151,8 @@ public class MountXisoFiles : IMountXisoFiles
         var mountProcess = new Process { StartInfo = psiMount, EnableRaisingEvents = true };
         var toolName = Path.GetFileName(toolRelativePath);
 
-        mountProcess.OutputDataReceived += (_, e) => AppendCapped(mountStdout, e.Data);
-        mountProcess.ErrorDataReceived += (_, e) => AppendCapped(mountStderr, e.Data);
+        mountProcess.OutputDataReceived += (_, e) => AppendCapped(mountStdout, e.Data, mountOutputLock);
+        mountProcess.ErrorDataReceived += (_, e) => AppendCapped(mountStderr, e.Data, mountOutputLock);
 
         try
         {
@@ -161,7 +165,7 @@ public class MountXisoFiles : IMountXisoFiles
             _logger.Debug($"[MountXisoFiles.MountAsync] {toolName} process started (ID: {processId}).");
 
             var mountResult = await WaitForDriveMountAsync(expectedPath, driveRoot, mountProcess, toolName,
-                processId, logErrors, mountStdout, mountStderr);
+                processId, logErrors, mountStdout, mountStderr, mountOutputLock);
 
             if (!mountResult.MountSuccessful)
             {
@@ -308,7 +312,7 @@ public class MountXisoFiles : IMountXisoFiles
 
     private async Task<MountWaitResult> WaitForDriveMountAsync(string defaultXbePath, string driveRoot,
         Process mountProcess, string toolName, int processId, ILogger logErrors,
-        StringBuilder stdoutBuffer, StringBuilder stderrBuffer)
+        StringBuilder stdoutBuffer, StringBuilder stderrBuffer, object outputLock)
     {
         const int maxRetries = 240;
         const int pollIntervalMs = 500;
@@ -335,7 +339,20 @@ public class MountXisoFiles : IMountXisoFiles
             if (mountProcess.HasExited)
             {
                 var exitCode = mountProcess.ExitCode;
-                var diagnostics = FormatToolDiagnostics(stdoutBuffer, stderrBuffer);
+
+                // Parameterless WaitForExit also waits for the asynchronous output event
+                // handlers to deliver the remaining lines, so the diagnostics below include
+                // the tool's final error message instead of a partially drained buffer.
+                try
+                {
+                    mountProcess.WaitForExit();
+                }
+                catch (InvalidOperationException)
+                {
+                    // The process object has no live handle; use whatever was captured.
+                }
+
+                var diagnostics = FormatToolDiagnostics(stdoutBuffer, stderrBuffer, outputLock);
                 _logger.Debug(
                     $"[MountXisoFiles.WaitForDriveMountAsync] Mount process {toolName} (ID: {processId}) exited prematurely during polling. Exit Code: {exitCode}.{diagnostics}");
                 var contextMessage =
@@ -351,7 +368,7 @@ public class MountXisoFiles : IMountXisoFiles
             await Task.Delay(pollIntervalMs);
         }
 
-        var timeoutDiagnostics = FormatToolDiagnostics(stdoutBuffer, stderrBuffer);
+        var timeoutDiagnostics = FormatToolDiagnostics(stdoutBuffer, stderrBuffer, outputLock);
         _logger.Debug(
             $"[MountXisoFiles.WaitForDriveMountAsync] Timed out waiting for '{defaultXbePath}' after {maxRetries * pollIntervalMs / 1000} seconds.{timeoutDiagnostics}");
         var timeoutContextMessage =
@@ -366,26 +383,35 @@ public class MountXisoFiles : IMountXisoFiles
     /// <summary>
     ///     Adds a console line to a bounded buffer (the tool can be chatty while it runs).
     /// </summary>
-    private static void AppendCapped(StringBuilder buffer, string? line)
+    private static void AppendCapped(StringBuilder buffer, string? line, object outputLock)
     {
         const int maxCharacters = 4096;
-        if (string.IsNullOrEmpty(line) || buffer.Length >= maxCharacters) return;
+        if (string.IsNullOrEmpty(line)) return;
 
-        buffer.AppendLine(line);
-        if (buffer.Length > maxCharacters) buffer.Length = maxCharacters;
+        lock (outputLock)
+        {
+            if (buffer.Length >= maxCharacters) return;
+
+            buffer.AppendLine(line);
+            if (buffer.Length > maxCharacters) buffer.Length = maxCharacters;
+        }
     }
 
     /// <summary>
     ///     Formats the captured tool output for the log: stderr first (the actual error),
     ///     then stdout when stderr is empty.
     /// </summary>
-    private static string FormatToolDiagnostics(StringBuilder stdoutBuffer, StringBuilder stderrBuffer)
+    private static string FormatToolDiagnostics(StringBuilder stdoutBuffer, StringBuilder stderrBuffer,
+        object outputLock)
     {
-        var stderr = stderrBuffer.ToString().Trim();
-        if (!string.IsNullOrEmpty(stderr)) return $" Tool error output: {stderr}";
+        lock (outputLock)
+        {
+            var stderr = stderrBuffer.ToString().Trim();
+            if (!string.IsNullOrEmpty(stderr)) return $" Tool error output: {stderr}";
 
-        var stdout = stdoutBuffer.ToString().Trim();
-        return string.IsNullOrEmpty(stdout) ? string.Empty : $" Tool output: {stdout}";
+            var stdout = stdoutBuffer.ToString().Trim();
+            return string.IsNullOrEmpty(stdout) ? string.Empty : $" Tool output: {stdout}";
+        }
     }
 
     private readonly record struct MountWaitResult(bool MountSuccessful, int? ExitCode);

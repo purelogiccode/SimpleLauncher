@@ -41,6 +41,18 @@ body {
 .sidebar > h1,
 .sidebar > h1 a { color: var(--sl-heading); }
 
+/* Section labels in docs/_sidebar.md (`- **Getting started**`): render them as
+   quiet group headings shared by the Pages and wiki menus. */
+.sidebar ul li > strong {
+    display: block;
+    margin: .9rem 0 .35rem;
+    color: var(--sl-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
 .sidebar ul li a { color: var(--sl-text); }
 
 .sidebar ul li a:hover { color: var(--sl-heading); }

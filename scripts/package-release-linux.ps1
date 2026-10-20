@@ -40,7 +40,7 @@ The version is validated against the canonical SimpleLauncher.csproj (plus the
 Avalonia/Core/updater projects and both manifests) before publishing.
 
 .PARAMETER Version
-The release version, e.g. 5.8.0. Must match the csproj/manifest values.
+The release version, e.g. 5.8.1. Must match the csproj/manifest values.
 
 .PARAMETER RuntimeIdentifiers
 RIDs to package. Defaults to linux-x64 and linux-arm64.
@@ -52,7 +52,7 @@ Where the zips are written. Defaults to artifacts\release.
 Scratch folder for the publish outputs. Defaults to artifacts\publish-linux.
 
 .EXAMPLE
-pwsh scripts/package-release-linux.ps1 -Version 5.8.0
+pwsh scripts/package-release-linux.ps1 -Version 5.8.1
 #>
 [CmdletBinding()]
 param(
@@ -86,7 +86,7 @@ $OutputDir = [System.IO.Path]::GetFullPath($OutputDir)
 $WorkDir = [System.IO.Path]::GetFullPath($WorkDir)
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
-    throw "Version '$Version' is not in Major.Minor.Patch form (e.g. 5.8.0)."
+    throw "Version '$Version' is not in Major.Minor.Patch form (e.g. 5.8.1)."
 }
 
 foreach ($rid in $RuntimeIdentifiers) {

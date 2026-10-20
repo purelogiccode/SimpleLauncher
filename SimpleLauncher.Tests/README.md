@@ -1,3 +1,8 @@
+[![CI](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download)
+[![xUnit](https://img.shields.io/badge/tests-xUnit%202.9.3-512BD4)](https://xunit.net/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](../LICENSE.txt)
+
 # SimpleLauncher.Tests
 
 xUnit test project for [SimpleLauncher](../SimpleLauncher). These tests validate resource localization, URL health, update logic, emulator configurations, game management, and various utility functions.

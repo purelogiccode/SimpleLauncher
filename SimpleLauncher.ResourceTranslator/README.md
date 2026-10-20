@@ -1,3 +1,8 @@
+[![CI](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml)
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download)
+[![OpenRouter](https://img.shields.io/badge/API-OpenRouter-6E56CF)](https://openrouter.ai/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](../LICENSE.txt)
+
 # SimpleLauncher.ResourceTranslator
 
 Console application that uses the **OpenRouter API** to automatically translate missing English resource keys into all other language files of the shared localization packs used by both UI apps of [SimpleLauncher](../README.md):

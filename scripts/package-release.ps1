@@ -45,7 +45,7 @@ projects/manifests, SimpleLauncher.Core.csproj and the Avalonia updater project)
 publishing.
 
 .PARAMETER Version
-The release version, e.g. 5.8.0. Must match the csproj/manifest values.
+The release version, e.g. 5.8.1. Must match the csproj/manifest values.
 
 .PARAMETER RuntimeIdentifiers
 RIDs to package. Defaults to win-x64 and win-arm64.
@@ -57,7 +57,7 @@ Where the zips are written. Defaults to artifacts\release.
 Scratch folder for the publish outputs. Defaults to artifacts\publish.
 
 .EXAMPLE
-pwsh scripts/package-release.ps1 -Version 5.8.0
+pwsh scripts/package-release.ps1 -Version 5.8.1
 #>
 [CmdletBinding()]
 param(
@@ -91,7 +91,7 @@ $OutputDir = [System.IO.Path]::GetFullPath($OutputDir)
 $WorkDir = [System.IO.Path]::GetFullPath($WorkDir)
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
-    throw "Version '$Version' is not in Major.Minor.Patch form (e.g. 5.8.0)."
+    throw "Version '$Version' is not in Major.Minor.Patch form (e.g. 5.8.1)."
 }
 
 foreach ($rid in $RuntimeIdentifiers) {

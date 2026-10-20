@@ -1,30 +1,31 @@
 # 01 — Overview
 
-> Simple Launcher — an open-source emulator frontend for Windows (x64 & ARM64).
+> Simple Launcher — an open-source emulator frontend for Windows and Linux (x64 & ARM64).
 > Related: [02 — Projects & Solution](02-projects-and-solution.md) · [03 — Quickstart](03-quickstart.md) · [README](README.md) (docs index)
 
 ## What it is
 
 **Simple Launcher** is a WPF desktop application that organizes, browses, and launches a retro (and modern PC) game collection through emulators. It is a *frontend*: it does not ship ROMs, ISOs, or BIOS files, and you must provide your own emulators.
 
-Three code projects implement it:
+Four application projects implement it:
 
 | Project | Role |
 |---|---|
 | `SimpleLauncher` (WPF app) | The launcher itself: windows, pages, ViewModels, UI services, launch handlers, game scanners, DI composition root |
 | `SimpleLauncher.Core` (class library) | Platform-independent services, models, interfaces, data persistence, emulator config injection |
-| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux/macOS) reusing all of Core. Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden or no-ops elsewhere; native implementations replace the launch pipeline on Linux/macOS (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
+| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux) reusing all of Core. Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden or no-ops elsewhere; on Linux archives and disc images mount through FUSE 3, with temp extraction/conversion as automatic fallbacks |
+| `SimpleLauncher.Avalonia.Updater` (Avalonia app) | The single `Updater.exe` / `Updater` shared by both apps: checks for updates, swaps the unified payload and relaunches the app that started it |
 
 ## Key differentiators
 
 - **Configuration injection into 21 emulators** — Ares, Azahar, Blastem, Cemu, Daphne, Dolphin, DuckStation, Flycast, MAME, Mednafen, Mesen, PCSX2, Raine, Redream, RetroArch, RPCS3, Sega Model 2, Stella, Supermodel, Xenia, Yumir. Settings are written into each emulator's own config file before launch (see [06 — Systems & Launch](06-systems-and-launch.md)).
-- **Universal CHD support** — the bundled **CHDMounter** mounts CHD files as virtual drives for 15+ emulators without native CHD support (Xenia, RPCS3, Xemu, Cxbx-Reloaded, Mednafen, Mesen, Raine, FinalBurn Neo/Alpha, 4DO, Gens, Blastem, Yabause, PCSX-Redux, CD-i Emulator, Tsugaru, Kega Fusion, DOSBox). It uses Dokan/WinFsp on Windows and FUSE 3 on Linux; on Linux the app falls back to the managed CHDSharp conversion when FUSE or the .NET 10 runtime is unavailable.
-- **On-the-fly mounting** — launch games directly from `.zip`, `.iso`, `.xiso`, `.chd` without manual extraction (requires **Dokan** on Windows; Linux/macOS extract archives to a temp folder, convert CHD with CHDSharp and `imgmount` ISOs inside DOSBox instead).
+- **Universal CHD support** — the bundled **CHDMounter** mounts CHD files as virtual drives for 15+ emulators without native CHD support (Xenia, RPCS3, Xemu, Cxbx-Reloaded, Mednafen, Mesen, Raine, FinalBurn Neo/Alpha, 4DO, Gens, Blastem, Yabause, PCSX-Redux, CD-i Emulator, Tsugaru, Kega Fusion, DOSBox). It uses Dokan/WinFsp on Windows and FUSE 3 on Linux; when FUSE or the bundled mount payload is unavailable on Linux, the app falls back to the managed CHDSharp conversion automatically.
+- **On-the-fly mounting** — launch games directly from `.zip`, `.7z`, `.rar`, `.iso`, `.xiso`, `.cso`, `.zar` and `.chd` without manual extraction: **Dokan** on Windows, **FUSE 3** on Linux (SimpleZipDrive, SimpleXisoDrive, CHDMounter), with automatic temp extraction / CHDSharp conversion fallbacks when a driver or payload is unavailable. DOSBox ISO games use the native `imgmount`.
 - **Modern store integration** — automatic scanning for games from Steam, Epic, GOG, Microsoft Store, Amazon, Battle.net, EA App, Humble, itch.io, Rockstar, Uplay (see [10 — Game Scanning](10-game-scanning.md)).
 - **RetroAchievements integration** — login, per-game achievements/rankings, profile, completion progress, hashing for complex systems, and automatic credential injection into supported emulators (see [09 — RetroAchievements](09-retroachievements.md)).
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
-- **Performance** — MessagePack binary storage (`favorites.dat`, `playhistory.dat`, `history.dat`, `mame.dat`, `RetroAchievements.dat`), async scanning/loading, pagination.
+- **Performance** — one SQLite `settings.dat` for settings/favorites/history/systems plus MessagePack caches (`history.dat`, `mame.dat`, `RetroAchievements.dat`); async scanning/loading and pagination. The Avalonia startup shows the system-selection grid immediately and scans the ROM folders for sidebar counts in the background.
 - **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 10 runtime. **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE, the `linux-arm64` bundle is structurally verified only.
 
 ## Feature surface (summary)
@@ -47,15 +48,15 @@ Three code projects implement it:
 
 ## Version & license
 
-- Current version: **5.8.0** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.0) and ships in the same release bundle.
-- The secondary server publishes a `version.txt` (e.g. `release5.8.0`) used by the update-check fallback.
+- Current version: **5.8.1** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.1) and ships in the same release bundle.
+- The secondary server publishes a `version.txt` (e.g. `release5.8.1`) used by the update-check fallback.
 - Framework: **.NET 10** (`net10.0-windows`), **C# 14**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).
 - Repository: https://github.com/purelogiccode/SimpleLauncher
 
 ## Release history
 
-See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.8.0 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
+See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.8.1 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
 
 ## Related docs
 

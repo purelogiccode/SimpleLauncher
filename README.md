@@ -32,8 +32,8 @@
 
 ## 📚 Documentation
 
-- **📖 Documentation site (GitHub Pages)** — [purelogiccode.github.io/SimpleLauncher](https://purelogiccode.github.io/SimpleLauncher/): [Quickstart](https://purelogiccode.github.io/SimpleLauncher/#/03-quickstart) · [Configuration](https://purelogiccode.github.io/SimpleLauncher/#/05-configuration) · [Bundled Tools](https://purelogiccode.github.io/SimpleLauncher/#/11-bundled-tools) · [Updater](https://purelogiccode.github.io/SimpleLauncher/#/16-updater) · [Testing](https://purelogiccode.github.io/SimpleLauncher/#/14-testing) · [Release Notes](https://purelogiccode.github.io/SimpleLauncher/#/17-release-notes)
-- **📚 GitHub Wiki** — [github.com/purelogiccode/SimpleLauncher/wiki](https://github.com/purelogiccode/SimpleLauncher/wiki): the same guides in wiki form, plus the [Emulator Parameters reference](https://github.com/purelogiccode/SimpleLauncher/wiki/parameters) with official emulator download links (the app links to this page too)
+- **📖 Documentation site (GitHub Pages)** — [purelogiccode.github.io/SimpleLauncher](https://purelogiccode.github.io/SimpleLauncher/): [Quickstart](https://purelogiccode.github.io/SimpleLauncher/#/03-quickstart) · [Configuration](https://purelogiccode.github.io/SimpleLauncher/#/05-configuration) · [Bundled Tools](https://purelogiccode.github.io/SimpleLauncher/#/11-bundled-tools) · [Updater](https://purelogiccode.github.io/SimpleLauncher/#/16-updater) · [Testing](https://purelogiccode.github.io/SimpleLauncher/#/14-testing) · [Release Notes](https://purelogiccode.github.io/SimpleLauncher/#/17-release-notes). The site has a labeled side menu (also available on mobile) and a persisted dark/light theme.
+- **📚 GitHub Wiki** — [github.com/purelogiccode/SimpleLauncher/wiki](https://github.com/purelogiccode/SimpleLauncher/wiki): the same guides in wiki form with the **same labeled side menu**, plus the [Emulator Parameters reference](https://github.com/purelogiccode/SimpleLauncher/wiki/parameters) with official emulator download links (the app links to this page too)
 - **📝 Changelog** — [SimpleLauncher/WhatsNew.md](SimpleLauncher/WhatsNew.md), also shown in-app via **Help → Update History**
 
 ---
@@ -58,7 +58,8 @@
 * **Unified Settings Database:** Both apps share one SQLite `settings.dat` (settings, favorites, play history, systems) with automatic migration of the legacy XML/dat files
 * **MessagePack Engine:** High-speed MessagePack serialization for near-instant settings loading
 * **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) alongside x64
-* **Asynchronous Architecture:** Multi-threaded game scanning and validation with fluid UI
+* **Asynchronous Architecture:** Multi-threaded game scanning and validation with fluid UI — the Avalonia app shows the system-selection grid immediately and refreshes library counts in the background
+* **Fast Startup:** System icons resolve through a short directory cache, and sidebar counts no longer block the first frame
 * **Single Instance Enforcement:** Prevents resource conflicts by ensuring only one instance runs — the WPF and Avalonia apps share the guard, so only one of them runs at a time (launching the other brings the running one to the foreground)
 * **Elevation Detection:** Automatically detects games requiring Administrator privileges
 * **Startup Validation:** Detects if running from temporary folders and prompts for proper extraction
@@ -150,7 +151,7 @@ Simple Launcher includes a comprehensive suite of specialized utilities:
 * **Global Statistics:** View usage statistics and play time across all systems
 * **Image Viewer:** Built-in image viewer for game art and screenshots
 * **Debug Window:** Advanced debugging and error reporting interface
-* **Update System:** Built-in updater with a resilient update check (GitHub `releases/latest` with multi-source fallback to the secondary server when GitHub is unreachable or rate-limited) and one shared `Updater.exe` that updates either app (WPF or Avalonia) and relaunches the app that started it
+* **Update System:** Built-in updater with a resilient update check (GitHub `releases/latest` with multi-source fallback to the secondary server when GitHub is unreachable or rate-limited) and one shared `Updater.exe` that updates either app (WPF or Avalonia) and relaunches the app that started it. Updates are refused when the app runs from a WinRAR/7-Zip temporary folder, interrupted swaps are recovered safely, and transient file locks/access denials are retried
 * **Multi-language Support:** 18 languages with localization system
 * **Accessibility Features:** Automation properties, access keys, and high contrast mode
 
