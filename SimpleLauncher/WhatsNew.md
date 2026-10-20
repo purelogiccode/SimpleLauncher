@@ -1,3 +1,16 @@
+# Release 5.8.2
+*2026-10-20*
+---
+
+## Avalonia System Loading Fixed
+- **Selecting a system works again** — The "Loading system..." overlay no longer stays on screen forever. The game-card template used runtime type casts in its bindings, which Avalonia cannot resolve inside deferred templates; realizing the first card now succeeds and the games are shown.
+- **Image pack list** — The same unsafe binding cast was removed from the image-pack download window.
+
+## Packaging
+- **Patch bundles** — Windows and Linux bundles are rebuilt as 5.8.2 with the same framework-dependent single-file layout and bundled `LICENSE.txt`, `README.md` and `WhatsNew.md`.
+
+---
+
 # Release 5.8.1
 *2026-10-19*
 ---

@@ -48,15 +48,15 @@ Four application projects implement it:
 
 ## Version & license
 
-- Current version: **5.8.1** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.1) and ships in the same release bundle.
-- The secondary server publishes a `version.txt` (e.g. `release5.8.1`) used by the update-check fallback.
+- Current version: **5.8.2** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.2) and ships in the same release bundle.
+- The secondary server publishes a `version.txt` (e.g. `release5.8.2`) used by the update-check fallback.
 - Framework: **.NET 10** (`net10.0-windows`), **C# 14**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).
 - Repository: https://github.com/purelogiccode/SimpleLauncher
 
 ## Release history
 
-See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.8.1 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
+See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.8.2 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
 
 ## Related docs
 

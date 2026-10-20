@@ -54,8 +54,8 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 `scripts/package-release.ps1` reproduces the unified release artifacts (also used by CI):
 
 ```powershell
-pwsh scripts/package-release.ps1 -Version 5.8.1
-# -> artifacts\release\release_5.8.1_win-x64.zip, release_5.8.1_win-arm64.zip
+pwsh scripts/package-release.ps1 -Version 5.8.2
+# -> artifacts\release\release_5.8.2_win-x64.zip, release_5.8.2_win-arm64.zip
 # -> artifacts\release\updater_win-x64.zip, updater_win-arm64.zip
 ```
 
@@ -73,8 +73,8 @@ pwsh scripts/package-release.ps1 -Version 5.8.1
 asset names the in-app updater looks up in the GitHub release):
 
 ```powershell
-pwsh scripts/package-release-linux.ps1 -Version 5.8.1
-# -> artifacts\release\release_5.8.1_linux-x64.zip, release_5.8.1_linux-arm64.zip
+pwsh scripts/package-release-linux.ps1 -Version 5.8.2
+# -> artifacts\release\release_5.8.2_linux-x64.zip, release_5.8.2_linux-arm64.zip
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 ```
 
@@ -136,7 +136,7 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
 
 ## Versioning
 
-Version `5.8.1` must stay in sync across:
+Version `5.8.2` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)

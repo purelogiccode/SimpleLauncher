@@ -18,9 +18,9 @@
         <AssemblyName>SimpleLauncher.Avalonia</AssemblyName>
         <RootNamespace>SimpleLauncher.Avalonia</RootNamespace>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-        <AssemblyVersion>5.8.1</AssemblyVersion>
-        <FileVersion>5.8.1</FileVersion>
-        <Version>5.8.1</Version>
+        <AssemblyVersion>5.8.2</AssemblyVersion>
+        <FileVersion>5.8.2</FileVersion>
+        <Version>5.8.2</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>
         <PackageIcon>icon\icon2.png</PackageIcon>
