@@ -51,7 +51,7 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 | [14 — Testing](14-testing.md) | Test projects (fast/slow split), helpers, coverage summary, running tests |
 | [15 — Development](15-development.md) | Build/publish, versioning, localization, analyzers, release workflow |
 | [16 — Updater](16-updater.md) | Update check, Updater.exe flow, restart/reinstall, install hardening |
-| [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.8.2 → 1.1 |
+| [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.8.3 → 1.1 |
 | [18 — Emulator Parameters](18-emulator-parameters.md) | parameters.md conventions + full system → emulator index (84 systems / 352 entries) |
 | [GUI Test Harness](gui-test-harness.md) | AT-SPI + vision harness for the Linux VM manual checklist |
 | [Manual Tests](manual-tests.md) | Manual test checklist for areas without unit tests |
@@ -62,4 +62,4 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 - Code facts are cited with `path:line` references into the repository.
 - `⚠` marks behavior that should be verified before relying on it.
 - Relative links (`xx-*.md`) work from within `docs\`; `../` links point to the repo root.
-- Version-specific numbers (package versions, test counts) reflect the repository at doc-write time (5.8.2).
+- Version-specific numbers (package versions, test counts) reflect the repository at doc-write time (5.8.3).

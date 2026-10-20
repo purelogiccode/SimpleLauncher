@@ -14,7 +14,7 @@
 - **Silent check** at startup. If every GitHub source is unreachable (offline, rate-limited, blocked), the check falls back to the secondary server.
 - **Manual check**: About window "Check for Updates".
 - **Rate limiting (investigated 2026-10-14)**: the GitHub REST API allows only **60 unauthenticated requests per hour per IP** (`HTTP 403 "API rate limit exceeded"`). Apps up to 5.6.0 have no fallback, so on a rate-limited/shared IP their check ends in "Error checking for updates" instead of the update window — for example a 5.6.0 run failed exactly this way right after a 5.7.0 run on the same IP. 5.6.1+ fall back to the secondary server on any non-success response, so keeping `version.txt` + the hosted packages in sync (see [15 — Development](15-development.md#release-workflow-from-git-history--whats-new)) is what makes update detection resilient to GitHub rate limits and outages.
-- Version comparison against the current `5.8.2`; new version → prompts to download.
+- Version comparison against the current `5.8.3`; new version → prompts to download.
 - **Missing platform assets**: a release is not required to ship every RID — when the latest release has no `release_{version}_{rid}.zip` / `updater_{rid}.zip` for the current platform, the check logs at Information and reports no update (LB-23) instead of an Error (which would also file a bug report).
 
 ## Update assets

@@ -2,7 +2,11 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
-## 5.8.2 — 2026-10-20 (current)
+## 5.8.3 — 2026-10-20 (current)
+
+- **Avalonia game ordering fixed**: opening a system and clicking **All** (or any letter) now applies the configured File Name / Machine Description order before rendering. The scan previously showed the raw directory-enumeration order; it now matches WPF.
+
+## 5.8.2 — 2026-10-20
 
 - **Avalonia system loading fixed**: selecting a system no longer leaves the "Loading system..." overlay stuck. The game-card template used runtime type casts (`((vm:MainViewModel)DataContext)...`) that Avalonia cannot resolve inside deferred templates, so realizing the first card threw on the UI thread; the bindings now use `DataContext.Property` and the game grid renders normally. The same unsafe cast was removed from the image-pack download window.
 - **Guard test**: XAML binding paths using runtime type casts now fail the Avalonia test suite.

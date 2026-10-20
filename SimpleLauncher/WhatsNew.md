@@ -1,3 +1,15 @@
+# Release 5.8.3
+*2026-10-20*
+---
+
+## Avalonia Game Ordering Fixed
+- **The "All" button now sorts the grid** — Opening a system and clicking "All" (or any letter) applies the configured **File Name** or **Machine Description** order before rendering. The Avalonia scan previously showed the raw directory-enumeration order; it now matches the WPF app.
+
+## Packaging
+- **Patch bundles** — Windows and Linux bundles are rebuilt as 5.8.3 with the same framework-dependent single-file layout and bundled `LICENSE.txt`, `README.md` and `WhatsNew.md`.
+
+---
+
 # Release 5.8.2
 *2026-10-20*
 ---
