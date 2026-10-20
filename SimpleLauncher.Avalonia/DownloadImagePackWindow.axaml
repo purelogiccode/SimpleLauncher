@@ -75,7 +75,7 @@
                                             AutomationProperties.Name="{Binding DisplayName}"
                                             Height="40"
                                             Margin="5"
-                                            Command="{Binding $parent[Window].((vm:DownloadImagePackViewModel)DataContext).DownloadImagePackCommand, FallbackValue={x:Null}}"
+                                            Command="{Binding $parent[Window].DataContext.DownloadImagePackCommand, FallbackValue={x:Null}}"
                                             CommandParameter="{Binding}"
                                             IsEnabled="{Binding CanStartDownload}"
                                             Classes="primary" />

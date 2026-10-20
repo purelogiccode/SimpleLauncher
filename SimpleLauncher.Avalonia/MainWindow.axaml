@@ -945,20 +945,20 @@
                                          Root is a real Button carrying the WPF GameButton3D 3D effect
                                          (Classes="game-button-3d" — see DarkTheme.axaml). -->
                                         <Button Classes="game-button-3d"
-                                                Width="{Binding ((vm:MainViewModel)DataContext).CardWidth, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=168}"
+                                                Width="{Binding DataContext.CardWidth, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=168}"
                                                 AutomationProperties.Name="{Binding DisplayTitle}"
                                                 Click="GameCard_Click"
                                                 PointerPressed="GameCard_PointerPressed">
                                             <Button.Height>
                                                 <MultiBinding Converter="{StaticResource CardHeightConverter}">
-                                                    <Binding Path="((vm:MainViewModel)DataContext).CardWidth"
+                                                    <Binding Path="DataContext.CardWidth"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="168" />
                                                     <Binding Path="SystemName" />
-                                                    <Binding Path="((vm:MainViewModel)DataContext).IsMixedView"
+                                                    <Binding Path="DataContext.IsMixedView"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="False" />
-                                                    <Binding Path="((vm:MainViewModel)DataContext).ButtonAspectRatio"
+                                                    <Binding Path="DataContext.ButtonAspectRatio"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="Square" />
                                                 </MultiBinding>
@@ -1056,7 +1056,7 @@
                                                         Text="{Binding DisplayTitle, Converter={StaticResource SmartTitleCase}}"
                                                         Foreground="{DynamicResource TextPrimaryBrush}"
                                                         FontFamily="{DynamicResource PrimaryFont}"
-                                                        FontSize="{Binding ((vm:MainViewModel)DataContext).CaptionFontSize, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=13}"
+                                                        FontSize="{Binding DataContext.CaptionFontSize, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=13}"
                                                         MaxHeight="32"
                                                         TextTrimming="CharacterEllipsis"
                                                         ToolTip.Tip="{Binding DisplayTitle}" />
