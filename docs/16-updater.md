@@ -40,6 +40,10 @@ standalone updater per RID:
   and the framework-dependent single-file `Updater`; the **.NET 10 runtime** is required, and the
   ZIP entries carry Unix permission bits (0755 for the executables) — see
   [15 — Development](15-development.md#linux-release-packaging-script).
+- The secondary fallback (`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`)
+  mirrors `version.txt` and the same eight assets. Publish it after packaging with
+  `scripts/publish-fallback-r2.ps1` — see
+  [15 — Development](15-development.md#cloudflare-r2-fallback-publishing).
 
 ## Update install flow
 

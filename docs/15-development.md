@@ -98,11 +98,31 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.4
 - Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
   `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
   verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
-- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 704 Avalonia
+- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 708 Avalonia
   tests pass with `dotnet test -c Debug -f net10.0 -r linux-x64` (Fedora's SDK defaults to the
   `fedora.44-x64` RID, whose apphost pack is not on nuget.org, so the `-r linux-x64` override is
   required to restore/build), and the published app launches and renders through XWayland
   (`DISPLAY=:0` plus the login session's `XAUTHORITY`, e.g. from `systemctl --user show-environment`).
+
+### Cloudflare R2 fallback publishing
+
+The secondary download fallback
+(`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`, read by the updater when
+GitHub is unreachable or rate-limited) is backed by the Cloudflare R2 bucket
+`simplelauncher-thumbnails` under the prefix `Simple Launcher/Simple Launcher/`.
+
+After both packaging scripts have produced all four RIDs, publish the fallback copy:
+
+```powershell
+pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
+```
+
+- Reads `R2_*` credentials from the environment or the gitignored `AGENTS.local.md` block
+  (see the local-only notes); never commit them.
+- Uploads the four `release_{version}_{rid}.zip` and four `updater_{rid}.zip` assets, verifies
+  their public URLs, then updates `version.txt` **last**, so clients never see a version before
+  its assets exist.
+- `-DryRun` prints the plan; `-ReleaseDir` selects a non-default package folder.
 
 ### Publish the Avalonia app (multi-targeted)
 

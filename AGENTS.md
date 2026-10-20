@@ -90,11 +90,45 @@ disk.
     images/tools are absent) and hits the live GitHub/PureLogicCode endpoints.
   - `dotnet test SimpleLauncher.Avalonia.SlowTests/SimpleLauncher.Avalonia.SlowTests.csproj`
     (~1 s) — cross-platform mount extraction fallback and platform guards.
+
+### Test temp path (drive D)
+
+Drive `C:` on the development machine is nearly full, so **all test runs must use drive D for
+temporary files**. Set `TEMP` and `TMP` in the same shell session as `dotnet test`, for example:
+
+```powershell
+$env:TEMP = 'D:\Temp\opencode\test-temp'
+$env:TMP = $env:TEMP
+dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj
+```
+
+Use separate subdirectories when running suites in parallel and remove them afterwards.
+
+Do **not** redirect `TEMP`/`TMP` for `dotnet build` / `dotnet publish`: WPF's generated
+`_wpftmp` XAML project stops resolving its generated members when the temp path is moved.
+Builds use the normal temp path; only test execution uses drive D.
+
 - Version metadata is centralized: `SimpleLauncher/SimpleLauncher.csproj` is canonical;
   `SimpleLauncher.Core.csproj`, `SimpleLauncher/app.manifest`, the Avalonia csproj/manifest and
   `SimpleLauncher.Avalonia.Updater.csproj` must stay in sync (`VersionConsistencyTests` enforces
   and auto-corrects this). The two `appsettings.json` files must stay identical — the unified
   bundle ships a single shared copy (`AppSettingsFilesAreIdentical` enforces this).
+
+## ☁️ Release download fallback (Cloudflare R2)
+
+The in-app update fallback (`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`)
+is served from the Cloudflare R2 bucket `simplelauncher-thumbnails` under the prefix
+`Simple Launcher/Simple Launcher/`.
+
+- After packaging a release, publish the fallback copy with:
+  `pwsh scripts/publish-fallback-r2.ps1 -Version <version>`
+- The script uploads the four `release_{version}_{rid}.zip` and four `updater_{rid}.zip` assets,
+  verifies their public URLs, and updates `version.txt` **last** — never update `version.txt`
+  before all bundles exist.
+- R2 credentials live in the gitignored `AGENTS.local.md` `R2_*` block (or environment
+  variables); never commit them. `-DryRun` prints the upload plan without touching R2.
+- `release.yml` publishes the GitHub release; this step is the separate secondary-server copy
+  used by the updater when GitHub is unreachable or rate-limited.
 
 ## 🖥️ Linux VM GUI test harness (AT-SPI + vision)
 
