@@ -422,6 +422,9 @@ foreach ($rid in $RuntimeIdentifiers) {
         '-o', $updaterPublishDir
     )
 
+    # The standalone updater zip carries the same bundle documents as the release zip.
+    Copy-BundleDocuments -RepoDir $repoDir -PayloadDir $updaterPublishDir
+
     $updaterZip = Join-Path $OutputDir "updater_${rid}.zip"
     New-LinuxZipArchive -SourceDir $updaterPublishDir -ZipPath $updaterZip -Rid $rid
     [void]$produced.Add($updaterZip)

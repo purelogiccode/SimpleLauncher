@@ -26,6 +26,10 @@
 - **Third InspectCode batch** — Removed unused dependencies and parameters, replaced XAML design-time placeholders with real design-time types and typed binding paths, used field-backed properties, and kept every project at **zero analyzer warnings**.
 - **Dependencies** — Meziantou.Analyzer **3.0.314**, NAudio **3.3.0**, SharpCompress **0.50.6**, CHDSharp **1.5.0**, Markdown.Avalonia **12.0.2**, Microsoft.Extensions.Http.Resilience **10.11.0**, Avalonia **12.1.4**.
 
+## Packaging
+- **Self-contained documents in every bundle** — Every `release_{version}_{rid}.zip` and `updater_{rid}.zip` now carries `LICENSE.txt`, `README.md` and `WhatsNew.md`.
+- **Framework-dependent single binaries** — The apps and the updater remain single-file framework-dependent builds: managed assemblies are bundled, the **.NET 10 runtime is required** on the target machine and is never embedded.
+
 ## CI, Documentation & Tests
 - **CI** — GitHub Actions now builds the solution in Debug **and** Release with `-warnaserror`, compiles the Linux updater, and a new **Package dry run** workflow packages all four RIDs and verifies the Linux ZIP layout and executable bits without creating a release. Tests still run locally only (the fast/slow split is by project).
 - **Documentation** — The Pages site and the GitHub wiki share one source and one labeled side menu; the site gained a persisted dark/light theme.

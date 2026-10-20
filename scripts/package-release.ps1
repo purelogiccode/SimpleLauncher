@@ -420,8 +420,14 @@ foreach ($rid in $RuntimeIdentifiers) {
     New-ZipArchive -SourceDir $payloadDir -ZipPath $releaseZip
     [void]$produced.Add($releaseZip)
 
+    # The standalone updater zip carries the same bundle documents as the release zip.
     $updaterZip = Join-Path $OutputDir "updater_${rid}.zip"
-    New-FilesZipArchive -FilePaths @((Join-Path $payloadDir 'Updater.exe')) -ZipPath $updaterZip
+    New-FilesZipArchive -FilePaths @(
+        (Join-Path $payloadDir 'Updater.exe'),
+        (Join-Path $payloadDir 'LICENSE.txt'),
+        (Join-Path $payloadDir 'README.md'),
+        (Join-Path $payloadDir 'WhatsNew.md')
+    ) -ZipPath $updaterZip
     [void]$produced.Add($updaterZip)
 }
 

@@ -12,6 +12,7 @@
 - **Avalonia launcher**: launch exceptions are classified before logging, keeping elevation-required, UAC-cancel and invalid-executable conditions out of bug reports (#68419).
 - **Code quality**: third InspectCode cleanup batch (unused dependencies/parameters removed, design-time types and typed binding paths in XAML, field-backed properties, ISO9660 root-record validation tightened); builds remain at zero warnings.
 - **Dependencies**: Meziantou.Analyzer 3.0.314, NAudio 3.3.0, SharpCompress 0.50.6, CHDSharp 1.5.0, Markdown.Avalonia 12.0.2, Microsoft.Extensions.Http.Resilience 10.11.0.
+- **Packaging**: every release and updater ZIP now carries `LICENSE.txt`, `README.md` and `WhatsNew.md`; the apps remain single-file framework-dependent builds (the .NET 10 runtime is required and never embedded).
 - **CI & docs**: CI now builds Debug **and** Release with `-warnaserror`, compiles the Linux updater, and a four-RID packaging dry run verifies the zips and Linux executable bits; the Pages site and wiki share one side menu and the dark/light theme.
 - **Tests**: 2208 WPF + 704 Avalonia fast tests; 83 WPF + 11 Avalonia slow tests.
 

@@ -32,7 +32,8 @@ standalone updater per RID:
   `libHarfBuzzSharp.dll`, `av_libglesv2.dll`, `IncludeNativeLibrariesForSelfExtract`) and
   self-extracts them at launch, so the one file runs from either app folder **and** on legacy
   WPF-only installs that never had those natives (which is how the old WPF updater asset name is
-  reused for the unified release).
+  reused for the unified release). The updater zip also carries `LICENSE.txt`, `README.md` and
+  `WhatsNew.md`.
 - On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the framework-dependent
   single-file `SimpleLauncher.Avalonia` payload (managed assemblies bundled into the binary;
   native libraries such as Skia/HarfBuzz/SQLite ship beside it, same shape as the Windows exes)
