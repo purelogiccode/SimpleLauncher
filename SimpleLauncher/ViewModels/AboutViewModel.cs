@@ -37,7 +37,7 @@ public partial class AboutViewModel : ObservableObject
     {
         get;
         private set => SetProperty(ref field, value);
-    } = "";
+    }
 
     /// <summary>
     ///     Gets whether an update check is in progress.

@@ -3,7 +3,9 @@
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                      xmlns:models="clr-namespace:SimpleLauncher.Core.Models;assembly=SimpleLauncher.Core"
+                      mc:Ignorable="d"
                       Title="{DynamicResource SelectaWindow}"
                       Width="500"
                       Height="450"
@@ -19,7 +21,7 @@
                  ToolTip="{DynamicResource SelectWindowToActivate}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel>
+                    <StackPanel d:DataContext="{d:DesignInstance Type=models:WindowItem}">
                         <!-- Display Window Title -->
                         <TextBlock Text="{Binding Title}"
                                    Margin="5,2,5,2"

@@ -104,7 +104,6 @@ public class MainViewModelQuickActionsTests : IDisposable
             systemManager,
             CreateLauncher(systemManager, settings),
             new Mock<IFindCoverImageService>().Object,
-            new Stats(TestDependencies.HttpFactory(new HttpClient()).Object, _config, _logger.Object),
             settings,
             _pagination,
             loadingOrchestrator,

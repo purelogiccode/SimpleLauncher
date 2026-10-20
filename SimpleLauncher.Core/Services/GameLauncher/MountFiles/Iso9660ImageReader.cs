@@ -77,8 +77,10 @@ public static class Iso9660ImageReader
             if (!HasIsoSignature(sector) || sector[0] != 1) continue;
 
             // The root directory record sits at offset 156 of the primary volume descriptor.
+            // A directory record is at most 255 bytes (one length byte), so it can never
+            // overrun the 2048-byte sector from offset 156 — only the minimum length matters.
             var recordLength = sector[156];
-            if (recordLength < 34 || 156 + recordLength > SectorSize) break;
+            if (recordLength < 34) break;
             var record = sector.AsSpan(156, recordLength);
             return (ReadLittleEndian32(record, 2), ReadLittleEndian32(record, 10));
         }

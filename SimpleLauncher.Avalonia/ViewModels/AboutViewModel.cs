@@ -44,7 +44,7 @@ public partial class AboutViewModel : ObservableObject
     {
         get;
         private set => SetProperty(ref field, value);
-    } = "";
+    }
 
     /// <summary>
     ///     Gets the path to the application logo image.

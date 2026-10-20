@@ -63,7 +63,6 @@ public sealed class SystemConfigurationChangeRefreshTests : IDisposable
             _systemManager,
             CreateLauncher(_systemManager, settings),
             new Mock<IFindCoverImageService>().Object,
-            new Stats(TestDependencies.HttpFactory(new HttpClient()).Object, _config, _logger.Object),
             settings,
             pagination,
             loadingOrchestrator,

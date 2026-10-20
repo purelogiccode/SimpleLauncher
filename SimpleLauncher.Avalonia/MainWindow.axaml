@@ -945,20 +945,20 @@
                                          Root is a real Button carrying the WPF GameButton3D 3D effect
                                          (Classes="game-button-3d" — see DarkTheme.axaml). -->
                                         <Button Classes="game-button-3d"
-                                                Width="{Binding DataContext.CardWidth, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=168}"
+                                                Width="{Binding ((vm:MainViewModel)DataContext).CardWidth, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=168}"
                                                 AutomationProperties.Name="{Binding DisplayTitle}"
                                                 Click="GameCard_Click"
                                                 PointerPressed="GameCard_PointerPressed">
                                             <Button.Height>
                                                 <MultiBinding Converter="{StaticResource CardHeightConverter}">
-                                                    <Binding Path="DataContext.CardWidth"
+                                                    <Binding Path="((vm:MainViewModel)DataContext).CardWidth"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="168" />
                                                     <Binding Path="SystemName" />
-                                                    <Binding Path="DataContext.IsMixedView"
+                                                    <Binding Path="((vm:MainViewModel)DataContext).IsMixedView"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="False" />
-                                                    <Binding Path="DataContext.ButtonAspectRatio"
+                                                    <Binding Path="((vm:MainViewModel)DataContext).ButtonAspectRatio"
                                                              RelativeSource="{RelativeSource AncestorType=ListBox}"
                                                              FallbackValue="Square" />
                                                 </MultiBinding>
@@ -1056,7 +1056,7 @@
                                                         Text="{Binding DisplayTitle, Converter={StaticResource SmartTitleCase}}"
                                                         Foreground="{DynamicResource TextPrimaryBrush}"
                                                         FontFamily="{DynamicResource PrimaryFont}"
-                                                        FontSize="{Binding DataContext.CaptionFontSize, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=13}"
+                                                        FontSize="{Binding ((vm:MainViewModel)DataContext).CaptionFontSize, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=13}"
                                                         MaxHeight="32"
                                                         TextTrimming="CharacterEllipsis"
                                                         ToolTip.Tip="{Binding DisplayTitle}" />
@@ -1104,7 +1104,7 @@
                                                                 Width="Auto" CanUserSort="True"
                                                                 SortMemberPath="IsFavorite">
                                             <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
+                                                <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
                                                     <Image Source="avares://SimpleLauncher.Avalonia/images/star.png"
                                                            Width="16" Height="16"
                                                            IsVisible="{Binding IsFavorite}"

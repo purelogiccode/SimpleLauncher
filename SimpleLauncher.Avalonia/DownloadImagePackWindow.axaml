@@ -3,6 +3,7 @@
         xmlns:ext="using:SimpleLauncher.Avalonia.Extensions"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="using:SimpleLauncher.Core.Models"
+        xmlns:vm="using:SimpleLauncher.Avalonia.ViewModels"
         Title="{ext:Translate DownloadImagePack}"
         Width="650" MinWidth="550"
         Height="600" MinHeight="500"
@@ -74,7 +75,7 @@
                                             AutomationProperties.Name="{Binding DisplayName}"
                                             Height="40"
                                             Margin="5"
-                                            Command="{Binding $parent[Window].DataContext.DownloadImagePackCommand, FallbackValue={x:Null}}"
+                                            Command="{Binding $parent[Window].((vm:DownloadImagePackViewModel)DataContext).DownloadImagePackCommand, FallbackValue={x:Null}}"
                                             CommandParameter="{Binding}"
                                             IsEnabled="{Binding CanStartDownload}"
                                             Classes="primary" />

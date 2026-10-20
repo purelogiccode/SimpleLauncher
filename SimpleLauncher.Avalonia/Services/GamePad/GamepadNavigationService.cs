@@ -24,6 +24,9 @@ public sealed class GamepadNavigationService : IDisposable
     private const long ScrollRepeatMilliseconds = 80;
     private const float ScrollPixelsPerTick = 45f;
 
+    // Subscribed only on non-Windows builds (see the #if in the constructor): the Windows
+    // apps drive input through the WPF-compatible OS-level mouse simulation instead.
+    // ReSharper disable once NotAccessedField.Local
     private readonly GamePadController _controller;
     private readonly ILogger _logger;
 

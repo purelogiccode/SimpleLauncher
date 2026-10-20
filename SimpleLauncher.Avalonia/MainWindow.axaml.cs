@@ -172,9 +172,9 @@ public partial class MainWindow : Window, IPaginationHost
         // XAML KeyDown wiring never saw it and Enter did not launch from these grids.
         // Subscribe with handledEventsToo so Delete (remove) and Enter (launch) both work.
         FavoritesDataGrid.AddHandler(KeyDownEvent,
-            (_, e) => _ = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
+            (sender, e) => _ = HandleFavoritesKeyDownAsync(e), RoutingStrategies.Bubble, true);
         PlayHistoryDataGrid.AddHandler(KeyDownEvent,
-            (_, e) => _ = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
+            (sender, e) => _ = HandlePlayHistoryKeyDownAsync(e), RoutingStrategies.Bubble, true);
 
         // Populate the top System ComboBox before the window shows. The sidebar and its
         // icons are filled by ShowSystemSelectionScreenAsync after the window opens:
@@ -337,7 +337,7 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Live library refresh: when a watched ROM folder changes on disk, reload the
         // current view on the UI thread (same debounced behavior as the WPF app).
-        _gameFilesChangedHandler = (_, e) =>
+        _gameFilesChangedHandler = (sender, e) =>
         {
             try
             {

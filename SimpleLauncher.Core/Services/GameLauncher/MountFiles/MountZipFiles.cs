@@ -163,8 +163,8 @@ public class MountZipFiles : IMountZipFiles
         if (!OperatingSystem.IsWindows())
         {
             if (await TryMountZipWithFuseAndLaunchAsync(resolvedZipFilePath, ZipMountMode.EbootBin,
-                    selectedSystemName, selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
-                    rawEmulatorParameters, windowContext, logPath, gameLauncher, logErrors, messageBox))
+                    selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
+                    rawEmulatorParameters, windowContext, gameLauncher, logErrors, messageBox))
             {
                 return;
             }
@@ -480,8 +480,8 @@ public class MountZipFiles : IMountZipFiles
         if (!OperatingSystem.IsWindows())
         {
             if (await TryMountZipWithFuseAndLaunchAsync(resolvedZipFilePath, ZipMountMode.NestedFile,
-                    selectedSystemName, selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
-                    rawEmulatorParameters, windowContext, logPath, gameLauncher, logErrors, messageBox))
+                    selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
+                    rawEmulatorParameters, windowContext, gameLauncher, logErrors, messageBox))
             {
                 return;
             }
@@ -770,8 +770,8 @@ public class MountZipFiles : IMountZipFiles
         if (!OperatingSystem.IsWindows())
         {
             if (await TryMountZipWithFuseAndLaunchAsync(resolvedZipFilePath, ZipMountMode.ScummVm,
-                    selectedSystemName, selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
-                    selectedEmulatorParameters, null, logPath, null, logErrors, messageBox))
+                    selectedEmulatorName, selectedSystemManager, selectedEmulatorManager,
+                    selectedEmulatorParameters, null, null, logErrors, messageBox))
             {
                 return;
             }
@@ -1269,9 +1269,9 @@ public class MountZipFiles : IMountZipFiles
     ///     attempted (including launch errors, which are reported and not retried as extraction).
     /// </summary>
     private async Task<bool> TryMountZipWithFuseAndLaunchAsync(string resolvedZipFilePath, ZipMountMode mode,
-        string selectedSystemName, string selectedEmulatorName, ISystemManager selectedSystemManager,
+        string selectedEmulatorName, ISystemManager selectedSystemManager,
         Emulator selectedEmulatorManager, string rawEmulatorParameters, IWindowContext? windowContext,
-        string? logPath, ILauncherService? gameLauncher, ILogger logErrors, IMessageBoxLibraryService messageBox)
+        ILauncherService? gameLauncher, ILogger logErrors, IMessageBoxLibraryService messageBox)
     {
         if (!OperatingSystem.IsLinux() || !FuseValidation.IsFuseAvailable()) return false;
 

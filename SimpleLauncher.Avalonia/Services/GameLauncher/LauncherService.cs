@@ -1014,7 +1014,7 @@ public class LauncherService : ILauncherService
         string resolvedFilePath,
         Emulator selectedEmulatorManager,
         IWindowContext windowContext,
-        ILoadingState? loadingStateProvider = null)
+        ILoadingState? loadingStateProvider)
     {
         // WPF parity (GameLauncherService.LaunchBatchFileAsync): batch launches emit a
         // success/failure toast + status-bar text when the caller provides an
@@ -1169,7 +1169,7 @@ public class LauncherService : ILauncherService
         string resolvedFilePath,
         Emulator selectedEmulatorManager,
         IWindowContext windowContext,
-        ILoadingState? loadingStateProvider = null)
+        ILoadingState? loadingStateProvider)
     {
         // WPF parity (GameLauncherService.LaunchShortcutFileAsync): optimistic
         // "{fileName} launched" toast + status text before the launch attempt.

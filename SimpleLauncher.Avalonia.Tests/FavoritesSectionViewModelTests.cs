@@ -92,7 +92,6 @@ public class FavoritesSectionViewModelTests : IDisposable
             systemManager,
             CreateLauncher(systemManager, settings),
             new Mock<IFindCoverImageService>().Object,
-            new Stats(TestDependencies.HttpFactory(new HttpClient()).Object, _config, _logger.Object),
             settings,
             new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object),
             new AvaloniaGameFileLoadingOrchestrator(new AvaloniaGameCacheService(), _logger.Object),

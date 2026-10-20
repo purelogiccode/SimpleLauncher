@@ -19,7 +19,6 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.RetroAchievements;
 using SimpleLauncher.Core.Services.SettingsManager;
-using SimpleLauncher.Core.Services.UsageStats;
 
 namespace SimpleLauncher.Avalonia.ViewModels;
 
@@ -47,7 +46,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private readonly IRetroAchievementsHashStore _raHashStore;
     private readonly RetroAchievementsManager _raManager;
     private readonly SettingsManagerService _settings;
-    private readonly Stats _stats;
     private readonly ISystemImageResolverService? _systemImageResolver;
     private readonly SystemManagerService _systemManager;
     private List<SystemManagerConfig> _allSystems;
@@ -170,7 +168,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         SystemManagerService systemManager,
         LauncherService launcher,
         IFindCoverImageService findCoverImage,
-        Stats stats,
         SettingsManagerService settings,
         IPaginationService pagination,
         AvaloniaGameFileLoadingOrchestrator loadingOrchestrator,
@@ -189,7 +186,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _systemManager = systemManager;
         _launcher = launcher;
         _findCoverImage = findCoverImage;
-        _stats = stats;
         _settings = settings;
         _pagination = pagination;
         _loadingOrchestrator = loadingOrchestrator;

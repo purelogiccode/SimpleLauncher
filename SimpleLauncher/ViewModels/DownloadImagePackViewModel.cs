@@ -56,6 +56,9 @@ public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>Gets the collection of system names available for image pack download.</summary>
+    // Bound as the ItemsSource of the system dropdown in DownloadImagePackWindow.xaml; the
+    // inspection cannot see that XAML binding, so the collection looks write-only to it.
+    // ReSharper disable once CollectionNeverQueried.Global
     public ObservableCollection<string> SystemNames { get; }
 
     /// <summary>Gets the collection of image pack items to display for the selected system.</summary>

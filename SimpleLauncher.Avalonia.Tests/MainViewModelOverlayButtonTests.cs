@@ -107,7 +107,6 @@ public class MainViewModelOverlayButtonTests : IDisposable
             systemManager,
             CreateLauncher(systemManager, settings),
             new Mock<IFindCoverImageService>().Object,
-            new Stats(TestDependencies.HttpFactory(new HttpClient()).Object, _config, _logger.Object),
             settings,
             new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object),
             loadingOrchestrator,
