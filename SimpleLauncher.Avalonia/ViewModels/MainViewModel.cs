@@ -1697,7 +1697,11 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             }
         }
 
-        return games;
+        // WPF parity (GameFileLoadingOrchestratorService.SortByMameDescription): the
+        // file list is sorted before the cards are rendered. Without this, the grid
+        // showed the raw directory-enumeration order and the "All" letter button
+        // appeared unsorted even with the configured FileName/MachineDescription order.
+        return _gameFilter.SortByMameOrder(games, _mameSortOrder);
     }
 
     /// <summary>

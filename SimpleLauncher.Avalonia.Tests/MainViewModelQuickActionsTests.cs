@@ -10,6 +10,7 @@ using SimpleLauncher.Avalonia.Services.PlayHistory;
 using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.GameLauncher.Strategies;
 using SimpleLauncher.Core.Services.GamePad;
 using SimpleLauncher.Core.Services.PlaySound;
@@ -37,9 +38,11 @@ public class MainViewModelQuickActionsTests : IDisposable
     private readonly Mock<IRetroAchievementsHashScanner> _raHashScanner = new();
     private readonly Mock<IRetroAchievementsHashStore> _raHashStore = new();
     private readonly FakeLoadingOverlayHost _loadingHost = new();
+    private readonly AvaloniaGameCacheService _gameCache = new();
     private readonly AvaloniaPaginationService _pagination;
     private readonly string _romsFolder;
     private readonly SettingsManagerService _settings;
+    private readonly SystemManagerService _systemManager;
     private readonly string _systemXmlPath;
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"SL_QuickActionsTest_{Guid.NewGuid():N}");
     private readonly MainViewModel _viewModel;
@@ -81,10 +84,10 @@ public class MainViewModelQuickActionsTests : IDisposable
 
         var settings = TestDependencies.Settings(_config, _messageBox);
         _settings = settings;
-        var systemManager = new SystemManagerService(_config);
-        UnifiedTestDatabase.SeedSystemsFromXml(systemManager, _systemXmlPath);
+        _systemManager = new SystemManagerService(_config);
+        UnifiedTestDatabase.SeedSystemsFromXml(_systemManager, _systemXmlPath);
         var loadingOrchestrator = new AvaloniaGameFileLoadingOrchestrator(
-            new AvaloniaGameCacheService(), _logger.Object);
+            _gameCache, _logger.Object);
         _pagination = new AvaloniaPaginationService(TestDependencies.ResourceProvider().Object);
 
         // Wire the reference-counted loading overlay to a recording host so tests can
@@ -101,8 +104,8 @@ public class MainViewModelQuickActionsTests : IDisposable
         _viewModel = new MainViewModel(
             new FavoritesManager(),
             new PlayHistoryManager(),
-            systemManager,
-            CreateLauncher(systemManager, settings),
+            _systemManager,
+            CreateLauncher(_systemManager, settings),
             new Mock<IFindCoverImageService>().Object,
             settings,
             _pagination,
@@ -447,6 +450,55 @@ public class MainViewModelQuickActionsTests : IDisposable
         Assert.Equal(3, titles.IndexOf("cantina"));
         Assert.Equal(2, titles.IndexOf("beyond"));
         Assert.Equal(0, titles.IndexOf("123start"));
+    }
+
+    [Fact]
+    public async Task NavigateToSystem_SortsByFileNameAndMachineDescription()
+    {
+        var system = _systemManager.GetSystem("Test System");
+        Assert.NotNull(system);
+
+        // Serve the cache in reverse order so the test never depends on the OS
+        // directory-enumeration order (Windows NTFS and Linux ext4 differ).
+        var files = Directory.GetFiles(_romsFolder, "*", SearchOption.TopDirectoryOnly)
+            .OrderByDescending(static f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        void PrimeCache() => _gameCache.SetCachedFiles(system.SystemName, files, BuildSignature(system));
+
+        PrimeCache();
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        var fileNameOrder = _viewModel.Games.Select(static g => Path.GetFileName(g.FilePath)).ToList();
+        Assert.Equal(
+            fileNameOrder.OrderBy(static f => f, StringComparer.OrdinalIgnoreCase),
+            fileNameOrder,
+            StringComparer.OrdinalIgnoreCase);
+
+        // The MAME descriptions reorder the list differently from the file names.
+        _mameData.Setup(m => m.Lookup).Returns(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["beyond"] = "Aardvark",
+            ["cantina"] = "Zulu"
+        });
+        _viewModel.ToggleMameSortOrder();
+        Assert.Equal("MachineDescription", _viewModel.MameSortOrder);
+
+        PrimeCache();
+        await _viewModel.ApplyLetterFilterAsync(""); // the "All" button reloads and must sort
+
+        Assert.Equal(
+            new[] { "123start.zip", "beyond.zip", "abyss.zip", "zero.was", "cantina.zip" },
+            _viewModel.Games.Select(static g => Path.GetFileName(g.FilePath)),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string BuildSignature(SystemManagerConfig system)
+    {
+        var folders = string.Join('\u001E', system.SystemFolders ?? []);
+        var formats = string.Join('\u001E', system.FileFormatsToSearch ?? []);
+        var recursion = system is { DisableRecursiveSearch: true, GroupByFolder: false } ? '0' : '1';
+        return $"{folders}\u001F{formats}\u001F{recursion}";
     }
 
     [Fact]
