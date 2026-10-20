@@ -100,6 +100,38 @@ public class UpdateSimulationTests : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that an existing read-only file (e.g. LICENSE.txt from a portable install)
+    ///     is overwritten instead of aborting the extraction with UnauthorizedAccessException
+    ///     (bug #68830).
+    /// </summary>
+    [Fact]
+    public void ExtractAllFromZipOverwritesReadOnlyExistingFile()
+    {
+        var existingFile = Path.Combine(_testDirectory, "LICENSE.txt");
+        File.WriteAllText(existingFile, "old license");
+        File.SetAttributes(existingFile, FileAttributes.ReadOnly);
+
+        try
+        {
+            var zipStream = CreateTestZip(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["LICENSE.txt"] = "new license"
+            });
+
+            var result = CheckForUpdatesService.ExtractAllFromZip(zipStream, _testDirectory, null, new NoOpLogger());
+
+            Assert.True(result);
+            AssertFileContent(existingFile, "new license");
+            Assert.False((File.GetAttributes(existingFile) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly);
+        }
+        finally
+        {
+            if (File.Exists(existingFile))
+                File.SetAttributes(existingFile, FileAttributes.Normal);
+        }
+    }
+
+    /// <summary>
     ///     Verifies that a newer latest version signals an available update.
     /// </summary>
     [Fact]

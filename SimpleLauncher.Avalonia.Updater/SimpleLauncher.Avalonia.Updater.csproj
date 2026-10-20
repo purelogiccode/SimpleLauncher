@@ -11,9 +11,9 @@
         <AssemblyName>Updater</AssemblyName>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <AssemblyVersion>5.8.3</AssemblyVersion>
-        <FileVersion>5.8.3</FileVersion>
-        <Version>5.8.3</Version>
+        <AssemblyVersion>5.8.4</AssemblyVersion>
+        <FileVersion>5.8.4</FileVersion>
+        <Version>5.8.4</Version>
         <IsPackable>false</IsPackable>
         <LangVersion>14</LangVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>
@@ -42,7 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.314">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.315">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -54,7 +54,7 @@
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <PackageReference Include="SharpCompress" Version="0.50.6" />
+        <PackageReference Include="SharpCompress" Version="0.50.7" />
         <PackageReference Include="Avalonia" Version="12.1.4" />
         <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />

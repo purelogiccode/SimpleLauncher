@@ -470,6 +470,12 @@ public partial class CheckForUpdatesService
                     if (!string.IsNullOrEmpty(entryDirectory) && !Directory.Exists(entryDirectory))
                         Directory.CreateDirectory(entryDirectory);
 
+                    // Portable installs often carry read-only files (e.g. LICENSE.txt).
+                    // File.Create fails with UnauthorizedAccessException on them (bug #68830),
+                    // so clear the attribute before overwriting the file.
+                    if (File.Exists(destinationFileFullPath))
+                        ClearReadOnlyAttribute(destinationFileFullPath);
+
                     // Extract the entry
                     using (var entryStream = entry.OpenEntryStream())
                     using (var fileStream = File.Create(destinationFileFullPath))
@@ -477,9 +483,19 @@ public partial class CheckForUpdatesService
                         entryStream.CopyTo(fileStream);
                     }
 
-                    // Preserve file time if available
+                    // Preserve file time if available. Timestamp preservation is cosmetic:
+                    // a denied attribute write must not abort an otherwise successful update.
                     if (entry.LastModifiedTime.HasValue)
-                        File.SetLastWriteTime(destinationFileFullPath, entry.LastModifiedTime.Value);
+                    {
+                        try
+                        {
+                            File.SetLastWriteTime(destinationFileFullPath, entry.LastModifiedTime.Value);
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        {
+                            logErrors.Debug(ex, $"Could not preserve the timestamp of '{entry.Key}'");
+                        }
+                    }
                 }
             }
 
@@ -492,6 +508,29 @@ public partial class CheckForUpdatesService
             logWindow?.Log("All files from the updater package extracted successfully.");
             return true;
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            // Expected user-environment condition: the install folder or one of its files
+            // is read-only/protected (ACL, Controlled Folder Access, archive-viewer folder).
+            // Bug #68830 filed this as an application error; it is not one.
+            logErrors.Information(ex, "Access denied while processing the update ZIP archive");
+            logWindow?.Log(
+                "Failed to process the update ZIP archive: access denied. " +
+                "Make sure the Simple Launcher folder is writable (not read-only or protected) and try again.");
+
+            return false;
+        }
+        catch (IOException ex) when (IsFileLockError(ex))
+        {
+            // Expected user-environment condition: another process (antivirus, OneDrive,
+            // a still-running Simple Launcher) holds one of the destination files.
+            logErrors.Information(ex, "The update ZIP archive could not be processed because a file is in use");
+            logWindow?.Log(
+                "Failed to process the update ZIP archive: a file is in use by another process. " +
+                "Close Simple Launcher and retry.");
+
+            return false;
+        }
         catch (Exception ex)
         {
             // Notify developer
@@ -500,6 +539,33 @@ public partial class CheckForUpdatesService
 
             return false;
         }
+    }
+
+    /// <summary>
+    ///     Clears the read-only attribute on an existing file (best effort). The extraction
+    ///     overwrites portable installs whose files may carry the attribute (bug #68830).
+    /// </summary>
+    private static void ClearReadOnlyAttribute(string path)
+    {
+        try
+        {
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
+        catch
+        {
+            // Best effort: the write reports the real error if this fails.
+        }
+    }
+
+    /// <summary>
+    ///     True only for transient file-locking failures (another process holds the file):
+    ///     Win32 ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION.
+    /// </summary>
+    private static bool IsFileLockError(IOException ex)
+    {
+        return ex.HResult is unchecked((int)0x80070020) or unchecked((int)0x80070021);
     }
 
     private bool IsNewVersionAvailable(string currentVersion, string latestVersion)

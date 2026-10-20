@@ -1,3 +1,20 @@
+# Release 5.8.4
+*2026-10-20*
+---
+
+## RetroAchievements Stability
+- **No more false bug reports** — When RetroAchievements serves an HTML challenge, rate-limit or maintenance page instead of JSON, both apps now log the condition at Information level and show the normal "no data" state. Previously the JSON parse error was reported as an application bug (bugs #68823–#68828).
+- **All RA endpoints covered** — Profile, recently played, completion progress, game details, ranks, earned achievements and session login share the same defensive response handling.
+
+## Updater Fix
+- **Read-only files no longer abort the update** — The updater bootstrap clears the read-only attribute before overwriting files such as `LICENSE.txt` (bug #68830). Access-denied and file-in-use conditions are logged at Information and shown with actionable guidance instead of being filed as bugs.
+
+## Dependencies & Maintenance
+- **Dependency updates** — Meziantou.Analyzer 3.0.315 and SharpCompress 0.50.7.
+- **Packaging** — Windows and Linux bundles are rebuilt as 5.8.4 with the same framework-dependent single-file layout and bundled `LICENSE.txt`, `README.md` and `WhatsNew.md`.
+
+---
+
 # Release 5.8.3
 *2026-10-20*
 ---

@@ -464,8 +464,6 @@ public class MainViewModelQuickActionsTests : IDisposable
             .OrderByDescending(static f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        void PrimeCache() => _gameCache.SetCachedFiles(system.SystemName, files, BuildSignature(system));
-
         PrimeCache();
         await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
 
@@ -491,6 +489,9 @@ public class MainViewModelQuickActionsTests : IDisposable
             new[] { "123start.zip", "beyond.zip", "abyss.zip", "zero.was", "cantina.zip" },
             _viewModel.Games.Select(static g => Path.GetFileName(g.FilePath)),
             StringComparer.OrdinalIgnoreCase);
+        return;
+
+        void PrimeCache() => _gameCache.SetCachedFiles(system.SystemName, files, BuildSignature(system));
     }
 
     private static string BuildSignature(SystemManagerConfig system)

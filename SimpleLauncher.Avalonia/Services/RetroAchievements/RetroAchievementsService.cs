@@ -70,13 +70,22 @@ public class RetroAchievementsService
             if (!response.IsSuccessStatusCode) return null;
 
             var jsonString = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(jsonString);
+            if (!TryGetJsonPayload(jsonString, nameof(GetSessionTokenAsync), out var json)) return null;
+
+            using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
             return root.TryGetProperty("Success", out var success) && success.GetBoolean() &&
                    root.TryGetProperty("Token", out var token)
                 ? token.GetString()
                 : null;
+        }
+        catch (JsonException ex)
+        {
+            // Expected external condition (malformed/non-JSON API payload): not a bug.
+            _logger.Information(ex,
+                "[RA Service] Invalid JSON response in GetSessionTokenAsync; the API may be temporarily unavailable.");
+            return null;
         }
         catch (Exception ex)
         {
@@ -121,7 +130,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<RaGameProgressResponse>(json);
+            var apiResponse = DeserializeApiResponse<RaGameProgressResponse>(json, nameof(GetGameInfoAndUserProgressAsync));
 
             if (apiResponse == null) return (null, null);
 
@@ -208,7 +217,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<RaGameExtendedDetails>(json);
+            return DeserializeApiResponse<RaGameExtendedDetails>(json, nameof(GetGameExtendedAsync));
         }
         catch (RaUnauthorizedException)
         {
@@ -242,7 +251,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<RaUserGameRank>>(json);
+            return DeserializeApiResponse<List<RaUserGameRank>>(json, nameof(GetUserGameRankAndScoreAsync));
         }
         catch (RaUnauthorizedException)
         {
@@ -278,7 +287,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<RaGameRankAndScore>>(json);
+            return DeserializeApiResponse<List<RaGameRankAndScore>>(json, nameof(GetGameRankAndScoreAsync));
         }
         catch (RaUnauthorizedException)
         {
@@ -312,7 +321,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<RaProfile>(json);
+            return DeserializeApiResponse<RaProfile>(json, nameof(GetUserProfileAsync));
         }
         catch (RaUnauthorizedException)
         {
@@ -360,7 +369,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<RaRecentlyPlayedGame>>(json);
+            return DeserializeApiResponse<List<RaRecentlyPlayedGame>>(json, nameof(GetUserRecentlyPlayedGamesAsync));
         }
         catch (RaUnauthorizedException)
         {
@@ -398,7 +407,7 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<RaEarnedAchievement>>(json);
+            return DeserializeApiResponse<List<RaEarnedAchievement>>(json, nameof(GetAchievementsEarnedBetweenAsync));
         }
         catch (RaUnauthorizedException)
         {
@@ -433,7 +442,8 @@ public class RetroAchievementsService
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<RaUserCompletionProgressResponse>(json);
+            var apiResponse = DeserializeApiResponse<RaUserCompletionProgressResponse>(json,
+                nameof(GetUserCompletionProgressAsync));
 
             if (apiResponse?.Results == null) return null;
 
@@ -457,5 +467,59 @@ public class RetroAchievementsService
             _logger.Error(ex, $"[RA Service] Error in GetUserCompletionProgressAsync for user {username}.");
             return null;
         }
+    }
+
+    /// <summary>
+    ///     Deserializes a RetroAchievements API payload. An HTML or empty payload is an expected
+    ///     external condition (Cloudflare challenge, rate limit, maintenance page) and is logged at
+    ///     Information so it never reaches the bug report service (bugs #68823-68828).
+    /// </summary>
+    private T? DeserializeApiResponse<T>(string json, string operation)
+    {
+        if (!TryGetJsonPayload(json, operation, out var payload)) return default;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(payload);
+        }
+        catch (JsonException ex)
+        {
+            // The API returned a payload that is not valid JSON: not an application bug.
+            _logger.Information(ex,
+                $"[RA Service] Invalid JSON response in {operation}; the API may be temporarily unavailable.");
+            return default;
+        }
+    }
+
+    /// <summary>
+    ///     Returns false for empty or non-JSON (HTML) API payloads, logging them at Information
+    ///     level so they stay out of the bug report service.
+    /// </summary>
+    private bool TryGetJsonPayload(string json, string operation, out string payload)
+    {
+        payload = json;
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            _logger.Information(
+                $"[RA Service] Empty response in {operation}; the RetroAchievements API may be temporarily unavailable.");
+            return false;
+        }
+
+        var trimmed = json.AsSpan().TrimStart();
+        if (!trimmed.IsEmpty && trimmed[0] == '<')
+        {
+            _logger.Information(
+                $"[RA Service] Non-JSON response in {operation}; the RetroAchievements API returned an HTML page (maintenance, rate limit or challenge). Response starts with: {GetResponseSnippet(json)}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string GetResponseSnippet(string response)
+    {
+        var singleLine = response.ReplaceLineEndings(" ").Trim();
+        return singleLine.Length <= 120 ? singleLine : $"{singleLine[..120]}...";
     }
 }

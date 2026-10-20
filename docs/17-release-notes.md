@@ -2,7 +2,14 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
-## 5.8.3 — 2026-10-20 (current)
+## 5.8.4 — 2026-10-20 (current)
+
+- **RetroAchievements stability**: HTML challenge, rate-limit and maintenance responses are treated as expected external conditions and logged at Information, so they no longer generate bug reports (bugs #68823–#68828).
+- **Updater**: the bootstrapper clears the read-only attribute before overwriting files such as `LICENSE.txt`; access-denied and file-in-use conditions are logged at Information with actionable guidance (bug #68830).
+- **Dependencies**: Meziantou.Analyzer 3.0.315 and SharpCompress 0.50.7.
+- **Packaging**: Windows and Linux bundles rebuilt as 5.8.4 (framework-dependent single-file, documents included).
+
+## 5.8.3 — 2026-10-20
 
 - **Avalonia game ordering fixed**: opening a system and clicking **All** (or any letter) now applies the configured File Name / Machine Description order before rendering. The scan previously showed the raw directory-enumeration order; it now matches WPF.
 

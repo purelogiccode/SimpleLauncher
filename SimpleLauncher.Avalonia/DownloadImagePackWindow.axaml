@@ -1,3 +1,4 @@
+<!-- ReSharper disable once Xaml.RedundantNamespaceAlias -->
 <Window x:Class="SimpleLauncher.Avalonia.DownloadImagePackWindow"
         xmlns="https://github.com/avaloniaui"
         xmlns:ext="using:SimpleLauncher.Avalonia.Extensions"

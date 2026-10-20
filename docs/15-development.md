@@ -54,8 +54,8 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 `scripts/package-release.ps1` reproduces the unified release artifacts (also used by CI):
 
 ```powershell
-pwsh scripts/package-release.ps1 -Version 5.8.3
-# -> artifacts\release\release_5.8.3_win-x64.zip, release_5.8.3_win-arm64.zip
+pwsh scripts/package-release.ps1 -Version 5.8.4
+# -> artifacts\release\release_5.8.4_win-x64.zip, release_5.8.4_win-arm64.zip
 # -> artifacts\release\updater_win-x64.zip, updater_win-arm64.zip
 ```
 
@@ -73,8 +73,8 @@ pwsh scripts/package-release.ps1 -Version 5.8.3
 asset names the in-app updater looks up in the GitHub release):
 
 ```powershell
-pwsh scripts/package-release-linux.ps1 -Version 5.8.3
-# -> artifacts\release\release_5.8.3_linux-x64.zip, release_5.8.3_linux-arm64.zip
+pwsh scripts/package-release-linux.ps1 -Version 5.8.4
+# -> artifacts\release\release_5.8.4_linux-x64.zip, release_5.8.4_linux-arm64.zip
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 ```
 
@@ -136,7 +136,7 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
 
 ## Versioning
 
-Version `5.8.3` must stay in sync across:
+Version `5.8.4` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)
@@ -167,7 +167,7 @@ packaging. Bump all of them together.
 
 ## Static analysis & code style
 
-- **Meziantou.Analyzer 3.0.314**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.402** and **Roslynator.Analyzers 5.0.1** (all `PrivateAssets`).
+- **Meziantou.Analyzer 3.0.315**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.402** and **Roslynator.Analyzers 5.0.1** (all `PrivateAssets`).
 - `Nullable` enabled everywhere; `LangVersion 14`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
 - `NoWarn` in app: `NU1903;CS0436`.
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).

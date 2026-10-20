@@ -29,10 +29,10 @@
         <PackageIcon>icon\icon2.png</PackageIcon>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <AssemblyVersion>5.8.3</AssemblyVersion>
-        <FileVersion>5.8.3</FileVersion>
+        <AssemblyVersion>5.8.4</AssemblyVersion>
+        <FileVersion>5.8.4</FileVersion>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-        <Version>5.8.3</Version>
+        <Version>5.8.4</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <PackageProjectUrl>https://github.com/purelogiccode/SimpleLauncher</PackageProjectUrl>
         <UseWindowsForms>False</UseWindowsForms>
@@ -932,7 +932,7 @@
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="MahApps.Metro" Version="2.4.11" />
         <PackageReference Include="MdXaml" Version="1.27.0" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.314">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.315">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -957,7 +957,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
-        <PackageReference Include="SharpCompress" Version="0.50.6" />
+        <PackageReference Include="SharpCompress" Version="0.50.7" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="Tomlyn" Version="2.10.1" />
         <PackageReference Include="Serilog" Version="4.4.0" />

@@ -6,8 +6,8 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <Company>PureLogicCode.com</Company>
-        <AssemblyVersion>5.8.3</AssemblyVersion>
-        <FileVersion>5.8.3</FileVersion>
+        <AssemblyVersion>5.8.4</AssemblyVersion>
+        <FileVersion>5.8.4</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.314">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.315">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
