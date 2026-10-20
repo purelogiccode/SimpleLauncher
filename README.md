@@ -1,6 +1,5 @@
 [![CI](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
-[![Latest release downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleLauncher/latest/total)](https://github.com/purelogiccode/SimpleLauncher/releases/latest)
 [![Total downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleLauncher/total)](https://github.com/purelogiccode/SimpleLauncher/releases)
 [![Release date](https://img.shields.io/github/release-date/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
 [![Last commit](https://img.shields.io/github/last-commit/purelogiccode/SimpleLauncher/master)](https://github.com/purelogiccode/SimpleLauncher/commits/master)
