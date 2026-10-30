@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SimpleLauncher.Core.Services.CheckPaths;
@@ -208,6 +209,18 @@ internal partial class EditSystemWindow
         var resolvedImageFolder = PathHelper.ResolveRelativeToAppDirectory(systemImageFolderText);
         if (!string.IsNullOrEmpty(resolvedImageFolder) && !Directory.Exists(resolvedImageFolder))
         {
+            // A path blocked by an existing file (for example an emulator executable pasted
+            // into the folder field) can never become a folder. Treat it as user input
+            // instead of letting Directory.CreateDirectory throw (bug 68909).
+            if (PathHelper.IsPathBlockedByFile(resolvedImageFolder))
+            {
+                _logger.Information("The system image folder path is blocked by an existing file: {Path}",
+                    resolvedImageFolder);
+                await ShowFolderPathIsBlockedByFileAsync("SystemImageFolderpathisnotvalid",
+                    "System Image Folder path is not valid or does not exist:", resolvedImageFolder);
+                return (true, systemImageFolderText);
+            }
+
             // Check for invalid path characters before attempting directory creation
             if (SanitizeInputSystemName.ContainsInvalidPathCharacters(resolvedImageFolder, out var invalidChars))
             {
@@ -255,6 +268,17 @@ internal partial class EditSystemWindow
         var resolvedSystemFolder = PathHelper.ResolveRelativeToAppDirectory(systemFolderText);
         if (!string.IsNullOrEmpty(resolvedSystemFolder) && !Directory.Exists(resolvedSystemFolder))
         {
+            // A path blocked by an existing file can never become a folder. Treat it as
+            // user input instead of letting Directory.CreateDirectory throw (bug 68909).
+            if (PathHelper.IsPathBlockedByFile(resolvedSystemFolder))
+            {
+                _logger.Information("The system folder path is blocked by an existing file: {Path}",
+                    resolvedSystemFolder);
+                await ShowFolderPathIsBlockedByFileAsync("SystemFolderpathisnotvalid",
+                    "System Folder path is not valid or does not exist:", resolvedSystemFolder);
+                return (true, systemFolderText);
+            }
+
             // Check for invalid path characters before attempting directory creation
             if (SanitizeInputSystemName.ContainsInvalidPathCharacters(resolvedSystemFolder, out var invalidChars))
             {
@@ -276,6 +300,13 @@ internal partial class EditSystemWindow
         }
 
         return (false, systemFolderText);
+    }
+
+    private async Task ShowFolderPathIsBlockedByFileAsync(string resourceKey, string fallbackMessage, string folderPath)
+    {
+        var messageTemplate = (string?)Application.Current.TryFindResource(resourceKey) ?? fallbackMessage;
+        var title = (string?)Application.Current.TryFindResource("Error") ?? "Error";
+        await _messageBox.CustomErrorMessageBoxAsync($"{messageTemplate}\n\n{folderPath}", title);
     }
 
     private async Task<bool> ValidateSystemNameAsync(string systemNameText)

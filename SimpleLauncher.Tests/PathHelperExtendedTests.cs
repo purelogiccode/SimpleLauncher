@@ -424,4 +424,72 @@ public class PathHelperExtendedTests
             Directory.Delete(tempDir);
         }
     }
+
+    /// <summary>
+    ///     Verifies that IsPathBlockedByFile returns true when the path itself is an existing file.
+    /// </summary>
+    [Fact]
+    public void IsPathBlockedByFileExistingFileReturnsTrue()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt");
+        File.WriteAllText(tempFile, "I am a file, not a folder");
+        try
+        {
+            Assert.True(PathHelper.IsPathBlockedByFile(tempFile));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// <summary>
+    ///     Verifies that IsPathBlockedByFile returns true when a parent segment of the path is an existing file.
+    /// </summary>
+    [Fact]
+    public void IsPathBlockedByFilePathUnderFileReturnsTrue()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.txt");
+        File.WriteAllText(tempFile, "I am a file, not a folder");
+        try
+        {
+            Assert.True(PathHelper.IsPathBlockedByFile(Path.Combine(tempFile, "images")));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// <summary>
+    ///     Verifies that IsPathBlockedByFile returns false for an existing directory and for a
+    ///     not-yet-created folder inside it.
+    /// </summary>
+    [Fact]
+    public void IsPathBlockedByFileDirectoryOrMissingPathReturnsFalse()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            Assert.False(PathHelper.IsPathBlockedByFile(tempDir));
+            Assert.False(PathHelper.IsPathBlockedByFile(Path.Combine(tempDir, "new-folder")));
+        }
+        finally
+        {
+            Directory.Delete(tempDir);
+        }
+    }
+
+    /// <summary>
+    ///     Verifies that IsPathBlockedByFile returns false for null, empty and whitespace input.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void IsPathBlockedByFileNullOrEmptyReturnsFalse(string? path)
+    {
+        Assert.False(PathHelper.IsPathBlockedByFile(path));
+    }
 }

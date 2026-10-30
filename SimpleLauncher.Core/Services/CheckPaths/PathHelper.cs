@@ -648,6 +648,38 @@ public static partial class PathHelper
     }
 
     /// <summary>
+    ///     Determines whether an existing file occupies the given path or one of its parent segments,
+    ///     which makes it impossible to create a directory at that path.
+    /// </summary>
+    /// <param name="path">The path that should become a directory.</param>
+    /// <returns>True when an existing file blocks directory creation; false otherwise.</returns>
+    public static bool IsPathBlockedByFile(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return false;
+
+        try
+        {
+            var current = Path.GetFullPath(path);
+            while (!string.IsNullOrEmpty(current))
+            {
+                if (Directory.Exists(current)) return false;
+                if (File.Exists(current)) return true;
+
+                var parent = Path.GetDirectoryName(current);
+                if (string.IsNullOrEmpty(parent) || string.Equals(parent, current, StringComparison.Ordinal)) return false;
+
+                current = parent;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"[PathHelper] Error inspecting '{path}': {ex.Message}");
+        }
+
+        return false;
+    }
+
+    /// <summary>
     ///     Attempts to find a file on disk matching the given path, tolerating Unicode normalization differences in the file
     ///     name.
     /// </summary>
