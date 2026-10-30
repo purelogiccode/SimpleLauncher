@@ -149,9 +149,12 @@ public class QuitSimpleLauncher
                 Environment.Exit(0);
             });
         }
-        catch (Win32Exception ex) when (ex.NativeErrorCode == 5) // Access Denied
+        catch (Win32Exception ex)
         {
-            _logger.Error(ex, "Access denied when starting Updater.exe");
+            // Expected user-environment condition (ACL, Controlled Folder Access,
+            // application control policy, missing association): not an application bug.
+            _logger.Information(ex,
+                "Could not start Updater.exe (Win32 error {NativeErrorCode})", ex.NativeErrorCode);
 
             await messageBox.UpdaterLaunchFailedMessageBoxAsync();
         }

@@ -3,6 +3,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Core.Interfaces;
 using WindowScreenshotModel = SimpleLauncher.Avalonia.Models.WindowScreenshot;
@@ -112,13 +113,35 @@ public sealed partial class AvaloniaActiveWindowScreenshotService
         try
         {
             _playSoundEffects.PlayShutterSound();
-
-            var flashWindow = _serviceProvider.GetRequiredService<FlashOverlayWindow>();
-            _ = flashWindow.ShowFlashAsync();
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "[AvaloniaActiveWindowScreenshot] Error playing the shutter sound or flash.");
+            _logger.Error(ex, "[AvaloniaActiveWindowScreenshot] Error playing the shutter sound.");
+        }
+
+        // The screenshot can be requested from a background thread, but Avalonia windows
+        // must be created and shown on the UI thread (bug #68921). Post the flash instead
+        // of resolving/constructing FlashOverlayWindow on the calling thread.
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            _ = ShowFlashOverlayAsync();
+        }
+        else
+        {
+            _ = Dispatcher.UIThread.InvokeAsync(ShowFlashOverlayAsync);
+        }
+    }
+
+    private async Task ShowFlashOverlayAsync()
+    {
+        try
+        {
+            var flashWindow = _serviceProvider.GetRequiredService<FlashOverlayWindow>();
+            await flashWindow.ShowFlashAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "[AvaloniaActiveWindowScreenshot] Error showing the flash overlay.");
         }
     }
 }

@@ -162,7 +162,11 @@ public class FavoritesManager
         {
             foreach (var favorite in FavoriteList)
             {
-                if (favorite.SystemName.Equals(oldSystemName, StringComparison.OrdinalIgnoreCase))
+                // Legacy favorites.dat entries may have a null SystemName (MessagePack does
+                // not enforce the required modifier), so compare null-safely instead of
+                // dereferencing it (bug #68900).
+                if (favorite is not null &&
+                    string.Equals(favorite.SystemName, oldSystemName, StringComparison.OrdinalIgnoreCase))
                 {
                     favorite.SystemName = newSystemName;
                     changed = true;

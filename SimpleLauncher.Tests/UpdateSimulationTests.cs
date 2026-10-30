@@ -132,6 +132,29 @@ public class UpdateSimulationTests : IDisposable
     }
 
     /// <summary>
+    ///     Verifies that a destination file held open by another process (for example a
+    ///     running Updater.exe) makes the extraction fail cleanly instead of throwing
+    ///     (bug #68840).
+    /// </summary>
+    [Fact]
+    public void ExtractAllFromZipFileInUseReturnsFalse()
+    {
+        var lockedFile = Path.Combine(_testDirectory, "Updater.exe");
+        File.WriteAllText(lockedFile, "old updater");
+
+        using var lockStream = new FileStream(lockedFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        var zipStream = CreateTestZip(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Updater.exe"] = "new updater"
+        });
+
+        var result = CheckForUpdatesService.ExtractAllFromZip(zipStream, _testDirectory, null, new NoOpLogger());
+
+        Assert.False(result, "ExtractAllFromZip should return false when a destination file is in use.");
+    }
+
+    /// <summary>
     ///     Verifies that a newer latest version signals an available update.
     /// </summary>
     [Fact]

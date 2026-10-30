@@ -336,4 +336,25 @@ public class FavoritesManagerTests : IDisposable
 
         Assert.Equal(longPath, deserialized.FavoriteList[0].FileName);
     }
+
+    /// <summary>
+    ///     Verifies that renaming a system tolerates legacy entries with a null system name
+    ///     instead of throwing a NullReferenceException (bug #68900).
+    /// </summary>
+    [Fact]
+    public async Task RenameSystemAsyncIgnoresNullSystemNames()
+    {
+        var manager = new FavoritesManager
+        {
+            FavoriteList =
+            [
+                new Favorite { FileName = "game1.zip", SystemName = null! },
+                null!
+            ]
+        };
+
+        var exception = await Record.ExceptionAsync(() => manager.RenameSystemAsync("Arcade", "MAME"));
+
+        Assert.Null(exception);
+    }
 }

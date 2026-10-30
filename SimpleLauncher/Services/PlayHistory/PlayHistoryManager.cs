@@ -443,7 +443,10 @@ public class PlayHistoryManager
         {
             foreach (var item in PlayHistoryList)
             {
-                if (item.SystemName.Equals(oldSystemName, StringComparison.OrdinalIgnoreCase))
+                // Legacy play history entries may have a null SystemName, so compare
+                // null-safely instead of dereferencing it (bug #68900).
+                if (item is not null &&
+                    string.Equals(item.SystemName, oldSystemName, StringComparison.OrdinalIgnoreCase))
                 {
                     item.SystemName = newSystemName;
                     changed = true;

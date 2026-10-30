@@ -183,15 +183,34 @@ internal partial class ScanMicrosoftStoreGames : IGamePlatformScanner
             // (e.g., game names containing control characters like 0x07 BEL)
             jsonStr = SanitizeJsonControlCharacters(jsonStr);
 
+            // PowerShell's ConvertTo-Json can leave a backslash followed by a non-ASCII
+            // character unescaped (e.g. a game name containing '\Å'), which is not a
+            // valid JSON escape sequence (bug #68895). Repair those escapes before parsing.
+            jsonStr = SanitizeJsonEscapes(jsonStr);
+
             var allInstalledApps = new List<StoreAppInfo>();
 
-            using var doc = JsonDocument.Parse(jsonStr);
-            if (doc.RootElement.ValueKind != JsonValueKind.Array) return;
+            JsonDocument doc;
+            try
+            {
+                doc = JsonDocument.Parse(jsonStr);
+            }
+            catch (JsonException ex)
+            {
+                // The output comes from an external tool and can be malformed; the store
+                // scan is optional, so this is an expected condition rather than a bug.
+                _logger.Information(ex,
+                    "[ScanMicrosoftStoreGames] Could not parse the PowerShell JSON output. Skipping Microsoft Store scan");
+                return;
+            }
+
+            using var parsedDoc = doc;
+            if (parsedDoc.RootElement.ValueKind != JsonValueKind.Array) return;
 
             // Track seen AppIds to avoid duplicates from multiple Start Menu entries
             var seenAppIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var element in doc.RootElement.EnumerateArray())
+            foreach (var element in parsedDoc.RootElement.EnumerateArray())
             {
                 try
                 {
@@ -625,6 +644,66 @@ internal partial class ScanMicrosoftStoreGames : IGamePlatformScanner
         // 0x09 (tab), 0x0A (line feed), 0x0D (carriage return)
         // Also allow 0x7F (DEL) and 0x00 is already excluded
         return MyRegex().Replace(json, "");
+    }
+
+    /// <summary>
+    ///     Repairs backslashes that are not valid JSON escape sequences.
+    ///     PowerShell's ConvertTo-Json can leave a raw backslash before a non-ASCII
+    ///     character (for example a game name containing '\Å'), which makes
+    ///     JsonDocument.Parse fail with an "invalid escapable character" error (bug #68895).
+    /// </summary>
+    internal static string SanitizeJsonEscapes(string json)
+    {
+        if (string.IsNullOrEmpty(json) || json.IndexOf('\\') < 0) return json;
+
+        var builder = new StringBuilder(json.Length + 16);
+        for (var i = 0; i < json.Length; i++)
+        {
+            var current = json[i];
+            if (current != '\\')
+            {
+                builder.Append(current);
+                continue;
+            }
+
+            if (i + 1 >= json.Length)
+            {
+                builder.Append('\\').Append('\\');
+                continue;
+            }
+
+            var next = json[i + 1];
+            switch (next)
+            {
+                case '"' or '\\' or '/' or 'b' or 'f' or 'n' or 'r' or 't':
+                    // Keep the valid escape and skip the escaped character so a second
+                    // backslash in "\\" is not processed again.
+                    builder.Append(current).Append(next);
+                    i++;
+                    break;
+                case 'u' when HasFourHexDigits(json, i + 2):
+                    builder.Append(current).Append(next).Append(json, i + 2, 4);
+                    i += 5;
+                    break;
+                default:
+                    builder.Append('\\').Append('\\'); // Escape the raw backslash itself.
+                    break;
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool HasFourHexDigits(string json, int startIndex)
+    {
+        if (startIndex + 4 > json.Length) return false;
+
+        for (var i = startIndex; i < startIndex + 4; i++)
+        {
+            if (!char.IsAsciiHexDigit(json[i])) return false;
+        }
+
+        return true;
     }
 
     /// <summary>

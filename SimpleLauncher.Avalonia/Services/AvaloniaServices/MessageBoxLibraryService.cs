@@ -556,7 +556,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
             }
         }
     }
@@ -599,7 +601,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -663,7 +667,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -732,7 +738,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -765,7 +773,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     _localization.GetString("Error", "Error"), MessageButtons.Ok,
@@ -949,7 +959,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -1082,7 +1094,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -1495,7 +1509,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -1929,7 +1945,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -1980,7 +1998,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -2584,7 +2604,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -3604,7 +3626,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -4337,7 +4361,9 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file");
+                // Expected user-environment condition (no log file yet, no default handler):
+                // never report it as an application bug.
+                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -4397,7 +4423,7 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to open the error log file from a batch file error message box");
+                Log.Information(ex, "Failed to open the error log file from a batch file error message box");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);

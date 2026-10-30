@@ -394,4 +394,25 @@ public class PlayHistoryManagerTests : IDisposable
         item.TotalPlayTime = 200;
         Assert.True(propertyChanged);
     }
+
+    /// <summary>
+    ///     Verifies that renaming a system tolerates legacy entries with a null system name
+    ///     instead of throwing a NullReferenceException (bug #68900).
+    /// </summary>
+    [Fact]
+    public async Task RenameSystemAsyncIgnoresNullSystemNames()
+    {
+        var manager = new PlayHistoryManager
+        {
+            PlayHistoryList =
+            [
+                new PlayHistoryItem { FileName = "game.zip", SystemName = null! },
+                null!
+            ]
+        };
+
+        var exception = await Record.ExceptionAsync(() => manager.RenameSystemAsync("Arcade", "MAME"));
+
+        Assert.Null(exception);
+    }
 }

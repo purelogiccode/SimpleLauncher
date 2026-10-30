@@ -57,10 +57,13 @@ public class ReinstallSimpleLauncher
 
                         ShutdownApplication();
                     }
-                    catch (Win32Exception ex) when (ex.NativeErrorCode == 5) // Access Denied
+                    catch (Win32Exception ex)
                     {
-                        // Log the access denied error
-                        _logger.Error(ex, "Access denied when starting Updater.exe");
+                        // Expected user-environment condition (ACL, Controlled Folder Access,
+                        // application control policy, missing association). Keep it out of the
+                        // bug reports and tell the user how to update manually (bug #68841).
+                        _logger.Information(ex,
+                            "Could not start Updater.exe (Win32 error {NativeErrorCode})", ex.NativeErrorCode);
 
                         // Notify user that update failed
                         await messageBoxLibrary.UpdaterLaunchFailedMessageBoxAsync();
@@ -113,10 +116,12 @@ public class ReinstallSimpleLauncher
 
                                 ShutdownApplication();
                             }
-                            catch (Win32Exception ex) when (ex.NativeErrorCode == 5) // Access Denied
+                            catch (Win32Exception ex)
                             {
-                                // Log the access denied error
-                                _logger.Error(ex, "Access denied when starting Updater.exe after download");
+                                // Same expected launch failure as above, after downloading the updater.
+                                _logger.Information(ex,
+                                    "Could not start Updater.exe after download (Win32 error {NativeErrorCode})",
+                                    ex.NativeErrorCode);
 
                                 // Notify user that update failed
                                 await messageBoxLibrary.UpdaterLaunchFailedMessageBoxAsync();

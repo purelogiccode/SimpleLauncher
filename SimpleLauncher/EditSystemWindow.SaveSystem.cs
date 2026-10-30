@@ -341,10 +341,22 @@ internal partial class EditSystemWindow
                         StringComparison.OrdinalIgnoreCase))
                 {
                     var oldSystemName = originalSystemNameToUse!;
-                    await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);
-                    await _playHistoryManager.RenameSystemAsync(oldSystemName, systemNameText);
-                    _logger.Information(
-                        $"System renamed from '{oldSystemName}' to '{systemNameText}'. Favorites and play history migrated.");
+
+                    // The system itself is already saved at this point. A failure while
+                    // migrating favorites/play history must not make the whole save look
+                    // failed (bug #68900), and it is not worth a bug report.
+                    try
+                    {
+                        await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);
+                        await _playHistoryManager.RenameSystemAsync(oldSystemName, systemNameText);
+                        _logger.Information(
+                            $"System renamed from '{oldSystemName}' to '{systemNameText}'. Favorites and play history migrated.");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Information(ex,
+                            $"System '{oldSystemName}' was renamed to '{systemNameText}', but favorites and play history could not be migrated");
+                    }
                 }
 
                 // Create folders based on the resolved paths

@@ -5,6 +5,7 @@ using System.Windows;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Services.QuitOrReinstall;
 using CoreMessageBoxResult = SimpleLauncher.Core.Models.MessageBoxResult;
@@ -1381,18 +1382,13 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             var downloadPageUrl = _configuration.GetValue<string>("Urls:GitHubReleases") ??
                                   "https://github.com/purelogiccode/SimpleLauncher/releases/latest/";
 
-            try
+            // Opening the download page is a user-environment action: a missing default
+            // browser (or a shell handler that refuses to start) is not an application bug
+            // (bug #68842). UrlHelper never throws; report the failure at Information level.
+            if (!UrlHelper.TryOpenHttpUrlInBrowser(downloadPageUrl))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = downloadPageUrl,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Notify developer
-                _logger.Error(ex, "Error in method UpdaterLaunchFailedMessageBoxAsync");
+                _logger.Information("Could not open the download page in the default browser: {Url}",
+                    downloadPageUrl);
 
                 // Notify user
                 var anerroroccurredwhileopeningthebrowser = _resourceProvider.GetString(
