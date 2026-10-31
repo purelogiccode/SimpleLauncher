@@ -104,6 +104,65 @@ public class PlaySoundEffectsTests
         }
     }
 
+    /// <summary>
+    ///     Regression guard for bug #69012: disposing the MP3 reader can throw
+    ///     <c>MmException("InvalidParameter calling acmStreamClose")</c>. The cleanup must
+    ///     swallow that failure (Debug log only) instead of letting it escape to the UI
+    ///     thread and being reported as an unhandled dispatcher exception.
+    /// </summary>
+    [Fact]
+    public async Task PlaySound_WhenReaderDisposeThrows_DoesNotReportError()
+    {
+        var settings = new SettingsManagerService(
+            new ConfigurationBuilder().Build(),
+            new Mock<ILogger>().Object,
+            new Mock<ICredentialProtector>().Object);
+
+        var logger = new Mock<ILogger>();
+        using var firstReaderCreated = new ManualResetEventSlim(false);
+        using var secondReaderCreated = new ManualResetEventSlim(false);
+        var readerCount = 0;
+
+        var player = new PlaySoundEffects(settings, logger.Object)
+        {
+            PlayerFactory = () => new Mock<IWavePlayer>().Object,
+            ReaderFactory = _ =>
+            {
+                if (Interlocked.Increment(ref readerCount) == 1) firstReaderCreated.Set();
+                else secondReaderCreated.Set();
+                return new ThrowingDisposeWaveStream();
+            }
+        };
+
+        var firstPath = Path.Combine(Path.GetTempPath(), $"sl-sound-{Guid.NewGuid():N}.mp3");
+        var secondPath = Path.Combine(Path.GetTempPath(), $"sl-sound-{Guid.NewGuid():N}.mp3");
+        await File.WriteAllBytesAsync(firstPath, [1, 2, 3]);
+        await File.WriteAllBytesAsync(secondPath, [1, 2, 3]);
+
+        try
+        {
+            player.PlayConfiguredSound(firstPath);
+            Assert.True(firstReaderCreated.Wait(TimeSpan.FromSeconds(5)),
+                "audio worker never started the first playback");
+
+            // A different sound forces the worker to stop the first playback; its reader
+            // disposal throws exactly like AcmMp3FrameDecompressor.Dispose() in bug #69012.
+            player.PlayConfiguredSound(secondPath);
+            Assert.True(secondReaderCreated.Wait(TimeSpan.FromSeconds(5)),
+                "audio worker never finished stopping the throwing reader");
+        }
+        finally
+        {
+            player.Dispose();
+            File.Delete(firstPath);
+            File.Delete(secondPath);
+        }
+
+        logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Error(It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Debug(It.IsAny<string>()), Times.AtLeastOnce);
+    }
+
     [Fact]
     public void IsExpectedPlaybackFailure_ClassifiesEnvironmentAndUserConditions()
     {
@@ -202,5 +261,29 @@ public class PlaySoundEffectsTests
         logger.Verify(l => l.Information(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
         logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
         logger.Verify(l => l.Error(It.IsAny<string>()), Times.Never);
+    }
+
+    /// <summary>
+    ///     WaveStream whose cleanup throws like NAudio's ACM MP3 decompressor does on
+    ///     <c>acmStreamClose</c> (bug #69012).
+    /// </summary>
+    private sealed class ThrowingDisposeWaveStream : WaveStream
+    {
+        private readonly WaveFormat _waveFormat = new(8000, 16, 1);
+
+        public override WaveFormat WaveFormat => _waveFormat;
+        public override long Length => 0;
+        public override long Position { get; set; }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return 0;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            throw new InvalidOperationException("InvalidParameter calling acmStreamClose");
+        }
     }
 }

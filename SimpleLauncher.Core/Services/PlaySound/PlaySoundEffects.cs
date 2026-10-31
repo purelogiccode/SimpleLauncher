@@ -59,6 +59,13 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     internal Func<IWavePlayer> PlayerFactory { get; set; } = CreatePlayer;
 
     /// <summary>
+    ///     Test seam: creates the sound decoder. Production uses <see cref="CreateReader" />;
+    ///     tests substitute a reader whose Dispose() throws to prove that a failing NAudio
+    ///     cleanup (e.g. acmStreamClose) is swallowed instead of escaping to the dispatcher.
+    /// </summary>
+    internal Func<string, WaveStream> ReaderFactory { get; set; } = CreateReader;
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="PlaySoundEffects" /> class.
     /// </summary>
     public PlaySoundEffects(SettingsManagerService settings, ILogger logger)
@@ -240,7 +247,7 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
 
                 StopCurrentPlayback();
 
-                _reader = CreateReader(soundPath);
+                _reader = ReaderFactory(soundPath);
                 _player = PlayerFactory();
                 _player.Init(_reader);
                 _player.Play();

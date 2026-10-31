@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
@@ -124,6 +125,38 @@ public class ApplicationStatsNetworkFailureTests
         Assert.Contains(sink.Events, static e => e.Level == LogEventLevel.Information);
     }
 
+    /// <summary>
+    ///     Regression test for bug #69013: a 429 rate-limit response from the stats API used
+    ///     to be logged at Error, so every launch during a rate-limit window sent a bug
+    ///     report. Rate limits are expected external conditions and must be logged at
+    ///     Information only.
+    /// </summary>
+    [Fact]
+    public async Task CoreStats_RateLimitResponse_IsLoggedAtInformation_NotAsBug()
+    {
+        AppConstants.InitializeApiKey(EncodeApiKey("test-key"));
+
+        var sink = new CaptureSink();
+        var logger = new LoggerConfiguration().WriteTo.Sink(sink).CreateLogger();
+
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        httpClientFactory.Setup(factory => factory.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient(new RateLimitHandler()));
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["StatsApiUrl"] = "https://www.purelogiccode.com/simplelauncher/stats/stats/"
+            })
+            .Build();
+
+        var stats = new Stats(httpClientFactory.Object, configuration, logger);
+        await stats.CallApiAsync();
+
+        Assert.DoesNotContain(sink.Events, static e => e.Level >= LogEventLevel.Warning);
+        Assert.Contains(sink.Events, static e => e.Level == LogEventLevel.Information);
+    }
+
     private static void SetAppServiceProvider(IServiceProvider? provider)
     {
         var property = typeof(App).GetProperty(nameof(App.ServiceProvider), BindingFlags.Static | BindingFlags.Public);
@@ -163,6 +196,22 @@ public class ApplicationStatsNetworkFailureTests
             CancellationToken cancellationToken)
         {
             throw new OperationCanceledException(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    ///     Simulates the 429 rate-limit response from bug #69013, including the API's
+    ///     <c>{"error":"Rate limit exceeded"}</c> body.
+    /// </summary>
+    private sealed class RateLimitHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.TooManyRequests)
+            {
+                Content = new StringContent("{\"error\":\"Rate limit exceeded\"}")
+            });
         }
     }
 
