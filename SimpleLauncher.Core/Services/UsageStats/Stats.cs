@@ -162,8 +162,21 @@ public class Stats
                                      (string.Equals(callType, "emulator", StringComparison.Ordinal)
                                          ? $", EmulatorName: {emulatorName}"
                                          : "");
-                _logger.Information(new HttpRequestException($"Stats API error: {response.StatusCode}"),
-                    contextMessage);
+                if (ExpectedHttpStatus.IsExpectedExternalCondition(response.StatusCode))
+                {
+                    // Rate limits (429) and hosting/WAF blocks (418) are expected external
+                    // conditions. Log them at Information without an exception object so they
+                    // can never be mistaken for an application defect (bug #69298).
+                    _logger.Information(contextMessage);
+                }
+                else
+                {
+                    // Other non-success statuses (e.g. 5xx during maintenance) are also
+                    // expected for this fire-and-forget telemetry call. Keep the exception for
+                    // diagnostics, but stay at Information so it is not reported as a bug.
+                    _logger.Information(new HttpRequestException($"Stats API error: {response.StatusCode}"),
+                        contextMessage);
+                }
             }
 
             return false;
