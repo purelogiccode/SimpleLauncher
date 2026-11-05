@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.317">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.320">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -31,7 +31,7 @@
         </PackageReference>
         <PackageReference Include="Moq" Version="4.21.0" />
         <!-- Headless Avalonia platform: enables Bitmap/TrayIcon/Dispatcher tests without a display -->
-        <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
+        <PackageReference Include="Avalonia.Headless" Version="12.1.5" />
     </ItemGroup>
 
     <ItemGroup>

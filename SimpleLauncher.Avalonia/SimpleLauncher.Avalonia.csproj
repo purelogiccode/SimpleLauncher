@@ -78,7 +78,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.317">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.320">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -96,9 +96,9 @@
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <!-- Avalonia 12.1.2; the References/Avalonia-12.1.1 tree is an older source snapshot -->
-        <PackageReference Include="Avalonia" Version="12.1.4" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+        <PackageReference Include="Avalonia" Version="12.1.5" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.5" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.5" />
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
         <!-- Markdown.Avalonia 12.x is required for Avalonia 12 — 11.0.3 crashes with
              MissingMethodException (DynamicResourceExtension.ProvideValue) at XAML load -->
@@ -557,7 +557,7 @@
                           Private="false" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-        <PackageReference Include="System.Drawing.Common" Version="10.0.13" />
+        <PackageReference Include="System.Drawing.Common" Version="10.0.14" />
     </ItemGroup>
 
     <!-- ── Staging path for the app payload's copy of the updater ──

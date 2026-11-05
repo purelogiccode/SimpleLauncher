@@ -932,7 +932,7 @@
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="MahApps.Metro" Version="2.4.11" />
         <PackageReference Include="MdXaml" Version="1.27.0" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.317">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.320">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -957,9 +957,9 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
-        <PackageReference Include="SharpCompress" Version="0.50.7" />
+        <PackageReference Include="SharpCompress" Version="0.50.8" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
-        <PackageReference Include="Tomlyn" Version="2.10.1" />
+        <PackageReference Include="Tomlyn" Version="2.10.2" />
         <PackageReference Include="Serilog" Version="4.4.0" />
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />

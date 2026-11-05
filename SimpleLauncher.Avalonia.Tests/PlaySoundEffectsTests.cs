@@ -119,8 +119,8 @@ public class PlaySoundEffectsTests
             new Mock<ICredentialProtector>().Object);
 
         var logger = new Mock<ILogger>();
-        using var firstReaderCreated = new ManualResetEventSlim(false);
-        using var secondReaderCreated = new ManualResetEventSlim(false);
+        var firstReaderCreated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondReaderCreated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var readerCount = 0;
 
         var player = new PlaySoundEffects(settings, logger.Object)
@@ -128,8 +128,8 @@ public class PlaySoundEffectsTests
             PlayerFactory = () => new Mock<IWavePlayer>().Object,
             ReaderFactory = _ =>
             {
-                if (Interlocked.Increment(ref readerCount) == 1) firstReaderCreated.Set();
-                else secondReaderCreated.Set();
+                if (Interlocked.Increment(ref readerCount) == 1) firstReaderCreated.TrySetResult();
+                else secondReaderCreated.TrySetResult();
                 return new ThrowingDisposeWaveStream();
             }
         };
@@ -142,13 +142,15 @@ public class PlaySoundEffectsTests
         try
         {
             player.PlayConfiguredSound(firstPath);
-            Assert.True(firstReaderCreated.Wait(TimeSpan.FromSeconds(5)),
+            var firstCompleted = await Task.WhenAny(firstReaderCreated.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+            Assert.True(firstCompleted == firstReaderCreated.Task,
                 "audio worker never started the first playback");
 
             // A different sound forces the worker to stop the first playback; its reader
             // disposal throws exactly like AcmMp3FrameDecompressor.Dispose() in bug #69012.
             player.PlayConfiguredSound(secondPath);
-            Assert.True(secondReaderCreated.Wait(TimeSpan.FromSeconds(5)),
+            var secondCompleted = await Task.WhenAny(secondReaderCreated.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+            Assert.True(secondCompleted == secondReaderCreated.Task,
                 "audio worker never finished stopping the throwing reader");
         }
         finally
