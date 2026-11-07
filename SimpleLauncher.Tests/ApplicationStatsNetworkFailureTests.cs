@@ -126,11 +126,11 @@ public class ApplicationStatsNetworkFailureTests
     }
 
     /// <summary>
-    ///     Regression test for bugs #69013 and #69298: a 429 rate-limit response from the
-    ///     stats API used to be logged at Error, so every launch during a rate-limit window
-    ///     sent a bug report. Rate limits are expected external conditions and must be logged
-    ///     at Information only — without an exception object that makes the event look like
-    ///     an application defect.
+    ///     Regression test for bugs #69013, #69298 and #69611: a 429 rate-limit response from
+    ///     the stats API used to be logged at Error, so every launch during a rate-limit
+    ///     window sent a bug report. Rate limits are expected external conditions and must be
+    ///     logged at Information only — without an exception object that makes the event look
+    ///     like an application defect.
     /// </summary>
     [Fact]
     public async Task CoreStats_RateLimitResponse_IsLoggedAtInformation_NotAsBug()
@@ -155,8 +155,13 @@ public class ApplicationStatsNetworkFailureTests
         await stats.CallApiAsync();
 
         Assert.DoesNotContain(sink.Events, static e => e.Level >= LogEventLevel.Warning);
-        Assert.Contains(sink.Events,
-            static e => e.Level == LogEventLevel.Information && e.Exception == null);
+        var infoEvent = Assert.Single(sink.Events, static e => e.Level == LogEventLevel.Information);
+        Assert.Null(infoEvent.Exception);
+
+        var message = infoEvent.RenderMessage();
+        Assert.Contains("Status Code: 'TooManyRequests'", message, StringComparison.Ordinal);
+        Assert.Contains("CallType: usage", message, StringComparison.Ordinal);
+        Assert.Contains("Rate limit exceeded", message, StringComparison.Ordinal);
     }
 
     private static void SetAppServiceProvider(IServiceProvider? provider)
