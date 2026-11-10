@@ -164,6 +164,47 @@ public class ApplicationStatsNetworkFailureTests
         Assert.Contains("Rate limit exceeded", message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    ///     Regression test for bugs #69675, #69680, #69681, #69685, #69688 and #69689: emulator
+    ///     launch stats reported a 429 and a duplicate "API request failed." error from 3.12.0.0,
+    ///     so every OpenMSX launch during a rate-limit window filed two bug reports. The current
+    ///     stats path must emit exactly one Information event for the emulator call — no Warning
+    ///     and no second report-generating event.
+    /// </summary>
+    [Fact]
+    public async Task CoreStats_EmulatorRateLimitResponse_LogsSingleInformationEvent_NotABug()
+    {
+        AppConstants.InitializeApiKey(EncodeApiKey("test-key"));
+
+        var sink = new CaptureSink();
+        var logger = new LoggerConfiguration().WriteTo.Sink(sink).CreateLogger();
+
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        httpClientFactory.Setup(factory => factory.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient(new RateLimitHandler()));
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["StatsApiUrl"] = "https://www.purelogiccode.com/simplelauncher/stats/stats/"
+            })
+            .Build();
+
+        var stats = new Stats(httpClientFactory.Object, configuration, logger);
+        await stats.CallApiAsync("Openmsx");
+
+        Assert.DoesNotContain(sink.Events, static e => e.Level >= LogEventLevel.Warning);
+        var infoEvent = Assert.Single(sink.Events);
+        Assert.Equal(LogEventLevel.Information, infoEvent.Level);
+        Assert.Null(infoEvent.Exception);
+
+        var message = infoEvent.RenderMessage();
+        Assert.Contains("Status Code: 'TooManyRequests'", message, StringComparison.Ordinal);
+        Assert.Contains("CallType: emulator", message, StringComparison.Ordinal);
+        Assert.Contains("EmulatorName: Openmsx", message, StringComparison.Ordinal);
+        Assert.DoesNotContain("API request failed.", message, StringComparison.Ordinal);
+    }
+
     private static void SetAppServiceProvider(IServiceProvider? provider)
     {
         var property = typeof(App).GetProperty(nameof(App.ServiceProvider), BindingFlags.Static | BindingFlags.Public);
