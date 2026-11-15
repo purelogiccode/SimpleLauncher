@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.TakeScreenshot;
 
 /// <summary>
 ///     Registers a system-wide F8 hotkey and raises an event when it is pressed.
-///     Windows-only port of the WPF GlobalHotkeyService (net10.0-windows TFM).
+///     Windows-only port of the WPF GlobalHotkeyService (net11.0-windows TFM).
 ///     Uses Win32 RegisterHotKey/UnregisterHotKey with a hidden message-only window,
 ///     so it does not depend on the host UI framework's message pump.
 /// </summary>

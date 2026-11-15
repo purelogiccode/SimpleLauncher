@@ -26,7 +26,7 @@ standalone updater per RID:
   `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other plus the shared content files
   (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Both apps are framework-dependent
   single executables (managed assemblies bundled; native libraries such as SQLite/Skia ship
-  beside the exe), so the .NET 10 Desktop Runtime is required.
+  beside the exe), so the .NET 11 Desktop Runtime is required.
 - `updater_{rid}.zip` — the single standalone `Updater.exe` (framework-dependent single file)
   shared by both apps. It bundles the Avalonia native libraries it needs (`libSkiaSharp.dll`,
   `libHarfBuzzSharp.dll`, `av_libglesv2.dll`, `IncludeNativeLibrariesForSelfExtract`) and
@@ -37,7 +37,7 @@ standalone updater per RID:
 - On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the framework-dependent
   single-file `SimpleLauncher.Avalonia` payload (managed assemblies bundled into the binary;
   native libraries such as Skia/HarfBuzz/SQLite ship beside it, same shape as the Windows exes)
-  and the framework-dependent single-file `Updater`; the **.NET 10 runtime** is required, and the
+  and the framework-dependent single-file `Updater`; the **.NET 11 runtime** is required, and the
   ZIP entries carry Unix permission bits (0755 for the executables) — see
   [15 — Development](15-development.md#linux-release-packaging-script).
 - The secondary fallback (`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`)
@@ -78,7 +78,7 @@ over the application folder, relaunch the app that launched it. The launching ap
 PID as the first argument and the target executable name (`SimpleLauncher.exe` or
 `SimpleLauncher.Avalonia.exe`) as the second; older WPF releases pass only the PID, so the
 updater detects the target from the process name. It was built from the Avalonia codebase
-(cross-platform `net10.0` / `net10.0-windows`) and replaced the former WPF-specific updater.
+(cross-platform `net11.0` / `net11.0-windows`) and replaced the former WPF-specific updater.
 The updater excludes its own files (`Updater*`) during extraction so it can replace the
 applications while running. Release-zip extraction is fail-closed against Zip-Slip: every entry
 must resolve under the destination root, with a case-sensitive (Ordinal) prefix comparison on

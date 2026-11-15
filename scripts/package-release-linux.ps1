@@ -14,7 +14,7 @@ The asset names match the ones the app and the updater look up in the release
 GitHub release serves Windows and Linux without collisions.
 
 The application payload is published framework-dependent single-file, mirroring the Windows
-binaries (the .NET 10 runtime is required on the target machine; the payload does not carry
+binaries (the .NET 11 runtime is required on the target machine; the payload does not carry
 it): the managed assemblies are bundled into the SimpleLauncher.Avalonia executable and only
 the native libraries it needs (Skia/HarfBuzz/SQLite) ship beside it. Content files
 (appsettings.json, images, tools, samples) still ship next to the exe, exactly as on
@@ -385,13 +385,13 @@ foreach ($rid in $RuntimeIdentifiers) {
 
     # Application: framework-dependent single file (managed assemblies bundled into the
     # exe; the native libraries ship beside it — same shape as the Windows binaries). The
-    # .NET 10 runtime is required on the target machine; native self-extraction stays off
+    # .NET 11 runtime is required on the target machine; native self-extraction stays off
     # so every launch does not pay an extraction penalty.
     Invoke-DotnetPublish @(
         'publish',
         $avaloniaProject,
         '-c', 'Release',
-        '-f', 'net10.0',
+        '-f', 'net11.0',
         '-r', $rid,
         '--self-contained', 'false',
         '-p:PublishSingleFile=true',
@@ -406,14 +406,14 @@ foreach ($rid in $RuntimeIdentifiers) {
     New-LinuxZipArchive -SourceDir $appPublishDir -ZipPath $releaseZip -Rid $rid
     [void]$produced.Add($releaseZip)
 
-    # Standalone updater: framework-dependent single file (the .NET 10 runtime is required,
+    # Standalone updater: framework-dependent single file (the .NET 11 runtime is required,
     # matching the app), with the Avalonia natives bundled for self-extraction so it is one
     # file that can also replace a damaged install.
     Invoke-DotnetPublish @(
         'publish',
         $updaterProject,
         '-c', 'Release',
-        '-f', 'net10.0',
+        '-f', 'net11.0',
         '-r', $rid,
         '--self-contained', 'false',
         '-p:PublishSingleFile=true',

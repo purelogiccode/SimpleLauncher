@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <!-- net10.0 (not -windows): the suite runs on Windows AND Linux CI runners -->
-        <TargetFramework>net10.0</TargetFramework>
+        <!-- net11.0 (not -windows): the suite runs on Windows AND Linux CI runners -->
+        <TargetFramework>net11.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <Nullable>enable</Nullable>
-        <LangVersion>14</LangVersion>
+        <LangVersion>15</LangVersion>
         <NoWarn>NU1903;xUnit1026</NoWarn>
         <AssemblyVersion>5.8.4</AssemblyVersion>
         <FileVersion>5.8.4</FileVersion>
@@ -15,11 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.322">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.340">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
         <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -31,7 +31,7 @@
         </PackageReference>
         <PackageReference Include="Moq" Version="4.21.0" />
         <!-- Headless Avalonia platform: enables Bitmap/TrayIcon/Dispatcher tests without a display -->
-        <PackageReference Include="Avalonia.Headless" Version="12.1.5" />
+        <PackageReference Include="Avalonia.Headless" Version="12.1.6" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
-        <RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
+        <TargetFrameworks>net11.0;net11.0-windows</TargetFrameworks>
+        <RuntimeFrameworkVersion>11.0.0</RuntimeFrameworkVersion>
         <OutputType>WinExe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <Company>PureLogicCode.com</Company>
         <Product>Simple Launcher</Product>
-        <LangVersion>14</LangVersion>
+        <LangVersion>15</LangVersion>
         <Nullable>enable</Nullable>
         <NeutralLanguage>en</NeutralLanguage>
-        <RuntimeIdentifiers Condition="'$(TargetFramework)' == 'net10.0-windows'">win-x64;win-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers Condition="'$(TargetFramework)' == 'net11.0-windows'">win-x64;win-arm64</RuntimeIdentifiers>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
@@ -32,6 +32,12 @@
         <StartupObject>SimpleLauncher.Avalonia.Program</StartupObject>
         <!-- Avalonia single-project (no .xaml split) -->
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+        <!-- The bundled tools (Windows and Linux payloads) are shipped as loose files beside the
+             single-file exe and pruned per platform by the packaging scripts. The .NET 11 bundler
+             excludes those native PE/ELF binaries from the bundle and reports each exclusion as
+             NETSDK1236; demote it to a message so publish output stays clean without hiding other
+             single-file diagnostics. -->
+        <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);NETSDK1236</MSBuildWarningsAsMessages>
         <!-- The updater project is referenced only so the publish target below can invoke its
              publish (ReferenceOutputAssembly=false; Private=false) — there is no assembly
              dependency. The SDK's exe-reference self-contained validation rejects a
@@ -40,18 +46,18 @@
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
     </PropertyGroup>
 
-    <!-- Cross-platform target (net10.0): Linux + macOS RIDs. A Windows RID on this TFM builds
+    <!-- Cross-platform target (net11.0): Linux + macOS RIDs. A Windows RID on this TFM builds
          WITHOUT the WINDOWS symbol, so Core's PlaySoundEffects takes the managed/(lib)sndfile
          decoder + ALSA output path, which fails on Windows (no libasound).
          Fail loudly instead of producing a broken publish. -->
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0'">
         <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <Target Name="GuardWindowsRidOnLinuxTfm" BeforeTargets="Build;Publish">
         <Error
-            Condition="'$(TargetFramework)' == 'net10.0' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))"
-            Text="Cannot build/publish net10.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net10.0 TFM is Linux/macOS-only (audio output uses NAudio.Alsa). For Windows, use the net10.0-windows TFM, e.g. `dotnet publish -f net10.0-windows -r $(RuntimeIdentifier)`." />
+            Condition="'$(TargetFramework)' == 'net11.0' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))"
+            Text="Cannot build/publish net11.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net11.0 TFM is Linux/macOS-only (audio output uses NAudio.Alsa). For Windows, use the net11.0-windows TFM, e.g. `dotnet publish -f net11.0-windows -r $(RuntimeIdentifier)`." />
     </Target>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -78,15 +84,15 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.322">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.340">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0" />
         <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -96,14 +102,14 @@
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <!-- Avalonia 12.1.2; the References/Avalonia-12.1.1 tree is an older source snapshot -->
-        <PackageReference Include="Avalonia" Version="12.1.5" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.1.5" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.5" />
+        <PackageReference Include="Avalonia" Version="12.1.6" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
         <!-- Markdown.Avalonia 12.x is required for Avalonia 12 — 11.0.3 crashes with
              MissingMethodException (DynamicResourceExtension.ProvideValue) at XAML load -->
         <PackageReference Include="Markdown.Avalonia" Version="12.0.2" />
-        <!-- Windows-only screenshot capture (net10.0-windows TFM only; the net10.0 Linux TFM
+        <!-- Windows-only screenshot capture (net11.0-windows TFM only; the net11.0 Linux TFM
              must not pull this in — System.Drawing.Common is Windows-only) -->
     </ItemGroup>
 
@@ -556,8 +562,8 @@
                           ReferenceOutputAssembly="false"
                           Private="false" />
     </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-        <PackageReference Include="System.Drawing.Common" Version="10.0.14" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'net11.0-windows'">
+        <PackageReference Include="System.Drawing.Common" Version="11.0.0" />
     </ItemGroup>
 
     <!-- ── Staging path for the app payload's copy of the updater ──

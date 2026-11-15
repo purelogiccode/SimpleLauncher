@@ -28,8 +28,8 @@ disk.
 
 - **CI scope**: GitHub Actions builds, packages releases and deploys docs — it never runs tests.
   - `.github/workflows/ci.yml` — build-only on pushes to `master` (non-docs paths) and PRs: full
-    `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia `net10.0`
-    Debug/Release and the updater `net10.0` build on `ubuntu-latest`. Builds pass
+    `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia `net11.0`
+    Debug/Release and the updater `net11.0` build on `ubuntu-latest`. Builds pass
     `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.**
   - `.github/workflows/package-dry-run.yml` — packages all four RIDs exactly like the release
     workflow (version read from `SimpleLauncher.csproj`), uploads the zips and verifies the Linux
@@ -40,7 +40,7 @@ disk.
     framework-dependent Linux bundle for `linux-x64` / `linux-arm64` via
     `scripts/package-release-linux.ps1`. On Windows the payload places `SimpleLauncher.exe` and
     `SimpleLauncher.Avalonia.exe` next to each other (both framework-dependent); on Linux it is
-    the framework-dependent `SimpleLauncher.Avalonia` (the .NET 10 runtime is required). Both ship
+    the framework-dependent `SimpleLauncher.Avalonia` (the .NET 11 runtime is required). Both ship
     as `release_{version}_{rid}.zip` plus the standalone `updater_{rid}.zip` (`Updater.exe` /
     `Updater`). Creates/updates the GitHub release.
   - `.github/workflows/docs.yml` — on `docs/**` pushes to `master`; deploys GitHub Pages from

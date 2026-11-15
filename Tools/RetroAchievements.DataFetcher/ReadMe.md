@@ -38,7 +38,7 @@ A .NET console application designed to fetch game and console data from the Retr
 
 Before you begin, ensure you have the following:
 
-*   **.NET SDK 10.0 or newer**: The application is built with C# 14 and targets .NET 10.0.
+*   **.NET SDK 11.0 or newer**: The application is built with C# 15 and targets .NET 11.0.
 *   **RetroAchievements.org Account**: You need an account to generate an API key.
 *   **RetroAchievements Web API Key**: Obtain your API key from your RetroAchievements.org profile settings.
 

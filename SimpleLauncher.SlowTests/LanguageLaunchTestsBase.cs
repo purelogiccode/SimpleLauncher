@@ -23,7 +23,7 @@ public static class LanguageLaunchTestsBase
         {
             foreach (var config in new[] { "Debug", "Release" })
             {
-                var candidate = Path.Combine(dir.FullName, "SimpleLauncher", "bin", config, "net10.0-windows",
+                var candidate = Path.Combine(dir.FullName, "SimpleLauncher", "bin", config, "net11.0-windows",
                     "SimpleLauncher.exe");
                 if (File.Exists(candidate)) return candidate;
             }

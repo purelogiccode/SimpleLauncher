@@ -4,7 +4,7 @@ namespace SimpleLauncher.Avalonia.Models;
 
 /// <summary>
 ///     Contains native interop structures for window screenshot capture.
-///     Avalonia port of the WPF WindowScreenshot (Windows-only, net10.0-windows TFM).
+///     Avalonia port of the WPF WindowScreenshot (Windows-only, net11.0-windows TFM).
 /// </summary>
 public static class WindowScreenshot
 {

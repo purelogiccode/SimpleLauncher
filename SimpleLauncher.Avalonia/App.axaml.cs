@@ -953,7 +953,7 @@ public class App : Application, IDisposable
         // Tray icon: cross-platform (Avalonia TrayIcon supports Windows and Linux)
         services.AddSingleton<AvaloniaTrayIconManager>();
 #if WINDOWS
-        // F8 global hotkey + active-window screenshot: Windows-only (net10.0-windows TFM)
+        // F8 global hotkey + active-window screenshot: Windows-only (net11.0-windows TFM)
         WindowScreenshot.Initialize(Log.Logger);
         services.AddSingleton<AvaloniaGlobalHotkeyService>();
         services.AddSingleton<AvaloniaActiveWindowScreenshotService>();

@@ -185,7 +185,10 @@ public class RetroAchievementsHashScanner : IRetroAchievementsHashScanner
             }
             finally
             {
-                Volatile.Write(ref _runningScanTask, null);
+                // Plain reference assignment is atomic and is published by the volatile flag
+                // release in the outer finally; a reader that observes null can only do so
+                // after the scan has completed.
+                _runningScanTask = null;
             }
         }
         finally

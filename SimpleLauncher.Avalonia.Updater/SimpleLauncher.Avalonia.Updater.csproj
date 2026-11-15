@@ -2,11 +2,11 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
+        <TargetFrameworks>net11.0;net11.0-windows</TargetFrameworks>
         <!-- Must stay in sync with SimpleLauncher.Avalonia.csproj. The app publishes this updater
              (framework-dependent) and copies it next to itself, so a different runtime pin here
              could make the updater require a runtime the apps do not. -->
-        <RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
+        <RuntimeFrameworkVersion>11.0.0</RuntimeFrameworkVersion>
         <!-- The single updater shared by the WPF and Avalonia apps ships as Updater.exe. -->
         <AssemblyName>Updater</AssemblyName>
         <Nullable>enable</Nullable>
@@ -15,7 +15,7 @@
         <FileVersion>5.8.4</FileVersion>
         <Version>5.8.4</Version>
         <IsPackable>false</IsPackable>
-        <LangVersion>14</LangVersion>
+        <LangVersion>15</LangVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>
         <NeutralLanguage>en</NeutralLanguage>
         <DebugType>embedded</DebugType>
@@ -28,10 +28,10 @@
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
-    <!-- Cross-platform target (net10.0): Linux + macOS RIDs (must cover every RID
-         the app's net10.0 target can publish, since the app build forwards its own
+    <!-- Cross-platform target (net11.0): Linux + macOS RIDs (must cover every RID
+         the app's net11.0 target can publish, since the app build forwards its own
          RuntimeIdentifier to the updater publish). -->
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0'">
         <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
@@ -42,7 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.322">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.340">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -54,10 +54,10 @@
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <PackageReference Include="SharpCompress" Version="0.50.8" />
-        <PackageReference Include="Avalonia" Version="12.1.5" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.1.5" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.5" />
+        <PackageReference Include="SharpCompress" Version="0.50.9" />
+        <PackageReference Include="Avalonia" Version="12.1.6" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
     </ItemGroup>
 
 </Project>

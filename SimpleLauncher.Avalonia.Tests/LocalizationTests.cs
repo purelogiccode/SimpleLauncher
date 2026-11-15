@@ -28,7 +28,8 @@ public class LocalizationTests
     private static Dictionary<string, string> LoadKeys(string file)
     {
         var json = File.ReadAllText(file);
-        return JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? [];
+        return JsonSerializer.Deserialize<Dictionary<string, string>>(json)
+               ?? new Dictionary<string, string>(StringComparer.Ordinal);
     }
 
     [Fact]

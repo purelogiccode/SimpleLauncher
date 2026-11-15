@@ -95,12 +95,12 @@ Verdict per scenario = **deterministic AND vision** (vision only when the scenar
 
 ```powershell
 dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release `
-  -f net10.0 -r linux-x64 --self-contained true -o D:\payload\linux-x64-annot
+  -f net11.0 -r linux-x64 --self-contained true -o D:\payload\linux-x64-annot
 tar -czf D:\payload\payload-annot.tar.gz -C D:\payload\linux-x64-annot .
 # copy to the guest, extract over the existing app folder, chmod +x
 ```
 `D:\payload` is any host folder outside the repo (the publish output is not committed).
-`-f net10.0` is required (the project is multi-TFM; otherwise NETSDK1129).
+`-f net11.0` is required (the project is multi-TFM; otherwise NETSDK1129).
 
 ---
 

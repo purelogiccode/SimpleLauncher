@@ -26,7 +26,7 @@ Four application projects implement it:
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
 - **Performance** — one SQLite `settings.dat` for settings/favorites/history/systems plus MessagePack caches (`history.dat`, `mame.dat`, `RetroAchievements.dat`); async scanning/loading and pagination. The Avalonia startup shows the system-selection grid immediately and scans the ROM folders for sidebar counts in the background.
-- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 10 runtime. **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE, the `linux-arm64` bundle is structurally verified only.
+- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 11 runtime. **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE, the `linux-arm64` bundle is structurally verified only.
 
 ## Feature surface (summary)
 
@@ -50,7 +50,7 @@ Four application projects implement it:
 
 - Current version: **5.8.4** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.4) and ships in the same release bundle.
 - The secondary server publishes a `version.txt` (e.g. `release5.8.4`) used by the update-check fallback.
-- Framework: **.NET 10** (`net10.0-windows`), **C# 14**, nullable reference types enabled.
+- Framework: **.NET 11** (`net11.0-windows`), **C# 15**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).
 - Repository: https://github.com/purelogiccode/SimpleLauncher
 

@@ -198,8 +198,8 @@ The launcher supports an extensive range of gaming systems including:
 3. **Run:** The single zip contains both apps next to each other — `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia). Run whichever you prefer; they share the same content and settings files.
 4. **Prerequisites:**
    * Install **Dokan** from [GitHub](https://github.com/dokan-dev/dokany/releases) for on-the-fly file mounting.
-   * Ensure you have the [.NET 10 **Desktop** Runtime](https://dotnet.microsoft.com/download) installed (both apps are framework-dependent).
-5. **Linux (beta):** download `release_{version}_linux-x64.zip` (or `linux-arm64`), install the [.NET 10 Runtime](https://dotnet.microsoft.com/download) and `libasound2` (optional: `libsndfile1` for FLAC/Ogg/Opus UI sounds), then run `./SimpleLauncher.Avalonia`. Mounting uses **FUSE 3** (`libfuse3` + `/dev/fuse`) instead of Dokan. Linux support is **beta** — issues are welcome on GitHub.
+   * Ensure you have the [.NET 11 **Desktop** Runtime](https://dotnet.microsoft.com/download) installed (both apps are framework-dependent).
+5. **Linux (beta):** download `release_{version}_linux-x64.zip` (or `linux-arm64`), install the [.NET 11 Runtime](https://dotnet.microsoft.com/download) and `libasound2` (optional: `libsndfile1` for FLAC/Ogg/Opus UI sounds), then run `./SimpleLauncher.Avalonia`. Mounting uses **FUSE 3** (`libfuse3` + `/dev/fuse`) instead of Dokan. Linux support is **beta** — issues are welcome on GitHub.
 
 ---
 
@@ -221,8 +221,8 @@ Simple Launcher is translated into **18 languages**:
 
 ## 💻 Technical Specifications
 
-* **Framework:** .NET 10 (WPF + Avalonia)
-* **Language:** C# 14
+* **Framework:** .NET 11 (WPF + Avalonia)
+* **Language:** C# 15
 * **Data Serialization:** Unified SQLite `settings.dat` (settings, favorites, play history, systems), MessagePack (RA/MAME/history databases) & XML (legacy migration)
 * **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 + NLayer (Audio; managed MP3/WAV on Linux/macOS), YamlDotNet, Tomlyn, PBPSharp — RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)
 * **Architecture:** Modular service-based architecture with dependency injection

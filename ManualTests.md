@@ -1085,7 +1085,7 @@ parameter-suggestion dialogs — pre-existing behavior, not a regression.
    reboot the VM - do not restart the a11y bus (see open item 3).
 4. Health check: `. scripts\gui-test-harness\lib.ps1; Deploy-VmNav; Test-VmNavHealth` (must be True).
 5. **If the app must be rebuilt** (source changed since the DLLs above):
-   `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r
+   `dotnet publish SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj -c Release -f net11.0 -r
    linux-x64 --self-contained true -o D:\payload\linux-x64-annot`, then `Stop-VmApp`, SCP
    `SimpleLauncher.Core.dll` + `SimpleLauncher.Avalonia.dll` to `/home/vm/SimpleLauncher`, `Start-VmApp`.
 6. **Next work:** the manual pass of the BUG-16..19 fixes and the **full 33-scenario suite re-run**

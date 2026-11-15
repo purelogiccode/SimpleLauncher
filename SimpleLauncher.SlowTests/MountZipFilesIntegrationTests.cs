@@ -23,7 +23,7 @@ public sealed class MountZipFilesIntegrationTests
     /// <summary>
     ///     Gets the test data rows for ZIP mount integration tests, specifying the file path and a descriptive game name.
     /// </summary>
-    public static TheoryData<string, string> ZipFiles => new()
+    public static readonly TheoryData<string, string> ZipFiles = new()
     {
         { @"G:\ScummVM\Castle, The (Windows).zip", "Castle, The (Windows)" },
         { @"G:\ScummVM\Accuse (IF).zip", "Accuse (IF)" },

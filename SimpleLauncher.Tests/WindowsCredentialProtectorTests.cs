@@ -9,7 +9,7 @@ namespace SimpleLauncher.Tests;
 /// <summary>
 ///     Tests for <see cref="WindowsCredentialProtector" /> (DPAPI-based credential protection).
 ///     These tests require the logged-in Windows user profile and are therefore Windows-only,
-///     matching the net10.0-windows target of the test project.
+///     matching the net11.0-windows target of the test project.
 ///     The portable-fallback level test swaps the global Serilog logger, so it shares the
 ///     GlobalLogMutating collection with the other log-level regression tests.
 /// </summary>

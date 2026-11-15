@@ -615,7 +615,7 @@ public class AvaloniaContextMenuFunctions(
     /// <summary>
     ///     Launches the specified game, waits for its window to appear, lets the user pick
     ///     the window, captures a screenshot, and saves it as the game's cover image.
-    ///     Windows-only: the Win32 capture code is compiled into the net10.0-windows target,
+    ///     Windows-only: the Win32 capture code is compiled into the net11.0-windows target,
     ///     so other platforms log an Information message and return (LB-04).
     /// </summary>
     public async Task TakeScreenshotOfSelectedWindowAsync(AvaloniaRightClickContext context)

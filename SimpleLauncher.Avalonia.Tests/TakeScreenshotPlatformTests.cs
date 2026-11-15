@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Tests;
 
 /// <summary>
 ///     LB-04 regression tests: taking a screenshot is a Windows-only feature (the Win32 capture
-///     code only exists in the net10.0-windows target). In the portable net10.0 build the handler
+///     code only exists in the net11.0-windows target). In the portable net11.0 build the handler
 ///     must return quietly with an Information log instead of creating an empty images folder
 ///     and showing the misleading "error was reported to the developer" dialog.
 /// </summary>

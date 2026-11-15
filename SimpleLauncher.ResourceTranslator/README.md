@@ -22,7 +22,7 @@ Console application that uses the **OpenRouter API** to automatically translate 
 
 ## Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download)
 - An [OpenRouter API key](https://openrouter.ai/keys) (the app **prompts every run** and does **not** store it)
 
 ## Running

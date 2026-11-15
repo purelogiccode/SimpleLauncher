@@ -36,7 +36,7 @@ jobs:
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Build Debug (warnings as errors)
         run: dotnet build SimpleLauncher.sln -c Debug --nologo -warnaserror
@@ -45,7 +45,7 @@ jobs:
         run: dotnet build SimpleLauncher.sln -c Release --nologo -warnaserror
 
   build-linux:
-    name: Build Avalonia net10.0 (Linux)
+    name: Build Avalonia net11.0 (Linux)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -55,16 +55,16 @@ jobs:
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Build Avalonia Debug (warnings as errors)
-        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0 --nologo -warnaserror
+        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net11.0 --nologo -warnaserror
 
       - name: Build Avalonia Release (warnings as errors)
-        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net10.0 --nologo -warnaserror
+        run: dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0 --nologo -warnaserror
 
       # The app references the updater with ReferenceOutputAssembly=false, so
       # building the app does not compile it. The Linux release publishes it,
       # therefore build its Release configuration explicitly here.
       - name: Build updater (warnings as errors)
-        run: dotnet build SimpleLauncher.Avalonia.Updater/SimpleLauncher.Avalonia.Updater.csproj -c Release -f net10.0 --nologo -warnaserror
+        run: dotnet build SimpleLauncher.Avalonia.Updater/SimpleLauncher.Avalonia.Updater.csproj -c Release -f net11.0 --nologo -warnaserror

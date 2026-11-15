@@ -19,7 +19,7 @@ public sealed class MountChdFilesIntegrationTests
     /// <summary>
     ///     Gets the test data rows for CHD mount integration tests, specifying the file path, game name, and console alias.
     /// </summary>
-    public static TheoryData<string, string, string> ChdFiles => new()
+    public static readonly TheoryData<string, string, string> ChdFiles = new()
     {
         // Microsoft Xbox (CHDMounter console alias "xbox")
         { @"E:\Microsoft Xbox\007 - Everything or Nothing (USA).chd", "007 - Everything or Nothing (USA)", "xbox" },

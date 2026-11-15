@@ -5,8 +5,8 @@
 
 ## Prerequisites
 
-- .NET SDK **10.0.x** (`global.json` pins `10.0.0`, roll-forward latestMajor, no prereleases).
-- Windows (the projects target `net10.0-windows` and use WPF/DPAPI).
+- .NET SDK **11.0.x** (`global.json` pins `11.0.100`, roll-forward latestMajor, no prereleases).
+- Windows (the projects target `net11.0-windows` and use WPF/DPAPI).
 
 ## Build & test
 
@@ -19,7 +19,7 @@ dotnet build SimpleLauncher.sln -c Release
 dotnet build SimpleLauncher/SimpleLauncher.csproj -c Debug
 dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug
 
-# run unit tests — WPF (net10.0-windows) and Avalonia (net10.0, headless)
+# run unit tests — WPF (net11.0-windows) and Avalonia (net11.0, headless)
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj -c Debug
 dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 
@@ -27,8 +27,8 @@ dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj -c Debug \
   --filter "FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~ApiConnectivity&FullyQualifiedName!~UrlValidation&FullyQualifiedName!~MountChd&FullyQualifiedName!~MountZip"
 
-# WSL2 / Linux — Avalonia only (net10.0 TFM, no Windows desktop pack)
-dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net10.0
+# WSL2 / Linux — Avalonia only (net11.0 TFM, no Windows desktop pack)
+dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net11.0
 dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 wsl dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 ```
@@ -61,7 +61,7 @@ pwsh scripts/package-release.ps1 -Version 5.8.4
 
 - The bundle places `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other and ships one shared set of content files (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Users choose which app to run.
 - Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`).
-- Both apps are published **framework-dependent** (the **.NET 10 Desktop Runtime** is required on the target machine), so the payload carries no runtime: each is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
+- Both apps are published **framework-dependent** (the **.NET 11 Desktop Runtime** is required on the target machine), so the payload carries no runtime: each is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
 - Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing.
 - Merges the two publish outputs and fails loudly when a shared file has different content (for example `appsettings.json` drift); `AppSettingsFilesAreIdentical` guards the two appsettings sources in the test suite.
 - Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` with `LICENSE.txt`, `README.md` and `WhatsNew.md` into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID tools (`FindRomCover`, `RetroAchievementsSharp`, `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target `win-{x64,arm64}` subfolder.
@@ -78,7 +78,7 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.4
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 ```
 
-- The Avalonia app is published **framework-dependent single-file** for `net10.0` (the **.NET 10
+- The Avalonia app is published **framework-dependent single-file** for `net11.0` (the **.NET 11
   runtime** is required on Linux; managed assemblies are bundled into the `SimpleLauncher.Avalonia`
   binary with only the native libraries beside it, mirroring the Windows exes); the standalone
   `Updater` is framework-dependent single-file as well.
@@ -98,8 +98,9 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.4
 - Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
   `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
   verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
-- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK): all 708 Avalonia
-  tests pass with `dotnet test -c Debug -f net10.0 -r linux-x64` (Fedora's SDK defaults to the
+- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK — not yet re-verified
+  after the .NET 11 move): all 708 Avalonia
+  tests pass with `dotnet test -c Debug -f net11.0 -r linux-x64` (Fedora's SDK defaults to the
   `fedora.44-x64` RID, whose apphost pack is not on nuget.org, so the `-r linux-x64` override is
   required to restore/build), and the published app launches and renders through XWayland
   (`DISPLAY=:0` plus the login session's `XAUTHORITY`, e.g. from `systemctl --user show-environment`).
@@ -129,22 +130,22 @@ pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
 
 ### Publish the Avalonia app (multi-targeted)
 
-The Avalonia app targets both `net10.0` (Linux) and `net10.0-windows` (Windows), so the
+The Avalonia app targets both `net11.0` (Linux) and `net11.0-windows` (Windows), so the
 target framework **must** be specified when publishing:
 
 ```bash
-dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net10.0-windows -r win-x64
-dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net10.0-windows -r win-arm64
-dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r linux-x64
-dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net10.0 -r linux-arm64
+dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0-windows -r win-x64
+dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0-windows -r win-arm64
+dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0 -r linux-x64
+dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0 -r linux-arm64
 
 # Verify the output includes the bundled tools + updater
-ls SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/ | head -20
-ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 2>/dev/null | head
+ls SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/ | head -20
+ls SimpleLauncher.Avalonia/bin/Release/net11.0-windows/win-x64/publish/Updater* 2>/dev/null | head
 ```
 
-- The `net10.0` TFM is **Linux/macOS-only** (audio output uses ALSA + managed decoders). Publishing it
-  with a Windows RID (`-f net10.0 -r win-x64`) is rejected by a build guard: the `WINDOWS`
+- The `net11.0` TFM is **Linux/macOS-only** (audio output uses ALSA + managed decoders). Publishing it
+  with a Windows RID (`-f net11.0 -r win-x64`) is rejected by a build guard: the `WINDOWS`
   symbol would not be defined, so `PlaySoundEffects` would take the ALSA path and fail on
   Windows (`DllNotFoundException: libasound`, no Windows native binary is shipped).
 - MP3 and WAV sound effects need **no native libraries** on Linux/macOS (NLayer +
@@ -153,9 +154,9 @@ ls SimpleLauncher.Avalonia/bin/Release/net10.0-windows/win-x64/publish/Updater* 
   sound file is logged at **Information** level (never reported as a bug) and playback is skipped.
 - The Windows publish uses Media Foundation + WaveOut, so neither `libsndfile` nor ALSA is needed there.
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
-  `#if WINDOWS` (defined only on the `net10.0-windows` TFM) and pull `System.Drawing.Common`
+  `#if WINDOWS` (defined only on the `net11.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net10.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net10.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (704 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (704 tests via `Avalonia.Headless`).
 
 ## Versioning
 
@@ -191,7 +192,7 @@ packaging. Bump all of them together.
 ## Static analysis & code style
 
 - **Meziantou.Analyzer 3.0.315**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.402** and **Roslynator.Analyzers 5.0.1** (all `PrivateAssets`).
-- `Nullable` enabled everywhere; `LangVersion 14`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
+- `Nullable` enabled everywhere; `LangVersion 15`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
 - `NoWarn` in app: `NU1903;CS0436`.
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).
 - **Every regex must specify a match timeout** (Meziantou `MA0009`): `[GeneratedRegex(pattern, options, 1000)]` (add a culture before the timeout only when needed: `[GeneratedRegex(pattern, options, 1000, "pt-BR")]`), and pass a `TimeSpan`/milliseconds to `new Regex(...)` and static `Regex.Match/IsMatch/Replace/Split/Matches` calls. `Regex.Escape`/`Unescape` need no timeout.
@@ -204,14 +205,14 @@ the test suites (they include live endpoints and real app launches; run them loc
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net10.0` Debug/Release and updater `net10.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. Never runs tests. |
+| `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net11.0` Debug/Release and updater `net11.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. Never runs tests. |
 | `.github/workflows/package-dry-run.yml` | push/PR touching the app projects or packaging scripts (or manual) | Packages all four RIDs with the same scripts as the release workflow, uploads the zips as workflow artifacts and verifies the Linux payload layout/executable bits — without creating a GitHub release. The version is read from `SimpleLauncher/SimpleLauncher.csproj`. |
 | `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the framework-dependent single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 `master` requires the two build checks from `ci.yml` for pull-request merges (direct pushes are
 still allowed). The required contexts are the job names **Build solution (Windows)** and
-**Build Avalonia net10.0 (Linux)** — keep them stable when editing the workflow.
+**Build Avalonia net11.0 (Linux)** — keep them stable when editing the workflow.
 
 To publish a release: bump the version everywhere (see [Versioning](#versioning)), commit and
 push, then run **Actions → Publish release → Run workflow** with the new version.

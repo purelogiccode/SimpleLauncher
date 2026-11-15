@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.Services.TakeScreenshot;
 /// <summary>
 ///     Captures a screenshot of the currently active (foreground) window and saves it
 ///     to the .\screenshot folder relative to the application directory.
-///     Windows-only port of the WPF ActiveWindowScreenshotService (net10.0-windows TFM).
+///     Windows-only port of the WPF ActiveWindowScreenshotService (net11.0-windows TFM).
 /// </summary>
 public sealed partial class AvaloniaActiveWindowScreenshotService
 {

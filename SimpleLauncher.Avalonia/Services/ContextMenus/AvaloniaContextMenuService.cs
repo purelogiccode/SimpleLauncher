@@ -188,7 +188,7 @@ public class AvaloniaContextMenuService
         contextMenu.Items.Add(new Separator());
 
         // Take Screenshot Context Menu — Windows-only (Win32 capture APIs are compiled into
-        // the net10.0-windows target only), so the entry is hidden on Linux/macOS (LB-04).
+        // the net11.0-windows target only), so the entry is hidden on Linux/macOS (LB-04).
 #if WINDOWS
         AddItem(contextMenu, "TakeScreenshot", "Take Screenshot", "snapshot.png", async () =>
         {

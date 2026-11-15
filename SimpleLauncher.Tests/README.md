@@ -213,7 +213,7 @@ Some tests are designed to **fail** to alert the admin of real data issues that 
 
 ```
 SimpleLauncher.Tests/
-├── SimpleLauncher.Tests.csproj          # Project file (xUnit, .NET 10)
+├── SimpleLauncher.Tests.csproj          # Project file (xUnit, .NET 11)
 ├── TestHelpers/                         # Shared test utilities
 │
 ├── # Resource Localization
@@ -336,8 +336,8 @@ SimpleLauncher.Tests/
 
 ## Test Dependencies
 
-- **Framework:** .NET 10 (Windows)
-- **Language:** C# 14
+- **Framework:** .NET 11 (Windows)
+- **Language:** C# 15
 - **Test Runner:** xUnit 2.9.3
 - **Mocking:** Moq 4.20.72
 - **Coverage:** Coverlet 10.0.1

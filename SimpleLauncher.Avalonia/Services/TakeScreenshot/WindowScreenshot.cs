@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.Services.TakeScreenshot;
 
 /// <summary>
 ///     Provides methods to capture screenshots of specific windows using Win32 API calls.
-///     Windows-only port of the WPF WindowScreenshot (net10.0-windows TFM).
+///     Windows-only port of the WPF WindowScreenshot (net11.0-windows TFM).
 /// </summary>
 public static partial class WindowScreenshot
 {

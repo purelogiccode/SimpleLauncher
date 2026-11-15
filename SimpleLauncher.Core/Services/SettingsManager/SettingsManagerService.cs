@@ -50,27 +50,36 @@ public class SettingsManagerService : IDisposable
 
     private readonly HashSet<string> _validAccentColors =
     [
+        with(StringComparer.Ordinal),
         "Amber", "Blue", "Brown", "Cobalt", "Crimson", "Cyan", "Emerald", "Green", "Indigo", "Lime", "Magenta",
         "Maroon", "Mauve", "Olive", "OliveDrab", "Orange", "Pink", "Plum", "Purple", "Red", "Sienna", "SkyBlue",
         "Steel", "Taupe", "Teal", "Violet", "Yellow"
     ];
 
-    private readonly HashSet<string> _validBaseThemes = ["Light", "Dark", "Adaptive", "HighContrast", "Midnight"];
+    private readonly HashSet<string> _validBaseThemes =
+        [with(StringComparer.Ordinal), "Light", "Dark", "Adaptive", "HighContrast", "Midnight"];
 
     private readonly HashSet<string> _validButtonAspectRatio =
-        ["Square", "Wider", "SuperWider", "SuperWider2", "Taller", "SuperTaller", "SuperTaller2"];
+    [
+        with(StringComparer.Ordinal),
+        "Square", "Wider", "SuperWider", "SuperWider2", "Taller", "SuperTaller", "SuperTaller2"
+    ];
 
-    private readonly HashSet<string> _validFilenameDisplayModes = ["Original", "CleanUp", "NoFilename"];
-    private readonly HashSet<string> _validFontSizes = ["Small", "Normal", "Big"];
+    private readonly HashSet<string> _validFilenameDisplayModes =
+        [with(StringComparer.Ordinal), "Original", "CleanUp", "NoFilename"];
+
+    private readonly HashSet<string> _validFontSizes = [with(StringComparer.Ordinal), "Small", "Normal", "Big"];
     private readonly HashSet<int> _validGamesPerPage = [100, 200, 300, 400, 500, 1000, 10000, 1000000];
-    private readonly HashSet<string> _validShowGames = ["ShowAll", "ShowWithCover", "ShowWithoutCover"];
-    private readonly HashSet<string> _validStyleVariants = ["Default"];
+    private readonly HashSet<string> _validShowGames =
+        [with(StringComparer.Ordinal), "ShowAll", "ShowWithCover", "ShowWithoutCover"];
+
+    private readonly HashSet<string> _validStyleVariants = [with(StringComparer.Ordinal), "Default"];
 
     private readonly HashSet<int> _validThumbnailSizes =
         [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800];
 
     private readonly HashSet<int> _validThumbnailSizesForSystem = [50, 100, 150];
-    private readonly HashSet<string> _validViewModes = ["GridView", "ListView"];
+    private readonly HashSet<string> _validViewModes = [with(StringComparer.Ordinal), "GridView", "ListView"];
 
     private bool _disposed;
 

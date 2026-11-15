@@ -12,7 +12,7 @@ For every runtime identifier this produces, in the output folder:
   updater_{rid}.zip             the single standalone Updater.exe (framework-dependent,
                                 single-file) used by both apps
 
-Both apps are published framework-dependent (the .NET 10 Desktop Runtime is required on
+Both apps are published framework-dependent (the .NET 11 Desktop Runtime is required on
 the target machine), so the payload does not carry a runtime. Each app ships as a single
 executable containing its managed assemblies; the small set of native libraries it needs
 (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater
@@ -402,7 +402,7 @@ foreach ($rid in $RuntimeIdentifiers) {
         'publish',
         $avaloniaProject,
         '-c', 'Release',
-        '-f', 'net10.0-windows',
+        '-f', 'net11.0-windows',
         '-r', $rid,
         '--self-contained', 'false',
         '-p:PublishSingleFile=true',

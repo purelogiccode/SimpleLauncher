@@ -44,7 +44,7 @@ The MAME DAT Creator Utility is a simple WPF application designed to merge the o
 ## Requirements
 
 *   **Operating System:** Windows 7 or newer.
-*   **.NET Runtime:** .NET 10 runtime.
+*   **.NET Runtime:** .NET 11 runtime.
 *   **MAME XML Files:**
     *   A `mame.xml` full driver list XML, available on the MAME website.
     *   The `hash` folder from your MAME installation, containing software list XMLs.

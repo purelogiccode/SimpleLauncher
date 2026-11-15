@@ -10,7 +10,7 @@
 | `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
 | `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
 | `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (and transitively Core) |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (704 tests, `net10.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (704 tests, `net11.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
 | `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux, x64/ARM64). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in the shared packs (`SimpleLauncher.Core\Localization\strings.*.json`) via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
@@ -18,14 +18,14 @@
 | `Tools\RetroAchievements.DataFetcher` | CLI tool | Fetches the RA game database into `RetroAchievements.dat` |
 | `Tools\XmlToBinaryConverter` | WPF tool | Converts `history.xml` ↔ `history.dat` (MessagePack) |
 
-Dependency edges: `SimpleLauncher → SimpleLauncher.Core`; `SimpleLauncher.Tests → SimpleLauncher`; `SimpleLauncher.Avalonia.Tests → SimpleLauncher.Avalonia`; `SimpleLauncher.Avalonia.Updater` standalone (no compile reference — the Avalonia app publishes it and copies `Updater.exe` next to itself); `SimpleLauncher.Avalonia` references Core (via `InternalsVisibleTo`). `SimpleLauncher.Avalonia.Tests` targets `net10.0` (not `-windows`) so it runs on Linux CI/WSL2 without the Windows desktop pack.
+Dependency edges: `SimpleLauncher → SimpleLauncher.Core`; `SimpleLauncher.Tests → SimpleLauncher`; `SimpleLauncher.Avalonia.Tests → SimpleLauncher.Avalonia`; `SimpleLauncher.Avalonia.Updater` standalone (no compile reference — the Avalonia app publishes it and copies `Updater.exe` next to itself); `SimpleLauncher.Avalonia` references Core (via `InternalsVisibleTo`). `SimpleLauncher.Avalonia.Tests` targets `net11.0` (not `-windows`) so it runs on Linux CI/WSL2 without the Windows desktop pack.
 
 ## `SimpleLauncher\SimpleLauncher.csproj` (the app)
 
 Key properties:
 
 ```xml
-<TargetFramework>net10.0-windows</TargetFramework>
+<TargetFramework>net11.0-windows</TargetFramework>
 <OutputType>WinExe</OutputType>
 <UseWPF>true</UseWPF>
 <LangVersion>14</LangVersion>
@@ -35,7 +35,7 @@ Key properties:
 <StartupObject>SimpleLauncher.App</StartupObject>
 <AssemblyVersion>/<FileVersion>/<Version>5.8.4</Version>
 <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-<RuntimeFrameworkVersion>10.0.2</RuntimeFrameworkVersion>
+<RuntimeFrameworkVersion>11.0.0</RuntimeFrameworkVersion>
 <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 ```
 
@@ -60,10 +60,10 @@ Key properties:
 | Microsoft.Data.Sqlite / SourceGear.sqlite3 | 10.0.13 / 3.53.4 | SQLite (unified `settings.dat`, Amazon scan, Stella settings) |
 | SharpCompress | 0.50.6 | Archive extraction |
 | NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.3.0 | UI sound effects (Windows + Linux/macOS) |
-| NLayer + NLayer.NAudioSupport | 3.0.0 | Managed MP3 decoding on Linux/macOS (`net10.0` TFM only; no libsndfile needed) |
+| NLayer + NLayer.NAudioSupport | 3.0.0 | Managed MP3 decoding on Linux/macOS (`net11.0` TFM only; no libsndfile needed) |
 | SharpDX + XInput + DirectInput | 4.2.0 | Gamepad input (Windows) |
 | InputSimulatorCore | 1.0.5 | Mouse simulation from gamepad (Windows) |
-| Hexa.NET.SDL2 | 1.2.17 | Gamepad input on Linux/macOS (`net10.0` TFM only; bundles the native SDL2 binaries) |
+| Hexa.NET.SDL2 | 1.2.17 | Gamepad input on Linux/macOS (`net11.0` TFM only; bundles the native SDL2 binaries) |
 | Serilog (+ Sinks.Async/Debug/File) | 4.4.0 | Logging |
 | Tomlyn | 2.10.1 | TOML parsing (Xenia, Yumir configs) |
 | YamlDotNet | 18.1.0 | YAML parsing (RPCS3 config) |
@@ -73,19 +73,19 @@ Key properties:
 
 ## `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (the library)
 
-Key properties: `net10.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 14`, `DebugType=embedded`, version `5.8.4`.
+Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 15`, `DebugType=embedded`, version `5.8.4`.
 
 - **`InternalsVisibleTo`:** `SimpleLauncher.Tests`, `SimpleLauncher`, `SimpleLauncher.New`, `SimpleLauncher.Avalonia`, `SimpleLauncher.New.Tests`.
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog` — so every Core service takes a Serilog `ILogger` by convention.
-- Packages: the same core set as the app (CommunityToolkit.Mvvm, MessagePack, Microsoft.Extensions.*, SharpCompress, NAudio, SharpDX*, Serilog, Tomlyn, YamlDotNet, SourceGear.sqlite3, Meziantou.Analyzer) — no WPF/MahApps (it targets `net10.0-windows` because of DPAPI `ProtectedData`, `System.Drawing`-adjacent helpers, and Windows-specific services, but stays UI-agnostic). RetroAchievements hashing is **not** a package: all hash computation is delegated to the bundled `tools\RetroAchievementsSharp\` CLI binaries (see [09 — RetroAchievements](09-retroachievements.md#hashing)).
+- Packages: the same core set as the app (CommunityToolkit.Mvvm, MessagePack, Microsoft.Extensions.*, SharpCompress, NAudio, SharpDX*, Serilog, Tomlyn, YamlDotNet, SourceGear.sqlite3, Meziantou.Analyzer) — no WPF/MahApps (it targets `net11.0-windows` because of DPAPI `ProtectedData`, `System.Drawing`-adjacent helpers, and Windows-specific services, but stays UI-agnostic). RetroAchievements hashing is **not** a package: all hash computation is delegated to the bundled `tools\RetroAchievementsSharp\` CLI binaries (see [09 — RetroAchievements](09-retroachievements.md#hashing)).
 - **Shared localization packs:** `Localization\strings.{lang}.json` (18 languages, canonical `strings.en.json`) are the single source for both apps — both embed them in their assemblies (WPF pack resources, Avalonia manifest resources; see [15 — Development](15-development.md#localization)).
 
 ## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the cross-platform port)
 
-Key properties: `net10.0` + `net10.0-windows` (dual target — the `net10.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.4`, `UseWindowsForms=False`, version synced to the WPF app (5.8.4), `StartupObject = SimpleLauncher.Avalonia.Program`.
+Key properties: `net11.0` + `net11.0-windows` (dual target — the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.4`, `UseWindowsForms=False`, version synced to the WPF app (5.8.4), `StartupObject = SimpleLauncher.Avalonia.Program`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
-- **Windows-only services** (`#if WINDOWS`, `net10.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).
+- **Windows-only services** (`#if WINDOWS`, `net11.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).
 - **Cross-platform services**: `AvaloniaTrayIconManager` (Avalonia `TrayIcon` + `NativeMenu`; `icon\icon.ico` copied to output), `AvaloniaFilePickerService` (platform-aware filters, dialogs parented to the active window), `EmulatorConfigHandlerRegistration` (the 21 pre-launch config handlers are registered on Windows only), `AvaloniaDispatcherService`, embedded JSON localization (manifest resources `SimpleLauncher.Avalonia.Resources.strings.*.json` sourced from `SimpleLauncher.Core\Localization`, 18 languages, 2671 keys each, all files in full key parity with `strings.en.json`).
 - Remaining work is tracked in [`References/TODO.md`](../References/TODO.md). All 44 windows and 21 `Inject*` dialogs are headless-smoke-tested via `AvaloniaViewSmokeTests` (45 window + 21 inject tests); `RetroAchievementsViewModel` and `RetroAchievementsSettingsViewModel` have full unit coverage in both WPF and Avalonia (30 + 19 tests). The Linux regression suite pins every finding of the Linux review (LB-01 … LB-23) — see [14 — Testing](14-testing.md).
 

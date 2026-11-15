@@ -12,7 +12,7 @@ public class LanguageLaunchArgumentTests
         "ja", "ko", "nl", "pt-br", "ru", "tr", "ur", "vi", "zh-hans"
     ];
 
-    public static TheoryData<string[], string> ParsingCases => new()
+    public static readonly TheoryData<string[], string> ParsingCases = new()
     {
         { ["--language", "es"], "es" },
         { ["-language", "TR"], "TR" }, // raw value returned; canonicalized later
@@ -20,7 +20,7 @@ public class LanguageLaunchArgumentTests
         { ["-debug", "--language", "pt-br"], "pt-br" } // mixed with other args
     };
 
-    public static TheoryData<string[]> AbsentCases => new()
+    public static readonly TheoryData<string[]> AbsentCases = new()
     {
         Array.Empty<string>(),
         { ["-debug"] },
@@ -28,7 +28,7 @@ public class LanguageLaunchArgumentTests
         { ["--restarting"] }
     };
 
-    public static TheoryData<string[], string, string> ResolutionCases => new()
+    public static readonly TheoryData<string[], string, string> ResolutionCases = new()
     {
         { ["--language", "es"], "en", "es" }, // arg wins
         { ["-language", "TR"], "en", "tr" }, // canonicalized

@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
+        <TargetFrameworks>net11.0;net11.0-windows</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <Company>PureLogicCode.com</Company>
         <Product>Simple Launcher Core</Product>
-        <LangVersion>14</LangVersion>
+        <LangVersion>15</LangVersion>
         <Nullable>enable</Nullable>
         <!-- SDL2's generated bindings (Hexa.NET.SDL2) expose native pointers. -->
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -27,28 +27,28 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CHDSharp" Version="1.6.3" />
+        <PackageReference Include="CHDSharp" Version="1.7.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.322">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.340">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="MessagePack" Version="3.1.12" />
         <PackageReference Include="NAudio.Alsa" Version="3.3.0" />
         <PackageReference Include="NAudio.SoundFile" Version="3.3.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.403">
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.14" />
-        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="11.0.0" />
         <PackageReference Include="NAudio.Core" Version="3.3.0" />
         <PackageReference Include="NAudio.Wasapi" Version="3.3.0" />
         <PackageReference Include="PBPSharp" Version="1.1.8" />
@@ -56,9 +56,9 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="SharpCompress" Version="0.50.8" />
+        <PackageReference Include="SharpCompress" Version="0.50.9" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
-        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
         <PackageReference Include="Tomlyn" Version="2.11.1" />
         <PackageReference Include="Serilog" Version="4.4.0" />
         <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
@@ -97,7 +97,7 @@
     <!-- Linux/macOS gamepad input; the bindings bundle the native SDL2 binaries for the
          linux/osx/win RIDs (Windows keeps the SharpDX/XInput path, so it is not referenced
          there and no SDL2 payload ships in the Windows release). -->
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
         <PackageReference Include="Hexa.NET.SDL2" Version="1.2.17" />
     </ItemGroup>
 
@@ -110,17 +110,17 @@
         <PackageReference Include="NLayer" Version="3.0.1" />
         <PackageReference Include="NLayer.NAudioSupport" Version="3.0.1" />
     </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net11.0-windows'">
         <PackageReference Include="NAudio.WinMM" Version="3.3.0" />
     </ItemGroup>
 
-    <!-- net10.0 is the Linux/macOS TFM; the WINDOWS symbol is defined only for
-         net10.0-windows. A Windows RID on net10.0 makes PlaySoundEffects take the
+    <!-- net11.0 is the Linux/macOS TFM; the WINDOWS symbol is defined only for
+         net11.0-windows. A Windows RID on net11.0 makes PlaySoundEffects take the
          managed/(lib)sndfile decoder + ALSA output path, so audio would fail on
          Windows (no libasound). Fail loudly instead. -->
     <Target Name="GuardWindowsRidOnLinuxTfm" BeforeTargets="Build;Publish">
         <Error
-            Condition="'$(TargetFramework)' == 'net10.0' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))"
-            Text="Cannot build/publish net10.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net10.0 TFM is Linux/macOS-only (audio output uses NAudio.Alsa). For Windows, use the net10.0-windows TFM, e.g. `dotnet publish -f net10.0-windows -r $(RuntimeIdentifier)`." />
+            Condition="'$(TargetFramework)' == 'net11.0' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))"
+            Text="Cannot build/publish net11.0 with a Windows RuntimeIdentifier '$([System.String]::Copy('$(RuntimeIdentifier)'))'. The net11.0 TFM is Linux/macOS-only (audio output uses NAudio.Alsa). For Windows, use the net11.0-windows TFM, e.g. `dotnet publish -f net11.0-windows -r $(RuntimeIdentifier)`." />
     </Target>
 </Project>
