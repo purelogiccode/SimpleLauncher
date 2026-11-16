@@ -12,7 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.340">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.341">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -28,7 +28,7 @@
         </PackageReference>
         <PackageReference Include="Moq" Version="4.21.0" />
         <Using Include="Serilog" />
-        <PackageReference Include="coverlet.collector" Version="10.1.0">
+        <PackageReference Include="coverlet.collector" Version="10.1.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
