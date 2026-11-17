@@ -35,6 +35,10 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private readonly IFindCoverImageService _findCoverImage;
     private readonly AvaloniaGameFilterService _gameFilter;
     private readonly LauncherService _launcher;
+    private readonly Lock _launchGate = new();
+    private readonly HashSet<string> _launchingGames = new(OperatingSystem.IsWindows()
+        ? StringComparer.OrdinalIgnoreCase
+        : StringComparer.Ordinal);
     private readonly AvaloniaGameFileLoadingOrchestrator _loadingOrchestrator;
     private readonly AvaloniaLoadingOverlayService _loadingOverlay;
     private readonly LocalizationService _localization;
@@ -185,6 +189,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _playHistoryManager = playHistoryManager;
         _systemManager = systemManager;
         _launcher = launcher;
+        _launcher.GamePlayed += OnGamePlayed;
         _findCoverImage = findCoverImage;
         _settings = settings;
         _pagination = pagination;
@@ -1572,8 +1577,32 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     Launches a game by file path and system name (shared by the game grid and the
     ///     Favorites / Play History / Global Search sections). Records play history and
     ///     usage stats; returns the measured play time so callers can update their rows.
+    ///     A second request for the SAME game while it is still launching/running is
+    ///     ignored: the grid launches on a single click, so a user double-click used to
+    ///     start two emulator processes and record two plays (observed on Linux Mint).
     /// </summary>
     public async Task<TimeSpan> LaunchGameAtPathAsync(string filePath, string systemName)
+    {
+        lock (_launchGate)
+        {
+            if (!_launchingGames.Add(filePath))
+            {
+                Log.Debug("Ignoring duplicate launch request for {Game}", filePath);
+                return TimeSpan.Zero;
+            }
+        }
+
+        try
+        {
+            return await LaunchGameAtPathCoreAsync(filePath, systemName);
+        }
+        finally
+        {
+            lock (_launchGate) _launchingGames.Remove(filePath);
+        }
+    }
+
+    private async Task<TimeSpan> LaunchGameAtPathCoreAsync(string filePath, string systemName)
     {
         var system = _systemManager.GetSystem(systemName);
         var emulator = system?.Emulators.FirstOrDefault(e =>
@@ -1641,6 +1670,26 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         Log.Debug("Refreshing favorites and play history");
         ApplyFavoritesAndHistory(_currentAllGames);
         ReapplyPagination();
+    }
+
+    /// <summary>
+    ///     Refreshes the play count/history state after a game session ends and updates the
+    ///     selected system's play-time display (WPF parity: the status bar used to stay at
+    ///     the stale value until the user re-selected the system).
+    /// </summary>
+    private void OnGamePlayed(object? sender, GamePlayedEventArgs e)
+    {
+        RefreshFavoritesAndHistory();
+
+        if (!IsPlayTimeVisible ||
+            !string.Equals(e.SystemName, SelectedSystem, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var systemPlayTime = _settings.SystemPlayTimes.FirstOrDefault(s =>
+            string.Equals(s.SystemName, e.SystemName, StringComparison.OrdinalIgnoreCase));
+        PlayTime = systemPlayTime?.FormattedPlayTime ?? "00:00:00";
     }
 
     /// <summary>

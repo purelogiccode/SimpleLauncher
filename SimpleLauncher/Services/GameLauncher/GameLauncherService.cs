@@ -44,6 +44,14 @@ public partial class GameLauncherService : ILauncherService
     /// </summary>
     private bool _gameLaunchStarted;
 
+    // Prevents a double-click on a game card from starting the same game twice (the grid
+    // launches on a single click, so the second click of a double-click used to start a
+    // second emulator and record a second play).
+    private readonly Lock _launchGate = new();
+    private readonly HashSet<string> _launchingGames = new(OperatingSystem.IsWindows()
+        ? StringComparer.OrdinalIgnoreCase
+        : StringComparer.Ordinal);
+
     private readonly IEnumerable<IEmulatorConfigHandler> _configHandlers;
     private readonly IConfiguration _configuration;
     private readonly IExtractionService _extractionService;
@@ -1285,6 +1293,37 @@ public partial class GameLauncherService : ILauncherService
     /// <param name="gamePadController">The gamepad controller to pause while the game is running.</param>
     /// <param name="loadingStateProvider">Optional loading state provider for UI feedback.</param>
     internal async Task HandleButtonClickAsync(string filePath,
+        string selectedEmulatorName,
+        string selectedSystemName,
+        ISystemManager selectedSystemManager,
+        SettingsManagerService settings,
+        IWindowContext windowContext,
+        GamePadController gamePadController,
+        ILoadingState? loadingStateProvider)
+    {
+        var key = PathHelper.ResolveRelativeToAppDirectory(filePath) ?? filePath;
+
+        lock (_launchGate)
+        {
+            if (!_launchingGames.Add(key))
+            {
+                _logger.Debug("Ignoring duplicate launch request for {Game}", filePath);
+                return;
+            }
+        }
+
+        try
+        {
+            await HandleButtonClickCoreAsync(filePath, selectedEmulatorName, selectedSystemName,
+                selectedSystemManager, settings, windowContext, gamePadController, loadingStateProvider);
+        }
+        finally
+        {
+            lock (_launchGate) _launchingGames.Remove(key);
+        }
+    }
+
+    private async Task HandleButtonClickCoreAsync(string filePath,
         string selectedEmulatorName,
         string selectedSystemName,
         ISystemManager selectedSystemManager,
