@@ -83,6 +83,13 @@ internal class ZipService
             // executable installed by this update gets its execute bit applied too.
             var stagedFiles = new List<(string RelativePath, string StagedPath, UnixFileMode? ArchiveMode)>();
 
+            // UPD-25: reject archives that contain two entries for the same destination.
+            // The swap would treat the second entry as a replacement of the first: it
+            // overwrites the first entry's .updbak, so a failure between the two moves
+            // could restore a staged copy instead of the user's original file.
+            var destinations = new HashSet<string>(
+                OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+
             // Use ZipReader for streaming extraction - no upfront indexing needed
             using (var reader = ZipReader.OpenReader(zipStream, new ReaderOptions { LeaveStreamOpen = true }))
             {
@@ -145,11 +152,20 @@ internal class ZipService
 
                         // Security check: ensure the resolved destination path is within AppDirectory
                         // This is the actual guard — it catches all traversal attempts including encoded or multi-level ".."
-                        if (!stagedPath.StartsWith(stagingRootFullPath, StringComparison.OrdinalIgnoreCase) ||
-                            !destinationPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                        if (!stagedPath.StartsWith(stagingRootFullPath, PathComparison) ||
+                            !destinationPath.StartsWith(appDirectoryFullPath, PathComparison))
                         {
                             throw new SecurityException(
                                 $"Zip entry attempts to escape target directory: {entryKey}");
+                        }
+
+                        // UPD-25: two entries resolving to the same live file would corrupt
+                        // the backup/rollback chain (see the destinations declaration above).
+                        // Comparison follows the target filesystem's case sensitivity.
+                        if (!destinations.Add(destinationPath))
+                        {
+                            throw new SecurityException(
+                                $"Zip archive contains multiple entries for the same file: {entryKey}");
                         }
 
                         // UPD-04: refuse to write through (or overwrite) a reparse point / symlink
@@ -250,13 +266,13 @@ internal class ZipService
         long stagedBytes = 0;
         foreach (var (_, stagedPath, _) in stagedFiles) stagedBytes += new FileInfo(stagedPath).Length;
 
-        var drive = new DriveInfo(Path.GetPathRoot(appDirectoryFullPath)!);
         const long reserveBytes = 64L * 1024 * 1024;
-        if (drive.AvailableFreeSpace < stagedBytes + reserveBytes)
+        if (TryGetAvailableFreeSpace(appDirectoryFullPath, out var availableFreeSpace, out var volumeName) &&
+            availableFreeSpace < stagedBytes + reserveBytes)
         {
             throw new IOException(
                 $"Insufficient disk space for update: need {DownloadService.FormatBytes(stagedBytes + reserveBytes)}, " +
-                $"only {DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
+                $"only {DownloadService.FormatBytes(availableFreeSpace)} free on {volumeName}.");
         }
 
         // Recover .updbak files left by a previously interrupted swap for exactly the
@@ -285,7 +301,7 @@ internal class ZipService
 
                 var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
 
-                if (!finalPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+                if (!finalPath.StartsWith(appDirectoryFullPath, PathComparison))
                 {
                     throw new SecurityException(
                         $"Zip entry attempts to escape target directory: {relativePath}");
@@ -592,6 +608,15 @@ internal class ZipService
         }
     }
 
+    /// <summary>
+    ///     Containment comparisons must follow the target filesystem's case rules: on Linux a
+    ///     case-insensitive prefix check accepts "/HOME/USER/App/pwn" for "/home/user/app" and
+    ///     lets a crafted entry write outside the install directory (LB-17 parity with the
+    ///     app's updater-package extraction).
+    /// </summary>
+    private static StringComparison PathComparison =>
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
     private static string EnsureTrailingSeparator(string fullPath)
     {
         // UPD-03: the containment prefix must end in a separator — without it,
@@ -687,7 +712,7 @@ internal class ZipService
         foreach (var (relativePath, _, _) in stagedFiles)
         {
             var finalPath = Path.GetFullPath(Path.Combine(_appDirectory, relativePath));
-            if (!finalPath.StartsWith(appDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+            if (!finalPath.StartsWith(appDirectoryFullPath, PathComparison))
                 continue; // the swap re-validates containment before touching the file
 
             var backupPath = finalPath + ".updbak";
@@ -873,14 +898,60 @@ internal class ZipService
         if (bytesNeeded <= 0)
             return; // Unknown size — the write itself will report ENOSPC fail-fast.
 
-        var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(directory))!);
         const long reserveBytes = 64L * 1024 * 1024;
-        if (drive.AvailableFreeSpace < bytesNeeded + reserveBytes)
+        if (!TryGetAvailableFreeSpace(directory, out var availableFreeSpace, out var volumeName))
+            return; // Volume cannot be probed — the write itself is authoritative.
+
+        if (availableFreeSpace < bytesNeeded + reserveBytes)
         {
             throw new IOException(
                 $"Insufficient disk space to extract '{entryKey}': need " +
                 $"{DownloadService.FormatBytes(bytesNeeded + reserveBytes)}, only " +
-                $"{DownloadService.FormatBytes(drive.AvailableFreeSpace)} free on {drive.Name}.");
+                $"{DownloadService.FormatBytes(availableFreeSpace)} free on {volumeName}.");
+        }
+    }
+
+    /// <summary>
+    ///     Returns the free space of the volume that holds <paramref name="directory" />.
+    ///     Returns <c>false</c> when the volume cannot be probed: <see cref="DriveInfo" />
+    ///     only accepts local volume roots and throws <see cref="ArgumentException" /> for
+    ///     a UNC share root ("\\server\share"), which aborted every update installed from
+    ///     a NAS share (bugs #69877-#69880). An unprobeable volume is not an error — the
+    ///     write itself reports a real ENOSPC — so callers skip the advisory pre-check.
+    /// </summary>
+    private static bool TryGetAvailableFreeSpace(string directory, out long availableFreeSpace,
+        out string volumeName)
+    {
+        availableFreeSpace = 0;
+        volumeName = string.Empty;
+
+        string? root;
+        try
+        {
+            root = Path.GetPathRoot(Path.GetFullPath(directory));
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException
+                                       or UnauthorizedAccessException)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(root) || root.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+
+        try
+        {
+            var drive = new DriveInfo(root);
+            if (!drive.IsReady)
+                return false;
+
+            availableFreeSpace = drive.AvailableFreeSpace;
+            volumeName = drive.Name;
+            return true;
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            return false;
         }
     }
 }

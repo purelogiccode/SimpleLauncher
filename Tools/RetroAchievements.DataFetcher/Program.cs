@@ -310,14 +310,24 @@ file static class Program
 
         try
         {
-            await using var stream = new FileStream(SettingsFilePath, FileMode.Create, FileAccess.Write);
-            await using var xmlWriter = XmlWriter.Create(stream, new XmlWriterSettings
+            // The writer is disposed asynchronously below, so Async must be enabled or
+            // DisposeAsync throws "Set XmlWriterSettings.Async to true if you want to use
+            // Async Methods" while flushing.
+            var writerSettings = new XmlWriterSettings
             {
                 Indent = true,
-                Encoding = Encoding.UTF8
-            });
-            var serializer = new XmlSerializer(typeof(RaSettings));
-            serializer.Serialize(xmlWriter, settings);
+                Encoding = new UTF8Encoding(false),
+                Async = true
+            };
+
+            await using (var stream = new FileStream(SettingsFilePath, FileMode.Create, FileAccess.Write))
+            await using (var xmlWriter = XmlWriter.Create(stream, writerSettings))
+            {
+                var serializer = new XmlSerializer(typeof(RaSettings));
+                serializer.Serialize(xmlWriter, settings);
+                await xmlWriter.FlushAsync();
+            }
+
             Log.Information("Settings saved to {SettingsFilePath}", SettingsFilePath);
         }
         catch (Exception ex)
