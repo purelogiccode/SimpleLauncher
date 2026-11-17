@@ -17,7 +17,10 @@ public class DownloadManager : IDisposable
     private const int RetryBaseDelayMs = 1000;
 
 
-    private const long DefaultRequiredSpaceBytes = 5L * 1024 * 1024 * 1024; // 5 GB
+    // Preflight headroom only. A fixed multi-GB threshold rejected small downloads (a 20 MB
+    // image pack) on a disk that was merely a little full; the streaming write reports a real
+    // ENOSPC and the partial file is removed on failure, so 256 MB is enough headroom.
+    private const long DefaultRequiredSpaceBytes = 256L * 1024 * 1024; // 256 MB
     private readonly IDispatcherService _dispatcherService;
     private readonly IExtractionService _extractionService;
 

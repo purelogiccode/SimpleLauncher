@@ -79,7 +79,8 @@ public class ExtractionService : IExtractionService
         {
             // Notify developer
             const string contextMessage = "File path is invalid.";
-            _logger.Warning(contextMessage);
+            // Expected user condition (missing/empty download): Information, not a bug.
+            _logger.Information(contextMessage);
 
             // Notify user
             await _messageBoxLibrary.DownloadedFileIsMissingMessageBoxAsync();
@@ -94,7 +95,8 @@ public class ExtractionService : IExtractionService
         {
             // Notify developer
             const string contextMessage = "Destination folder path resolution failed.";
-            _logger.Warning(contextMessage);
+            // Expected user condition (invalid configured path): Information, not a bug.
+            _logger.Information(contextMessage);
 
             // Notify user
             await _messageBoxLibrary.ExtractionFailedMessageBoxAsync();
@@ -115,7 +117,8 @@ public class ExtractionService : IExtractionService
                 // Notify developer
                 var contextMessage =
                     $"The downloaded file appears to be locked after {maxRetries} retries: {archivePath}";
-                _logger.Warning(contextMessage);
+                // Expected user-environment condition (antivirus/OneDrive lock): Information.
+                _logger.Information(contextMessage);
 
                 // Notify user, passing the directory of the locked archive
                 await _messageBoxLibrary.FileIsLockedMessageBoxAsync(Path.GetDirectoryName(archivePath));
@@ -202,7 +205,8 @@ public class ExtractionService : IExtractionService
                             // Notify developer
                             var contextMessage =
                                 $"Not enough disk space for extraction. Required: {estimatedSize / (1024 * 1024)} MB, Available: {drive.AvailableFreeSpace / (1024 * 1024)} MB";
-                            _logger.Warning(contextMessage);
+                            // Expected environment condition (full disk): Information, not a bug.
+                            _logger.Information(contextMessage);
 
                             // Notify user
                             await _messageBoxLibrary.DiskSpaceErrorMessageBoxAsync();
@@ -279,12 +283,16 @@ public class ExtractionService : IExtractionService
                             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                                 Directory.CreateDirectory(directory);
 
+                            // Track only files this run CREATED: a pre-existing file may be
+                            // overwritten by the extraction, but the failure cleanup below must
+                            // never delete it (CORE-01) — a missing config/executable is worse
+                            // than a partially updated one.
+                            var destinationExistedBefore = File.Exists(destinationPath);
+
                             await using (var entryStream = await entry.OpenEntryStreamAsync())
                             await using (var fileStream = File.Create(destinationPath))
                             {
-                                // Track the file as soon as it exists on disk: if the copy fails
-                                // halfway the partial file must still be cleaned up.
-                                extractedFiles.Add(destinationPath);
+                                if (!destinationExistedBefore) extractedFiles.Add(destinationPath);
                                 await entryStream.CopyToAsync(fileStream);
                             }
 
@@ -808,16 +816,20 @@ public class ExtractionService : IExtractionService
         {
             Directory.CreateDirectory(destinationFolder);
 
-            var args = $"x -o\"{destinationFolder}\" -y \"{archivePath}\"";
+            // ArgumentList (not a concatenated string): a Linux file name can legally
+            // contain '"', which would otherwise split into attacker-chosen arguments.
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = exePath,
-                Arguments = args,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            processStartInfo.ArgumentList.Add("x");
+            processStartInfo.ArgumentList.Add($"-o{destinationFolder}");
+            processStartInfo.ArgumentList.Add("-y");
+            processStartInfo.ArgumentList.Add(archivePath);
 
             using var process = new Process();
             process.StartInfo = processStartInfo;

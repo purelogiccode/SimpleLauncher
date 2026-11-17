@@ -215,13 +215,13 @@ public partial class MainWindow : Window
             {
                 await DialogHelper.ShowMessageAsync(this, "Update installed successfully.", "Success");
 
-                // Check if Dokan is installed and offer to install it if missing (Windows only)
-                if (OperatingSystem.IsWindows())
-                    await _updateService.CheckAndInstallDokanAsync(cancellationToken);
-
+                // Restart the application FIRST: it is already closed, and the optional
+                // Dokan step below can be cancelled (e.g. the user closes this window while
+                // the success dialog is up) — that must never leave the user with no app.
                 // UPD-16: only close on a real restart — a null/failed start must
                 // tell the user to launch manually instead of vanishing.
-                if (!_updateService.RestartMainApplication(targetAppProcessName))
+                var restarted = _updateService.RestartMainApplication(targetAppProcessName);
+                if (!restarted)
                 {
                     Log("Update installed, but the application could not be restarted automatically.");
                     var restartHint = ProcessService.IsArchiveTempDirectory(AppDirectory)
@@ -232,6 +232,20 @@ public partial class MainWindow : Window
                         "Update installed successfully, but Simple Launcher could not be restarted automatically.\n\n" +
                         "Please start it manually." + restartHint,
                         "Restart Failed");
+                }
+
+                // Check if Dokan is installed and offer to install it if missing (Windows only).
+                // A cancel during this optional step must not hide the successful restart.
+                if (OperatingSystem.IsWindows())
+                {
+                    try
+                    {
+                        await _updateService.CheckAndInstallDokanAsync(cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Serilog.Log.Information("Dokan check cancelled after a successful update");
+                    }
                 }
 
                 Close();
@@ -255,7 +269,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                Serilog.Log.Warning("Update timed out waiting for a network response");
+                Serilog.Log.Information("Update timed out waiting for a network response");
                 Log("Update timed out waiting for a network response.");
                 await RedirectToDownloadPage(
                     "The update timed out while contacting the update server.\n\nWould you like to update manually?");

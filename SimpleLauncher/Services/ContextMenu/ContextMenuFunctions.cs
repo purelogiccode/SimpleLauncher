@@ -66,10 +66,11 @@ public class ContextMenuFunctions : IContextMenuFunctions
     {
         try
         {
-            // Add the new favorite if it doesn't already exist
+            // Add the new favorite if it doesn't already exist (legacy records may carry a
+            // null SystemName — never dereference it).
             if (!favoritesManager.FavoriteList.Any(f =>
-                    f.FileName.Equals(fileNameWithExtension, StringComparison.OrdinalIgnoreCase)
-                    && f.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase)))
+                    string.Equals(f.FileName, fileNameWithExtension, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(f.SystemName, systemName, StringComparison.OrdinalIgnoreCase)))
             {
                 favoritesManager.FavoriteList.Add(new Favorite
                 {
@@ -141,10 +142,10 @@ public class ContextMenuFunctions : IContextMenuFunctions
     {
         try
         {
-            // Find the favorite to remove
+            // Find the favorite to remove (legacy records may carry a null SystemName).
             var favoriteToRemove = favoritesManager.FavoriteList.FirstOrDefault(f =>
-                f.FileName.Equals(fileNameWithExtension, StringComparison.OrdinalIgnoreCase)
-                && f.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
+                string.Equals(f.FileName, fileNameWithExtension, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(f.SystemName, systemName, StringComparison.OrdinalIgnoreCase));
 
             if (favoriteToRemove == null) return;
 
@@ -459,7 +460,9 @@ public class ContextMenuFunctions : IContextMenuFunctions
             if (!File.Exists(filePath))
             {
                 _logger.Debug($"[RA Service] File not found at {filePath}");
-                logErrors.Warning($"[RA Service] File not found at {filePath}");
+                // Expected user condition (the file was moved/deleted): Information so it
+                // never reaches the bug-report sink.
+                logErrors.Information($"[RA Service] File not found at {filePath}");
 
                 await messageBox.CouldNotFindAFileMessageBoxAsync();
 
@@ -682,7 +685,17 @@ public class ContextMenuFunctions : IContextMenuFunctions
             // Ensure loading indicator is hidden. Use the app dispatcher: the provider can be
             // a Window but also a Page (Favorites/GlobalSearch/PlayHistory), so casting to
             // Window skipped every Page host and left the overlay blocking the page.
-            Application.Current.Dispatcher.Invoke(() => loadingStateProvider.SetLoadingState(false));
+            // Guarded: during shutdown a blocking Invoke throws and used to skip the temp
+            // folder cleanup below.
+            try
+            {
+                if (Application.Current?.Dispatcher is { HasShutdownStarted: false } dispatcher)
+                    dispatcher.Invoke(() => loadingStateProvider.SetLoadingState(false));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or TaskCanceledException)
+            {
+                _logger.Debug($"[RA Service] Could not reset the loading state during shutdown: {ex.Message}");
+            }
 
             // --- Remove temporary extraction folder ---
             if (!string.IsNullOrEmpty(tempExtractionPath))

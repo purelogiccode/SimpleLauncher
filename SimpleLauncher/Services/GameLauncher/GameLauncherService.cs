@@ -745,8 +745,11 @@ public partial class GameLauncherService : ILauncherService
                       selectedEmulatorName.Contains("Yumir", StringComparison.OrdinalIgnoreCase) ||
                       IsYmirEmulatorLocation(selectedEmulatorManager.EmulatorLocation));
 
-        // Declare tempExtractionPath here to be accessible in the finally block
-        string? tempExtractionPath = null;
+        // The temporary extraction directory must survive until the emulator process exits
+        // (it reads the game from there) but must be deleted on EVERY exit from this method:
+        // the early returns for a missing/unsupported emulator or invalid parameters used to
+        // leak the whole extracted archive until the next application start.
+        using var tempExtraction = new TempExtractionDirectory();
 
         var fileExtension = Path.GetExtension(resolvedFilePath).ToLowerInvariant();
 
@@ -805,7 +808,7 @@ public partial class GameLauncherService : ILauncherService
                     if (!string.IsNullOrEmpty(extractedGameFilePath)) resolvedFilePath = extractedGameFilePath;
 
                     // Always store the temp directory path for cleanup, even if no game file was found within it
-                    tempExtractionPath = extractedTempDirPath;
+                    tempExtraction.Path = extractedTempDirPath;
                 }
                 finally
                 {
@@ -1083,6 +1086,12 @@ public partial class GameLauncherService : ILauncherService
 
                     if (process.HasExited)
                     {
+                        // WaitForExitAsync does not wait for the BeginOutputReadLine /
+                        // BeginErrorReadLine handlers to flush. The synchronous overload does,
+                        // so the error classification below never reads the StringBuilders
+                        // while a pipe reader thread is still appending to them.
+                        process.WaitForExit();
+
                         if (DoNotCheckErrorsOnSpecificEmulators(selectedEmulatorName, resolvedEmulatorExePath, process,
                                 psi, output, error))
                         {
@@ -1228,24 +1237,32 @@ public partial class GameLauncherService : ILauncherService
                 }
             }
 
-            // Only attempt to delete if a temporary extraction path was actually set
-            if (!string.IsNullOrEmpty(tempExtractionPath) && Directory.Exists(tempExtractionPath))
+            // The temp extraction directory is removed by the using-tracker when this
+            // method exits (normal completion or any early return).
+        }
+    }
+
+    /// <summary>
+    ///     Deletes the temporary extraction directory created for a launch when the launch
+    ///     method exits, on every path (including the early returns that used to leak it).
+    /// </summary>
+    private sealed class TempExtractionDirectory : IDisposable
+    {
+        public string? Path { get; set; }
+
+        public void Dispose()
+        {
+            if (string.IsNullOrEmpty(Path) || !Directory.Exists(Path)) return;
+
+            try
             {
-                try
-                {
-                    _logger.Debug(
-                        $"[LaunchRegularEmulatorAsync] Attempting to delete temporary extraction directory: {tempExtractionPath}");
-                    Directory.Delete(tempExtractionPath, true); // Use Directory.Delete with recursive=true
-                    _logger.Debug(
-                        $"[LaunchRegularEmulatorAsync] Successfully deleted temporary extraction directory: {tempExtractionPath}");
-                }
-                catch (Exception ex)
-                {
-                    // Log the error but don't prevent other cleanup actions
-                    _logger.Error(ex, $"Failed to delete temporary extraction directory: {tempExtractionPath}");
-                    _logger.Debug(
-                        $"[LaunchRegularEmulatorAsync] Error deleting temporary extraction directory {tempExtractionPath}: {ex.Message}");
-                }
+                Directory.Delete(Path, true);
+                Log.Debug($"[LaunchRegularEmulatorAsync] Deleted temporary extraction directory: {Path}");
+            }
+            catch (Exception ex)
+            {
+                // Best effort: the next startup cleanup removes whatever is left.
+                Log.Debug($"[LaunchRegularEmulatorAsync] Failed to delete temporary extraction directory {Path}: {ex.Message}");
             }
         }
     }

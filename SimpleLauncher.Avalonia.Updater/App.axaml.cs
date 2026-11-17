@@ -25,7 +25,17 @@ public class App : Application
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 
         var appDataLogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
-        Directory.CreateDirectory(appDataLogFolder);
+        try
+        {
+            Directory.CreateDirectory(appDataLogFolder);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            // A read-only install folder (Program Files without elevation, a root-owned
+            // /opt tree) must not kill the updater before it can show any UI or log.
+            appDataLogFolder = Path.Combine(Path.GetTempPath(), "SimpleLauncher-updater-logs");
+            Directory.CreateDirectory(appDataLogFolder);
+        }
 
         var bugReportSink = new BugReportApiSink(appDataLogFolder);
 

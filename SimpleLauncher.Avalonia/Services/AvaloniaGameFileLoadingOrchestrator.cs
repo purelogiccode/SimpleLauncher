@@ -114,8 +114,17 @@ public class AvaloniaGameFileLoadingOrchestrator
     ///     of aborting the whole scan when one subfolder is inaccessible (mirrors the
     ///     per-directory error handling of the WPF GetListOfFilesService).
     /// </summary>
-    private IEnumerable<string> EnumerateFilesTolerant(string directory, bool recurse)
+    private IEnumerable<string> EnumerateFilesTolerant(string directory, bool recurse,
+        HashSet<string>? visitedDirectories = null)
     {
+        // Directory enumeration follows symbolic links/junctions; a link cycle would loop
+        // forever (or overflow the stack). Visit each physical directory at most once.
+        visitedDirectories ??= new HashSet<string>(OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal);
+        if (!visitedDirectories.Add(PathHelper.GetDirectoryIdentity(directory)))
+            yield break;
+
         IEnumerable<string> files;
         try
         {
@@ -145,7 +154,7 @@ public class AvaloniaGameFileLoadingOrchestrator
 
         foreach (var subDirectory in subDirectories)
         {
-            foreach (var file in EnumerateFilesTolerant(subDirectory, true))
+            foreach (var file in EnumerateFilesTolerant(subDirectory, true, visitedDirectories))
                 yield return file;
         }
     }

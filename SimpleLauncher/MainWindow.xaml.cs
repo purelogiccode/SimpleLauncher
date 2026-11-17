@@ -811,8 +811,8 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
             // Get the current playtime from history
             var historyItem = PlayHistoryManager.PlayHistoryList
                 .FirstOrDefault(h =>
-                    h.FileName.Equals(fileName, StringComparison.OrdinalIgnoreCase) &&
-                    h.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(h.FileName, fileName, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(h.SystemName, systemName, StringComparison.OrdinalIgnoreCase));
 
             if (historyItem == null) return;
 

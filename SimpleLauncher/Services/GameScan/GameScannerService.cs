@@ -254,7 +254,7 @@ public class GameScannerService
                 using var client = _httpClientFactory.CreateClient("GameImageClient");
 
                 var encodedGameName = WebUtility.UrlEncode(gameName);
-                var response = await client.GetAsync($"api/v1/games/search?name={encodedGameName}");
+                using var response = await client.GetAsync($"api/v1/games/search?name={encodedGameName}");
 
                 if (!response.IsSuccessStatusCode)
                 {

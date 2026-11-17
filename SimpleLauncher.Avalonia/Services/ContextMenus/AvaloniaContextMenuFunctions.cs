@@ -365,7 +365,9 @@ public class AvaloniaContextMenuFunctions(
             if (!File.Exists(context.FilePath))
             {
                 _logErrors.Debug($"[RA Service] File not found at {context.FilePath}");
-                _logErrors.Warning($"[RA Service] File not found at {context.FilePath}");
+                // Expected user condition (the file was moved/deleted): Information so it
+                // never reaches the bug-report sink.
+                _logErrors.Information($"[RA Service] File not found at {context.FilePath}");
                 await _messageBox.CouldNotFindAFileMessageBoxAsync();
                 return;
             }
@@ -373,7 +375,8 @@ public class AvaloniaContextMenuFunctions(
             if (string.IsNullOrEmpty(raSystemName))
             {
                 _logErrors.Debug("[RA Service] SystemName is null or empty after matching");
-                _logErrors.Warning("[RA Service] SystemName is null or empty after matching");
+                // Expected user condition (unsupported/unmatched game): Information.
+                _logErrors.Information("[RA Service] SystemName is null or empty after matching");
 
                 var messageBoxResult = await _messageBox.GameNotSupportedByRetroAchievementsMessageBoxAsync();
                 if (messageBoxResult == MessageBoxResult.Yes)

@@ -101,6 +101,8 @@ public class PlayHistoryManager
     /// </summary>
     internal static PlayHistoryManager LoadPlayHistory(ILogger? logErrors = null)
     {
+        var databaseLoadFailed = false;
+
         if (UnifiedSettingsDatabase.IsValidDatabase())
         {
             try
@@ -109,7 +111,13 @@ public class PlayHistoryManager
             }
             catch (Exception ex)
             {
-                logErrors?.Error(ex, "Error loading play history from the unified database; trying the legacy file");
+                // Expected environment condition (lock, I/O, corruption). Information level,
+                // preserve a copy, and do NOT seed defaults below: that save would DELETE the
+                // user's play history because the read (not the data) failed.
+                databaseLoadFailed = true;
+                logErrors?.Information(ex,
+                    "Error loading play history from the unified database; keeping the database untouched");
+                UnifiedSettingsDatabase.TryPreserveUnreadableDatabase();
             }
         }
         else if (!File.Exists(FilePath))
@@ -141,7 +149,8 @@ public class PlayHistoryManager
         if (!File.Exists(FilePath))
         {
             var defaultManager = new PlayHistoryManager { _logger = logErrors! };
-            _ = defaultManager.SavePlayHistoryAsync();
+            // Never seed defaults over a database that exists but could not be read.
+            if (!databaseLoadFailed) _ = defaultManager.SavePlayHistoryAsync();
             return defaultManager;
         }
 
@@ -158,11 +167,12 @@ public class PlayHistoryManager
         }
         catch (Exception ex)
         {
-            // Notify developer
-            logErrors?.Error(ex, "Error loading play history");
-
-            return new PlayHistoryManager { _logger = logErrors! }; // Return default instance if error occurs
+            // Expected user-data condition (corrupt/foreign MessagePack file): Information
+            // level; the in-memory manager returned below is never saved over the file.
+            logErrors?.Information(ex, "Error loading play history");
         }
+
+        return new PlayHistoryManager { _logger = logErrors! };
     }
 
     /// <summary>
@@ -486,7 +496,7 @@ public class PlayHistoryManager
                 // Check if the game already exists in play history
                 var existingItem = PlayHistoryList.FirstOrDefault(item =>
                     item.FileName.Equals(fullPath, StringComparison.OrdinalIgnoreCase) &&
-                    item.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(item.SystemName, systemName, StringComparison.OrdinalIgnoreCase));
 
                 if (existingItem != null)
                 {

@@ -9,6 +9,7 @@ namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 /// </summary>
 public class MountXisoDrive : IAsyncDisposable
 {
+    private readonly ILogger _logErrors;
     private readonly ILogger _logger;
     private readonly Process? _mountProcess;
     private readonly int _mountProcessId;
@@ -22,7 +23,7 @@ public class MountXisoDrive : IAsyncDisposable
     {
         _mountProcess = mountProcess;
         _mountProcessId = mountProcess?.Id ?? -1;
-        _logger = logErrors;
+        _logErrors = logErrors;
         _logger = logger;
         MountedPath = mountedPath;
         IsMounted = !string.IsNullOrEmpty(mountedPath) && _mountProcess != null;
@@ -39,7 +40,7 @@ public class MountXisoDrive : IAsyncDisposable
     /// </summary>
     public MountXisoDrive(ILogger logErrors, ILogger logger)
     {
-        _logger = logErrors;
+        _logErrors = logErrors;
         _logger = logger;
         IsMounted = false;
     }
@@ -133,7 +134,7 @@ public class MountXisoDrive : IAsyncDisposable
         {
             _logger.Debug(
                 $"[MountXisoDrive.DisposeAsync] Exception while terminating mounting tool (ID: {_mountProcessId}): {termEx}");
-            _logger.Error(termEx,
+            _logErrors.Error(termEx,
                 $"Failed to terminate mounting tool (ID: {_mountProcessId}) for unmounting.");
         }
         finally

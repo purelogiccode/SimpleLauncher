@@ -198,14 +198,17 @@ public class OpenRouterTranslationService
 
         foreach (var rawLine in text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
         {
-            var line = rawLine.Trim();
+            // Trim only the key side / leading indentation: several resource values
+            // intentionally begin or end with a space (e.g. "Could not delete " +
+            // fileName), and trimming the value concatenated words in every translation.
+            var line = rawLine.TrimStart();
             if (string.IsNullOrEmpty(line)) continue;
 
             var pipeIndex = line.IndexOf('|');
             if (pipeIndex <= 0) continue;
 
             var key = line[..pipeIndex].Trim();
-            var value = line[(pipeIndex + 1)..].Trim();
+            var value = line[(pipeIndex + 1)..];
 
             // Unescape pipes and newline markers
             value = value.Replace("\\|", "|").Replace("\\n", "\n");

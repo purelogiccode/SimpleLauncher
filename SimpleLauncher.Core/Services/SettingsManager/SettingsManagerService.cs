@@ -379,7 +379,7 @@ public class SettingsManagerService : IDisposable
         }
     }
 
-    private string? DecryptString(string storedValue)
+    private string DecryptString(string storedValue)
     {
         if (string.IsNullOrEmpty(storedValue)) return storedValue;
 
@@ -388,7 +388,11 @@ public class SettingsManagerService : IDisposable
             var legacyValue = storedValue[EncryptedPrefix.Length..];
             try
             {
-                return _credentialProtector.Unprotect(legacyValue);
+                // Unprotect returns null when the blob cannot be decrypted (different
+                // user/machine, corruption). Fall back to the raw value instead of
+                // returning null: callers would otherwise load "" and the next save would
+                // permanently erase a credential that was merely unreadable here.
+                return _credentialProtector.Unprotect(legacyValue) ?? legacyValue;
             }
             catch
             {
@@ -398,7 +402,7 @@ public class SettingsManagerService : IDisposable
 
         try
         {
-            return _credentialProtector.Unprotect(storedValue);
+            return _credentialProtector.Unprotect(storedValue) ?? storedValue;
         }
         catch
         {
@@ -423,7 +427,12 @@ public class SettingsManagerService : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error loading settings from the unified database; falling back to legacy files");
+                // An unreadable database (lock, I/O error, corruption) is an expected
+                // environment condition. Preserve a copy BEFORE the defaults are saved over
+                // it, so a transient failure can never destroy the user's settings.
+                TryPreserveUnreadableSettingsFile(UnifiedSettingsDatabase.GetDatabasePath());
+                _logger.Information(ex,
+                    "Error loading settings from the unified database; falling back to legacy files");
             }
         }
 
@@ -447,7 +456,11 @@ public class SettingsManagerService : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error loading settings.xml");
+                // Corrupt/unsupported settings.xml is user data failing, not app code:
+                // Information level (never a bug report), and keep a recoverable copy before
+                // SetDefaultsAndSave below replaces the file.
+                TryPreserveUnreadableSettingsFile(_fileLocation.FilePath);
+                _logger.Information(ex, "Error loading settings.xml");
             }
         }
 
@@ -463,6 +476,26 @@ public class SettingsManagerService : IDisposable
         finally
         {
             _settingsLock.ExitWriteLock();
+        }
+    }
+
+    /// <summary>
+    ///     Copies an unreadable settings file aside before a defaults save can overwrite it.
+    ///     Best effort: failing to preserve the copy must never block startup.
+    /// </summary>
+    private void TryPreserveUnreadableSettingsFile(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return;
+
+            var backupPath = $"{path}.corrupt-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}";
+            File.Copy(path, backupPath, false);
+            _logger.Information("Preserved the unreadable settings file as {BackupPath}", backupPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug(ex, "Could not preserve the unreadable settings file {Path}", path);
         }
     }
 
@@ -790,42 +823,52 @@ public class SettingsManagerService : IDisposable
         {
             try
             {
-                await _saveSemaphore.WaitAsync();
-            }
-            catch (ObjectDisposedException)
-            {
-                return; // Service is shutting down; the save cannot proceed.
-            }
-
-            try
-            {
-                await WriteSnapshotAsync(snapshot);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
-                                           or NewerSchemaVersionException)
-            {
-                // Settings persistence is best-effort and usually fire-and-forget:
-                // never let a failed background save fault the returned task (it would
-                // surface later as an unobserved task exception / bug report). A
-                // read-only, locked, or newer-schema settings.dat is an environment
-                // issue, not a bug.
-                _logger.Information(ex, "Failed to save settings");
-            }
-            catch (Exception ex)
-            {
-                // Unexpected errors (serialization, programming bugs) stay visible.
-                _logger.Error(ex, "Failed to save settings");
-            }
-            finally
-            {
                 try
                 {
-                    _saveSemaphore.Release();
+                    await _saveSemaphore.WaitAsync();
                 }
                 catch (ObjectDisposedException)
                 {
-                    // Disposed mid-save during shutdown — nothing left to release to.
+                    return; // Service is shutting down; the save cannot proceed.
                 }
+
+                try
+                {
+                    await WriteSnapshotAsync(snapshot);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException
+                                               or NewerSchemaVersionException)
+                {
+                    // Settings persistence is best-effort and usually fire-and-forget:
+                    // never let a failed background save fault the returned task (it would
+                    // surface later as an unobserved task exception / bug report). A
+                    // read-only, locked, or newer-schema settings.dat is an environment
+                    // issue, not a bug.
+                    _logger.Information(ex, "Failed to save settings");
+                }
+                catch (Exception ex)
+                {
+                    // Unexpected errors (serialization, programming bugs) stay visible.
+                    _logger.Error(ex, "Failed to save settings");
+                }
+                finally
+                {
+                    try
+                    {
+                        _saveSemaphore.Release();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // Disposed mid-save during shutdown — nothing left to release to.
+                    }
+                }
+            }
+            finally
+            {
+                // The snapshot owns its own ReaderWriterLockSlim/SemaphoreSlim instances;
+                // disposing it here (on every path, including the shutdown early-return)
+                // avoids leaking a disposable service per save.
+                snapshot.Dispose();
             }
         });
     }

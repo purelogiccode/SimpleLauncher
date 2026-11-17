@@ -49,7 +49,7 @@ file static class Program
         {
             if (args.Length == 1 && Path.GetExtension(args[0]).Equals(".json", StringComparison.OrdinalIgnoreCase))
             {
-                await RunConversionModeAsync(args[0]);
+                if (!await RunConversionModeAsync(args[0])) Environment.ExitCode = 1;
                 return;
             }
 
@@ -65,9 +65,10 @@ file static class Program
         }
     }
 
-    private static async Task RunConversionModeAsync(string jsonFilePath)
+    private static async Task<bool> RunConversionModeAsync(string jsonFilePath)
     {
         Log.Information("Conversion mode: Processing JSON file '{FilePath}'...", jsonFilePath);
+        var succeeded = false;
 
         try
         {
@@ -76,7 +77,8 @@ file static class Program
 
             if (games == null || games.Count == 0)
             {
-                Log.Error("The JSON file is empty or invalid. No data to convert");
+                // Expected user input condition: Information, not a bug report.
+                Log.Information("The JSON file is empty or invalid. No data to convert");
             }
             else
             {
@@ -85,6 +87,7 @@ file static class Program
                 var msgPackData = MessagePackSerializer.Serialize(games);
                 await File.WriteAllBytesAsync(msgPackFilePath, msgPackData);
                 Log.Information("MessagePack file saved as '{FilePath}'", msgPackFilePath);
+                succeeded = true;
             }
         }
         catch (Exception ex)
@@ -94,6 +97,7 @@ file static class Program
 
         Console.WriteLine("\nPress any key to exit...");
         Console.ReadKey();
+        return succeeded;
     }
 
     private static async Task RunFetchModeAsync()
@@ -131,16 +135,29 @@ file static class Program
             Log.Information("Processing {ActiveCount} active game consoles...", activeConsoles.Count);
 
             // Fetch games for each console
-            var totalGames = await FetchGamesForAllConsolesAsync(client, settings, activeConsoles, allGames);
+            var (totalGames, failedConsoles) =
+                await FetchGamesForAllConsolesAsync(client, settings, activeConsoles, allGames);
 
             Console.WriteLine();
             Log.Information("Total games fetched: {TotalGames:N0}", totalGames);
 
-            // Save results
-            if (allGames.Count > 0)
+            if (failedConsoles > 0)
+            {
+                // Writing now would silently replace a complete database with a partial one.
+                Log.Error(
+                    "Fetch failed for {FailedCount} console(s); the existing FA data files were left untouched. " +
+                    "Run the fetcher again.", failedConsoles);
+                Environment.ExitCode = 1;
+            }
+            else if (allGames.Count > 0)
+            {
                 await SaveGameDataAsync(allGames, serializerOptions);
+            }
             else
-                Log.Warning("No games were found to save");
+            {
+                Log.Error("No games were found to save");
+                Environment.ExitCode = 1;
+            }
         }
         catch (Exception ex)
         {
@@ -161,7 +178,7 @@ file static class Program
             var auth = $"u={settings.Username}&y={settings.WebApiKey}";
             var url = $"{BaseApiUrl}/API_GetConsoleIDs.php?{auth}";
 
-            var response = await client.GetAsync(url);
+            using var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
@@ -176,13 +193,14 @@ file static class Program
         }
     }
 
-    private static async Task<int> FetchGamesForAllConsolesAsync(
+    private static async Task<(int TotalGames, int FailedConsoles)> FetchGamesForAllConsolesAsync(
         HttpClient client,
         RaSettings settings,
         List<ConsoleInfo> consoles,
         List<GameInfo> allGames)
     {
         var totalGames = 0;
+        var failedConsoles = 0;
         var auth = $"u={settings.Username}&y={settings.WebApiKey}";
 
         for (var i = 0; i < consoles.Count; i++)
@@ -194,12 +212,14 @@ file static class Program
             try
             {
                 var url = $"{BaseApiUrl}/API_GetGameList.php?{auth}&i={console.Id}&h=1&f=1";
-                var response = await client.GetAsync(url);
+                using var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    failedConsoles++;
                     Log.Warning("Failed to fetch games for console {ConsoleName}: HTTP {StatusCode}", console.Name,
                         response.StatusCode);
+                    await Task.Delay(500); // Rate limiting also on failures
                     continue;
                 }
 
@@ -221,11 +241,13 @@ file static class Program
             }
             catch (Exception ex)
             {
+                failedConsoles++;
                 Log.Warning(ex, "Error fetching games for console {ConsoleName}", console.Name);
+                await Task.Delay(500);
             }
         }
 
-        return totalGames;
+        return (totalGames, failedConsoles);
     }
 
     private static async Task SaveGameDataAsync(List<GameInfo> games, JsonSerializerOptions options)
@@ -303,7 +325,8 @@ file static class Program
 
         if (string.IsNullOrWhiteSpace(settings.Username) || string.IsNullOrWhiteSpace(settings.WebApiKey))
         {
-            Log.Error("Username and Web API Key cannot be empty");
+            // Expected user-input condition: Information, never a bug report.
+            Log.Information("Username and Web API Key cannot be empty");
             Log.CloseAndFlush();
             Environment.Exit(1);
         }

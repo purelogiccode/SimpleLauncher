@@ -401,11 +401,20 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private void ReapplyPagination()
     {
-        var pageFiles = _pagination.ApplyPagination(_currentAllGames.ConvertAll(g => g.FilePath));
-        var pageSet = pageFiles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Drives the pagination buttons/labels and clamps CurrentPage when the list shrank.
+        _pagination.ApplyPagination(_currentAllGames.ConvertAll(g => g.FilePath));
 
-        Games = new ObservableCollection<GameCardViewModel>(
-            _currentAllGames.Where(g => pageSet.Contains(g.FilePath)));
+        // Slice the CARDS by index. Mapping the page's file paths back through a HashSet
+        // duplicated every card that shares a path (the same folder configured for two
+        // systems) and produced pages larger than FilesPerPage / repeated entries.
+        var page = _pagination.TotalFiles > _pagination.PaginationThreshold
+            ? _currentAllGames
+                .Skip((_pagination.CurrentPage - 1) * _pagination.FilesPerPage)
+                .Take(_pagination.FilesPerPage)
+                .ToList()
+            : _currentAllGames;
+
+        Games = new ObservableCollection<GameCardViewModel>(page);
         UpdateGameCount();
     }
 

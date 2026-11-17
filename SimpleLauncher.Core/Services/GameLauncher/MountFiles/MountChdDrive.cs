@@ -8,6 +8,7 @@ namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 /// </summary>
 public class MountChdDrive : IAsyncDisposable
 {
+    private readonly ILogger _logErrors;
     private readonly ILogger _logger;
     private readonly Process? _mountProcess;
     private readonly int _mountProcessId;
@@ -20,7 +21,7 @@ public class MountChdDrive : IAsyncDisposable
     {
         _mountProcess = mountProcess;
         _mountProcessId = mountProcess?.Id ?? -1;
-        _logger = logErrors;
+        _logErrors = logErrors;
         _logger = logger;
         MountedPath = mountedPath;
         MountedDriveLetter = mountedDriveLetter;
@@ -32,7 +33,7 @@ public class MountChdDrive : IAsyncDisposable
     /// </summary>
     public MountChdDrive(ILogger logErrors, ILogger logger)
     {
-        _logger = logErrors;
+        _logErrors = logErrors;
         _logger = logger;
         IsMounted = false;
     }
@@ -129,7 +130,7 @@ public class MountChdDrive : IAsyncDisposable
         {
             _logger.Debug(
                 $"[MountChdDrive.DisposeAsync] Exception while terminating CHDMounter (ID: {_mountProcessId}): {termEx}");
-            _logger.Error(termEx, $"Failed to terminate CHDMounter (ID: {_mountProcessId}) for unmounting.");
+            _logErrors.Error(termEx, $"Failed to terminate CHDMounter (ID: {_mountProcessId}) for unmounting.");
         }
         finally
         {

@@ -110,13 +110,14 @@ internal partial class ScanMicrosoftStoreGames : IGamePlatformScanner
             string output;
             string errorOutput;
             int exitCode;
+            Process? process = null;
 
             try
             {
                 // Add a 30-second timeout to prevent indefinite hangs on locked-down systems
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
-                using var process = Process.Start(startInfo);
+                process = Process.Start(startInfo);
                 if (process == null)
                 {
                     _logger.Debug(
@@ -124,13 +125,28 @@ internal partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                     return;
                 }
 
-                output = await process.StandardOutput.ReadToEndAsync(cts.Token);
-                errorOutput = await process.StandardError.ReadToEndAsync(cts.Token);
+                // Read stdout and stderr concurrently. Reading stdout to EOF before touching
+                // stderr deadlocks as soon as PowerShell fills the stderr pipe buffer: the
+                // child blocks in WriteFile, never closes stdout, and the 30s token never
+                // fires because the synchronous StandardOutput stream ignores it.
+                var outputTask = process.StandardOutput.ReadToEndAsync(cts.Token);
+                var errorTask = process.StandardError.ReadToEndAsync(cts.Token);
                 await process.WaitForExitAsync(cts.Token);
+                output = await outputTask;
+                errorOutput = await errorTask;
                 exitCode = process.ExitCode;
             }
             catch (OperationCanceledException)
             {
+                try
+                {
+                    process?.Kill(true);
+                }
+                catch
+                {
+                    // Already exited / access denied — nothing else to do.
+                }
+
                 _logger.Debug(
                     "[ScanMicrosoftStoreGames] PowerShell scan timed out after 30 seconds. Skipping Microsoft Store scan");
                 return;
@@ -147,6 +163,10 @@ internal partial class ScanMicrosoftStoreGames : IGamePlatformScanner
                 _logger.Debug(
                     $"[ScanMicrosoftStoreGames] Failed to execute PowerShell: {ex.Message}. Skipping Microsoft Store scan.");
                 return;
+            }
+            finally
+            {
+                process?.Dispose();
             }
 
             if (exitCode != 0 && !string.IsNullOrWhiteSpace(errorOutput))

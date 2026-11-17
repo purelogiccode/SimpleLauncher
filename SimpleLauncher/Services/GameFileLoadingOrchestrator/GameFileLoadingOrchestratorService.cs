@@ -170,8 +170,10 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         }
         catch (OperationCanceledException)
         {
+            // A superseded load must not clear the UI: the newer load has already cleared at
+            // its start (SetUiBeforeLoadGameFilesAsync) and may be rendering its own items
+            // right now. Clearing here used to wipe the newer results mid-render.
             _logger.Debug("[LoadGameFilesAsync] Operation was canceled");
-            _gameItemRenderService.ClearRenderedItems();
         }
         catch (Exception ex)
         {
@@ -504,7 +506,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
         if (string.IsNullOrEmpty(selectedSystem) || selectedManager == null) return [];
 
         var favoriteGamePaths = favorites
-            .Where(fav => fav.SystemName.Equals(selectedSystem, StringComparison.OrdinalIgnoreCase))
+            .Where(fav => string.Equals(fav.SystemName, selectedSystem, StringComparison.OrdinalIgnoreCase))
             .Select(fav => PathHelper.FindFileInSystemFolders(selectedManager.SystemFolders, fav.FileName))
             .Where(static path => !string.IsNullOrEmpty(path))
             .Select(static path => path!)

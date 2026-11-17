@@ -162,7 +162,7 @@ public class DiscConverter : IDiscConverter
 
             Directory.CreateDirectory(TempFolder);
             var tempOutputPath = Path.Combine(TempFolder, $"{Guid.NewGuid()}{outputExtension}");
-            var args = $"{command} -i \"{chdPath}\" -o \"{tempOutputPath}\"";
+            var args = new List<string> { command, "-i", chdPath, "-o", tempOutputPath };
 
             if (await TryRunChdmanAsync(chdmanPath, args, tempOutputPath, logTag))
             {
@@ -183,17 +183,18 @@ public class DiscConverter : IDiscConverter
     /// <summary>
     ///     Runs the bundled chdman and reports whether it produced the expected output file.
     /// </summary>
-    private async Task<bool> TryRunChdmanAsync(string chdmanPath, string args, string expectedOutputPath, string logTag)
+    private async Task<bool> TryRunChdmanAsync(string chdmanPath, IReadOnlyList<string> args,
+        string expectedOutputPath, string logTag)
     {
         var processStartInfo = new ProcessStartInfo
         {
             FileName = chdmanPath,
-            Arguments = args,
             RedirectStandardOutput = false,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        foreach (var argument in args) processStartInfo.ArgumentList.Add(argument);
 
         var chdmanDir = Path.GetDirectoryName(chdmanPath);
         if (!string.IsNullOrEmpty(chdmanDir)) processStartInfo.WorkingDirectory = chdmanDir;
@@ -201,7 +202,7 @@ public class DiscConverter : IDiscConverter
         using var process = new Process();
         process.StartInfo = processStartInfo;
 
-        _logger.Debug($"{logTag} Running chdman with args: {args}");
+        _logger.Debug($"{logTag} Running chdman with args: {string.Join(' ', args)}");
 
         var errorBuilder = new StringBuilder();
         process.ErrorDataReceived += (_, e) =>
@@ -336,6 +337,7 @@ public class DiscConverter : IDiscConverter
     /// <returns>The path of the converted ISO file, or null if the conversion failed.</returns>
     public async Task<string?> ConvertToIsoAsync(string discImagePath)
     {
+        string? tempIsoPath = null;
         try
         {
             var arch = RuntimeInformation.ProcessArchitecture;
@@ -353,25 +355,32 @@ public class DiscConverter : IDiscConverter
 
             var dolphinDir = Path.GetDirectoryName(dolphinToolPath);
 
-            var tempIsoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.iso");
+            Directory.CreateDirectory(TempFolder);
+            tempIsoPath = Path.Combine(TempFolder, $"{Guid.NewGuid()}.iso");
 
-            var args = $"convert --format=iso --input=\"{discImagePath}\" --output=\"{tempIsoPath}\"";
+            var args = new List<string>
+            {
+                "convert",
+                "--format=iso",
+                $"--input={discImagePath}",
+                $"--output={tempIsoPath}"
+            };
 
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = dolphinToolPath,
-                Arguments = args,
                 RedirectStandardOutput = false,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 WorkingDirectory = dolphinDir
             };
+            foreach (var argument in args) processStartInfo.ArgumentList.Add(argument);
 
             using var process = new Process();
             process.StartInfo = processStartInfo;
 
-            _logger.Debug($"[ConvertDiscImageToIso] Running DolphinTool with args: {args}");
+            _logger.Debug($"[ConvertDiscImageToIso] Running DolphinTool with args: {string.Join(' ', args)}");
             _logger.Debug($"[ConvertDiscImageToIso] Converting {Path.GetExtension(discImagePath)} to ISO.");
 
             var errorBuilder = new StringBuilder();
@@ -401,6 +410,7 @@ public class DiscConverter : IDiscConverter
                     /* ignored */
                 }
 
+                TryDeleteTempFile(tempIsoPath);
                 return null;
             }
 
@@ -412,12 +422,29 @@ public class DiscConverter : IDiscConverter
 
             _logger.Debug(
                 $"[ConvertDiscImageToIso] DolphinTool failed. ExitCode: {process.ExitCode}. Error: {errorBuilder}");
+            // A failed conversion can leave a multi-GB partial ISO behind.
+            TryDeleteTempFile(tempIsoPath);
             return null;
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO");
+            TryDeleteTempFile(tempIsoPath);
             return null;
+        }
+    }
+
+    private static void TryDeleteTempFile(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch
+        {
+            // Best effort: the startup cleanup removes anything left in TempFolder.
         }
     }
 

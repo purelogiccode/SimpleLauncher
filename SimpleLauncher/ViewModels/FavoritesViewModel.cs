@@ -245,8 +245,8 @@ public partial class FavoritesViewModel : ObservableObject, IDisposable
                 if (result == CoreMessageBoxResult.Yes)
                 {
                     var favoriteToRemove = Favorites.FirstOrDefault(fav =>
-                        fav.FileName.Equals(fileName, StringComparison.OrdinalIgnoreCase)
-                        && fav.SystemName.Equals(selectedSystemName, StringComparison.OrdinalIgnoreCase));
+                        string.Equals(fav.FileName, fileName, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(fav.SystemName, selectedSystemName, StringComparison.OrdinalIgnoreCase));
                     if (favoriteToRemove != null) RemoveFavoriteFromCollection(favoriteToRemove);
                 }
 

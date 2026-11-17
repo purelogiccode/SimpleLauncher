@@ -12,6 +12,7 @@ namespace SimpleLauncher;
 public partial class MainWindow
 {
     private bool _isCloseSaveDeferred;
+    private bool _allowClose;
 
     /// <summary>
     ///     Disposes all managed resources including cancellation tokens, event handlers, and background services.
@@ -92,9 +93,14 @@ public partial class MainWindow
         {
             // Defer the actual close until the settings save completes; otherwise the
             // process can exit before the background write finishes and lose the last changes.
-            if (!_isCloseSaveDeferred)
+            if (!_allowClose)
             {
+                // A second close request (X clicked again, Alt+F4, tray Exit) while the
+                // deferred save is in flight must NOT let the window close underneath it.
                 e.Cancel = true;
+                if (_isCloseSaveDeferred)
+                    return;
+
                 _isCloseSaveDeferred = true;
 
                 try
@@ -139,6 +145,7 @@ public partial class MainWindow
                         return;
                     }
 
+                    _allowClose = true;
                     Close();
                 }
                 catch (InvalidOperationException ex)

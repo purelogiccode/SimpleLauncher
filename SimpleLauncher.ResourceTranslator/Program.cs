@@ -51,7 +51,10 @@ public static class Program
             var apiKey = Console.ReadLine()?.Trim();
             if (string.IsNullOrEmpty(apiKey))
             {
-                Log.Error("API key is required");
+                // Expected user-input condition: Information level so it is not filed as a
+                // bug, and flush explicitly (Environment.Exit skips the finally below).
+                Log.Information("API key is required");
+                Log.CloseAndFlush();
                 Environment.Exit(1);
             }
 

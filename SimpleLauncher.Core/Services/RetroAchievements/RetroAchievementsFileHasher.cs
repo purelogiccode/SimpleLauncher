@@ -130,7 +130,9 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
             }
             else
             {
-                _logger.Warning(
+                // Expected user-environment condition (a very large/slow file): Information
+                // keeps it out of the bug-report sink, per the repository logging policy.
+                _logger.Information(
                     $"[RA File Hasher] Hashing of '{filePath}' timed out after {SingleFileTimeout.TotalMinutes:0} minute(s).");
             }
 
@@ -281,7 +283,9 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
         }
         catch (OperationCanceledException)
         {
-            _logger.Warning(
+            // Expected user-environment condition (a very large/slow batch): Information
+            // keeps it out of the bug-report sink, per the repository logging policy.
+            _logger.Information(
                 $"[RA File Hasher] Batch hashing timed out after {BatchTimeout.TotalMinutes:0} minute(s).");
             TryKillProcess(process);
             return null;

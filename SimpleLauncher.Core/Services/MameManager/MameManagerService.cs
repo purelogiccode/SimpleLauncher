@@ -76,8 +76,10 @@ public class MameManagerService
             // Read the binary data from the DAT file
             var binaryData = File.ReadAllBytes(datPath);
 
-            // Deserialize the binary data to a list of MameManagerService objects
-            return MessagePackSerializer.Deserialize<List<MameManagerService>>(binaryData);
+            // Deserialize the binary data to a list of MameManagerService objects.
+            // A nil root payload (0xC0) deserializes to null, not an exception — return an
+            // empty list so the DI-constructed MameDataService cannot NRE at startup.
+            return MessagePackSerializer.Deserialize<List<MameManagerService>>(binaryData) ?? [];
         }
         catch (Exception ex)
         {

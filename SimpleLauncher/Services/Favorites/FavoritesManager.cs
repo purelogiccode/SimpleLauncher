@@ -84,6 +84,8 @@ public class FavoritesManager
     /// </summary>
     public static FavoritesManager LoadFavorites(ILogger? logErrors = null)
     {
+        var databaseLoadFailed = false;
+
         if (UnifiedSettingsDatabase.IsValidDatabase())
         {
             try
@@ -92,7 +94,13 @@ public class FavoritesManager
             }
             catch (Exception ex)
             {
-                logErrors?.Error(ex, "Error loading favorites from the unified database; trying the legacy file");
+                // Expected environment condition (lock, I/O, corruption). Information level,
+                // preserve a copy, and do NOT seed defaults below: that save would DELETE the
+                // user's favorites table because the read (not the data) failed.
+                databaseLoadFailed = true;
+                logErrors?.Information(ex,
+                    "Error loading favorites from the unified database; keeping the database untouched");
+                UnifiedSettingsDatabase.TryPreserveUnreadableDatabase();
             }
         }
         else if (!File.Exists(DatFilePath))
@@ -132,18 +140,24 @@ public class FavoritesManager
             }
             catch (Exception ex)
             {
-                // Notify developer
-                const string contextMessage = "Error loading favorites.dat";
-                logErrors?.Error(ex, contextMessage);
+                // Expected user-data condition (corrupt/foreign MessagePack file): Information
+                // level, and never seed defaults over the unreadable file.
+                databaseLoadFailed = true;
+                logErrors?.Information(ex, "Error loading favorites.dat");
             }
         }
 
-        // If no files exist, create a new instance
+        // If no files exist, create a new instance — but never over a database that exists
+        // yet could not be read (the save would empty the favorites table).
         var defaultManager = new FavoritesManager { _logger = logErrors };
-        _ = defaultManager.SaveFavoritesAsync().ContinueWith(static (task, state) =>
+        if (!databaseLoadFailed)
         {
-            if (task.IsFaulted) (state as ILogger)?.Error(task.Exception, "Error saving default favorites");
-        }, logErrors, TaskContinuationOptions.OnlyOnFaulted);
+            _ = defaultManager.SaveFavoritesAsync().ContinueWith(static (task, state) =>
+            {
+                if (task.IsFaulted) (state as ILogger)?.Error(task.Exception, "Error saving default favorites");
+            }, logErrors, TaskContinuationOptions.OnlyOnFaulted);
+        }
+
         return defaultManager; // Return default instance if error occurs
     }
 

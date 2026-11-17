@@ -158,8 +158,8 @@ internal partial class GameButtonFactory(
         var viewModel = new GameButtonViewModel
         {
             IsFavorite = _favoritesManager.FavoriteList.Any(f =>
-                f.FileName.Equals(fileNameWithExtension, StringComparison.OrdinalIgnoreCase) &&
-                f.SystemName.Equals(selectedSystemName, StringComparison.OrdinalIgnoreCase)),
+                string.Equals(f.FileName, fileNameWithExtension, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(f.SystemName, selectedSystemName, StringComparison.OrdinalIgnoreCase)),
             // Placeholder logic for achievements
             HasAchievements = true
         };

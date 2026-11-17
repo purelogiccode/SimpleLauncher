@@ -70,8 +70,11 @@ internal class ZipService
 
         // UPD-05: sibling staging directory — same volume as the install, so the later
         // per-file swaps are atomic moves. Leftovers from a crashed run are removed first.
-        var stagingRoot = _appDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
-                          ".update-staging";
+        // TrimEndingDirectorySeparator keeps a volume root intact ("C:\", "/"); a plain
+        // TrimEnd would turn "C:\" into "C:" — a drive-relative path that resolves against
+        // the process's current directory instead of the install directory.
+        var stagingRoot =
+            Path.TrimEndingDirectorySeparator(appDirectoryFullPath) + ".update-staging";
         var stagingRootFullPath = EnsureTrailingSeparator(Path.GetFullPath(stagingRoot));
         CleanupDirectoryQuietly(stagingRoot);
         Directory.CreateDirectory(stagingRoot);
@@ -172,8 +175,8 @@ internal class ZipService
                         // planted by an earlier entry of this same archive or a previous run —
                         // FileMode.Create would otherwise follow it outside AppDirectory even
                         // though this entry's own path passed the containment check above.
-                        ThrowIfPathContainsLink(stagedPath, entryKey);
-                        ThrowIfPathContainsLink(destinationPath, entryKey);
+                        ThrowIfPathContainsLink(stagedPath, entryKey, stagingRootFullPath);
+                        ThrowIfPathContainsLink(destinationPath, entryKey, appDirectoryFullPath);
 
                         var stagingDirectory = Path.GetDirectoryName(stagedPath);
 
@@ -307,7 +310,7 @@ internal class ZipService
                         $"Zip entry attempts to escape target directory: {relativePath}");
                 }
 
-                ThrowIfPathContainsLink(finalPath, relativePath);
+                ThrowIfPathContainsLink(finalPath, relativePath, appDirectoryFullPath);
 
                 var finalDirectory = Path.GetDirectoryName(finalPath);
                 if (!string.IsNullOrEmpty(finalDirectory) && !Directory.Exists(finalDirectory))
@@ -749,16 +752,22 @@ internal class ZipService
     ///     extracted earlier in this same pass cannot redirect a later one.
     /// </summary>
     /// <exception cref="SecurityException">A link was found on the destination path.</exception>
-    private static void ThrowIfPathContainsLink(string destinationPath, string entryKey)
+    private static void ThrowIfPathContainsLink(string destinationPath, string entryKey, string? stopAtRoot = null)
     {
         // The final component (may exist from a previous run).
         if (IsLink(destinationPath))
             throw new SecurityException($"Zip entry targets a symbolic link, refusing to extract: {entryKey}");
 
-        // Each existing ancestor directory.
+        // Each existing ancestor directory. The install/staging root itself is exempt: a user
+        // may legitimately install into a junction/symlink (D:\Games\SL -> C:\Apps\SL) or a
+        // OneDrive-hydrated folder, and rejecting that made every update impossible. Links
+        // planted *inside* the root are still rejected.
         var directory = Path.GetDirectoryName(destinationPath);
         while (!string.IsNullOrEmpty(directory))
         {
+            if (stopAtRoot is not null && IsSameDirectory(directory, stopAtRoot))
+                break;
+
             if (IsLink(directory))
             {
                 throw new SecurityException(
@@ -767,6 +776,14 @@ internal class ZipService
 
             directory = Path.GetDirectoryName(directory);
         }
+    }
+
+    private static bool IsSameDirectory(string first, string second)
+    {
+        return string.Equals(
+            Path.TrimEndingDirectorySeparator(Path.GetFullPath(first)),
+            Path.TrimEndingDirectorySeparator(Path.GetFullPath(second)),
+            PathComparison);
     }
 
     private static bool IsLink(string path)

@@ -36,6 +36,13 @@ public class DatCreatorLogic
     {
         try
         {
+            if (PathsEqual(fullXmlPath, outputXmlPath))
+            {
+                throw new InvalidOperationException(
+                    "The output XML path must be different from the input MAME XML path: " +
+                    "saving the merged list there would destroy the source file.");
+            }
+
             _logger.Info("--- Starting Process 1: MAME Full List ---");
             var fullList = await MameFullProcessor.GetMachinesFromFullXmlAsync(fullXmlPath, _logger);
 
@@ -98,8 +105,17 @@ public class DatCreatorLogic
             await Task.Run(() => mergedDoc.Save(outputXmlPath));
             _logger.Info("XML file saved successfully.");
 
-            // Save DAT
+            // Save DAT. If the chosen XML name already ends in .dat, do not let
+            // Path.ChangeExtension return the same path (the DAT save would overwrite the
+            // merged XML that was just written).
             var datOutputPath = Path.ChangeExtension(outputXmlPath, ".dat");
+            if (PathsEqual(datOutputPath, outputXmlPath))
+            {
+                datOutputPath = outputXmlPath + ".dat";
+                _logger.Warning(
+                    $"The selected output name is already a .dat file; saving the binary DAT to '{datOutputPath}' so the XML is preserved.");
+            }
+
             _logger.Info($"Saving merged DAT to: {datOutputPath}");
             await SaveMachinesToDatAsync(sortedMachines, datOutputPath);
             _logger.Info("DAT file saved successfully.");
@@ -116,6 +132,19 @@ public class DatCreatorLogic
         {
             _logger.Error("A critical error occurred during the process.", ex);
             throw;
+        }
+    }
+
+    private static bool PathsEqual(string first, string second)
+    {
+        try
+        {
+            return string.Equals(Path.GetFullPath(first), Path.GetFullPath(second),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return string.Equals(first, second, StringComparison.OrdinalIgnoreCase);
         }
     }
 

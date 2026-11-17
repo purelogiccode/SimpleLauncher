@@ -77,6 +77,8 @@ public class FavoritesManager
     /// </summary>
     public static FavoritesManager LoadFavorites(ILogger? logErrors = null)
     {
+        var databaseLoadFailed = false;
+
         if (UnifiedSettingsDatabase.IsValidDatabase())
         {
             try
@@ -85,7 +87,13 @@ public class FavoritesManager
             }
             catch (Exception ex)
             {
-                logErrors?.Error(ex, "Error loading favorites from the unified database; trying the legacy file");
+                // Expected environment condition (lock, I/O, corruption). Information level,
+                // preserve a copy, and do NOT seed defaults below: that save would DELETE the
+                // user's favorites table because the read (not the data) failed.
+                databaseLoadFailed = true;
+                logErrors?.Information(ex,
+                    "Error loading favorites from the unified database; keeping the database untouched");
+                UnifiedSettingsDatabase.TryPreserveUnreadableDatabase();
             }
         }
         else if (!File.Exists(DatFilePath))
@@ -127,15 +135,25 @@ public class FavoritesManager
             }
             catch (Exception ex)
             {
-                logErrors?.Error(ex, "Error loading favorites.dat");
+                // Expected user-data condition (corrupt/foreign MessagePack file): Information
+                // level, and never seed defaults over the unreadable file.
+                databaseLoadFailed = true;
+                logErrors?.Information(ex, "Error loading favorites.dat");
             }
         }
 
         var newManager = new FavoritesManager { _logger = logErrors };
-        // Write the initial file synchronously. This runs on the UI thread at startup —
-        // awaiting the async save via GetAwaiter().GetResult() would deadlock (the async
-        // continuation needs the UI thread that is blocked waiting).
-        newManager.SaveFavoritesSync();
+        // Never seed defaults over a database that exists but could not be read: the
+        // in-memory empty list is used for this session, the file stays intact (a copy was
+        // preserved above).
+        if (!databaseLoadFailed)
+        {
+            // Write the initial file synchronously. This runs on the UI thread at startup —
+            // awaiting the async save via GetAwaiter().GetResult() would deadlock (the async
+            // continuation needs the UI thread that is blocked waiting).
+            newManager.SaveFavoritesSync();
+        }
+
         return newManager;
     }
 
@@ -491,7 +509,7 @@ public class FavoritesManager
         {
             foreach (var favorite in FavoriteList)
             {
-                if (favorite.SystemName.Equals(oldSystemName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(favorite.SystemName, oldSystemName, StringComparison.OrdinalIgnoreCase))
                 {
                     favorite.SystemName = newSystemName;
                     changed = true;

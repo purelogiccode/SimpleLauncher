@@ -160,10 +160,12 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
             _host.CancelAndRecreateToken();
             var token = _host.CurrentCancellationToken;
 
+            // Checked BEFORE the loading-overlay try/finally: returning here must not run
+            // the finally and decrement a count this call never added.
+            if (((IUiResetHost)_host).IsUiUpdating) return;
+
             try
             {
-                if (((IUiResetHost)_host).IsUiUpdating) return;
-
                 _host.SetLoadingState(true);
                 await Task.Delay(100, token);
 
@@ -177,7 +179,8 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
             }
             catch (OperationCanceledException)
             {
-                _host.SetLoadingState(false);
+                // The finally below owns the single SetLoadingState(false) for this
+                // increment; decrementing here too hid another operation's overlay.
                 _updateStatusBarService.UpdateContent(
                     (string)Application.Current.TryFindResource("SystemLoadCancelled") ?? "System load cancelled.");
             }

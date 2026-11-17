@@ -26,7 +26,10 @@ public static class MameFullProcessor
             try
             {
                 logger.Info($"Loading MAME full driver XML from: {inputFilePath}");
-                var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };
+                // MAME's -listxml output starts with an internal DTD subset; Prohibit would
+                // reject every stock file. Ignore skips the DTD (and never resolves external
+                // entities because XmlResolver is null) while still parsing the document.
+                var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore, XmlResolver = null };
                 using var reader = XmlReader.Create(inputFilePath, settings);
                 var inputDoc = XDocument.Load(reader);
                 IList<MachineInfo> machines = new List<MachineInfo>();

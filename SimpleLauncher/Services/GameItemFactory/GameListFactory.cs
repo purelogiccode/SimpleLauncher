@@ -83,14 +83,15 @@ public class GameListFactory(
         var machineDescription = GetMachineDescription(fileNameWithoutExtension);
 
         var isFavorite = _favoritesManager.FavoriteList
-            .Any(f => f.FileName.Equals(fileNameWithExtension, StringComparison.OrdinalIgnoreCase) &&
-                      f.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
+            .Any(f => string.Equals(f.FileName, fileNameWithExtension, StringComparison.OrdinalIgnoreCase) &&
+                      string.Equals(f.SystemName, systemName, StringComparison.OrdinalIgnoreCase));
 
         // Play history stores the full path in FileName (see AddOrUpdatePlayHistoryItem),
-        // so it must be matched against entityPath, not the bare file name.
+        // so it must be matched against entityPath, not the bare file name. Legacy records
+        // may carry a null SystemName (bug #68900), so never dereference it.
         var playHistoryItem = _playHistoryManager.PlayHistoryList
-            .FirstOrDefault(h => h.FileName.Equals(entityPath, StringComparison.OrdinalIgnoreCase) &&
-                                 h.SystemName.Equals(systemName, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(h => string.Equals(h.FileName, entityPath, StringComparison.OrdinalIgnoreCase) &&
+                                 string.Equals(h.SystemName, systemName, StringComparison.OrdinalIgnoreCase));
 
         var timesPlayed = "0";
         var playTime = "0m 0s";

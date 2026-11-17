@@ -289,7 +289,9 @@ public class MountIsoFiles : IMountIsoFiles
             // Notify developer
             var timeoutMessage = $"PowerShell mount command timed out (30s) for ISO {isoPath}.";
             _logger.Debug($"[MountIsoFiles] Timeout: {timeoutMessage}");
-            logErrors.Warning(timeoutMessage);
+            // A mount that takes longer than 30s is an expected environment condition
+            // (slow disk, antivirus, PowerShell startup): Information, never a bug report.
+            logErrors.Information(timeoutMessage);
 
             if (process.HasExited) return null;
 
@@ -385,7 +387,8 @@ public class MountIsoFiles : IMountIsoFiles
             // Notify developer
             var timeoutMessage = $"PowerShell dismount command timed out (30s) for ISO {isoPath}.";
             _logger.Debug($"[MountIsoFiles] Timeout: {timeoutMessage}");
-            logErrors.Warning(timeoutMessage); // Log timeout as an error
+            // Expected environment condition (timeout): Information, never a bug report.
+            logErrors.Information(timeoutMessage);
 
             if (!process.HasExited)
             {

@@ -71,6 +71,28 @@ public static class UnifiedSettingsDatabase
     }
 
     /// <summary>
+    ///     Copies an unreadable settings database aside before a fallback save can overwrite
+    ///     it. A transient read failure (lock, I/O, antivirus) must never permanently destroy
+    ///     the user's favorites/play history/settings.
+    /// </summary>
+    public static void TryPreserveUnreadableDatabase()
+    {
+        try
+        {
+            var path = GetDatabasePath();
+            if (!File.Exists(path)) return;
+
+            var backupPath = $"{path}.corrupt-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}";
+            File.Copy(path, backupPath, false);
+            Log.Information("Preserved the unreadable settings database as {BackupPath}", backupPath);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Could not preserve the unreadable settings database");
+        }
+    }
+
+    /// <summary>
     ///     Pure database path resolution (separated for testability).
     /// </summary>
     /// <param name="baseDirectory">The application (exe) folder used for portable mode.</param>

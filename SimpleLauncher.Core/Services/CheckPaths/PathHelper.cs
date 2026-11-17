@@ -44,7 +44,10 @@ public static partial class PathHelper
         var normalizedResolved = Path.TrimEndingDirectorySeparator(Path.GetFullPath(resolvedPath));
         var normalizedBase = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseFolder));
 
-        if (normalizedResolved.Equals(normalizedBase, StringComparison.OrdinalIgnoreCase)) return true;
+        // The comparison follows the target filesystem's case rules. A case-insensitive
+        // prefix check on Linux would accept "/HOME/USER/app/..." as living inside
+        // "/home/user/app", letting a ".."-style relative path escape the app directory.
+        if (normalizedResolved.Equals(normalizedBase, PathComparison)) return true;
 
         if (!normalizedBase.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) &&
             !normalizedBase.EndsWith(Path.AltDirectorySeparatorChar.ToString(), StringComparison.Ordinal))
@@ -52,7 +55,37 @@ public static partial class PathHelper
             normalizedBase += Path.DirectorySeparatorChar;
         }
 
-        return normalizedResolved.StartsWith(normalizedBase, StringComparison.OrdinalIgnoreCase);
+        return normalizedResolved.StartsWith(normalizedBase, PathComparison);
+    }
+
+    private static StringComparison PathComparison =>
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+    /// <summary>
+    ///     Returns a stable identity for a directory that resolves symbolic links/junctions
+    ///     to their final target, so recursive scans can visit each physical folder once and
+    ///     cannot loop forever on a link cycle.
+    /// </summary>
+    public static string GetDirectoryIdentity(string path)
+    {
+        try
+        {
+            var target = Directory.ResolveLinkTarget(path, returnFinalTarget: true);
+            if (target is not null) return Path.GetFullPath(target.FullName);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            // Fall through to the literal path below.
+        }
+
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch
+        {
+            return path;
+        }
     }
 
     /// <summary>

@@ -313,7 +313,15 @@ public partial class AvaloniaCheckForUpdatesService
                     UseShellExecute = OperatingSystem.IsWindows(),
                     WorkingDirectory = _updaterDirectory
                 };
-                Process.Start(startInfo);
+                using var startedProcess = Process.Start(startInfo);
+                if (startedProcess == null)
+                {
+                    // Shell-execute can report success without creating a process (e.g. an
+                    // existing-instance handler); do not hide/shutdown for a failed start.
+                    _logger.Information("The updater process did not start from {UpdaterPath}", updaterPath);
+                    await _messageBoxLibrary.UpdaterLaunchFailedMessageBoxAsync();
+                    return;
+                }
 
                 // Hide the owner only now that the updater really started: hiding it
                 // earlier left the failure dialogs below without a visible owner, and

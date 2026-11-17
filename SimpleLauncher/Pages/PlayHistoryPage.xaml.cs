@@ -267,8 +267,8 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
             if (result == CoreMessageBoxResult.Yes)
             {
                 var itemToRemove = _viewModel.PlayHistoryList.FirstOrDefault(item =>
-                    item.FileName.Equals(fileName, StringComparison.OrdinalIgnoreCase)
-                    && item.SystemName.Equals(selectedSystemName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(item.FileName, fileName, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(item.SystemName, selectedSystemName, StringComparison.OrdinalIgnoreCase));
                 if (itemToRemove != null) _viewModel.RemoveItem(itemToRemove);
             }
 
@@ -300,8 +300,8 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         if (selectedItemIdentifier is (not null, not null))
         {
             var updatedItem = _viewModel.PlayHistoryList.FirstOrDefault(item =>
-                item.FileName.Equals(selectedItemIdentifier.FileName, StringComparison.OrdinalIgnoreCase) &&
-                item.SystemName.Equals(selectedItemIdentifier.SystemName, StringComparison.OrdinalIgnoreCase));
+                string.Equals(item.FileName, selectedItemIdentifier.FileName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(item.SystemName, selectedItemIdentifier.SystemName, StringComparison.OrdinalIgnoreCase));
             if (updatedItem != null)
             {
                 PlayHistoryDataGrid.SelectedItem = updatedItem;
@@ -394,8 +394,8 @@ public partial class PlayHistoryPage : ILoadingState, IDisposable
         if (selectedItemIdentifier.FileName == null || selectedItemIdentifier.SystemName == null) return;
 
         var updatedItem = _viewModel.PlayHistoryList.FirstOrDefault(item =>
-            item.FileName.Equals(selectedItemIdentifier.FileName, StringComparison.OrdinalIgnoreCase) &&
-            item.SystemName.Equals(selectedItemIdentifier.SystemName, StringComparison.OrdinalIgnoreCase));
+            string.Equals(item.FileName, selectedItemIdentifier.FileName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(item.SystemName, selectedItemIdentifier.SystemName, StringComparison.OrdinalIgnoreCase));
 
         if (updatedItem != null)
         {

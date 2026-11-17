@@ -38,7 +38,9 @@ public static class MameSoftwareProcessor
             var allSoftware = new ConcurrentBag<MachineInfo>();
             var warnings = new ConcurrentBag<string>();
 
-            var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };
+            // MAME hash/*.xml files declare a DOCTYPE (softwarelist.dtd); Prohibit rejects
+            // them all. Ignore skips the DTD and XmlResolver=null prevents external fetches.
+            var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore, XmlResolver = null };
 
             Parallel.ForEach(files, file =>
             {

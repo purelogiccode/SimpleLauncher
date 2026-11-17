@@ -108,17 +108,26 @@ public partial class PlayHistoryViewModel : ObservableObject, IDisposable
 
             await Task.Yield();
 
+            // Snapshot the live collections on the UI thread: PlayHistoryList is an
+            // ObservableCollection mutated by a winding-down game session, and
+            // "Collection was modified; enumeration operation may not execute" on the pool
+            // thread used to abort the whole page load.
+            var historySnapshot = _playHistoryManager.PlayHistoryList.ToList();
+            var machinesSnapshot = _machines.ToList();
+            var systemManagersSnapshot = _systemManagers.ToList();
+
             var processedHistory = await Task.Run(() =>
             {
                 var processedList = new List<PlayHistoryItem>();
-                foreach (var historyItemConfig in _playHistoryManager.PlayHistoryList)
+                foreach (var historyItemConfig in historySnapshot)
                 {
-                    var machine = _machines.FirstOrDefault(m =>
+                    var machine = machinesSnapshot.FirstOrDefault(m =>
                         m.MachineName.Equals(Path.GetFileNameWithoutExtension(historyItemConfig.FileName),
                             StringComparison.OrdinalIgnoreCase));
                     var machineDescription = machine?.Description ?? "";
-                    var systemManager = _systemManagers.FirstOrDefault(config =>
-                        config.SystemName.Equals(historyItemConfig.SystemName, StringComparison.OrdinalIgnoreCase));
+                    var systemManager = systemManagersSnapshot.FirstOrDefault(config =>
+                        string.Equals(config.SystemName, historyItemConfig.SystemName,
+                            StringComparison.OrdinalIgnoreCase));
                     var defaultEmulator = systemManager?.Emulators.FirstOrDefault()?.EmulatorName
                                           ?? _resourceProvider.GetString("UnknownString", "Unknown");
                     var coverImagePath = GetCoverImagePath(historyItemConfig.SystemName, historyItemConfig.FileName);

@@ -24,40 +24,38 @@ public static class ConverterService
     {
         try
         {
-            progress.Report("Reading XML file...");
+            progress.Report("Reading and parsing XML file...");
 
-            // Read XML content as string
-            var xmlContent = await File.ReadAllTextAsync(inputPath);
-
-            progress.Report("Parsing XML content...");
-
-            // Deserialize XML to objects
+            // Parse through XmlReader.Create(path): it honours the XML declaration's
+            // encoding (a legacy windows-1252 history.xml decoded as UTF-8 produced U+FFFD
+            // in every accented title). XmlSerializer and MessagePack are CPU-bound, so
+            // run them off the UI thread instead of freezing the tool.
             var serializer = new XmlSerializer(typeof(History));
-            History? history;
-            using (var reader = new StringReader(xmlContent))
-            using (var xmlReader = XmlReader.Create(reader, new XmlReaderSettings
-                   {
-                       DtdProcessing = DtdProcessing.Prohibit,
-                       XmlResolver = null
-                   }))
+            History? history = await Task.Run(() =>
             {
+                using var xmlReader = XmlReader.Create(inputPath, new XmlReaderSettings
+                {
+                    DtdProcessing = DtdProcessing.Ignore,
+                    XmlResolver = null
+                });
+
                 try
                 {
-                    history = serializer.Deserialize(xmlReader) as History;
+                    return serializer.Deserialize(xmlReader) as History;
                 }
                 catch (InvalidOperationException ex) when (ex.InnerException != null)
                 {
                     throw new InvalidOperationException(
                         $"Failed to deserialize XML content. Inner exception: {ex.InnerException.Message}", ex);
                 }
-            }
+            });
 
             if (history == null) throw new InvalidOperationException("Failed to deserialize XML content.");
 
             progress.Report("Serializing to binary format...");
 
             // Serialize to MessagePack
-            var binaryData = MessagePackSerializer.Serialize(history);
+            var binaryData = await Task.Run(() => MessagePackSerializer.Serialize(history));
 
             progress.Report("Saving binary file...");
 
@@ -95,7 +93,7 @@ public static class ConverterService
             progress.Report("Deserializing from binary format...");
 
             // Deserialize from MessagePack
-            var history = MessagePackSerializer.Deserialize<History>(binaryData);
+            var history = await Task.Run(() => MessagePackSerializer.Deserialize<History>(binaryData));
 
             progress.Report("Saving XML file...");
 
@@ -104,22 +102,23 @@ public static class ConverterService
             // UTF-8; serialize through an XmlWriter over a UTF-8 stream instead so the
             // declaration matches the bytes (standard readers reject the mismatch).
             var serializer = new XmlSerializer(typeof(History));
-            await using (var stream = new MemoryStream())
+            var xmlBytes = await Task.Run(() =>
             {
+                using var stream = new MemoryStream();
                 var settings = new XmlWriterSettings
                 {
                     Encoding = new UTF8Encoding(false),
-                    Indent = true,
-                    Async = true
+                    Indent = true
                 };
-                await using (var xmlWriter = XmlWriter.Create(stream, settings))
+                using (var xmlWriter = XmlWriter.Create(stream, settings))
                 {
                     serializer.Serialize(xmlWriter, history);
-                    await xmlWriter.FlushAsync();
                 }
 
-                await File.WriteAllBytesAsync(outputPath, stream.ToArray());
-            }
+                return stream.ToArray();
+            });
+
+            await File.WriteAllBytesAsync(outputPath, xmlBytes);
 
             progress.Report("Conversion completed successfully!");
             Log.Information("Binary to XML conversion completed: {OutputPath}", outputPath);

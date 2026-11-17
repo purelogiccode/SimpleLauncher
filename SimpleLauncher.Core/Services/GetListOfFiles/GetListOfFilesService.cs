@@ -1,4 +1,5 @@
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Core.Services.GetListOfFiles;
 
@@ -80,11 +81,21 @@ public class GetListOfFilesService : IGetListOfFilesService
     }
 
     private void EnumerateFilesRecursive(string path, HashSet<string> extensions, List<string> results,
-        List<string> restrictedFolders, bool doRecurse, CancellationToken token)
+        List<string> restrictedFolders, bool doRecurse, CancellationToken token,
+        HashSet<string>? visitedDirectories = null)
     {
         token.ThrowIfCancellationRequested();
 
         if (!Directory.Exists(path))
+            return;
+
+        // Directory enumeration follows symbolic links/junctions. A link cycle
+        // ("roms/latest -> roms") would recurse until the stack overflows (uncatchable) or
+        // the scan never ends; visit every physical directory at most once.
+        visitedDirectories ??= new HashSet<string>(OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal);
+        if (!visitedDirectories.Add(PathHelper.GetDirectoryIdentity(path)))
             return;
 
         try
@@ -98,7 +109,8 @@ public class GetListOfFilesService : IGetListOfFilesService
             if (doRecurse)
             {
                 foreach (var dir in Directory.EnumerateDirectories(path))
-                    EnumerateFilesRecursive(dir, extensions, results, restrictedFolders, doRecurse, token);
+                    EnumerateFilesRecursive(dir, extensions, results, restrictedFolders, doRecurse, token,
+                        visitedDirectories);
             }
         }
         catch (UnauthorizedAccessException)

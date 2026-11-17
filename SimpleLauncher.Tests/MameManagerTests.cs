@@ -1,6 +1,8 @@
 using MessagePack;
 using Moq;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services.MameData;
+using SimpleLauncher.Core.Services.MameManager;
 using SimpleLauncher.Tests.TestHelpers;
 using Xunit;
 
@@ -178,6 +180,32 @@ public class MameManagerTests : IDisposable
 
             Assert.NotNull(result);
             Assert.Empty(result);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// <summary>
+    ///     A MessagePack nil root (0xC0) deserializes to null rather than throwing. The loader
+    ///     must return an empty list, otherwise MameDataService's constructor (DI startup)
+    ///     dereferences null and the application dies before the window opens.
+    /// </summary>
+    [Fact]
+    public void LoadFromDatNilRootReturnsEmptyList()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");
+        File.WriteAllBytes(tempFile, [0xC0]);
+
+        try
+        {
+            var result = MameManagerService.LoadFromDat(_logErrors, tempFile, null, notifyUser: false,
+                out var failure);
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+            Assert.Equal(MameDataLoadFailure.None, failure);
         }
         finally
         {

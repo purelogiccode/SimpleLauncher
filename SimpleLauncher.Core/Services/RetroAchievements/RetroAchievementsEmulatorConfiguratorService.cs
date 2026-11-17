@@ -34,7 +34,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
             // Restore from sample if missing
             if (!RestoreConfigFromSample("retroarch", configPath))
             {
-                _logger.Warning($"RetroArch config not found and no sample available at {configPath}");
+                _logger.Information($"RetroArch config not found and no sample available at {configPath}");
                 return false;
             }
 
@@ -65,7 +65,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
         // Restore from sample if missing
         if (!RestoreConfigFromSample("pcsx2", configPath))
         {
-            _logger.Warning($"PCSX2 config not found and no sample available at {configPath}");
+            _logger.Information($"PCSX2 config not found and no sample available at {configPath}");
             return false;
         }
 
@@ -97,7 +97,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
             // Restore from sample if missing
             if (!RestoreConfigFromSample("duckstation", configPath))
             {
-                _logger.Warning($"DuckStation config not found and no sample available at {configPath}");
+                _logger.Information($"DuckStation config not found and no sample available at {configPath}");
                 return false;
             }
 
@@ -153,7 +153,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
             // Restore from sample if missing
             if (!RestoreConfigFromSample("ppsspp", configPath))
             {
-                _logger.Warning($"PPSSPP config not found and no sample available at {configPath}");
+                _logger.Information($"PPSSPP config not found and no sample available at {configPath}");
                 return false;
             }
 
@@ -260,7 +260,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
                 // Try restoring to appdata if portable failed
                 if (!RestoreConfigFromSample("flycast", configPath))
                 {
-                    _logger.Warning("Flycast config not found and no sample available");
+                    _logger.Information("Flycast config not found and no sample available");
                     return false;
                 }
             }
@@ -292,7 +292,7 @@ public class RetroAchievementsEmulatorConfiguratorService : IRetroAchievementsEm
             // Restore from sample if missing
             if (!RestoreConfigFromSample("bizhawk", configPath))
             {
-                _logger.Warning($"BizHawk config not found and no sample available at {configPath}");
+                _logger.Information($"BizHawk config not found and no sample available at {configPath}");
                 return false;
             }
 

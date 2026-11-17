@@ -87,6 +87,8 @@ public class PlayHistoryManager
     /// </summary>
     public static PlayHistoryManager LoadPlayHistory(ILogger? logErrors = null)
     {
+        var databaseLoadFailed = false;
+
         if (UnifiedSettingsDatabase.IsValidDatabase())
         {
             try
@@ -95,7 +97,13 @@ public class PlayHistoryManager
             }
             catch (Exception ex)
             {
-                logErrors?.Error(ex, "Error loading play history from the unified database; trying the legacy file");
+                // Expected environment condition (lock, I/O, corruption). Information level,
+                // preserve a copy, and do NOT seed defaults below: that save would DELETE the
+                // user's play history because the read (not the data) failed.
+                databaseLoadFailed = true;
+                logErrors?.Information(ex,
+                    "Error loading play history from the unified database; keeping the database untouched");
+                UnifiedSettingsDatabase.TryPreserveUnreadableDatabase();
             }
         }
         else if (!File.Exists(FilePath))
@@ -127,9 +135,14 @@ public class PlayHistoryManager
         if (!File.Exists(FilePath))
         {
             var defaultManager = new PlayHistoryManager { _logger = logErrors };
-            // Write the initial file synchronously. This runs on the UI thread at startup —
-            // awaiting the async save via GetAwaiter().GetResult() would deadlock.
-            defaultManager.SavePlayHistorySync();
+            // Never seed defaults over a database that exists but could not be read.
+            if (!databaseLoadFailed)
+            {
+                // Write the initial file synchronously. This runs on the UI thread at startup —
+                // awaiting the async save via GetAwaiter().GetResult() would deadlock.
+                defaultManager.SavePlayHistorySync();
+            }
+
             return defaultManager;
         }
 
@@ -144,12 +157,16 @@ public class PlayHistoryManager
         }
         catch (Exception ex)
         {
-            logErrors?.Error(ex, "Error loading playhistory.dat");
+            // Expected user-data condition (corrupt/foreign MessagePack file): Information
+            // level, and never seed defaults over the unreadable file.
+            databaseLoadFailed = true;
+            logErrors?.Information(ex, "Error loading playhistory.dat");
         }
 
         var newManager = new PlayHistoryManager { _logger = logErrors };
-        // Synchronous recovery save (same UI-thread deadlock protection as above)
-        newManager.SavePlayHistorySync();
+        // Synchronous recovery save (same UI-thread deadlock protection as above) — skipped
+        // when the file exists but could not be read, so it is never overwritten with empty data.
+        if (!databaseLoadFailed) newManager.SavePlayHistorySync();
         return newManager;
     }
 
@@ -380,7 +397,7 @@ public class PlayHistoryManager
         {
             foreach (var item in PlayHistoryList)
             {
-                if (item.SystemName.Equals(oldSystemName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(item.SystemName, oldSystemName, StringComparison.OrdinalIgnoreCase))
                 {
                     item.SystemName = newSystemName;
                     changed = true;
