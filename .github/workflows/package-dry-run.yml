@@ -164,7 +164,9 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y flatpak
+          # The Flatpak CLI package does not pull the ostree CLI on the runner; the
+          # bundle-verification step below needs it to inspect the imported commits.
+          sudo apt-get install -y flatpak ostree
           sudo flatpak remote-add --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
 
