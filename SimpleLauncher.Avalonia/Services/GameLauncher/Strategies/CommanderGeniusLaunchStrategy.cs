@@ -144,18 +144,11 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
                         $"{originalFileName} {launchedWith} {context.EmulatorName}");
                 }
 
-                var psi = new ProcessStartInfo
-                {
-                    FileName = emulatorLocation,
-                    Arguments = arguments,
-                    WorkingDirectory = cgDataPath,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8
-                };
+                var psi = HostProcess.Create(
+                    emulatorLocation,
+                    arguments,
+                    cgDataPath,
+                    redirectOutput: true);
 
                 var output = new StringBuilder();
                 var error = new StringBuilder();

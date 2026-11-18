@@ -567,19 +567,15 @@ public class LauncherService : ILauncherService
                     var stdoutBuffer = new StringBuilder();
 
                     using var process = new Process();
-                    process.StartInfo = new ProcessStartInfo
-                    {
-                        FileName = resolvedEmulatorPath,
-                        Arguments = arguments,
-                        // .bat files require shell execution; .exe works without it
-                        UseShellExecute = isBatchFile,
-                        WorkingDirectory = resolvedEmulatorFolderPath,
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = !isBatchFile,
-                        RedirectStandardError = !isBatchFile,
-                        StandardOutputEncoding = Encoding.UTF8,
-                        StandardErrorEncoding = Encoding.UTF8
-                    };
+                    // .bat files require shell execution; .exe works without it. Inside a
+                    // Flatpak sandbox the emulator is launched on the host (it is a host
+                    // program, often an AppImage, and needs the host's libraries/devices).
+                    process.StartInfo = HostProcess.Create(
+                        resolvedEmulatorPath,
+                        arguments,
+                        resolvedEmulatorFolderPath,
+                        useShellExecute: isBatchFile,
+                        redirectOutput: !isBatchFile);
 
                     if (!isBatchFile)
                     {

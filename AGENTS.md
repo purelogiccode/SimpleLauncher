@@ -31,23 +31,35 @@ disk.
     `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia `net11.0`
     Debug/Release and the updater `net11.0` build on `ubuntu-latest`. Builds pass
     `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.**
-  - `.github/workflows/package-dry-run.yml` — packages all four RIDs exactly like the release
-    workflow (version read from `SimpleLauncher.csproj`), uploads the zips and verifies the Linux
-    executable bits on `ubuntu-latest`, but **never creates or updates a GitHub release**. Runs on
-    PRs/pushes touching the app projects or packaging scripts, and on manual dispatch.
+  - `.github/workflows/package-dry-run.yml` — packages every release asset exactly like the
+    release workflow (version read from `SimpleLauncher.csproj`): Windows bundles on
+    `windows-latest`; portable ZIP/tar.gz + AppImage/Flatpak for both Linux RIDs on
+    `ubuntu-latest`; then verifies the archives, executable bits, AppImage architectures and
+    Flatpak commits, but **never creates or updates a GitHub release**. Runs on PRs/pushes
+    touching the app projects or packaging scripts, and on manual dispatch.
   - `.github/workflows/release.yml` — manual (`workflow_dispatch`); packages the unified WPF +
-    Avalonia bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1` and the
-    framework-dependent Linux bundle for `linux-x64` / `linux-arm64` via
-    `scripts/package-release-linux.ps1`. On Windows the payload places `SimpleLauncher.exe` and
-    `SimpleLauncher.Avalonia.exe` next to each other (both framework-dependent); on Linux it is
-    the framework-dependent `SimpleLauncher.Avalonia` (the .NET 11 runtime is required). Both ship
-    as `release_{version}_{rid}.zip` plus the standalone `updater_{rid}.zip` (`Updater.exe` /
-    `Updater`). Creates/updates the GitHub release.
+    Avalonia bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1` on
+    `windows-latest`, and every Linux bundle for `linux-x64` / `linux-arm64` on `ubuntu-latest`:
+    portable `release_{version}_{rid}.zip` + `release_{version}_{rid}.tar.gz` and updater ZIPs
+    via `scripts/package-release-linux.ps1`, plus self-contained
+    `SimpleLauncher-{version}-{rid}.AppImage` and `.flatpak` via
+    `scripts/package-linux-native.sh`. On Windows the payload places `SimpleLauncher.exe` and
+    `SimpleLauncher.Avalonia.exe` next to each other (both framework-dependent); the portable
+    Linux formats require the .NET 11 runtime, while AppImage/Flatpak bundle it. A publish job
+    then creates/updates the GitHub release and mirrors every asset to R2.
   - `.github/workflows/docs.yml` — on `docs/**` pushes to `master`; deploys GitHub Pages from
     `docs/` and syncs the wiki via `scripts/sync-wiki.py` (needs the `WIKI_PAT` secret, skipped
     with a warning when absent).
   - Verification stays local: `dotnet build` / `dotnet test` per project on Windows (plus WSL2
     for the Linux paths), because the suites include live endpoints and real app launches.
+- **Linux distribution formats**: every Linux release ships four formats for both RIDs —
+  portable ZIP, portable tar.gz, AppImage and Flatpak. The AppImage/Flatpak are
+  self-contained; the portable formats stay framework-dependent. AppImage self-updates by
+  replacing the outer file (`APPIMAGE`), Flatpak defers to the software center for repository
+  installs (or a newer `.flatpak` reinstall) and launches host emulators through
+  `flatpak-spawn --host`, and portable installs keep the existing Updater. Never drop a
+  format or an architecture from the release workflow or the R2 publisher
+  (`scripts/publish-fallback-r2.ps1`) without updating both.
 - **Fast/slow test split (no filtering)**: the suites are split **by project**, never by
   `[Trait]`/filter: fast — `SimpleLauncher.Tests` and `SimpleLauncher.Avalonia.Tests`; slow —
   `SimpleLauncher.SlowTests` (app-launch language checks, real ZIP/CHD mounts, live-endpoint

@@ -13,9 +13,12 @@ public static class FuseValidation
 
     /// <summary>
     ///     Checks whether the FUSE device node exists (Linux only). macOS uses macFUSE and is not
-    ///     covered because the launcher ships no macOS payload.
+    ///     covered because the launcher ships no macOS payload. Flatpak is excluded on purpose:
+    ///     a mount created inside the sandbox is not visible to emulators launched on the host,
+    ///     so the extraction/conversion fallbacks are used instead.
     /// </summary>
-    public static bool IsFuseAvailable() => OperatingSystem.IsLinux() && File.Exists(FuseDevicePath);
+    public static bool IsFuseAvailable() =>
+        OperatingSystem.IsLinux() && !PackagingEnvironment.IsFlatpak && File.Exists(FuseDevicePath);
 
     /// <summary>
     ///     Releases a FUSE mount. Needed when the CHDMounter process was killed instead of

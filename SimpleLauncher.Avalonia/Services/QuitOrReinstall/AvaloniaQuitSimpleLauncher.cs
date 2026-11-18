@@ -30,7 +30,9 @@ public class AvaloniaQuitSimpleLauncher
     /// </summary>
     public async Task RestartApplicationAsync(IMessageBoxLibraryService messageBox)
     {
-        var processPath = Environment.ProcessPath;
+        // Inside an AppImage Environment.ProcessPath points into the read-only squashfs
+        // mount (/tmp/.mount_*/...); the launchable program is the outer .AppImage file.
+        var processPath = PackagingEnvironment.AppImagePath ?? Environment.ProcessPath;
         if (processPath is null)
         {
             _logger.Debug("[AvaloniaQuitSimpleLauncher] Could not resolve the current process path; restart aborted");

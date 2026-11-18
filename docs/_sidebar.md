@@ -5,6 +5,7 @@
 - [03 — Quickstart](03-quickstart.md)
 - [05 — Configuration](05-configuration.md)
 - [18 — Emulator Parameters](18-emulator-parameters.md)
+- [19 — Linux Packages](19-linux-packages.md)
 
 - **Architecture & internals**
 - [02 — Projects & Solution](02-projects-and-solution.md)

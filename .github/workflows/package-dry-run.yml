@@ -1,12 +1,11 @@
 name: Package dry run
 
-# Packages all four RIDs exactly like the release workflow, but never creates or
-# updates a GitHub release. It exists to validate the packaging scripts and the
-# Linux ZIP permissions in CI (and can be dispatched manually before a release).
-#
-# The version is read from the canonical SimpleLauncher.csproj, so this workflow
-# never needs a version input and can never publish a version that is not
-# consistent across the projects and manifests.
+# Packages every release asset exactly like the release workflow, but never creates or
+# updates a GitHub release. It validates the Windows and Linux packaging scripts, the
+# Linux ZIP/tar.gz permissions, the AppImage architecture and the Flatpak bundles.
+# The version is read from the canonical SimpleLauncher.csproj, so this workflow never
+# needs a version input and can never publish a version that is not consistent across
+# the projects and manifests.
 
 on:
   push:
@@ -17,6 +16,7 @@ on:
       - 'global.json'
       - 'scripts/package-release.ps1'
       - 'scripts/package-release-linux.ps1'
+      - 'scripts/package-linux-native.sh'
       - 'SimpleLauncher.sln'
       - 'SimpleLauncher/**'
       - 'SimpleLauncher.Core/**'
@@ -28,6 +28,7 @@ on:
       - 'global.json'
       - 'scripts/package-release.ps1'
       - 'scripts/package-release-linux.ps1'
+      - 'scripts/package-linux-native.sh'
       - 'SimpleLauncher.sln'
       - 'SimpleLauncher/**'
       - 'SimpleLauncher.Core/**'
@@ -43,8 +44,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  package:
-    name: Package all RIDs (no release)
+  package-windows:
+    name: Package Windows bundles (no release)
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
@@ -74,45 +75,135 @@ jobs:
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
 
-      - name: Package Linux release (no GitHub release)
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: simplelauncher-dry-run-windows
+          path: artifacts/release/*
+          retention-days: 7
+
+  package-linux:
+    name: Package Linux bundles (no release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Read the canonical version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher/SimpleLauncher.csproj' -Raw
+          $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+              throw "Unexpected version '$version' in SimpleLauncher.csproj."
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install Flatpak runtimes (x86_64 and aarch64)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y flathub \
+            org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+          sudo flatpak install -y --arch=aarch64 flathub \
+            org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+
+      - name: Package portable Linux bundles
         shell: pwsh
         run: >
           ./scripts/package-release-linux.ps1
           -Version $env:VERSION
+          -BuildSelfContainedPayload
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish-linux'
 
-      - name: Upload packages as workflow artifacts
+      - name: Package native Linux bundles (AppImage + Flatpak)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for rid in linux-x64 linux-arm64; do
+            ./scripts/package-linux-native.sh \
+              --version "$VERSION" \
+              --rid "$rid" \
+              --payload "$RUNNER_TEMP/sl-publish-linux/$rid/selfcontained" \
+              --output artifacts/release \
+              --work "$RUNNER_TEMP/sl-native-$rid"
+          done
+
+      - name: Upload Linux packages
         uses: actions/upload-artifact@v7
         with:
-          name: simplelauncher-dry-run
-          path: artifacts/release/*.zip
+          name: simplelauncher-dry-run-linux
+          path: artifacts/release/*
           retention-days: 7
 
   verify-linux:
     name: Verify Linux packages
-    needs: package
+    needs: package-linux
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Download packages
+      - name: Download Linux packages
         uses: actions/download-artifact@v8
         with:
-          name: simplelauncher-dry-run
+          name: simplelauncher-dry-run-linux
           path: artifacts
 
-      - name: Check the ZIP layout and executable bits
+      - name: Install Flatpak tools
         shell: bash
         run: |
           set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak
+          sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Check the archives, executable bits and bundle architectures
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Release zips and tar.gz must extract the launcher and bundled tools executable.
           for rid in linux-x64 linux-arm64; do
             unzip -q artifacts/release_*_${rid}.zip -d "app-${rid}"
             test -x "app-${rid}/SimpleLauncher.Avalonia"
             test -f "app-${rid}/appsettings.json"
             test -f "app-${rid}/LICENSE.txt"
 
+            mkdir -p "tar-${rid}"
+            tar -xzf artifacts/release_*_${rid}.tar.gz -C "tar-${rid}"
+            test -x "tar-${rid}/SimpleLauncher.Avalonia"
+            if [[ "$rid" == linux-x64 ]]; then sevenzip=7zz; else sevenzip=7zz_arm64; fi
+            test -x "tar-${rid}/tools/SevenZip/${sevenzip}"
+
             unzip -q "artifacts/updater_${rid}.zip" -d "updater-${rid}"
             test -x "updater-${rid}/Updater"
           done
 
-          echo "Linux payload layout and permissions are correct for both RIDs."
+          # AppImages: correct outer runtime architecture and a plausible size.
+          file artifacts/SimpleLauncher-*-linux-x64.AppImage | grep -q 'ELF 64-bit'
+          file artifacts/SimpleLauncher-*-linux-arm64.AppImage | grep -q 'ARM aarch64'
+          for image in artifacts/SimpleLauncher-*-linux-*.AppImage; do
+            test "$(stat -c%s "$image")" -gt 50000000
+          done
+
+          # Flatpak bundles: importable OSTree commits with the expected app ref/arch.
+          for rid in linux-x64 linux-arm64; do
+            if [[ "$rid" == linux-x64 ]]; then arch=x86_64; else arch=aarch64; fi
+            repo="$RUNNER_TEMP/flatpak-repo-${rid}"
+            ostree init --repo="$repo" --mode=archive
+            flatpak build-import-bundle "$repo" artifacts/SimpleLauncher-*-${rid}.flatpak
+            ostree --repo="$repo" refs | grep -q "app/com.purelogiccode.SimpleLauncher/${arch}/master"
+          done
+
+          echo "Linux archives, executable bits, AppImages and Flatpak bundles are valid."

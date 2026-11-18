@@ -69,21 +69,30 @@ pwsh scripts/package-release.ps1 -Version 5.8.4
 
 ### Linux release packaging script
 
-`scripts/package-release-linux.ps1` produces the Linux counterparts (also used by CI; same
-asset names the in-app updater looks up in the GitHub release):
+`scripts/package-release-linux.ps1` produces the portable Linux pairs (the asset names the
+in-app updater looks up in the GitHub release):
 
 ```powershell
-pwsh scripts/package-release-linux.ps1 -Version 5.8.4
+pwsh scripts/package-release-linux.ps1 -Version 5.8.4 -BuildSelfContainedPayload
 # -> artifacts\release\release_5.8.4_linux-x64.zip, release_5.8.4_linux-arm64.zip
+# -> artifacts\release\release_5.8.4_linux-x64.tar.gz, release_5.8.4_linux-arm64.tar.gz
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
+# -> <WorkDir>\linux-x64\selfcontained, <WorkDir>\linux-arm64\selfcontained
 ```
 
-- The Avalonia app is published **framework-dependent single-file** for `net11.0` (the **.NET 11
-  runtime** is required on Linux; managed assemblies are bundled into the `SimpleLauncher.Avalonia`
-  binary with only the native libraries beside it, mirroring the Windows exes); the standalone
-  `Updater` is framework-dependent single-file as well.
-- Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`,
-  the same helper the Windows script uses) and to `updater_{rid}.zip`.
+- The portable payload is published **framework-dependent single-file** for `net11.0` (the
+  **.NET 11 runtime** is required; managed assemblies are bundled into the
+  `SimpleLauncher.Avalonia` binary with only the native libraries beside it, mirroring the
+  Windows exes); the standalone `Updater` is framework-dependent single-file as well.
+- `release_{version}_{rid}.tar.gz` is the same payload in a tar archive whose entry modes are
+  written explicitly (0755 for the executables, 0644 otherwise), so `tar -xzf` restores the
+  executable bits even when the archive was built on Windows.
+- `-BuildSelfContainedPayload` also publishes a **self-contained** payload (the .NET 11
+  runtime travels with the app) for the AppImage/Flatpak packager, removes the
+  framework-dependent `Updater` from it, prunes Windows-only files and applies Unix modes when
+  the script runs on Linux.
+- Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to every payload root
+  (`Copy-BundleDocuments`, the same helper the Windows script uses).
 - Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`, the other
   architecture's `7zz`); the per-RID tools (`FindRomCover`, `RetroAchievementsSharp`,
   `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target
@@ -95,15 +104,39 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.4
   bits; the in-app updater preserves installed modes during a swap, applies the archive's
   mode to files an update adds for the first time, and re-applies the executable bit to a
   freshly downloaded updater.
-- Verified on Ubuntu 24.04 GNOME Wayland (VMware VM): packaged payload extracted with
-  `unzip`, launched and rendered correctly; the `linux-arm64` artifacts were structurally
-  verified (aarch64 ELF app/updater) but not run (no ARM64 hardware).
-- Also verified on Fedora 44 KDE Wayland (VMware VM, distro .NET 10 SDK — not yet re-verified
-  after the .NET 11 move): all 708 Avalonia
-  tests pass with `dotnet test -c Debug -f net11.0 -r linux-x64` (Fedora's SDK defaults to the
-  `fedora.44-x64` RID, whose apphost pack is not on nuget.org, so the `-r linux-x64` override is
-  required to restore/build), and the published app launches and renders through XWayland
-  (`DISPLAY=:0` plus the login session's `XAUTHORITY`, e.g. from `systemctl --user show-environment`).
+
+### Native Linux bundles (AppImage + Flatpak)
+
+`scripts/package-linux-native.sh` runs on a Linux build host (CI uses `ubuntu-latest`) and
+turns the self-contained payload into the two store-style bundles:
+
+```bash
+./scripts/package-linux-native.sh \
+  --version 5.8.4 --rid linux-x64 \
+  --payload artifacts/publish-linux/linux-x64/selfcontained \
+  --output artifacts/release
+# -> SimpleLauncher-5.8.4-linux-x64.AppImage
+# -> SimpleLauncher-5.8.4-linux-x64.flatpak
+```
+
+- **AppImage** — builds an AppDir (`AppRun`, `.desktop`, icon, payload under `usr/bin`), then
+  runs `appimagetool`. The tool is downloaded on first use. For `linux-arm64` on an x86_64
+  host it uses `ARCH=aarch64` plus the aarch64 type-2 runtime (`--runtime-file`), so the
+  precompiled ARM64 payload can be packaged without ARM64 hardware.
+- **Flatpak** — `flatpak build-init` / `build-finish` / `build-export` / `build-bundle` on
+  `org.freedesktop.Platform//25.08`. The app runs the emulators on the host via
+  `flatpak-spawn --host`, has host filesystem access for ROMs/emulators/BIOS/config files,
+  and exposes `org.a11y.Bus` for screen readers. FUSE mounting is disabled inside the sandbox
+  (the app uses its extraction/conversion fallbacks) because a sandbox mount is not visible to
+  host emulators.
+- **Cross-architecture**: both arm64 artifacts are exported from the x86_64 host because the
+  payload is already compiled and no target code is executed; CI installs the x86_64 and
+  aarch64 Flatpak runtimes.
+- Verified on Linux Mint 22.3 x64 (X11): AppImage launched and rendered, Flatpak installed and
+  launched, the Flatpak launched the host dummy emulator through `flatpak-spawn`, and the
+  portable tarball extracted with correct executable bits and ran with the .NET 11 runtime.
+  The arm64 AppImage and Flatpak were built and structurally verified (aarch64 ELF runtime and
+  payload, aarch64 OSTree commit).
 
 ### Cloudflare R2 fallback publishing
 
@@ -120,9 +153,10 @@ pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
 
 - Reads `R2_*` credentials from the environment or the gitignored `AGENTS.local.md` block
   (see the local-only notes); never commit them.
-- Uploads the four `release_{version}_{rid}.zip` and four `updater_{rid}.zip` assets, verifies
-  their public URLs, then updates `version.txt` **last**, so clients never see a version before
-  its assets exist.
+- Uploads the four `release_{version}_{rid}.zip`, the two portable Linux tar.gz files, the four
+  `updater_{rid}.zip` assets, the two AppImages and the two Flatpak bundles, verifies their
+  public URLs, then updates `version.txt` **last**, so clients never see a version before its
+  assets exist. AppImages self-update from this copy, so they must be published with the rest.
 - `-DryRun` prints the plan; `-ReleaseDir` selects a non-default package folder.
 - The manual `release.yml` workflow runs this publisher automatically after creating/updating the
   GitHub release, using the `R2_*` repository secrets. Local/manual releases still run the script

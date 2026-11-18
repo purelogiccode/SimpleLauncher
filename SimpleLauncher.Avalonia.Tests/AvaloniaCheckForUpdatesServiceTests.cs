@@ -58,8 +58,67 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
         Assert.Equal($"release_9.9.9_{Rid}.zip",
             AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid));
         Assert.Equal($"updater_{Rid}.zip", AvaloniaCheckForUpdatesService.UpdaterAssetName(Rid));
+        Assert.Equal($"SimpleLauncher-9.9.9-{Rid}.AppImage",
+            AvaloniaCheckForUpdatesService.AppImageAssetName("9.9.9", Rid));
         Assert.Equal(OperatingSystem.IsWindows() ? "Updater.exe" : "Updater",
             AvaloniaCheckForUpdatesService.UpdaterExecutableName);
+    }
+
+    private static byte[] FakeAppImage()
+    {
+        // ELF magic + enough padding to pass the minimum-size guard.
+        var bytes = new byte[1 * 1024 * 1024];
+        bytes[0] = 0x7F;
+        bytes[1] = (byte)'E';
+        bytes[2] = (byte)'L';
+        bytes[3] = (byte)'F';
+        return bytes;
+    }
+
+    [Fact]
+    public async Task DownloadAndReplaceAppImage_ReplacesTheRunningFile()
+    {
+        var target = Path.Combine(_updaterDir, "SimpleLauncher.AppImage");
+        var (service, _, _) = CreateService(_ => Zip(FakeAppImage()));
+        await File.WriteAllTextAsync(target, "old-appimage");
+
+        var replaced = await service.DownloadAndReplaceAppImageAsync(
+            "https://example.test/SimpleLauncher-9.9.9-linux-x64.AppImage", target);
+
+        Assert.True(replaced);
+        var actual = await File.ReadAllBytesAsync(target);
+        Assert.True(FakeAppImage().SequenceEqual(actual));
+        Assert.False(File.Exists(target + ".new"));
+    }
+
+    [Fact]
+    public async Task DownloadAndReplaceAppImage_InvalidPayloadKeepsCurrentFile()
+    {
+        var target = Path.Combine(_updaterDir, "SimpleLauncher.AppImage");
+        var (service, _, _) = CreateService(_ => Zip("<html>not an AppImage</html>"u8.ToArray()));
+        await File.WriteAllTextAsync(target, "old-appimage");
+
+        var replaced = await service.DownloadAndReplaceAppImageAsync(
+            "https://example.test/SimpleLauncher-9.9.9-linux-x64.AppImage", target);
+
+        Assert.False(replaced);
+        Assert.Equal("old-appimage", await File.ReadAllTextAsync(target));
+        Assert.False(File.Exists(target + ".new"));
+    }
+
+    [Fact]
+    public async Task DownloadAndReplaceAppImage_FailureKeepsCurrentFile()
+    {
+        var target = Path.Combine(_updaterDir, "SimpleLauncher.AppImage");
+        var (service, _, _) = CreateService(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        await File.WriteAllTextAsync(target, "old-appimage");
+
+        var replaced = await service.DownloadAndReplaceAppImageAsync(
+            "https://example.test/SimpleLauncher-9.9.9-linux-x64.AppImage", target);
+
+        Assert.False(replaced);
+        Assert.Equal("old-appimage", await File.ReadAllTextAsync(target));
+        Assert.False(File.Exists(target + ".new"));
     }
 
     private static string GitHubReleaseJson(string versionTag, params string[] assetNames)

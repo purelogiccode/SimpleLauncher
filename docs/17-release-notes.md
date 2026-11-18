@@ -2,6 +2,13 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
+## Next release — Unreleased
+
+- **Linux leaves beta**: x64 and ARM64 are supported release targets.
+- **New Linux bundles**: self-contained AppImage (`SimpleLauncher-{version}-linux-{x64,arm64}.AppImage`), Flatpak (`SimpleLauncher-{version}-linux-{x64,arm64}.flatpak`) and a portable `release_{version}_linux-{x64,arm64}.tar.gz` next to the existing ZIP. The AppImage and Flatpak carry the .NET runtime; the portable formats still require .NET 11.
+- **Package-aware updates**: AppImages download and replace the outer file, Flatpak installs defer to the software center (repository installs) or a reinstall of the newer bundle (direct `.flatpak`), and portable ZIP/tarball installs keep the existing Updater. Flatpak emulators run on the host through `flatpak-spawn`, and the sandbox uses the extraction/conversion fallbacks instead of FUSE mounts.
+- **Read-only installs**: AppImage and Flatpak no longer trigger the "move to a writable folder" warning; user data stays in the XDG folder (Flatpak uses `~/.var/app/com.purelogiccode.SimpleLauncher/data/SimpleLauncher`).
+
 ## 5.8.4 — 2026-10-20 (current)
 
 - **RetroAchievements stability**: HTML challenge, rate-limit and maintenance responses are treated as expected external conditions and logged at Information, so they no longer generate bug reports (bugs #68823–#68828).
@@ -46,7 +53,7 @@
 - **Updater**: the Avalonia updater's OK/Yes/No dialogs now close on click so the update flow resumes; single-file emulator downloads install directly; cancelled downloads delete partial files and stalled transfers retry.
 - **Reliability/security hardening**: Zip-Slip fail-closed extraction without wiping destination folders, partial-file cleanup, download cancel/path sanitization, updater staged-swap rollback, launch gating + invalid executable handling, gamepad/hash-pipe deadlocks, shutdown/tray-icon stall, play-history locking, RA account/system/hash hardening.
 - **Avalonia fixes**: Edit System help rendering, system-selection status bar, RA no-credentials panel, clicked-card load after Edit System, in-app path guard, INI encoding, WPF-matching title; embedded tray/about/link icons, wait overlay for long operations, selected-system info panel, owned message dialogs, background-thread UI sounds (a wedged audio stop can no longer freeze the UI).
-- **Linux support (beta)**: framework-dependent single-file Avalonia bundles for `linux-x64` / `linux-arm64` (the **.NET 10 runtime** is required) plus the Linux `Updater` in the same GitHub release; native launch pipeline (temp extraction, managed CHDSharp conversion, DOSBox `imgmount`, bundled `7zz`), XDG data folder, managed MP3/WAV audio, SDL2 gamepad navigation, platform-aware pickers/validation. Windows-only features (Dokan mounting, storefront scanning, RA config injection, screenshot/hotkey, Windows-only Tools menu entries) are hidden/no-ops. **Beta** — verified on Ubuntu 24.04 x64 and Fedora 44 KDE; ARM64 structurally verified only; please report issues.
+- **Linux support**: framework-dependent single-file Avalonia bundles for `linux-x64` / `linux-arm64` (the **.NET 10 runtime** is required) plus the Linux `Updater` in the same GitHub release; native launch pipeline (temp extraction, managed CHDSharp conversion, DOSBox `imgmount`, bundled `7zz`), XDG data folder, managed MP3/WAV audio, SDL2 gamepad navigation, platform-aware pickers/validation. Windows-only features (Dokan mounting, storefront scanning, RA config injection, screenshot/hotkey, Windows-only Tools menu entries) are hidden/no-ops. Verified on Ubuntu 24.04 x64 and Fedora 44 KDE; ARM64 structurally verified only; please report issues.
 - **Bundled tools**: XISOStudio/CHDStudio/RVZStudio replace the old batch converters; CHDStudio 3.9.4, RomValidator 2.9.2, SimpleZipDrive 3.1.1, FindRomCover 3.3.0 (now also Linux), RetroAchievementsSharp 1.0.0 per-RID CLI; per-RID tool folders; obsolete flat tool payloads are pruned on startup.
 - **Release packaging**: both scripts copy `LICENSE.txt` / `README.md` / `WhatsNew.md` into every payload; the Linux bundles ship framework-dependent single-file binaries.
 - **Accessibility**: every interactive control exposes an accessible name/automation id (Narrator/NVDA on Windows, Orca/AT-SPI on Linux); guardrail tests fail on missing names.

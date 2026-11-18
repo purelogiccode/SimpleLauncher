@@ -19,8 +19,8 @@
 
 ## Update assets
 
-Both apps read the same GitHub release, which ships the Windows and Linux bundles plus a
-standalone updater per RID:
+Both apps read the same GitHub release, which ships the Windows and Linux bundles (portable
+ZIP/tarball, AppImage and Flatpak) plus a standalone updater per RID:
 
 - `release_{version}_{rid}.zip` — the unified payload: `SimpleLauncher.exe` (WPF) and
   `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other plus the shared content files
@@ -40,9 +40,19 @@ standalone updater per RID:
   and the framework-dependent single-file `Updater`; the **.NET 11 runtime** is required, and the
   ZIP entries carry Unix permission bits (0755 for the executables) — see
   [15 — Development](15-development.md#linux-release-packaging-script).
+- `release_{version}_linux-{x64,arm64}.tar.gz` — the portable Linux payload above as a tarball
+  (same updater flow as the ZIP).
+- `SimpleLauncher-{version}-linux-{x64,arm64}.AppImage` — the self-contained AppImage bundle.
+  An AppImage install ignores the ZIP/Updater assets: it downloads the new AppImage beside the
+  running file, replaces it atomically (the `APPIMAGE` environment variable points at the outer
+  file) and restarts.
+- `SimpleLauncher-{version}-linux-{x64,arm64}.flatpak` — the Flatpak bundle. Flatpak installs do
+  not run the in-app updater check at all: a repository install updates through the software
+  center (`flatpak update`), while a direct `.flatpak` bundle is refreshed by reinstalling the
+  newer bundle (`flatpak install --user --reinstall ...`).
 - The secondary fallback (`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`)
-  mirrors `version.txt` and the same eight assets. Publish it after packaging with
-  `scripts/publish-fallback-r2.ps1` — see
+  mirrors `version.txt` and the same assets (including the AppImages, which self-update from
+  this copy). Publish it after packaging with `scripts/publish-fallback-r2.ps1` — see
   [15 — Development](15-development.md#cloudflare-r2-fallback-publishing).
 
 ## Update install flow
@@ -64,6 +74,13 @@ sequenceDiagram
   - `ShutdownForUpdateAsync` — downloads a fresh `Updater.exe` from GitHub (fallback: secondary server), launches it with the current PID and the target executable name, kills the app.
 - `ReinstallSimpleLauncher` (WPF) / `ReinstallAndShutdownAsync` (Avalonia):
   - `StartUpdaterAndShutdownAsync` / `LaunchUpdaterAndShutdownAsync` — launches the local `Updater.exe` or downloads it from GitHub/secondary server, then hard-exits; access-denied (error 5) → correct message box.
+- AppImage installs take a different path: there is no `Updater` file in the read-only mount,
+  so `AvaloniaCheckForUpdatesService` resolves `SimpleLauncher-{version}-{rid}.AppImage`,
+  downloads it to `<appimage>.new`, applies the executable bit, renames it over the running
+  file and starts it with `--restarting`. A failed download/replace shows the manual-download
+  message and leaves the current AppImage untouched.
+- Flatpak installs (`/.flatpak-info` or `FLATPAK_ID`) skip silent and manual update checks; a
+  manual check points to the download page, and the software center owns the release channel.
 - `--restarting` skips single-instance enforcement during startup; `-whatsnew` shows the release-notes window.
 - The updater relaunches with `-whatsnew` (not `--restarting`), so the restarted app still goes
   through the shared single-instance guard: if another instance is somehow still alive, the

@@ -26,7 +26,7 @@ Four application projects implement it:
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
 - **Performance** — one SQLite `settings.dat` for settings/favorites/history/systems plus MessagePack caches (`history.dat`, `mame.dat`, `RetroAchievements.dat`); async scanning/loading and pagination. The Avalonia startup shows the system-selection grid immediately and scans the ROM folders for sidebar counts in the background.
-- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia, x64/ARM64); .NET 11 runtime. **Linux support is beta**: verified end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE, the `linux-arm64` bundle is structurally verified only.
+- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia). Linux ships as a self-contained **AppImage**, a **Flatpak** bundle, and portable **tar.gz**/**ZIP** builds (the portable formats require the .NET 11 runtime). Verified end-to-end on Ubuntu 24.04 x64, Fedora 44 KDE and Linux Mint 22.3; the `linux-arm64` bundles are structurally verified. See [19 — Linux Packages](19-linux-packages.md).
 
 ## Feature surface (summary)
 

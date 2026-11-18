@@ -4,14 +4,20 @@
 Publishes a SimpleLauncher release to the Cloudflare R2 download fallback.
 
 .DESCRIPTION
-Uploads the four release ZIPs and four updater ZIPs to the R2 bucket behind
+Uploads every Linux/Windows release asset to the R2 bucket behind
 https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/, verifies that
-every object is publicly readable, and only then updates version.txt.
+every object is publicly readable, and only then updates version.txt:
+
+  release_{version}_{rid}.zip            Windows and portable Linux bundles
+  release_{version}_linux-{arch}.tar.gz  portable Linux tarballs
+  updater_{rid}.zip                      standalone updater bundles
+  SimpleLauncher-{version}-linux-*.AppImage  self-contained AppImage bundles
+  SimpleLauncher-{version}-linux-*.flatpak   Flatpak bundles
 
 The in-app update check reads version.txt first and then downloads
-release_{version}_{rid}.zip / updater_{rid}.zip from the same prefix. Uploading the
-bundles before version.txt prevents clients from seeing a version whose assets are
-not available yet.
+release_{version}_{rid}.zip / updater_{rid}.zip (or the AppImage when running from
+an AppImage) from the same prefix. Uploading the bundles before version.txt prevents
+clients from seeing a version whose assets are not available yet.
 
 Credentials are read from the process environment (R2_ACCOUNT_ID,
 R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, optional R2_PREFIX and
@@ -22,8 +28,8 @@ R2_PUBLIC_BASE_URL) or, when absent, from the R2_* block in AGENTS.local.md
 Release version in Major.Minor.Patch form, e.g. 5.8.4.
 
 .PARAMETER ReleaseDir
-Folder containing the eight ZIPs. Defaults to artifacts\release-{version}, then
-SimpleLauncher\bin\Release.
+Folder containing every release asset. Defaults to artifacts/release-{version}, then
+SimpleLauncher/bin/Release.
 
 .PARAMETER CredentialFile
 File with the R2_* key=value block. Defaults to AGENTS.local.md in the repo root.
@@ -79,8 +85,8 @@ $repoDir = Split-Path -Parent $PSScriptRoot
 # ---------------------------------------------------------------------------
 if (-not $ReleaseDir) {
     $candidates = @(
-        (Join-Path $repoDir "artifacts\release-$Version"),
-        (Join-Path $repoDir 'SimpleLauncher\bin\Release')
+        (Join-Path $repoDir "artifacts/release-$Version"),
+        (Join-Path $repoDir 'SimpleLauncher/bin/Release')
     )
 
     $ReleaseDir = $candidates | Where-Object {
@@ -98,6 +104,11 @@ $requiredAssets = [System.Collections.Generic.List[string]]::new()
 foreach ($rid in @('win-x64', 'win-arm64', 'linux-x64', 'linux-arm64')) {
     $requiredAssets.Add("release_${Version}_$rid.zip")
     $requiredAssets.Add("updater_$rid.zip")
+}
+foreach ($rid in @('linux-x64', 'linux-arm64')) {
+    $requiredAssets.Add("release_${Version}_$rid.tar.gz")
+    $requiredAssets.Add("SimpleLauncher-${Version}-$rid.AppImage")
+    $requiredAssets.Add("SimpleLauncher-${Version}-$rid.flatpak")
 }
 
 foreach ($asset in $requiredAssets) {
@@ -187,6 +198,25 @@ function Get-R2ObjectUrl {
     return "https://$accountId.r2.cloudflarestorage.com/$bucket/$encodedKey"
 }
 
+function Get-AssetContentType {
+    param([Parameter(Mandatory = $true)][string]$AssetName)
+
+    if ($AssetName.EndsWith('.tar.gz', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/gzip'
+    }
+    if ($AssetName.EndsWith('.AppImage', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/vnd.appimage'
+    }
+    if ($AssetName.EndsWith('.flatpak', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/vnd.flatpak'
+    }
+    if ($AssetName.EndsWith('.zip', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/zip'
+    }
+
+    return 'application/octet-stream'
+}
+
 function Get-PublicAssetUrl {
     param([Parameter(Mandatory = $true)][string]$AssetName)
 
@@ -201,7 +231,7 @@ function Invoke-R2Put {
     )
 
     if ($DryRun) {
-        Write-Host "[dry-run] PUT $Key"
+        Write-Host "[dry-run] PUT $Key ($ContentType)"
         return
     }
 
@@ -294,7 +324,7 @@ foreach ($asset in $requiredAssets) {
     $objectKey = $prefix + $asset
     $localLength = (Get-Item -LiteralPath $localPath).Length
     if (-not $VerifyOnly) {
-        Invoke-R2Put -LocalPath $localPath -Key $objectKey -ContentType 'application/zip'
+        Invoke-R2Put -LocalPath $localPath -Key $objectKey -ContentType (Get-AssetContentType -AssetName $asset)
     }
     Test-PublicAsset -AssetName $asset -ExpectedLength $localLength
 }

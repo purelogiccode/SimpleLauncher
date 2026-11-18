@@ -1,3 +1,23 @@
+# Next Release
+*Unreleased*
+---
+
+## Linux Packaging
+- **Linux is out of beta** — x64 and ARM64 are supported release targets.
+- **AppImage** — self-contained `SimpleLauncher-{version}-linux-{x64,arm64}.AppImage` with the
+  .NET runtime bundled; no runtime installation, and the app updates by downloading and
+  replacing the outer AppImage.
+- **Flatpak** — `SimpleLauncher-{version}-linux-{x64,arm64}.flatpak` on
+  `org.freedesktop.Platform//25.08`; emulators launch on the host through `flatpak-spawn`.
+  Repository installs update through the software center; direct bundles are refreshed by
+  reinstalling the newer `.flatpak` file.
+- **Portable tarball** — `release_{version}_linux-{x64,arm64}.tar.gz` next to the existing ZIP,
+  with Unix permissions preserved.
+- **Update handling** — portable ZIP/tarball installs keep using the in-app Updater; AppImage
+  installs self-replace; Flatpak installs defer to the OS package manager.
+
+---
+
 # Release 5.8.4
 *2026-10-20*
 ---
@@ -114,8 +134,8 @@
 - **Avalonia fixes** — Edit System help rendering, status bar visibility in the system selection screen, no-credentials panel in the RA window, loading the clicked system card after closing Edit System, in-app path guards, INI encoding, and a window title matching WPF.
 - **Filtering** — Accent-insensitive game filtering restored, and Commander Genius archive deletion fixed.
 
-## Linux Support (Avalonia) — Beta
-- **Beta** — Linux support is in beta: it was tested end-to-end on Ubuntu 24.04 x64 and Fedora 44 KDE (GUI smoke-tested on Wayland); the ARM64 bundle is structurally verified only. Please report issues on GitHub.
+## Linux Support (Avalonia)
+- **Stable on x64** — tested end-to-end on Ubuntu 24.04 x64, Fedora 44 KDE (GUI smoke-tested on Wayland) and Linux Mint 22.3; the ARM64 bundles are structurally verified. Please report issues on GitHub.
 - **Native Linux builds** — The Avalonia app ships framework-dependent single-file bundles for `linux-x64` and `linux-arm64` (one `SimpleLauncher.Avalonia` binary plus its native libraries, like the Windows exes; the **.NET 10 runtime** is required; `release_{version}_linux-*.zip` plus `updater_linux-*.zip`); the release workflow publishes them next to the Windows bundles and the in-app updater resolves the Linux assets.
 - **No Dokan needed on Linux** — Archive launches (ZIP/7z/RAR) mount through the bundled SimpleZipDrive FUSE build and Xbox images (`.iso`/`.xiso`/`.cso`/`.chd`/`.zar`) through the bundled SimpleXisoDrive FUSE build (with the virtual `image.iso` for xemu); the temp-extraction and managed CHDSharp conversion paths remain automatic fallbacks when FUSE or the payload is unavailable. DOSBox ISO games use the native `imgmount` instead of the Windows PowerShell path.
 - **Native Linux behavior** — App data lives in the XDG folder (`~/.local/share/SimpleLauncher`), Commander Genius uses `~/.CommanderGenius`, paths are handled POSIX-style with case-sensitive matching, and the extension-less bundled 7-Zip fallback (`7zz`) runs correctly. SDL2 gamepad navigation is supported.

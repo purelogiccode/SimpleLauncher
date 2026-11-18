@@ -199,7 +199,11 @@ The launcher supports an extensive range of gaming systems including:
 4. **Prerequisites:**
    * Install **Dokan** from [GitHub](https://github.com/dokan-dev/dokany/releases) for on-the-fly file mounting.
    * Ensure you have the [.NET 11 **Desktop** Runtime](https://dotnet.microsoft.com/download) installed (both apps are framework-dependent).
-5. **Linux (beta):** download `release_{version}_linux-x64.zip` (or `linux-arm64`), install the [.NET 11 Runtime](https://dotnet.microsoft.com/download) and `libasound2` (optional: `libsndfile1` for FLAC/Ogg/Opus UI sounds), then run `./SimpleLauncher.Avalonia`. Mounting uses **FUSE 3** (`libfuse3` + `/dev/fuse`) instead of Dokan. Linux support is **beta** — issues are welcome on GitHub.
+5. **Linux (x64 / ARM64):** every release ships four formats — see the [Linux packages guide](docs/19-linux-packages.md).
+   * **AppImage (recommended, no runtime needed):** `chmod +x SimpleLauncher-{version}-linux-x64.AppImage` (or `linux-arm64`) and run it. It self-updates in place.
+   * **Flatpak:** `flatpak install --user ./SimpleLauncher-{version}-linux-x64.flatpak`, then `flatpak run com.purelogiccode.SimpleLauncher`. Updates come from the software center; emulators run on the host via `flatpak-spawn`.
+   * **Portable tarball / ZIP:** `release_{version}_linux-x64.tar.gz` (or `.zip`) requires the [.NET 11 Runtime](https://dotnet.microsoft.com/download); extract and run `./SimpleLauncher.Avalonia`.
+   * Install `libasound2` for audio output (optional: `libsndfile1` for FLAC/Ogg/Opus UI sounds). **FUSE 3** (`libfuse3` + `/dev/fuse`) enables direct ZIP/7z/RAR and Xbox-image mounts (not available inside Flatpak, which uses the extraction fallbacks).
 
 ---
 

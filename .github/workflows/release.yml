@@ -1,15 +1,25 @@
 name: Publish release
 
-# Manual release: packages the Windows WPF + Avalonia bundle for win-x64 and win-arm64 via
-# scripts/package-release.ps1 and the framework-dependent Linux bundle for linux-x64 and linux-arm64
-# via scripts/package-release-linux.ps1, uploads the zips as workflow artifacts,
-# creates/updates the GitHub release the in-app updater reads, and mirrors the same
-# assets to the Cloudflare R2 download fallback with scripts/publish-fallback-r2.ps1.
+# Manual release. Packages:
+#
+#   Windows (windows-latest)  win-x64 / win-arm64 portable ZIPs + updater ZIPs
+#                             via scripts/package-release.ps1
+#   Linux   (ubuntu-latest)   linux-x64 / linux-arm64 framework-dependent ZIP + tar.gz,
+#                             self-contained AppImage and Flatpak, and the updater ZIPs
+#                             via scripts/package-release-linux.ps1 +
+#                             scripts/package-linux-native.sh
+#
+# The publish job then creates/updates the GitHub release the in-app updater reads,
+# uploads every asset and mirrors the same files to the Cloudflare R2 fallback with
+# scripts/publish-fallback-r2.ps1.
 #
 # Assets produced per RID:
-#   release_{version}_{rid}.zip   Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe side by side
-#                                 Linux:   the framework-dependent SimpleLauncher.Avalonia payload
-#   updater_{rid}.zip             the standalone updater shared by the apps (Updater.exe / Updater)
+#   release_{version}_{rid}.zip        Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe
+#                                      Linux:   framework-dependent SimpleLauncher.Avalonia payload
+#   release_{version}_{rid}.tar.gz     Linux:   the same portable payload as a tarball
+#   updater_{rid}.zip                  the standalone updater shared by the apps
+#   SimpleLauncher-{version}-{rid}.AppImage   Linux: self-contained (bundled .NET runtime)
+#   SimpleLauncher-{version}-{rid}.flatpak    Linux: Flatpak bundle (org.freedesktop.Platform)
 
 on:
   workflow_dispatch:
@@ -37,9 +47,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Package release bundles (win-x64, win-arm64, linux-x64, linux-arm64)
+  package-windows:
+    name: Package Windows bundles
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -59,22 +70,128 @@ jobs:
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
 
-      - name: Package Linux release
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: simplelauncher-windows-${{ inputs.version }}
+          path: artifacts/release/*
+          retention-days: 7
+
+  package-linux:
+    name: Package Linux bundles (zip, tar.gz, AppImage, Flatpak)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Install Flatpak runtimes (x86_64 and aarch64)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y flathub \
+            org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+          sudo flatpak install -y --arch=aarch64 flathub \
+            org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+
+      - name: Package portable Linux bundles
         shell: pwsh
         env:
           VERSION: ${{ inputs.version }}
         run: >
           ./scripts/package-release-linux.ps1
           -Version $env:VERSION
+          -BuildSelfContainedPayload
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish-linux'
 
-      - name: Upload packages as workflow artifacts
+      - name: Package native Linux bundles (AppImage + Flatpak)
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          for rid in linux-x64 linux-arm64; do
+            ./scripts/package-linux-native.sh \
+              --version "$VERSION" \
+              --rid "$rid" \
+              --payload "$RUNNER_TEMP/sl-publish-linux/$rid/selfcontained" \
+              --output artifacts/release \
+              --work "$RUNNER_TEMP/sl-native-$rid"
+          done
+
+      - name: Upload Linux packages
         uses: actions/upload-artifact@v7
         with:
-          name: simplelauncher-${{ inputs.version }}
-          path: artifacts/release/*.zip
+          name: simplelauncher-linux-${{ inputs.version }}
+          path: artifacts/release/*
           retention-days: 7
+
+  publish:
+    name: Create release and publish fallback
+    needs:
+      - package-windows
+      - package-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download Windows packages
+        uses: actions/download-artifact@v8
+        with:
+          name: simplelauncher-windows-${{ inputs.version }}
+          path: artifacts/release
+
+      - name: Download Linux packages
+        uses: actions/download-artifact@v8
+        with:
+          name: simplelauncher-linux-${{ inputs.version }}
+          path: artifacts/release
+
+      - name: Verify every release asset is present
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          $expected = @(
+            "release_$($env:VERSION)_win-x64.zip"
+            "release_$($env:VERSION)_win-arm64.zip"
+            "release_$($env:VERSION)_linux-x64.zip"
+            "release_$($env:VERSION)_linux-arm64.zip"
+            "release_$($env:VERSION)_linux-x64.tar.gz"
+            "release_$($env:VERSION)_linux-arm64.tar.gz"
+            "updater_win-x64.zip"
+            "updater_win-arm64.zip"
+            "updater_linux-x64.zip"
+            "updater_linux-arm64.zip"
+            "SimpleLauncher-$($env:VERSION)-linux-x64.AppImage"
+            "SimpleLauncher-$($env:VERSION)-linux-arm64.AppImage"
+            "SimpleLauncher-$($env:VERSION)-linux-x64.flatpak"
+            "SimpleLauncher-$($env:VERSION)-linux-arm64.flatpak"
+          )
+
+          $missing = @($expected | Where-Object {
+              -not (Test-Path -LiteralPath (Join-Path 'artifacts/release' $_))
+            })
+          if ($missing.Count -gt 0) {
+            throw "Missing release assets: $($missing -join ', ')"
+          }
+
+          Get-ChildItem -LiteralPath 'artifacts/release' |
+            Sort-Object Name |
+            Select-Object Name, @{ Name = 'MB'; Expression = { [math]::Round($_.Length / 1MB, 1) } } |
+            Format-Table -AutoSize
 
       - name: Create or update GitHub release
         if: ${{ inputs.create_release }}
@@ -85,7 +202,7 @@ jobs:
           RELEASE_NOTES: ${{ inputs.release_notes }}
         run: |
           $tag = "release$env:VERSION"
-          $assets = Get-ChildItem -LiteralPath 'artifacts/release' -Filter '*.zip' | ForEach-Object { $_.FullName }
+          $assets = Get-ChildItem -LiteralPath 'artifacts/release' -File | ForEach-Object { $_.FullName }
 
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {

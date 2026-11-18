@@ -13,6 +13,7 @@ using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleLauncher.Avalonia.Services.AvaloniaServices;
 using SimpleLauncher.Core.Interfaces;
+using SimpleLauncher.Core.Services;
 using CoreMessageBoxResult = SimpleLauncher.Core.Models.MessageBoxResult;
 using IApplicationLifetime = SimpleLauncher.Core.Interfaces.IApplicationLifetime;
 
@@ -111,6 +112,16 @@ public partial class AvaloniaCheckForUpdatesService
     }
 
     /// <summary>
+    ///     Name of the self-contained AppImage asset for a raw version and runtime identifier,
+    ///     e.g. SimpleLauncher-5.8.4-linux-x64.AppImage. AppImages update by replacing the
+    ///     outer file, so they do not use the portable release ZIP or the Updater.
+    /// </summary>
+    internal static string AppImageAssetName(string rawVersion, string rid)
+    {
+        return $"SimpleLauncher-{rawVersion}-{rid}.AppImage";
+    }
+
+    /// <summary>
     ///     Name of the single updater package asset for a runtime identifier,
     ///     e.g. updater_win-x64.zip.
     /// </summary>
@@ -142,6 +153,15 @@ public partial class AvaloniaCheckForUpdatesService
     /// <returns>A task representing the asynchronous update check operation.</returns>
     public async Task SilentCheckForUpdatesAsync()
     {
+        if (PackagingEnvironment.UpdatesManagedExternally)
+        {
+            // Flatpak installs are updated by the software center (flatpak update), never by
+            // the in-app updater: the payload lives on a read-only /app mount and the store
+            // owns the release channel.
+            _logger.Information("Flatpak install: updates are managed by the software center; skipping the update check");
+            return;
+        }
+
         try
         {
             var (latestVersion, releasePackageUrl, updaterZipAssetUrl, _) = await GetLatestReleaseInfoAsync();
@@ -168,6 +188,13 @@ public partial class AvaloniaCheckForUpdatesService
             var result = await _messageBoxLibrary.DoYouWantToUpdateMessageBoxAsync(CurrentVersion, latestVersion);
             if (result == CoreMessageBoxResult.Yes)
             {
+                if (PackagingEnvironment.IsAppImage)
+                {
+                    _logger.Information("AppImage update to {LatestVersion} confirmed by user", latestVersion);
+                    await UpdateAppImageAsync(releasePackageUrl, latestVersion, TryGetMainWindow());
+                    return;
+                }
+
                 _logger.Information("Update to {LatestVersion} confirmed by user; launching the updater",
                     latestVersion);
                 await ShowUpdateWindowAsync(releasePackageUrl, updaterZipAssetUrl, TryGetMainWindow());
@@ -205,6 +232,15 @@ public partial class AvaloniaCheckForUpdatesService
     /// <returns>A task representing the asynchronous update check operation.</returns>
     internal async Task ManualCheckForUpdatesAsync(Window? owner)
     {
+        if (PackagingEnvironment.UpdatesManagedExternally)
+        {
+            // The store owns the update channel; a manual check can only point the user at
+            // the release page (or at `flatpak update`).
+            _logger.Information("Flatpak install: updates are managed by the software center");
+            await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+            return;
+        }
+
         try
         {
             var (latestVersion, releasePackageUrl, updaterZipAssetUrl, _) = await GetLatestReleaseInfoAsync();
@@ -224,6 +260,13 @@ public partial class AvaloniaCheckForUpdatesService
                 var result = await _messageBoxLibrary.DoYouWantToUpdateMessageBoxAsync(CurrentVersion, latestVersion);
                 if (result == CoreMessageBoxResult.Yes)
                 {
+                    if (PackagingEnvironment.IsAppImage)
+                    {
+                        _logger.Information("AppImage update to {LatestVersion} confirmed by user", latestVersion);
+                        await UpdateAppImageAsync(releasePackageUrl, latestVersion, owner);
+                        return;
+                    }
+
                     _logger.Information("Update to {LatestVersion} confirmed by user; launching the updater",
                         latestVersion);
                     await ShowUpdateWindowAsync(releasePackageUrl, updaterZipAssetUrl, owner);
@@ -261,6 +304,30 @@ public partial class AvaloniaCheckForUpdatesService
     /// <param name="updaterZipAssetUrl">URL of the updater package, or null when unknown.</param>
     public async Task ReinstallAndShutdownAsync(string? updaterZipAssetUrl = null)
     {
+        if (PackagingEnvironment.UpdatesManagedExternally)
+        {
+            _logger.Information(
+                "Reinstall requested from a Flatpak install; pointing the user at the manual download page");
+            await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+            return;
+        }
+
+        if (PackagingEnvironment.IsAppImage)
+        {
+            try
+            {
+                var (latestVersion, appImageUrl, _, _) = await GetLatestReleaseInfoAsync();
+                await UpdateAppImageAsync(appImageUrl, latestVersion, TryGetMainWindow());
+            }
+            catch (Exception ex)
+            {
+                _logger.Information(ex, "AppImage reinstall failed");
+                await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+            }
+
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(updaterZipAssetUrl))
         {
             try
@@ -411,6 +478,147 @@ public partial class AvaloniaCheckForUpdatesService
             // Failure paths only — a successful launch shuts the process down before this runs.
             if (logWindow is not null) await RunOnUiThreadAsync(logWindow.Close);
             if (owner is not null) await RunOnUiThreadAsync(owner.Show);
+        }
+    }
+
+    /// <summary>
+    ///     Updates an AppImage install: downloads the new AppImage beside the running file,
+    ///     atomically replaces it and restarts the application. AppImages run from a
+    ///     read-only squashfs mount, so the portable ZIP/Updater flow cannot be used.
+    /// </summary>
+    private async Task UpdateAppImageAsync(string? appImageUrl, string? latestVersion, Window? owner)
+    {
+        UpdateLogWindow? logWindow = null;
+        var appImagePath = PackagingEnvironment.AppImagePath;
+
+        if (string.IsNullOrWhiteSpace(appImageUrl) || string.IsNullOrWhiteSpace(appImagePath))
+        {
+            _logger.Information("AppImage update: no AppImage asset or APPIMAGE path is available");
+            await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+            return;
+        }
+
+        try
+        {
+            logWindow = TryResolveUpdateLogWindow();
+            if (logWindow is not null)
+            {
+                await RunOnUiThreadAsync(logWindow.Show);
+                await logWindow.LogAsync($"Downloading Simple Launcher {latestVersion} AppImage...");
+            }
+
+            if (!await DownloadAndReplaceAppImageAsync(appImageUrl, appImagePath))
+            {
+                await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+                return;
+            }
+
+            if (logWindow is not null)
+                await logWindow.LogAsync("Restarting Simple Launcher...");
+
+            var startInfo = new ProcessStartInfo(appImagePath)
+            {
+                Arguments = "--restarting",
+                UseShellExecute = false,
+                WorkingDirectory = Path.GetDirectoryName(appImagePath) ?? AppDomain.CurrentDomain.BaseDirectory
+            };
+            using var startedProcess = Process.Start(startInfo);
+            if (startedProcess is null)
+            {
+                _logger.Information("The updated AppImage did not start from {Path}", appImagePath);
+                await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+                return;
+            }
+
+            if (owner is not null) await RunOnUiThreadAsync(owner.Hide);
+            _logger.Information("Updated AppImage launched from {Path}; shutting down for the update", appImagePath);
+            _applicationLifetime.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            // Expected during updates (read-only install folder, failed restart); the user
+            // is guided to the manual download page below.
+            _logger.Information(ex, "AppImage update failed");
+            await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
+        }
+        finally
+        {
+            if (logWindow is not null) await RunOnUiThreadAsync(logWindow.Close);
+            if (owner is not null) await RunOnUiThreadAsync(owner.Show);
+        }
+    }
+
+    /// <summary>
+    ///     Downloads an AppImage beside the current file and atomically renames it over the
+    ///     running one. Internal so the replacement path can be tested without launching a
+    ///     process or depending on the <c>APPIMAGE</c> environment variable.
+    /// </summary>
+    internal async Task<bool> DownloadAndReplaceAppImageAsync(string appImageUrl, string appImagePath)
+    {
+        var tempPath = appImagePath + ".new";
+
+        try
+        {
+            using (var response = await _httpClient.GetAsync(appImageUrl, HttpCompletionOption.ResponseHeadersRead))
+            {
+                response.EnsureSuccessStatusCode();
+                await using var source = await response.Content.ReadAsStreamAsync();
+                await using var target = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None,
+                    81920, FileOptions.Asynchronous);
+                await source.CopyToAsync(target);
+            }
+
+            if (!await IsValidAppImageAsync(tempPath))
+            {
+                // A proxy/captive portal can return an HTML error page with HTTP 200; never
+                // replace a working AppImage with a file that cannot be launched.
+                _logger.Information("Downloaded AppImage is not a valid ELF AppImage; keeping the current file");
+                TryDeleteFile(tempPath);
+                return false;
+            }
+
+            // ZIP/tar distribution carries no Unix modes; the downloaded AppImage must be
+            // executable before the replacement can be launched.
+            if (!OperatingSystem.IsWindows())
+                TryMakeExecutable(tempPath);
+
+            // Both paths live in the same folder, so this rename is atomic: the running
+            // AppImage keeps its inode until it exits and the next launch uses the new file.
+            File.Move(tempPath, appImagePath, true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Information(ex, "AppImage update download failed");
+            TryDeleteFile(tempPath);
+            return false;
+        }
+    }
+
+    private static async Task<bool> IsValidAppImageAsync(string path)
+    {
+        var file = new FileInfo(path);
+        if (!file.Exists || file.Length < 1 * 1024 * 1024) return false;
+
+        await using var stream = file.OpenRead();
+        var header = new byte[4];
+        var read = await stream.ReadAsync(header);
+        return read == 4 &&
+               header[0] == 0x7F &&
+               header[1] == (byte)'E' &&
+               header[2] == (byte)'L' &&
+               header[3] == (byte)'F';
+    }
+
+    private void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (Exception ex)
+        {
+            _logger.Debug(ex, "Could not delete the temporary AppImage update file {Path}", path);
         }
     }
 
@@ -597,8 +805,12 @@ public partial class AvaloniaCheckForUpdatesService
 
             var rawVersion = versionMatch.Value;
             var latestVersion = NormalizeVersion(rawVersion);
-            var releasePackageUrl = SecondaryServerBaseUrl + ReleaseAssetName(rawVersion, CurrentRuntimeIdentifier);
-            var updaterZipAssetUrl = SecondaryServerBaseUrl + UpdaterAssetName(CurrentRuntimeIdentifier);
+            var releasePackageUrl = PackagingEnvironment.IsAppImage
+                ? SecondaryServerBaseUrl + AppImageAssetName(rawVersion, CurrentRuntimeIdentifier)
+                : SecondaryServerBaseUrl + ReleaseAssetName(rawVersion, CurrentRuntimeIdentifier);
+            var updaterZipAssetUrl = PackagingEnvironment.IsAppImage
+                ? null
+                : SecondaryServerBaseUrl + UpdaterAssetName(CurrentRuntimeIdentifier);
 
             _logger.Information("GitHub API unavailable. Using the secondary server: version {LatestVersion}",
                 latestVersion);
@@ -698,8 +910,14 @@ public partial class AvaloniaCheckForUpdatesService
             string? foundReleasePackageUrl = null;
             string? foundUpdaterZipUrl = null;
 
-            var expectedUpdaterFileName = UpdaterAssetName(CurrentRuntimeIdentifier);
-            var expectedReleaseFileName = ReleaseAssetName(rawVersionStringFromTag!, CurrentRuntimeIdentifier);
+            // An AppImage updates by replacing its outer file: it reads the AppImage asset
+            // and has no use for the portable ZIP or the standalone Updater.
+            var expectedUpdaterFileName = PackagingEnvironment.IsAppImage
+                ? null
+                : UpdaterAssetName(CurrentRuntimeIdentifier);
+            var expectedReleaseFileName = PackagingEnvironment.IsAppImage
+                ? AppImageAssetName(rawVersionStringFromTag!, CurrentRuntimeIdentifier)
+                : ReleaseAssetName(rawVersionStringFromTag!, CurrentRuntimeIdentifier);
 
             _logger.Debug($"Searching for assets: '{expectedReleaseFileName}' and '{expectedUpdaterFileName}'");
 
@@ -710,7 +928,8 @@ public partial class AvaloniaCheckForUpdatesService
                     if (!asset.TryGetProperty("name", out var nameElement)) continue;
 
                     var assetName = nameElement.GetString();
-                    if (assetName?.Equals(expectedUpdaterFileName, StringComparison.OrdinalIgnoreCase) == true)
+                    if (expectedUpdaterFileName is not null &&
+                        assetName?.Equals(expectedUpdaterFileName, StringComparison.OrdinalIgnoreCase) == true)
                     {
                         if (asset.TryGetProperty("browser_download_url", out var downloadUrlElement))
                             foundUpdaterZipUrl = downloadUrlElement.GetString();
@@ -721,10 +940,11 @@ public partial class AvaloniaCheckForUpdatesService
                             foundReleasePackageUrl = downloadUrlElement.GetString();
                     }
 
-                    if (foundUpdaterZipUrl != null && foundReleasePackageUrl != null) break;
+                    if (foundReleasePackageUrl != null &&
+                        (expectedUpdaterFileName is null || foundUpdaterZipUrl != null)) break;
                 }
 
-                if (foundUpdaterZipUrl == null)
+                if (expectedUpdaterFileName is not null && foundUpdaterZipUrl == null)
                 {
                     // A release is not required to ship every platform: a missing asset means
                     // "no update for this platform", not an error (Error+ is reported as a bug).

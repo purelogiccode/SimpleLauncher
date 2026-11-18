@@ -6,8 +6,13 @@ Packages the Linux release artifacts (linux-x64 / linux-arm64) for SimpleLaunche
 .DESCRIPTION
 For every runtime identifier this produces, in the output folder:
 
-  release_{version}_{rid}.zip   the single-file SimpleLauncher.Avalonia payload
-  updater_{rid}.zip             the standalone Updater binary (single file)
+  release_{version}_{rid}.zip      the single-file SimpleLauncher.Avalonia payload
+  release_{version}_{rid}.tar.gz   the same payload as a tar.gz (Unix modes preserved)
+  updater_{rid}.zip                the standalone Updater binary (single file)
+
+With -BuildSelfContainedPayload it also produces a self-contained (bundled .NET
+runtime) payload under the work folder, which the native AppImage/Flatpak packager
+(scripts/package-linux-native.sh) turns into the store-style bundles.
 
 The asset names match the ones the app and the updater look up in the release
 (AvaloniaCheckForUpdatesService.ReleaseAssetName / UpdaterAssetName), so the same
@@ -46,10 +51,10 @@ The release version, e.g. 5.8.1. Must match the csproj/manifest values.
 RIDs to package. Defaults to linux-x64 and linux-arm64.
 
 .PARAMETER OutputDir
-Where the zips are written. Defaults to artifacts\release.
+Where the zips are written. Defaults to artifacts/release.
 
 .PARAMETER WorkDir
-Scratch folder for the publish outputs. Defaults to artifacts\publish-linux.
+Scratch folder for the publish outputs. Defaults to artifacts/publish-linux.
 
 .EXAMPLE
 pwsh scripts/package-release-linux.ps1 -Version 5.8.1
@@ -63,24 +68,30 @@ param(
 
     [string]$OutputDir,
 
-    [string]$WorkDir
+    [string]$WorkDir,
+
+    # Also publish a self-contained payload (bundled .NET runtime) for the native
+    # AppImage/Flatpak packager. The portable ZIP/tarball stay framework-dependent.
+    [switch]$BuildSelfContainedPayload
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 Add-Type -AssemblyName System.IO.Compression | Out-Null
+Add-Type -AssemblyName System.Formats.Tar | Out-Null
 
 $repoDir = Split-Path -Parent $PSScriptRoot
-$wpfProject = Join-Path $repoDir 'SimpleLauncher\SimpleLauncher.csproj'
-$avaloniaProject = Join-Path $repoDir 'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj'
-$updaterProject = Join-Path $repoDir 'SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj'
+# Forward slashes keep every path valid on both Windows and the Linux CI runner.
+$wpfProject = Join-Path $repoDir 'SimpleLauncher/SimpleLauncher.csproj'
+$avaloniaProject = Join-Path $repoDir 'SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj'
+$updaterProject = Join-Path $repoDir 'SimpleLauncher.Avalonia.Updater/SimpleLauncher.Avalonia.Updater.csproj'
 
 if (-not $OutputDir) {
-    $OutputDir = Join-Path $repoDir 'artifacts\release'
+    $OutputDir = Join-Path $repoDir 'artifacts/release'
 }
 if (-not $WorkDir) {
-    $WorkDir = Join-Path $repoDir 'artifacts\publish-linux'
+    $WorkDir = Join-Path $repoDir 'artifacts/publish-linux'
 }
 $OutputDir = [System.IO.Path]::GetFullPath($OutputDir)
 $WorkDir = [System.IO.Path]::GetFullPath($WorkDir)
@@ -98,6 +109,16 @@ foreach ($rid in $RuntimeIdentifiers) {
 # Unix permission bits stored in the ZIP external attributes (high 16 bits).
 $fileMode = 0x81A4 -shl 16      # 0100644
 $executableMode = 0x81ED -shl 16 # 0100755
+
+# The same modes as UnixFileMode values, used by tar.gz and direct mode updates.
+$fileModeUnix = [System.IO.UnixFileMode]::UserRead -bor
+    [System.IO.UnixFileMode]::UserWrite -bor
+    [System.IO.UnixFileMode]::GroupRead -bor
+    [System.IO.UnixFileMode]::OtherRead
+$executableUnixMode = $fileModeUnix -bor
+    [System.IO.UnixFileMode]::UserExecute -bor
+    [System.IO.UnixFileMode]::GroupExecute -bor
+    [System.IO.UnixFileMode]::OtherExecute
 
 function Get-CsprojVersion {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -119,10 +140,10 @@ function Assert-Versions {
     param([Parameter(Mandatory = $true)][string]$Version)
 
     $projectVersions = [ordered]@{
-        'SimpleLauncher\SimpleLauncher.csproj'                   = $wpfProject
-        'SimpleLauncher.Core\SimpleLauncher.Core.csproj'         = (Join-Path $repoDir 'SimpleLauncher.Core\SimpleLauncher.Core.csproj')
-        'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj' = $avaloniaProject
-        'SimpleLauncher.Avalonia.Updater\...csproj'              = $updaterProject
+        'SimpleLauncher/SimpleLauncher.csproj'                   = $wpfProject
+        'SimpleLauncher.Core/SimpleLauncher.Core.csproj'         = (Join-Path $repoDir 'SimpleLauncher.Core/SimpleLauncher.Core.csproj')
+        'SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj' = $avaloniaProject
+        'SimpleLauncher.Avalonia.Updater/...csproj'              = $updaterProject
     }
 
     foreach ($entry in $projectVersions.GetEnumerator()) {
@@ -133,8 +154,8 @@ function Assert-Versions {
     }
 
     $manifests = @(
-        'SimpleLauncher\app.manifest',
-        'SimpleLauncher.Avalonia\app.manifest'
+        'SimpleLauncher/app.manifest',
+        'SimpleLauncher.Avalonia/app.manifest'
     )
     foreach ($manifestRelative in $manifests) {
         $manifestVersion = Get-ManifestVersion (Join-Path $repoDir $manifestRelative)
@@ -311,7 +332,7 @@ function Copy-BundleDocuments {
     $documents = @(
         @{ Source = (Join-Path $RepoDir 'LICENSE.txt'); Name = 'LICENSE.txt' },
         @{ Source = (Join-Path $RepoDir 'README.md'); Name = 'README.md' },
-        @{ Source = (Join-Path $RepoDir 'SimpleLauncher\WhatsNew.md'); Name = 'WhatsNew.md' }
+        @{ Source = (Join-Path $RepoDir 'SimpleLauncher/WhatsNew.md'); Name = 'WhatsNew.md' }
     )
 
     foreach ($document in $documents) {
@@ -368,6 +389,107 @@ function New-LinuxZipArchive {
     Set-UnixHostSystem -ZipPath $ZipPath
 }
 
+# Applies the executable bits directly on a Unix build host (the ZIP external attributes
+# and tar entry modes handle the same files when the packaging runs on Windows).
+function Set-UnixFileModes {
+    param(
+        [Parameter(Mandatory = $true)][string]$PublishDir,
+        [Parameter(Mandatory = $true)][string]$Rid
+    )
+
+    if ($IsWindows) { return }
+
+    $count = 0
+    foreach ($file in @(Get-ChildItem -LiteralPath $PublishDir -Recurse -File -Force)) {
+        $relative = [System.IO.Path]::GetRelativePath($PublishDir, $file.FullName).Replace('\', '/')
+        $mode = if (Test-ExecutableEntry -RelativePath $relative -Rid $Rid) {
+            $executableUnixMode
+        }
+        else {
+            $fileModeUnix
+        }
+
+        [System.IO.File]::SetUnixFileMode($file.FullName, $mode)
+        $count++
+    }
+
+    Write-Host "Applied Unix file modes to $count files."
+}
+
+# The self-contained payload is used by AppImage/Flatpak, where the in-app updater is
+# replaced by the AppImage self-update or the Flatpak software center. Do not ship the
+# framework-dependent Updater inside those bundles.
+function Remove-UpdaterFiles {
+    param([Parameter(Mandatory = $true)][string]$PublishDir)
+
+    $removed = 0
+    foreach ($file in @(Get-ChildItem -LiteralPath $PublishDir -File -Force |
+            Where-Object { $_.Name -like 'Updater*' })) {
+        Remove-Item -LiteralPath $file.FullName -Force
+        $removed++
+    }
+
+    Write-Host "Removed $removed Updater file(s) from the self-contained payload."
+}
+
+# Writes a gzip-compressed tar archive with explicit Unix modes, so extraction with
+# `tar -xzf` restores the executable bits even when the archive was built on Windows.
+function New-LinuxTarGz {
+    param(
+        [Parameter(Mandatory = $true)][string]$SourceDir,
+        [Parameter(Mandatory = $true)][string]$TarGzPath,
+        [Parameter(Mandatory = $true)][string]$Rid
+    )
+
+    if (Test-Path -LiteralPath $TarGzPath) { Remove-Item -LiteralPath $TarGzPath -Force }
+
+    $fileStream = [System.IO.File]::Create($TarGzPath)
+    try {
+        $gzipStream = [System.IO.Compression.GZipStream]::new(
+            $fileStream, [System.IO.Compression.CompressionLevel]::Optimal, $true)
+        try {
+            $writer = [System.Formats.Tar.TarWriter]::new(
+                $gzipStream, [System.Formats.Tar.TarEntryFormat]::Pax, $true)
+            try {
+                $files = @(Get-ChildItem -LiteralPath $SourceDir -Recurse -File -Force |
+                    Sort-Object -Property FullName)
+                foreach ($file in $files) {
+                    $relative = [System.IO.Path]::GetRelativePath($SourceDir, $file.FullName).Replace('\', '/')
+                    $entry = [System.Formats.Tar.PaxTarEntry]::new(
+                        [System.Formats.Tar.TarEntryType]::RegularFile, $relative)
+                    $entry.Mode = if (Test-ExecutableEntry -RelativePath $relative -Rid $Rid) {
+                        $executableUnixMode
+                    }
+                    else {
+                        $fileModeUnix
+                    }
+                    $entry.ModificationTime = [DateTimeOffset]$file.LastWriteTimeUtc
+
+                    $dataStream = [System.IO.File]::OpenRead($file.FullName)
+                    try {
+                        $entry.DataStream = $dataStream
+                        $writer.WriteEntry($entry)
+                    }
+                    finally {
+                        $dataStream.Dispose()
+                    }
+                }
+            }
+            finally {
+                $writer.Dispose()
+            }
+        }
+        finally {
+            $gzipStream.Dispose()
+        }
+    }
+    finally {
+        $fileStream.Dispose()
+    }
+
+    Write-Host "Created $(Split-Path -Leaf $TarGzPath) with Unix modes."
+}
+
 Assert-Versions -Version $Version
 
 $null = New-Item -ItemType Directory -Path $OutputDir -Force
@@ -375,10 +497,11 @@ if (Test-Path -LiteralPath $WorkDir) { Remove-Item -LiteralPath $WorkDir -Recurs
 $null = New-Item -ItemType Directory -Path $WorkDir -Force
 
 $produced = [System.Collections.Generic.List[string]]::new()
+$nativePayloads = @{}
 
 foreach ($rid in $RuntimeIdentifiers) {
-    $appPublishDir = Join-Path $WorkDir "$rid\app"
-    $updaterPublishDir = Join-Path $WorkDir "$rid\updater"
+    $appPublishDir = Join-Path $WorkDir "$rid/app"
+    $updaterPublishDir = Join-Path $WorkDir "$rid/updater"
 
     Write-Host ""
     Write-Host "=== SimpleLauncher.Avalonia $Version ($rid) ==="
@@ -405,6 +528,35 @@ foreach ($rid in $RuntimeIdentifiers) {
     $releaseZip = Join-Path $OutputDir "release_${Version}_${rid}.zip"
     New-LinuxZipArchive -SourceDir $appPublishDir -ZipPath $releaseZip -Rid $rid
     [void]$produced.Add($releaseZip)
+
+    $releaseTarGz = Join-Path $OutputDir "release_${Version}_${rid}.tar.gz"
+    New-LinuxTarGz -SourceDir $appPublishDir -TarGzPath $releaseTarGz -Rid $rid
+    [void]$produced.Add($releaseTarGz)
+
+    if ($BuildSelfContainedPayload) {
+        # Self-contained payload for AppImage/Flatpak: the .NET runtime travels with the
+        # app, so no runtime installation is required on the target machine.
+        $selfContainedDir = Join-Path $WorkDir "$rid/selfcontained"
+        Invoke-DotnetPublish @(
+            'publish',
+            $avaloniaProject,
+            '-c', 'Release',
+            '-f', 'net11.0',
+            '-r', $rid,
+            '--self-contained', 'true',
+            '-p:PublishSingleFile=false',
+            '--nologo',
+            '-o', $selfContainedDir
+        )
+
+        Remove-WindowsOnlyFiles -PublishDir $selfContainedDir -Rid $rid
+        Remove-UpdaterFiles -PublishDir $selfContainedDir
+        Copy-BundleDocuments -RepoDir $repoDir -PayloadDir $selfContainedDir
+        Set-UnixFileModes -PublishDir $selfContainedDir -Rid $rid
+
+        $nativePayloads[$rid] = $selfContainedDir
+        Write-Host "Self-contained payload for ${rid}: $selfContainedDir"
+    }
 
     # Standalone updater: framework-dependent single file (the .NET 11 runtime is required,
     # matching the app), with the Avalonia natives bundled for self-extraction so it is one
@@ -435,4 +587,12 @@ Write-Host "Packages written to $OutputDir :"
 foreach ($path in $produced) {
     $size = [math]::Round((Get-Item -LiteralPath $path).Length / 1MB, 1)
     Write-Host ("  {0} ({1} MB)" -f (Split-Path -Leaf $path), $size)
+}
+
+if ($BuildSelfContainedPayload) {
+    Write-Host ""
+    Write-Host "Self-contained payloads for the native packager:"
+    foreach ($rid in $RuntimeIdentifiers) {
+        Write-Host ("  {0}: {1}" -f $rid, $nativePayloads[$rid])
+    }
 }

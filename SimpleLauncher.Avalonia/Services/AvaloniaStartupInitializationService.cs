@@ -112,6 +112,15 @@ public class AvaloniaStartupInitializationService
     {
         try
         {
+            // AppImage and Flatpak installs intentionally run from a read-only package
+            // mount; user data already lives in ~/.local/share/SimpleLauncher. Asking the
+            // user to move a packaged install would be wrong (and impossible for Flatpak).
+            if (PackagingEnvironment.HasReadOnlyInstall)
+            {
+                _logger.Debug("Skipping the writable-folder check for a read-only packaged install");
+                return;
+            }
+
             _logger.Debug("Checking if the application directory is writable");
             if (!CheckIfDirectoryIsWritableService.IsWritableDirectory(AppContext.BaseDirectory, _logger))
             {
