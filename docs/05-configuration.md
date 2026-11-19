@@ -49,9 +49,10 @@ Since 5.8.0 both apps persist **all** user data in one SQLite database (`setting
 1. **An existing database always wins**: a portable `settings.dat` next to the exe is kept;
    when both a portable and a per-user copy exist, the newest one is used.
 2. **No database yet**: Windows keeps portable mode for a writable exe folder (zip installs);
-   Linux/macOS always default to the per-user data folder (`~/.local/share/SimpleLauncher`,
-   XDG) because the extracted app folder is writable there and user data belongs in the
-   per-user location (the same folder as logs, window bounds and the legacy backups).
+   Linux and macOS always default to the per-user data folder (`~/.local/share/SimpleLauncher` on
+   Linux, `~/Library/Application Support/SimpleLauncher` on macOS) because the extracted app
+   folder is writable there and user data belongs in the per-user location (the same folder as
+   logs, window bounds and the legacy backups).
 
 See [12 — Data Formats](12-data-formats.md#unified-database-settingsdat) for the schema,
 migration and merge behavior. The legacy files below are still read (first-launch migration)

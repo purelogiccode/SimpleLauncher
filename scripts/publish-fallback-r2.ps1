@@ -4,7 +4,7 @@
 Publishes a SimpleLauncher release to the Cloudflare R2 download fallback.
 
 .DESCRIPTION
-Uploads every Linux/Windows release asset to the R2 bucket behind
+Uploads every Windows/Linux/macOS release asset to the R2 bucket behind
 https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/, verifies that
 every object is publicly readable, and only then updates version.txt:
 
@@ -13,6 +13,8 @@ every object is publicly readable, and only then updates version.txt:
   updater_{rid}.zip                      standalone updater bundles
   SimpleLauncher-{version}-linux-*.AppImage  self-contained AppImage bundles
   SimpleLauncher-{version}-linux-*.flatpak   Flatpak bundles
+  SimpleLauncher-{version}-osx-arm64.dmg     unsigned macOS Apple Silicon DMG
+  easymode_macos_arm64.xml                   macOS Easy Mode emulator catalog
 
 The in-app update check reads version.txt first and then downloads
 release_{version}_{rid}.zip / updater_{rid}.zip (or the AppImage when running from
@@ -110,6 +112,11 @@ foreach ($rid in @('linux-x64', 'linux-arm64')) {
     $requiredAssets.Add("SimpleLauncher-${Version}-$rid.AppImage")
     $requiredAssets.Add("SimpleLauncher-${Version}-$rid.flatpak")
 }
+
+# macOS ships as a single unsigned Apple Silicon DMG. It has no in-app updater (the
+# next DMG replaces the whole .app), but it is mirrored next to the other bundles so
+# every download lives at the same public fallback URL.
+$requiredAssets.Add("SimpleLauncher-${Version}-osx-arm64.dmg")
 
 foreach ($asset in $requiredAssets) {
     $path = Join-Path $ReleaseDir $asset
@@ -209,6 +216,12 @@ function Get-AssetContentType {
     }
     if ($AssetName.EndsWith('.flatpak', [StringComparison]::OrdinalIgnoreCase)) {
         return 'application/vnd.flatpak'
+    }
+    if ($AssetName.EndsWith('.dmg', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/x-apple-diskimage'
+    }
+    if ($AssetName.EndsWith('.xml', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/xml'
     }
     if ($AssetName.EndsWith('.zip', [StringComparison]::OrdinalIgnoreCase)) {
         return 'application/zip'
@@ -327,6 +340,21 @@ foreach ($asset in $requiredAssets) {
         Invoke-R2Put -LocalPath $localPath -Key $objectKey -ContentType (Get-AssetContentType -AssetName $asset)
     }
     Test-PublicAsset -AssetName $asset -ExpectedLength $localLength
+}
+
+# The macOS Easy Mode catalog is not versioned: every release refreshes the same
+# object so the app's macos-arm64 fallback URL always serves the current emulator list.
+$easyModeXml = Join-Path $repoDir 'SimpleLauncher/Services/EasyMode/Samples/easymode_macos_arm64.xml'
+if (Test-Path -LiteralPath $easyModeXml -PathType Leaf) {
+    $easyModeKey = $prefix + 'easymode_macos_arm64.xml'
+    $easyModeLength = (Get-Item -LiteralPath $easyModeXml).Length
+    if (-not $VerifyOnly) {
+        Invoke-R2Put -LocalPath $easyModeXml -Key $easyModeKey -ContentType 'application/xml'
+    }
+    Test-PublicAsset -AssetName 'easymode_macos_arm64.xml' -ExpectedLength $easyModeLength
+}
+else {
+    Write-Warning "The macOS Easy Mode catalog was not found at $easyModeXml; skipping it."
 }
 
 # version.txt is the switch clients read first: update it only after every bundle

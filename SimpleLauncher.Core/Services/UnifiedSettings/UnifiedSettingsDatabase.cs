@@ -55,7 +55,8 @@ public static class UnifiedSettingsDatabase
     ///     precedence so portable installs keep working: an existing portable database
     ///     wins over AppData (newest wins when both exist). When no database exists yet,
     ///     Windows keeps portable mode for a writable exe folder (zip installs), while
-    ///     Linux/macOS default to the per-user data folder (<c>~/.local/share/SimpleLauncher</c>)
+    ///     Linux defaults to <c>~/.local/share/SimpleLauncher</c>; macOS to
+    ///     <c>~/Library/Application Support/SimpleLauncher</c>
     ///     because the extracted app folder is always writable there. Tests redirect via
     ///     <see cref="DatabasePathOverride" />.
     /// </summary>

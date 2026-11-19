@@ -10,9 +10,9 @@
 | `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
 | `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
 | `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (and transitively Core) |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 72 test files (704 tests, `net11.0`, runs on Windows + Linux/WSL2 via `Avalonia.Headless`) |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 725 tests (`net11.0`, runs on Windows + Linux/WSL2 + macOS via `Avalonia.Headless`) |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
-| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux, x64/ARM64). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`) |
+| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux + macOS, x64/ARM64). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`); macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE, no bundled tools, no in-app updater) |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in the shared packs (`SimpleLauncher.Core\Localization\strings.*.json`) via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
 | `Tools\Mame.DatCreator` | WPF tool | Builds `mame.dat` (MessagePack) from MAME `-listxml` + software lists |
 | `Tools\RetroAchievements.DataFetcher` | CLI tool | Fetches the RA game database into `RetroAchievements.dat` |
@@ -59,8 +59,8 @@ Key properties:
 | Microsoft.Extensions.Http.Resilience | 10.11.0 | Polly retry policy on downloads |
 | Microsoft.Data.Sqlite / SourceGear.sqlite3 | 10.0.13 / 3.53.4 | SQLite (unified `settings.dat`, Amazon scan, Stella settings) |
 | SharpCompress | 0.50.6 | Archive extraction |
-| NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.3.0 | UI sound effects (Windows + Linux/macOS) |
-| NLayer + NLayer.NAudioSupport | 3.0.0 | Managed MP3 decoding on Linux/macOS (`net11.0` TFM only; no libsndfile needed) |
+| NAudio (Core / Wasapi / WinMM / SoundFile / Alsa) | 3.3.0 | UI sound effects (Windows + Linux; macOS uses the system `afplay` CoreAudio command) |
+| NLayer + NLayer.NAudioSupport | 3.0.0 | Managed MP3 decoding on Linux (`net11.0` TFM only; no libsndfile needed) |
 | SharpDX + XInput + DirectInput | 4.2.0 | Gamepad input (Windows) |
 | InputSimulatorCore | 1.0.5 | Mouse simulation from gamepad (Windows) |
 | Hexa.NET.SDL2 | 1.2.17 | Gamepad input on Linux/macOS (`net11.0` TFM only; bundles the native SDL2 binaries) |

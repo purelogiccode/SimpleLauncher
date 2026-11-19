@@ -13,8 +13,8 @@
 [![Pull requests](https://img.shields.io/github/issues-pr/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/pulls)
 [![Maintained](https://img.shields.io/badge/Maintained%3F-yes-brightgreen)](https://github.com/purelogiccode/SimpleLauncher/commits/master)
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(x64%20%7C%20ARM64)-blue)](https://github.com/purelogiccode/SimpleLauncher/releases)
-[![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(x64%20%7C%20ARM64)%20%7C%20macOS%20(Apple%20Silicon)-blue)](https://github.com/purelogiccode/SimpleLauncher/releases)
+[![.NET](https://img.shields.io/badge/.NET-11-512BD4)](https://dotnet.microsoft.com/download)
 [![Made with C#](https://img.shields.io/badge/Made%20with-C%23-239120)](https://learn.microsoft.com/dotnet/csharp/)
 [![Built with Avalonia](https://img.shields.io/badge/Built%20with-Avalonia-8B44AC)](https://avaloniaui.net/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.txt)
@@ -204,6 +204,9 @@ The launcher supports an extensive range of gaming systems including:
    * **Flatpak:** `flatpak install --user ./SimpleLauncher-{version}-linux-x64.flatpak`, then `flatpak run com.purelogiccode.SimpleLauncher`. Updates come from the software center; emulators run on the host via `flatpak-spawn`.
    * **Portable tarball / ZIP:** `release_{version}_linux-x64.tar.gz` (or `.zip`) requires the [.NET 11 Runtime](https://dotnet.microsoft.com/download); extract and run `./SimpleLauncher.Avalonia`.
    * Install `libasound2` for audio output (optional: `libsndfile1` for FLAC/Ogg/Opus UI sounds). **FUSE 3** (`libfuse3` + `/dev/fuse`) enables direct ZIP/7z/RAR and Xbox-image mounts (not available inside Flatpak, which uses the extraction fallbacks).
+6. **macOS (Apple Silicon):** download `SimpleLauncher-{version}-osx-arm64.dmg`, open it and drag **Simple Launcher** onto **Applications** — see the [macOS packages guide](docs/20-macos-packages.md).
+   * The app is **unsigned and not notarized** (no Apple Developer Program). On first launch, right-click the app → **Open**, or run `xattr -dr com.apple.quarantine "/Applications/Simple Launcher.app"`.
+   * Requires **macOS 15+ on Apple Silicon**. The .NET 11 runtime is bundled. Updates are manual: install the next DMG; user data in `~/Library/Application Support/SimpleLauncher` is kept.
 
 ---
 

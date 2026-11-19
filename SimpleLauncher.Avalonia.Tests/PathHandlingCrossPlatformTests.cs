@@ -36,7 +36,7 @@ public class PathHandlingCrossPlatformTests
         var result = PathHelper.ResolveRelativeToAppDirectory(@"%BASEFOLDER%\roms\SimpleLauncherTest");
 
         Assert.Equal(
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "roms", "SimpleLauncherTest"),
+            Path.Combine(PathHelper.BaseFolder, "roms", "SimpleLauncherTest"),
             result);
     }
 

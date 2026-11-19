@@ -244,6 +244,9 @@ public class ExtractionServiceTests
     [Fact]
     public async Task ExtractToFolderAsync_ExtractsTarXzAndRestoresUnixExecuteBits()
     {
+        // The macOS bundle ships no 7-Zip payload, so the fixture cannot be built there.
+        if (OperatingSystem.IsMacOS()) return;
+
         var sevenZip = FindBundledSevenZip();
         if (sevenZip is null) throw SkipException.ForSkip("Bundled 7-Zip tool not found.");
         EnsureExecutable(sevenZip);
@@ -294,6 +297,9 @@ public class ExtractionServiceTests
     [Fact]
     public async Task ExtractToFolderAsync_ExtractsSolidSevenZipWithAllEntries()
     {
+        // The macOS bundle ships no 7-Zip payload, so the fixture cannot be built there.
+        if (OperatingSystem.IsMacOS()) return;
+
         var sevenZip = FindBundledSevenZip();
         if (sevenZip is null) throw SkipException.ForSkip("Bundled 7-Zip tool not found.");
         EnsureExecutable(sevenZip);

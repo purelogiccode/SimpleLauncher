@@ -8,7 +8,9 @@ namespace SimpleLauncher.Core.Services;
 ///     Portable ZIP/tarball installs live in a user-writable folder and keep using the
 ///     existing in-app updater. AppImage runs from a read-only squashfs mount and updates
 ///     by replacing the outer <c>.AppImage</c> file. Flatpak runs from a read-only
-///     <c>/app</c> mount and is updated by the software center, never by the app.
+///     <c>/app</c> mount and is updated by the software center, never by the app. The
+///     macOS release is an unsigned DMG whose <c>.app</c> is replaced manually with the
+///     next DMG, so macOS also has no in-app updater.
 /// </remarks>
 public static class PackagingEnvironment
 {
@@ -41,14 +43,24 @@ public static class PackagingEnvironment
          File.Exists(FlatpakInfoPath));
 
     /// <summary>
+    ///     Gets a value indicating whether the application is running from a macOS
+    ///     <c>.app</c> bundle (the DMG layout), whose payload is replaced by installing
+    ///     the next DMG instead of the in-app updater.
+    /// </summary>
+    public static bool IsMacOsAppBundle =>
+        OperatingSystem.IsMacOS() &&
+        AppContext.BaseDirectory.Contains(".app/Contents/", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     ///     Gets a value indicating whether the install directory is a read-only package
     ///     mount (AppImage or Flatpak), where the regular portable update flow cannot write.
     /// </summary>
     public static bool HasReadOnlyInstall => IsAppImage || IsFlatpak;
 
     /// <summary>
-    ///     Gets a value indicating whether application updates are managed by an external
-    ///     package manager instead of the in-app updater.
+    ///     Gets a value indicating whether application updates are managed outside the app
+    ///     (Flatpak's software center or a freshly downloaded macOS DMG) instead of the
+    ///     in-app updater.
     /// </summary>
-    public static bool UpdatesManagedExternally => IsFlatpak;
+    public static bool UpdatesManagedExternally => IsFlatpak || IsMacOsAppBundle;
 }

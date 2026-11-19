@@ -1,6 +1,6 @@
 # 01 — Overview
 
-> Simple Launcher — an open-source emulator frontend for Windows and Linux (x64 & ARM64).
+> Simple Launcher - an open-source emulator frontend for Windows and Linux (x64 & ARM64) and macOS (Apple Silicon).
 > Related: [02 — Projects & Solution](02-projects-and-solution.md) · [03 — Quickstart](03-quickstart.md) · [README](README.md) (docs index)
 
 ## What it is
@@ -13,7 +13,7 @@ Four application projects implement it:
 |---|---|
 | `SimpleLauncher` (WPF app) | The launcher itself: windows, pages, ViewModels, UI services, launch handlers, game scanners, DI composition root |
 | `SimpleLauncher.Core` (class library) | Platform-independent services, models, interfaces, data persistence, emulator config injection |
-| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux) reusing all of Core. Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden or no-ops elsewhere; on Linux archives and disc images mount through FUSE 3, with temp extraction/conversion as automatic fallbacks |
+| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux + macOS) reusing all of Core. Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden or no-ops elsewhere; on Linux archives and disc images mount through FUSE 3, with temp extraction/conversion as automatic fallbacks; macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE) and no in-app updater |
 | `SimpleLauncher.Avalonia.Updater` (Avalonia app) | The single `Updater.exe` / `Updater` shared by both apps: checks for updates, swaps the unified payload and relaunches the app that started it |
 
 ## Key differentiators
@@ -26,7 +26,7 @@ Four application projects implement it:
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
 - **Performance** — one SQLite `settings.dat` for settings/favorites/history/systems plus MessagePack caches (`history.dat`, `mame.dat`, `RetroAchievements.dat`); async scanning/loading and pagination. The Avalonia startup shows the system-selection grid immediately and scans the ROM folders for sidebar counts in the background.
-- **Platform coverage** — native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia). Linux ships as a self-contained **AppImage**, a **Flatpak** bundle, and portable **tar.gz**/**ZIP** builds (the portable formats require the .NET 11 runtime). Verified end-to-end on Ubuntu 24.04 x64, Fedora 44 KDE and Linux Mint 22.3; the `linux-arm64` bundles are structurally verified. See [19 — Linux Packages](19-linux-packages.md).
+- **Platform coverage** - native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia), plus **Apple Silicon macOS**. Linux ships as a self-contained **AppImage**, a **Flatpak** bundle, and portable **tar.gz**/**ZIP** builds (the portable formats require the .NET 11 runtime). macOS ships as an unsigned, self-contained **DMG** (ad-hoc signed, not notarized; manual updates). Verified end-to-end on Ubuntu 24.04 x64, Fedora 44 KDE and Linux Mint 22.3; the `linux-arm64` bundles are structurally verified; the macOS DMG is validated on a NoMac Apple M5 Pro host. See [19 - Linux Packages](19-linux-packages.md) and [20 - macOS Package](20-macos-packages.md).
 
 ## Feature surface (summary)
 
@@ -36,7 +36,8 @@ Four application projects implement it:
 - **Themes** (Light, Dark, Adaptive, High Contrast, Midnight) + 27 accent colors; **18 languages** (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-br, ru, tr, ur, vi, zh-hans).
 - **Gamepad navigation** (Xbox XInput + PlayStation DirectInput on Windows, SDL2 GameController API on Linux/macOS), dead-zone configuration, UI sound effects (NAudio). On Windows the controller moves the real mouse cursor / clicks (WPF behavior); on Linux/macOS the Avalonia app's `GamepadNavigationService` maps the pad to in-app focus navigation, activation, context menu and scrolling instead (Wayland-safe, no input-injection permissions).
 - **Tray icon**, minimize-to-tray, **F8 global screenshot hotkey**, loading overlays, status bar, debug window (`-debug`).
-- **Built-in updater** (`Updater.exe`) with GitHub release assets, `--restarting` restart flow.
+- **Built-in updater** (`Updater.exe`) with GitHub release assets, `--restarting` restart flow
+  (Windows/Linux; the macOS `.app` is replaced manually with the next DMG).
 - **Bundled power tools** — conversion (CHD, RVZ, XISO, 7z/zip), batch-file creators, cover tools, ROM validator (see [11 — Bundled Tools](11-bundled-tools.md)).
 - **100+ supported systems** — Nintendo, Sony, Sega, Atari, NEC, SNK, Commodore, arcade (MAME/FBN/Raine), retro computers, and modern PC storefronts (the authoritative per-system emulator guide is [`parameters.md`](parameters.md); see also [18 — Emulator Parameters](18-emulator-parameters.md)).
 

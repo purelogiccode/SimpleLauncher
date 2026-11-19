@@ -5,7 +5,8 @@ namespace SimpleLauncher.Avalonia.Tests;
 /// <summary>
 ///     Cross-platform tests for the portable vs per-user database location resolution
 ///     (<see cref="UnifiedSettingsDatabase.ResolveDatabasePath" />): Windows keeps portable mode
-///     for a writable exe folder, Linux/macOS default to <c>~/.local/share/SimpleLauncher</c>,
+///     for a writable exe folder, Linux defaults to <c>~/.local/share/SimpleLauncher</c> and
+///     macOS to <c>~/Library/Application Support/SimpleLauncher</c>,
 ///     and an existing database always wins so migrations keep working.
 /// </summary>
 public class UnifiedSettingsDatabasePathTests

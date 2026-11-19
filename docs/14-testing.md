@@ -6,11 +6,11 @@
 ## Projects
 
 - `SimpleLauncher.Tests` — xUnit (`net11.0-windows`), references `SimpleLauncher` (and transitively `SimpleLauncher.Core`); `InternalsVisibleTo` gives access to internal members. **Fast suite.**
-- `SimpleLauncher.Avalonia.Tests` — xUnit (`net11.0`, runs on Windows **and** Linux/WSL2), references `SimpleLauncher.Avalonia`; uses `Avalonia.Headless 12.1.1` for window construction tests. **Fast suite.**
+- `SimpleLauncher.Avalonia.Tests` - xUnit (`net11.0`, runs on Windows, Linux/WSL2 **and macOS**), references `SimpleLauncher.Avalonia`; uses `Avalonia.Headless 12.1.1` for window construction tests. **Fast suite.**
 - `SimpleLauncher.SlowTests` — xUnit (`net11.0-windows`), **slow suite**: live GitHub/PureLogicCode endpoint checks, real `SimpleLauncher.exe` app launches for the language checks (no other instance may run), real ZIP/CHD mount integration via Dokan (self-skips cleanly when the images/media or mount tools are absent).
 - `SimpleLauncher.Avalonia.SlowTests` — xUnit (`net11.0`), **slow suite**: cross-platform mount extraction fallback and platform guards.
 - Frameworks: **xUnit 2.9.3**, **Moq 4.21.0**, **Avalonia.Headless 12.1.4**, Serilog `ILogger` mocks; Meziantou analyzer enabled.
-- **~154 WPF test files + 72 Avalonia test files (~226 total)** — **708 Avalonia tests** + **2211 WPF tests** in the fast suites, plus **83 WPF slow tests** + **11 Avalonia slow tests**. WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
+- **~154 WPF test files + 72 Avalonia test files (~226 total)** - **725 Avalonia tests** + **2227 WPF tests** in the fast suites, plus **83 WPF slow tests** + **11 Avalonia slow tests**. The Avalonia suite is also green on macOS (725/725, 2026-11-19). WPF parallelization is disabled (`AssemblyInfo.cs`: `CollectionBehavior(DisableTestParallelization = true)`) because several tests share static/WPF state; Avalonia tests run on a dedicated headless UI thread (`TestEnvironment.cs:HeadlessAvalonia`).
 - **Linux regression coverage (LB-01 … LB-23)** — the cross-platform suite pins each fixed finding: ZIP/RPCS3/ScummVM temp extraction (`MountZipFilesCrossPlatformTests`), DOSBox CHD/ISO `imgmount` (`DosBoxChdLinuxTests`, `DosBoxIsoLinuxTests`, `Iso9660ImageReaderTests`), emulator pickers (`ExecutableFileFilterTests`) and `CheckPath` on Unix, case-insensitive extraction (`ExtractionServiceTests`, `DosBoxCaseSensitivityTests`), RA emulator-integration gating (`EmulatorConfigHandlerRegistrationTests`), audio decoders/degradation (`PlaySoundEffectsTests`), mount platform guards (`MountPlatformGuardTests`), archive entry normalization + Unix execute bits (`ExtractionServiceTests`), updater case-variant Zip-Slip and missing-asset Information logging (`AvaloniaCheckForUpdatesServiceTests`), invalid-executable errno + separator normalization (`PathHandlingCrossPlatformTests`), multi-track CHD cleanup (`ChdMountStrategyCleanupTests`).
 - **Manual Linux smoke test** — the packaged `linux-x64` bundle (framework-dependent single-file, from `scripts/package-release-linux.ps1`) was run by hand on **Debian 13 (trixie) x64** (GNOME Wayland/Xwayland): first-run "Welcome" dialog and main window render with no errors (2026-09-24) — see [ManualTests.md](manual-tests.md).
 
@@ -50,7 +50,7 @@
 # WPF — fast suite, unfiltered (~40 s)
 dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj
 
-# Avalonia — fast suite (headless, runs on Windows and Linux/WSL2, no display required, ~20 s)
+# Avalonia - fast suite (headless, runs on Windows, Linux/WSL2 and macOS, no display required, ~20 s)
 dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj
 
 # WPF — single class

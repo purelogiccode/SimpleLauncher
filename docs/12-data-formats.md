@@ -52,9 +52,9 @@
   per-user copy exist the newest one is used. When no database exists yet, Windows keeps
   portable mode for a writable exe folder (zip installs), while Linux/macOS default to the
   per-user data folder (`%LocalAppData%\SimpleLauncher` on Windows,
-  `~/.local/share/SimpleLauncher` on Linux/macOS). The folder also holds the logs, window
-  bounds and the shelved legacy `.bak` files, and is what the **Open AppData Path** menu
-  action opens.
+  `~/.local/share/SimpleLauncher` on Linux and `~/Library/Application Support/SimpleLauncher`
+  on macOS). The folder also holds the logs, window bounds and the shelved legacy `.bak`
+  files, and is what the **Open AppData Path** menu action opens.
 - Schema (versioned via a `Meta` table): `AppSettings` (key/value),
   `EmulatorSettings` (one JSON blob per emulator), `Favorites`, `PlayHistory`,
   `Systems` (one JSON blob per system), `SystemPlayTimes`. Name/file keys are

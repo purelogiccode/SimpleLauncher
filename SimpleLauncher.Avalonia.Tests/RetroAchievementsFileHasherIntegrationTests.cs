@@ -21,6 +21,10 @@ public class RetroAchievementsFileHasherIntegrationTests
     [Fact]
     public async Task CalculateHashAsync_GenesisRom_ReturnsValidHash()
     {
+        // The macOS bundle ships no RetroAchievementsSharp payload (the tool has only
+        // win-*/linux-* builds), so there is no CLI for the hasher to run on macOS.
+        if (OperatingSystem.IsMacOS()) return;
+
         // Integration test: runs the real RetroAchievementsSharp CLI tool
         // against a dummy cartridge file (system 'genesis/mega drive', whole-file MD5).
         var tempFile = Path.Combine(Path.GetTempPath(), "SLTest_rahash_" + Guid.NewGuid().ToString("N") + ".bin");

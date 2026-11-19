@@ -1,8 +1,9 @@
 name: Package dry run
 
 # Packages every release asset exactly like the release workflow, but never creates or
-# updates a GitHub release. It validates the Windows and Linux packaging scripts, the
-# Linux ZIP/tar.gz permissions, the AppImage architecture and the Flatpak bundles.
+# updates a GitHub release. It validates the Windows, Linux and macOS packaging scripts,
+# the Linux ZIP/tar.gz permissions, the AppImage architecture, the Flatpak bundles and
+# the macOS DMG bundle layout.
 # The version is read from the canonical SimpleLauncher.csproj, so this workflow never
 # needs a version input and can never publish a version that is not consistent across
 # the projects and manifests.
@@ -16,6 +17,7 @@ on:
       - 'global.json'
       - 'scripts/package-release.ps1'
       - 'scripts/package-release-linux.ps1'
+      - 'scripts/package-release-macos.ps1'
       - 'scripts/package-linux-native.sh'
       - 'SimpleLauncher.sln'
       - 'SimpleLauncher/**'
@@ -28,6 +30,7 @@ on:
       - 'global.json'
       - 'scripts/package-release.ps1'
       - 'scripts/package-release-linux.ps1'
+      - 'scripts/package-release-macos.ps1'
       - 'scripts/package-linux-native.sh'
       - 'SimpleLauncher.sln'
       - 'SimpleLauncher/**'
@@ -144,6 +147,61 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: simplelauncher-dry-run-linux
+          path: artifacts/release/*
+          retention-days: 7
+
+  package-macos:
+    name: Package macOS DMG (no release)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Read the canonical version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher/SimpleLauncher.csproj' -Raw
+          $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+              throw "Unexpected version '$version' in SimpleLauncher.csproj."
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Package macOS DMG (no GitHub release)
+        shell: pwsh
+        run: >-
+          ./scripts/package-release-macos.ps1
+          -Version $env:VERSION
+          -OutputDir '${{ github.workspace }}/artifacts/release'
+          -WorkDir '${{ runner.temp }}/sl-publish-macos'
+
+      - name: Verify the DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg=$(ls artifacts/release/SimpleLauncher-*-osx-arm64.dmg)
+          test -f "$dmg"
+          hdiutil verify "$dmg"
+
+          mount=$(mktemp -d)
+          hdiutil attach -quiet -nobrowse -readonly -mountpoint "$mount" "$dmg"
+          trap 'hdiutil detach -quiet "$mount" || true' EXIT
+          test -d "$mount/Simple Launcher.app"
+          test -x "$mount/Simple Launcher.app/Contents/MacOS/SimpleLauncher.Avalonia"
+          test -f "$mount/Simple Launcher.app/Contents/Info.plist"
+          test -L "$mount/Applications"
+          echo "macOS DMG is valid."
+
+      - name: Upload macOS packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: simplelauncher-dry-run-macos
           path: artifacts/release/*
           retention-days: 7
 

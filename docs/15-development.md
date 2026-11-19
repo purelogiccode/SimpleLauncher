@@ -138,6 +138,27 @@ turns the self-contained payload into the two store-style bundles:
   The arm64 AppImage and Flatpak were built and structurally verified (aarch64 ELF runtime and
   payload, aarch64 OSTree commit).
 
+### macOS release packaging script
+
+`scripts/package-release-macos.ps1` runs on macOS (CI uses the arm64 `macos-15` runner) and
+produces the Apple Silicon DMG:
+
+```powershell
+pwsh scripts/package-release-macos.ps1 -Version 5.8.4
+# -> artifacts/release/SimpleLauncher-5.8.4-osx-arm64.dmg
+```
+
+- Publishes `net11.0 -r osx-arm64 --self-contained true` (the .NET 11 runtime travels inside
+  the `.app`) and lays it out as `Simple Launcher.app/Contents/MacOS`.
+- Prunes the bundled `tools/` tree and the `Updater`: there are no macOS payloads for the
+  bundled tools, and macOS updates install the next DMG instead of using the in-app updater.
+- Generates `Info.plist` (`LSMinimumSystemVersion` 15.0, bundle id
+  `com.purelogiccode.simplelauncher`) and a `.icns` from `SimpleLauncher.Avalonia/icon/icon.png`.
+- Ad-hoc signs the bundle with `codesign -s -` (skip with `-NoAdHocSign`); **it is not
+  Developer ID signed and not notarized**, so no Apple Developer certificate is involved.
+- Creates a compressed `UDZO` DMG with an Applications shortcut and verifies its contents
+  with `hdiutil`.
+
 ### Cloudflare R2 fallback publishing
 
 The secondary download fallback
@@ -145,7 +166,8 @@ The secondary download fallback
 GitHub is unreachable or rate-limited) is backed by the Cloudflare R2 bucket
 `simplelauncher-thumbnails` under the prefix `Simple Launcher/Simple Launcher/`.
 
-After both packaging scripts have produced all four RIDs, publish the fallback copy:
+After the packaging scripts have produced every asset (four Windows/Linux RIDs plus the
+Apple Silicon DMG), publish the fallback copy:
 
 ```powershell
 pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
@@ -154,9 +176,11 @@ pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
 - Reads `R2_*` credentials from the environment or the gitignored `AGENTS.local.md` block
   (see the local-only notes); never commit them.
 - Uploads the four `release_{version}_{rid}.zip`, the two portable Linux tar.gz files, the four
-  `updater_{rid}.zip` assets, the two AppImages and the two Flatpak bundles, verifies their
-  public URLs, then updates `version.txt` **last**, so clients never see a version before its
-  assets exist. AppImages self-update from this copy, so they must be published with the rest.
+  `updater_{rid}.zip` assets, the two AppImages, the two Flatpak bundles and the macOS
+  `SimpleLauncher-{version}-osx-arm64.dmg`, verifies their public URLs, then updates
+  `version.txt` **last**, so clients never see a version before its assets exist. AppImages
+  self-update from this copy, so they must be published with the rest. The publisher also
+  refreshes `easymode_macos_arm64.xml` from the source catalog.
 - `-DryRun` prints the plan; `-ReleaseDir` selects a non-default package folder.
 - The manual `release.yml` workflow runs this publisher automatically after creating/updating the
   GitHub release, using the `R2_*` repository secrets. Local/manual releases still run the script
@@ -190,7 +214,7 @@ ls SimpleLauncher.Avalonia/bin/Release/net11.0-windows/win-x64/publish/Updater* 
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net11.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (704 tests via `Avalonia.Headless`).
+- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (725 tests via `Avalonia.Headless`; the same suite also runs natively on macOS).
 
 ## Versioning
 
@@ -240,8 +264,8 @@ the test suites (they include live endpoints and real app launches; run them loc
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net11.0` Debug/Release and updater `net11.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. Never runs tests. |
-| `.github/workflows/package-dry-run.yml` | push/PR touching the app projects or packaging scripts (or manual) | Packages all four RIDs with the same scripts as the release workflow, uploads the zips as workflow artifacts and verifies the Linux payload layout/executable bits — without creating a GitHub release. The version is read from `SimpleLauncher/SimpleLauncher.csproj`. |
-| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1` and the framework-dependent single-file Linux bundle for `linux-x64` + `linux-arm64` via `scripts/package-release-linux.ps1`, uploads the zips as workflow artifacts, and creates/updates the `release{version}` GitHub release with `release_{version}_{rid}.zip` + `updater_{rid}.zip` for all four RIDs. Options: skip release creation, provide custom release notes. |
+| `.github/workflows/package-dry-run.yml` | push/PR touching the app projects or packaging scripts (or manual) | Packages every release asset with the same scripts as the release workflow (Windows, Linux and the macOS DMG on `macos-15`), uploads the archives as workflow artifacts and verifies the Linux payload layout/executable bits and the DMG bundle layout — without creating a GitHub release. The version is read from `SimpleLauncher/SimpleLauncher.csproj`. |
+| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, the Linux bundles for `linux-x64` + `linux-arm64`, and the Apple Silicon `osx-arm64` DMG via `scripts/package-release-macos.ps1`; uploads the artifacts and creates/updates the `release{version}` GitHub release with every Windows/Linux/macOS asset. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 `master` requires the two build checks from `ci.yml` for pull-request merges (direct pushes are

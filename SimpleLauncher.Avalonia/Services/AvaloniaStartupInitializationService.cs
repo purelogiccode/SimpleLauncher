@@ -113,7 +113,7 @@ public class AvaloniaStartupInitializationService
         try
         {
             // AppImage and Flatpak installs intentionally run from a read-only package
-            // mount; user data already lives in ~/.local/share/SimpleLauncher. Asking the
+            // mount; user data already lives in the per-user data folder. Asking the
             // user to move a packaged install would be wrong (and impossible for Flatpak).
             if (PackagingEnvironment.HasReadOnlyInstall)
             {

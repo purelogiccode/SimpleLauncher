@@ -20,7 +20,8 @@
 ## Update assets
 
 Both apps read the same GitHub release, which ships the Windows and Linux bundles (portable
-ZIP/tarball, AppImage and Flatpak) plus a standalone updater per RID:
+ZIP/tarball, AppImage and Flatpak), the macOS DMG, plus a standalone updater per Windows/Linux
+RID:
 
 - `release_{version}_{rid}.zip` — the unified payload: `SimpleLauncher.exe` (WPF) and
   `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other plus the shared content files
@@ -50,6 +51,10 @@ ZIP/tarball, AppImage and Flatpak) plus a standalone updater per RID:
   not run the in-app updater check at all: a repository install updates through the software
   center (`flatpak update`), while a direct `.flatpak` bundle is refreshed by reinstalling the
   newer bundle (`flatpak install --user --reinstall ...`).
+- `SimpleLauncher-{version}-osx-arm64.dmg` — the unsigned Apple Silicon bundle. macOS installs
+  do **not** use the in-app updater: there is no `Updater` in the `.app`, silent/manual update
+  checks point at the release page, and the user installs the next DMG over the old app. The
+  DMG is mirrored to the fallback next to the other assets.
 - The secondary fallback (`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`)
   mirrors `version.txt` and the same assets (including the AppImages, which self-update from
   this copy). Publish it after packaging with `scripts/publish-fallback-r2.ps1` — see

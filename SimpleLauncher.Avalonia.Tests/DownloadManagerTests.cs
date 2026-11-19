@@ -294,6 +294,75 @@ public class DownloadManagerTests
         }
     }
 
+    [Theory]
+    [InlineData("RetroArch_Metal.dmg", true)]
+    [InlineData("RETROARCH.DMG", true)]
+    [InlineData("emulator.zip", false)]
+    [InlineData("emulator.AppImage", false)]
+    [InlineData("emulator", false)]
+    public void IsDiskImageDownload_DetectsMacDiskImages(string fileName, bool expected)
+    {
+        Assert.Equal(expected, DownloadManager.IsDiskImageDownload(fileName));
+    }
+
+    [Fact]
+    public async Task ExtractFileAsync_MacDiskImage_InstallsAppBundleAndRestoresExecuteBit()
+    {
+        if (!OperatingSystem.IsMacOS()) return;
+
+        var workDirectory = Path.Combine(Path.GetTempPath(), "SimpleLauncherDmgTests", Guid.NewGuid().ToString("N"));
+        var stagingDirectory = Path.Combine(workDirectory, "staging");
+        var appBundle = Path.Combine(stagingDirectory, "Dummy.app");
+        var macOsDirectory = Path.Combine(appBundle, "Contents", "MacOS");
+        var executable = Path.Combine(macOsDirectory, "Dummy");
+        Directory.CreateDirectory(macOsDirectory);
+        await File.WriteAllTextAsync(Path.Combine(appBundle, "Contents", "Info.plist"),
+            """<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>CFBundleExecutable</key><string>Dummy</string></dict></plist>""");
+        await File.WriteAllTextAsync(executable, "#!/bin/sh\nexit 0\n");
+        File.SetUnixFileMode(executable, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
+        var dmgPath = Path.Combine(workDirectory, "Dummy.dmg");
+        var create = await RunProcessAsync("hdiutil",
+        [
+            "create", "-quiet", "-volname", "Dummy", "-srcfolder", stagingDirectory, "-ov", "-format", "UDZO", dmgPath
+        ]);
+        Assert.Equal(0, create.ExitCode);
+
+        var destination = Path.Combine(workDirectory, "installed");
+        var manager = CreateManager([], out _);
+        var installed = await manager.ExtractFileAsync(dmgPath, destination);
+
+        Assert.True(installed);
+        var installedExecutable = Path.Combine(destination, "Dummy.app", "Contents", "MacOS", "Dummy");
+        Assert.True(File.Exists(installedExecutable));
+        Assert.True((File.GetUnixFileMode(installedExecutable) & UnixFileMode.UserExecute) != UnixFileMode.None);
+
+        var quarantine = await RunProcessAsync("xattr", ["-p", "com.apple.quarantine", Path.Combine(destination, "Dummy.app")]);
+        Assert.NotEqual(0, quarantine.ExitCode);
+
+        Directory.Delete(workDirectory, true);
+    }
+
+    private static async Task<(int ExitCode, string StandardOutput, string StandardError)> RunProcessAsync(
+        string fileName, IReadOnlyList<string> arguments)
+    {
+        var startInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = fileName,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+
+        using var process = System.Diagnostics.Process.Start(startInfo)!;
+        var standardOutput = await process.StandardOutput.ReadToEndAsync();
+        var standardError = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        return (process.ExitCode, standardOutput, standardError);
+    }
+
     private sealed class RawStreamContent(Stream stream) : HttpContent
     {
         private readonly Stream _stream = stream;

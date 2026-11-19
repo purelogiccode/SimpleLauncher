@@ -225,8 +225,8 @@ public class GameScannerService
             // System doesn't exist, create it with default paths
             _logger.Debug($"[GameScannerService] '{WindowsSystemName}' system not found. Creating it now.");
 
-            var defaultRomsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "roms", WindowsSystemName);
-            var defaultImagesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", WindowsSystemName);
+            var defaultRomsPath = Path.Combine(PathHelper.BaseFolder, "roms", WindowsSystemName);
+            var defaultImagesPath = Path.Combine(PathHelper.BaseFolder, "images", WindowsSystemName);
 
             await SystemManagerService.SaveSystemConfigurationAsync(
                 WindowsSystemName,
@@ -268,8 +268,8 @@ public class GameScannerService
                 "Cannot create 'Microsoft Windows' system directories in protected location. Falling back to default paths");
 
             // Fall back to default paths even on error
-            var fallbackRomsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "roms", WindowsSystemName);
-            var fallbackImagesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", WindowsSystemName);
+            var fallbackRomsPath = Path.Combine(PathHelper.BaseFolder, "roms", WindowsSystemName);
+            var fallbackImagesPath = Path.Combine(PathHelper.BaseFolder, "images", WindowsSystemName);
 
             return (fallbackRomsPath, fallbackImagesPath, false);
         }
@@ -278,8 +278,8 @@ public class GameScannerService
             _logger.Error(ex, "Failed to initialize 'Microsoft Windows' system paths");
 
             // Fall back to default paths even on error
-            var fallbackRomsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "roms", WindowsSystemName);
-            var fallbackImagesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", WindowsSystemName);
+            var fallbackRomsPath = Path.Combine(PathHelper.BaseFolder, "roms", WindowsSystemName);
+            var fallbackImagesPath = Path.Combine(PathHelper.BaseFolder, "images", WindowsSystemName);
 
             return (fallbackRomsPath, fallbackImagesPath, false);
         }

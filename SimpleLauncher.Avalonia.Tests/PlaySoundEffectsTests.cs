@@ -28,7 +28,10 @@ public class PlaySoundEffectsTests
             new Mock<ICredentialProtector>().Object);
         settings.EnableNotificationSound = true;
 
-        var player = new PlaySoundEffects(settings, new Mock<ILogger>().Object);
+        var player = new PlaySoundEffects(settings, new Mock<ILogger>().Object)
+        {
+            UseMacSystemPlayer = false
+        };
 
         try
         {
@@ -72,7 +75,10 @@ public class PlaySoundEffectsTests
             stopRelease.Wait(TimeSpan.FromSeconds(20));
         });
 
-        var player = new PlaySoundEffects(settings, new Mock<ILogger>().Object);
+        var player = new PlaySoundEffects(settings, new Mock<ILogger>().Object)
+        {
+            UseMacSystemPlayer = false
+        };
         player.PlayerFactory = () => blockingPlayer.Object;
 
         try
@@ -125,6 +131,7 @@ public class PlaySoundEffectsTests
 
         var player = new PlaySoundEffects(settings, logger.Object)
         {
+            UseMacSystemPlayer = false,
             PlayerFactory = () => new Mock<IWavePlayer>().Object,
             ReaderFactory = _ =>
             {
@@ -244,7 +251,10 @@ public class PlaySoundEffectsTests
             new Mock<ICredentialProtector>().Object);
 
         var logger = new Mock<ILogger>();
-        var player = new PlaySoundEffects(settings, logger.Object);
+        var player = new PlaySoundEffects(settings, logger.Object)
+        {
+            UseMacSystemPlayer = false
+        };
 
         var corruptPath = Path.Combine(Path.GetTempPath(), $"sl-corrupt-{Guid.NewGuid():N}.mp3");
         await File.WriteAllBytesAsync(corruptPath, [1, 3, 3, 7]);

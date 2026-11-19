@@ -11,6 +11,20 @@ public static partial class PathHelper
 {
     private const string BaseFolderPlaceholder = "%BASEFOLDER%";
 
+    /// <summary>
+    ///     Gets the folder that <c>%BASEFOLDER%</c> expands to.
+    /// </summary>
+    /// <remarks>
+    ///     Portable Windows/Linux builds keep the whole library in the application folder, so the
+    ///     base folder is the executable's directory. A macOS <c>.app</c> is a read-only bundle that
+    ///     is replaced on update, so user content (ROMs, images, emulators, image packs) must live in
+    ///     the per-user data folder instead. Resource files that ship inside the bundle are still
+    ///     resolved against the application directory (see <see cref="ResolveRelativeToAppDirectory" />).
+    /// </remarks>
+    public static string BaseFolder => OperatingSystem.IsMacOS()
+        ? AppDataPaths.SimpleLauncherDataFolder
+        : AppDomain.CurrentDomain.BaseDirectory;
+
     // Path length limit to prevent potential recursion issues or overflows
     private const int MaxPathLength = 4096;
 
@@ -232,7 +246,7 @@ public static partial class PathHelper
             if (processedToken.Contains("%BASEFOLDER%", StringComparison.OrdinalIgnoreCase))
             {
                 processedToken = processedToken.Replace("%BASEFOLDER%",
-                    SanitizePathToken(AppDomain.CurrentDomain.BaseDirectory), StringComparison.OrdinalIgnoreCase);
+                    SanitizePathToken(BaseFolder), StringComparison.OrdinalIgnoreCase);
             }
 
             if (processedToken.Contains("%SYSTEMFOLDER%", StringComparison.OrdinalIgnoreCase))
@@ -363,10 +377,13 @@ public static partial class PathHelper
         // Inputs anchored at the app directory (placeholder or relative) must resolve
         // inside it; explicitly absolute paths are the caller's responsibility (CORE-17).
         var mustStayInAppDirectory = true;
+        var containmentBase = AppDomain.CurrentDomain.BaseDirectory;
 
         if (path.StartsWith(BaseFolderPlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            basePath = AppDomain.CurrentDomain.BaseDirectory;
+            // On macOS the placeholder is the per-user content folder, not the .app bundle.
+            basePath = BaseFolder;
+            containmentBase = BaseFolder;
             remainingPath = path[BaseFolderPlaceholder.Length..];
 
             // Stored configurations use Windows separators after the placeholder
@@ -406,10 +423,10 @@ public static partial class PathHelper
             var fullPath = Path.GetFullPath(combinedPath);
 
             if (mustStayInAppDirectory &&
-                !IsPathContainedInBaseFolder(fullPath, AppDomain.CurrentDomain.BaseDirectory))
+                !IsPathContainedInBaseFolder(fullPath, containmentBase))
             {
                 Log.Debug(
-                    $"[PathHelper] Rejected path '{path}': resolves outside the application directory.");
+                    $"[PathHelper] Rejected path '{path}': resolves outside the base directory.");
                 return null;
             }
 

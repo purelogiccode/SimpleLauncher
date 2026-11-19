@@ -88,7 +88,9 @@ public partial class AvaloniaCheckForUpdatesService
 
     /// <summary>
     ///     Gets the current runtime identifier used for release/updater asset names,
-    ///     mirroring the updater's GitHubService (win-x64/win-arm64/linux-x64/linux-arm64).
+    ///     mirroring the updater's GitHubService (win-x64/win-arm64/linux-x64/linux-arm64/osx-arm64).
+    ///     macOS always resolves to osx-arm64/osx-x64 so a mac build can never pick a Linux
+    ///     payload by mistake.
     /// </summary>
     internal static string CurrentRuntimeIdentifier
     {
@@ -96,6 +98,7 @@ public partial class AvaloniaCheckForUpdatesService
         {
             var arch = RuntimeInformation.ProcessArchitecture;
             if (OperatingSystem.IsWindows()) return arch == Architecture.Arm64 ? "win-arm64" : "win-x64";
+            if (OperatingSystem.IsMacOS()) return arch == Architecture.Arm64 ? "osx-arm64" : "osx-x64";
 
             return arch == Architecture.Arm64 ? "linux-arm64" : "linux-x64";
         }
@@ -157,8 +160,10 @@ public partial class AvaloniaCheckForUpdatesService
         {
             // Flatpak installs are updated by the software center (flatpak update), never by
             // the in-app updater: the payload lives on a read-only /app mount and the store
-            // owns the release channel.
-            _logger.Information("Flatpak install: updates are managed by the software center; skipping the update check");
+            // owns the release channel. macOS .app installs are replaced manually with the
+            // next unsigned DMG, so they also skip the in-app updater.
+            _logger.Information(
+                "This install is updated outside the app (Flatpak software center or a new macOS DMG); skipping the update check");
             return;
         }
 
@@ -235,8 +240,10 @@ public partial class AvaloniaCheckForUpdatesService
         if (PackagingEnvironment.UpdatesManagedExternally)
         {
             // The store owns the update channel; a manual check can only point the user at
-            // the release page (or at `flatpak update`).
-            _logger.Information("Flatpak install: updates are managed by the software center");
+            // the release page (or at `flatpak update`). macOS .app installs download the
+            // next DMG from the same release page.
+            _logger.Information(
+                "This install is updated outside the app (Flatpak software center or a new macOS DMG)");
             await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
             return;
         }
@@ -307,7 +314,7 @@ public partial class AvaloniaCheckForUpdatesService
         if (PackagingEnvironment.UpdatesManagedExternally)
         {
             _logger.Information(
-                "Reinstall requested from a Flatpak install; pointing the user at the manual download page");
+                "Reinstall requested from an externally managed install; pointing the user at the manual download page");
             await _messageBoxLibrary.InstallUpdateManuallyMessageBoxAsync();
             return;
         }

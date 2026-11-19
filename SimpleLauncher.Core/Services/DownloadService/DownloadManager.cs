@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Runtime.Versioning;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.CheckPaths;
@@ -463,10 +465,14 @@ public class DownloadManager : IDisposable
 
             // Single-file emulator downloads (e.g. the .AppImage links used by the Linux Easy
             // Mode manifest) are not archives: install them directly instead of failing the
-            // extraction and reporting a bug (bug #67537).
+            // extraction and reporting a bug (bug #67537). macOS emulators are commonly
+            // distributed as DMGs, which the archive extractor cannot open; mount the image
+            // and install the .app bundle instead.
             var result = IsSingleFileExecutableDownload(filePath)
                 ? await InstallSingleFileAsync(filePath, destinationPath)
-                : await _extractionService.ExtractToFolderAsync(filePath, destinationPath);
+                : OperatingSystem.IsMacOS() && IsDiskImageDownload(filePath)
+                    ? await InstallMacDiskImageAsync(filePath, destinationPath)
+                    : await _extractionService.ExtractToFolderAsync(filePath, destinationPath);
 
             if (result)
             {
@@ -582,6 +588,188 @@ public class DownloadManager : IDisposable
             _logger.Error(ex, $"Error installing the downloaded file: {filePath} to {destinationPath}");
             return false;
         }
+    }
+
+    /// <summary>
+    ///     Returns true for a macOS disk image download (.dmg). DMGs are mounted with
+    ///     <c>hdiutil</c> and their <c>.app</c> bundles are copied into the destination;
+    ///     they are not archives the normal extractor can open.
+    /// </summary>
+    internal static bool IsDiskImageDownload(string filePath)
+    {
+        return Path.GetExtension(filePath).Equals(".dmg", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Installs a macOS emulator shipped as a DMG: mounts the image read-only, copies
+    ///     every top-level <c>.app</c> bundle into the destination with <c>ditto</c> (which
+    ///     preserves the bundle's code signature and resource forks), clears the quarantine
+    ///     attribute so the freshly installed app can launch, and restores the execute bits
+    ///     on the bundle's Mach-O executables.
+    /// </summary>
+    /// <param name="filePath">The downloaded .dmg file.</param>
+    /// <param name="destinationPath">The folder that receives the .app bundle(s).</param>
+    [SupportedOSPlatform("macos")]
+    private async Task<bool> InstallMacDiskImageAsync(string filePath, string destinationPath)
+    {
+        var resolvedDestinationPath = PathHelper.ResolveRelativeToAppDirectory(destinationPath);
+        if (string.IsNullOrEmpty(resolvedDestinationPath))
+        {
+            _logger.Information(
+                $"Error installing the macOS disk image: the destination path could not be resolved: {destinationPath}");
+            return false;
+        }
+
+        var mountPoint = Path.Combine(TempFolder, $"dmg-{Guid.NewGuid():N}");
+        var attached = false;
+        try
+        {
+            Directory.CreateDirectory(resolvedDestinationPath);
+            Directory.CreateDirectory(mountPoint);
+
+            var attach = await RunProcessAsync("hdiutil",
+                ["attach", "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", mountPoint, filePath],
+                TimeSpan.FromMinutes(5));
+            if (attach.ExitCode != 0)
+            {
+                // Expected user-environment condition (damaged/unsupported image): Information.
+                _logger.Information(
+                    $"Could not mount the macOS disk image: {filePath}. hdiutil exit code {attach.ExitCode}: {attach.StandardError.Trim()}");
+                return false;
+            }
+            attached = true;
+
+            var appBundles = Directory.EnumerateDirectories(mountPoint, "*.app", SearchOption.TopDirectoryOnly)
+                .ToList();
+            if (appBundles.Count == 0)
+            {
+                _logger.Information(
+                    $"The macOS disk image does not contain a top-level .app bundle: {filePath}");
+                return false;
+            }
+
+            foreach (var appBundle in appBundles)
+            {
+                var destinationApp = Path.Combine(resolvedDestinationPath, Path.GetFileName(appBundle));
+                if (Directory.Exists(destinationApp))
+                {
+                    Directory.Delete(destinationApp, true);
+                }
+
+                var copy = await RunProcessAsync("ditto", [appBundle, destinationApp], TimeSpan.FromMinutes(10));
+                if (copy.ExitCode != 0)
+                {
+                    _logger.Information(
+                        $"Could not copy {Path.GetFileName(appBundle)} out of the macOS disk image. ditto exit code {copy.ExitCode}: {copy.StandardError.Trim()}");
+                    return false;
+                }
+
+                // The image carries the quarantine flag from the download; without clearing it
+                // Gatekeeper blocks the emulator the user just installed from Easy Mode.
+                await RunProcessAsync("xattr",
+                    ["-dr", "com.apple.quarantine", destinationApp], TimeSpan.FromMinutes(1));
+
+                MakeAppBundleExecutable(destinationApp);
+            }
+
+            _logger.Information(
+                $"Installed {appBundles.Count} macOS app bundle(s) from {Path.GetFileName(filePath)} into {resolvedDestinationPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Expected user-environment condition (unmountable/corrupt image): Information.
+            _logger.Information(ex, $"Error installing the macOS disk image: {filePath}");
+            return false;
+        }
+        finally
+        {
+            if (attached)
+            {
+                await RunProcessAsync("hdiutil", ["detach", mountPoint, "-force"], TimeSpan.FromMinutes(1));
+            }
+
+            try
+            {
+                if (Directory.Exists(mountPoint)) Directory.Delete(mountPoint, true);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"Could not remove the DMG mount point {mountPoint}: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Restores the execute bits on every Mach-O executable inside a freshly copied
+    ///     <c>.app</c> bundle (zip/DMG extraction does not always preserve them on Unix).
+    /// </summary>
+    [SupportedOSPlatform("macos")]
+    private void MakeAppBundleExecutable(string appBundlePath)
+    {
+        var macOsDirectory = Path.Combine(appBundlePath, "Contents", "MacOS");
+        if (!Directory.Exists(macOsDirectory)) return;
+
+        foreach (var executable in Directory.EnumerateFiles(macOsDirectory, "*", SearchOption.AllDirectories))
+        {
+            try
+            {
+                ExtractionService.EnsureExecuteBits(executable);
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug(
+                    $"[DownloadManager] Could not set the execute bits on {executable}: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Runs an external process with an argument list (never a shell string) and returns
+    ///     its exit code and captured output. A timeout kills the process and reports -1.
+    /// </summary>
+    private static async Task<(int ExitCode, string StandardOutput, string StandardError)> RunProcessAsync(
+        string fileName, IReadOnlyList<string> arguments, TimeSpan timeout)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = fileName,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        using var process = new Process();
+        process.StartInfo = startInfo;
+        process.Start();
+        var standardOutputTask = process.StandardOutput.ReadToEndAsync();
+        var standardErrorTask = process.StandardError.ReadToEndAsync();
+
+        using var timeoutCts = new CancellationTokenSource(timeout);
+        try
+        {
+            await process.WaitForExitAsync(timeoutCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try
+            {
+                process.Kill(true);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug($"[DownloadManager] process.Kill() failed: {ex.Message}");
+            }
+
+            return (-1, await standardOutputTask, $"timed out after {timeout.TotalSeconds:N0}s");
+        }
+
+        return (process.ExitCode, await standardOutputTask, await standardErrorTask);
     }
 
     private async Task DownloadWithProgressAsync(string downloadUrl, string destinationPath,

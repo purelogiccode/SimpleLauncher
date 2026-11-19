@@ -100,14 +100,15 @@ public partial class UrlValidationTests
     }
 
     /// <summary>
-    ///     Verifies that the EasyMode fallback XML files for Windows and Linux (x64 and arm64) are reachable
-    ///     and contain valid, reachable download URLs.
+    ///     Verifies that the EasyMode fallback XML files for Windows, Linux and macOS (x64 and arm64)
+    ///     are reachable and contain valid, reachable download URLs.
     /// </summary>
     [Theory]
     [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode.xml")]
     [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_arm64.xml")]
     [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_linux_x64.xml")]
     [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_linux_arm64.xml")]
+    [InlineData("https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/easymode_macos_arm64.xml")]
     public async Task EasyModeFallbackXmlIsReachableAndContainsValidUrls(string xmlUrl)
     {
         using var response = await HttpClient.GetAsync(xmlUrl);

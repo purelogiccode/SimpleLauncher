@@ -1,6 +1,4 @@
-// ReSharper disable once RedundantUsingDirective
-
-using NAudio;
+using System.Diagnostics;
 using NAudio.Wave;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.SettingsManager;
@@ -14,9 +12,10 @@ namespace SimpleLauncher.Core.Services.PlaySound;
 /// <summary>
 ///     Plays UI sound effects such as click, shutter, and trash sounds using NAudio 3.
 ///     Decoding and output are platform-specific (Windows: Media Foundation + WaveOut;
-///     Linux/macOS: managed WAV/MP3 decoders or libsndfile via NAudio.SoundFile, plus ALSA
-///     via NAudio.Alsa), but the playback pipeline itself is a single cross-platform path
-///     built on <see cref="IWavePlayer" />.
+///     Linux: managed WAV/MP3 decoders or libsndfile via NAudio.SoundFile, plus ALSA via
+///     NAudio.Alsa; macOS: the system <c>afplay</c> command, which decodes through
+///     CoreAudio). The Windows/Linux pipeline is built on <see cref="IWavePlayer" />;
+///     macOS starts/kills an <c>afplay</c> process on the same audio thread.
 ///     Playback runs on a dedicated background thread: callers only validate and enqueue
 ///     the request. A wedged audio backend (e.g. the PipeWire ALSA plugin blocking inside
 ///     <c>snd_pcm_mmap_writei</c>) can therefore silence sound effects but can never freeze
@@ -51,6 +50,10 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     private IWavePlayer? _player;
     private WaveStream? _reader;
 
+    // macOS has no NAudio output backend; the system afplay command (CoreAudio) plays the
+    // file. The process is owned by the audio thread and killed when a newer sound arrives.
+    private Process? _macPlaybackProcess;
+
     /// <summary>
     ///     Test seam: creates the output device. Production uses <see cref="CreatePlayer" />;
     ///     tests substitute a fake whose Stop() blocks to prove that the playback lifecycle
@@ -64,6 +67,13 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     ///     cleanup (e.g. acmStreamClose) is swallowed instead of escaping to the dispatcher.
     /// </summary>
     internal Func<string, WaveStream> ReaderFactory { get; set; } = CreateReader;
+
+    /// <summary>
+    ///     Test seam: when false, the NAudio <see cref="PlayerFactory" />/<see cref="ReaderFactory" />
+    ///     pipeline runs even on macOS. Production macOS uses the system <c>afplay</c> backend;
+    ///     the NAudio fake-backend tests set this to false so they behave the same on every OS.
+    /// </summary>
+    internal bool UseMacSystemPlayer { get; set; } = OperatingSystem.IsMacOS();
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="PlaySoundEffects" /> class.
@@ -247,10 +257,17 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
 
                 StopCurrentPlayback();
 
-                _reader = ReaderFactory(soundPath);
-                _player = PlayerFactory();
-                _player.Init(_reader);
-                _player.Play();
+                if (UseMacSystemPlayer)
+                {
+                    StartMacPlayback(soundPath);
+                }
+                else
+                {
+                    _reader = ReaderFactory(soundPath);
+                    _player = PlayerFactory();
+                    _player.Init(_reader);
+                    _player.Play();
+                }
 
                 lock (_stateLock)
                 {
@@ -309,14 +326,14 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     private static bool IsExpectedPlaybackFailureType(Exception exception)
     {
 #if WINDOWS
-        if (exception is MmException) return true; // BadDeviceId — no wave device
+        if (exception is NAudio.MmException) return true; // BadDeviceId — no wave device
 #else
         if (exception is AlsaException) return true; // no ALSA device, or the device is busy
 #endif
         return exception
             is DllNotFoundException // native libsndfile/libasound is not installed
             or FileNotFoundException // a native library file could not be resolved
-            or PlatformNotSupportedException // macOS has no audio output backend
+            or PlatformNotSupportedException // no usable audio output backend
             or SoundFileException // libsndfile rejected the file (unsupported/truncated)
             or InvalidDataException // a managed decoder rejected the file
             or EndOfStreamException // the file ends mid-frame
@@ -399,7 +416,9 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     }
 
     /// <summary>
-    ///     Creates the output device: WaveOut (winmm) on Windows, ALSA on Linux.
+    ///     Creates the output device: WaveOut (winmm) on Windows, ALSA on Linux. macOS does
+    ///     not use an <see cref="IWavePlayer" /> at all; <see cref="StartMacPlayback" /> runs
+    ///     the system <c>afplay</c> command instead.
     /// </summary>
     private static IWavePlayer CreatePlayer()
     {
@@ -413,8 +432,69 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
 #endif
     }
 
+    /// <summary>
+    ///     Starts a sound on macOS through the system <c>afplay</c> command, which decodes
+    ///     the file with CoreAudio and plays it without an NAudio output device. The process
+    ///     is reaped in the background so it cannot leave a zombie; <see cref="StopCurrentPlayback" />
+    ///     kills it when a newer sound arrives.
+    /// </summary>
+    private void StartMacPlayback(string soundPath)
+    {
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "/usr/bin/afplay",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            startInfo.ArgumentList.Add(soundPath);
+
+            var process = Process.Start(startInfo);
+            if (process == null) return;
+
+            _macPlaybackProcess = process;
+
+            // Reap the short-lived child on a worker thread; Dispose never joins it.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await process.WaitForExitAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug($"[PlaySoundEffects] afplay wait failed: {ex.Message}");
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // afplay missing or unusable is an environment condition, not a bug.
+            _logger.Information(ex, $"[PlaySoundEffects] Could not start afplay for {soundPath}");
+        }
+    }
+
     private void StopCurrentPlayback()
     {
+        var macProcess = _macPlaybackProcess;
+        _macPlaybackProcess = null;
+        if (macProcess != null)
+        {
+            try
+            {
+                if (!macProcess.HasExited) macProcess.Kill();
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug($"[PlaySoundEffects] Error stopping afplay: {ex.Message}");
+            }
+        }
+
         var player = _player;
         if (player != null)
         {

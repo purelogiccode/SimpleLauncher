@@ -93,7 +93,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | Class | Purpose |
 |---|---|
 | `GamePad\GamePadController` | Windows: XInput + DirectInput (SharpDX) mouse/keyboard simulation, dead zones, reconnect. Linux/macOS: `SdlGamepadBackend` (Hexa.NET.SDL2, bundled native `libSDL2`) raises `InputChanged` snapshots that the Avalonia app's `GamepadNavigationService` turns into focus/activation/context-menu/scroll actions |
-| `PlaySound\PlaySoundEffects` | NAudio 3 sound effects — Media Foundation + WaveOut (Windows) / managed MP3 (NLayer) + WAV decoders, libsndfile for other formats, ALSA output (Linux/macOS); missing dependency/device or corrupt file logs Information (never bug-reported); respects settings |
+| `PlaySound\PlaySoundEffects` | NAudio 3 sound effects - Media Foundation + WaveOut (Windows) / managed MP3 (NLayer) + WAV decoders, libsndfile for other formats, ALSA output (Linux) / system `afplay` CoreAudio backend (macOS); missing dependency/device or corrupt file logs Information (never bug-reported); respects settings |
 | `AudioInputService` | Audio input abstraction |
 | `WpfServices\WpfImageLoader` | Image loading with `default.png` fallback |
 | `TakeScreenshot\WindowManager` | Enumerate top-level windows for screenshots |

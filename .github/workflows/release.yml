@@ -8,10 +8,12 @@ name: Publish release
 #                             self-contained AppImage and Flatpak, and the updater ZIPs
 #                             via scripts/package-release-linux.ps1 +
 #                             scripts/package-linux-native.sh
+#   macOS   (macos-15, arm64) osx-arm64 self-contained `.app` inside an unsigned DMG
+#                             via scripts/package-release-macos.ps1
 #
 # The publish job then creates/updates the GitHub release the in-app updater reads,
 # uploads every asset and mirrors the same files to the Cloudflare R2 fallback with
-# scripts/publish-fallback-r2.ps1.
+# scripts/publish-fallback-r2.ps1 (the macOS DMG is mirrored too).
 #
 # Assets produced per RID:
 #   release_{version}_{rid}.zip        Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe
@@ -20,6 +22,8 @@ name: Publish release
 #   updater_{rid}.zip                  the standalone updater shared by the apps
 #   SimpleLauncher-{version}-{rid}.AppImage   Linux: self-contained (bundled .NET runtime)
 #   SimpleLauncher-{version}-{rid}.flatpak    Linux: Flatpak bundle (org.freedesktop.Platform)
+#   SimpleLauncher-{version}-osx-arm64.dmg    macOS: unsigned, ad-hoc signed `.app`
+#                                             (no notarization; manual updates)
 
 on:
   workflow_dispatch:
@@ -136,11 +140,45 @@ jobs:
           path: artifacts/release/*
           retention-days: 7
 
+  package-macos:
+    name: Package macOS arm64 DMG
+    # macos-15 is the arm64 (Apple Silicon) GitHub-hosted runner. The bundle is
+    # unsigned (ad-hoc signature only) and is not notarized, so no Apple Developer
+    # certificate is needed on the runner.
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Package macOS DMG
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: >-
+          ./scripts/package-release-macos.ps1
+          -Version $env:VERSION
+          -OutputDir '${{ github.workspace }}/artifacts/release'
+          -WorkDir '${{ runner.temp }}/sl-publish-macos'
+
+      - name: Upload macOS packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: simplelauncher-macos-${{ inputs.version }}
+          path: artifacts/release/*
+          retention-days: 7
+
   publish:
     name: Create release and publish fallback
     needs:
       - package-windows
       - package-linux
+      - package-macos
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -157,6 +195,12 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: simplelauncher-linux-${{ inputs.version }}
+          path: artifacts/release
+
+      - name: Download macOS packages
+        uses: actions/download-artifact@v8
+        with:
+          name: simplelauncher-macos-${{ inputs.version }}
           path: artifacts/release
 
       - name: Verify every release asset is present
@@ -179,6 +223,7 @@ jobs:
             "SimpleLauncher-$($env:VERSION)-linux-arm64.AppImage"
             "SimpleLauncher-$($env:VERSION)-linux-x64.flatpak"
             "SimpleLauncher-$($env:VERSION)-linux-arm64.flatpak"
+            "SimpleLauncher-$($env:VERSION)-osx-arm64.dmg"
           )
 
           $missing = @($expected | Where-Object {
