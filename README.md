@@ -56,7 +56,7 @@
 ### 🚀 Performance & Core Infrastructure
 * **Unified Settings Database:** Both apps share one SQLite `settings.dat` (settings, favorites, play history, systems) with automatic migration of the legacy XML/dat files
 * **MessagePack Engine:** High-speed MessagePack serialization for near-instant settings loading
-* **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) alongside x64
+* **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) and Linux ARM64, alongside x64. The Windows ARM64 (WPF + Avalonia) and Linux ARM64 (portable tarball + AppImage) bundles are validated on real ARM64 hosts.
 * **Asynchronous Architecture:** Multi-threaded game scanning and validation with fluid UI — the Avalonia app shows the system-selection grid immediately and refreshes library counts in the background
 * **Fast Startup:** System icons resolve through a short directory cache, and sidebar counts no longer block the first frame
 * **Single Instance Enforcement:** Prevents resource conflicts by ensuring only one instance runs — the WPF and Avalonia apps share the guard, so only one of them runs at a time (launching the other brings the running one to the foreground)

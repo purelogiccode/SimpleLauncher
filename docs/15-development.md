@@ -136,7 +136,9 @@ turns the self-contained payload into the two store-style bundles:
   launched, the Flatpak launched the host dummy emulator through `flatpak-spawn`, and the
   portable tarball extracted with correct executable bits and ran with the .NET 11 runtime.
   The arm64 AppImage and Flatpak were built and structurally verified (aarch64 ELF runtime and
-  payload, aarch64 OSTree commit).
+  payload, aarch64 OSTree commit). The AppImage was also built and launched natively on the
+  Azure `linuxarm-test` ARM64 host (2026-11-19); the Flatpak was not run there because the
+  guest lacks `flatpak-builder` and the 25.08 SDK.
 
 ### macOS release packaging script
 

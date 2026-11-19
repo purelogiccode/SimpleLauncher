@@ -31,12 +31,19 @@ shared RetroArch core** in the Linux manifest (15/15 emulators + 1/1 core instal
 zip execute bits, BUG-05 `.tar.xz` support and BUG-06 solid-7z extraction performance). Details in `ManualTests.md`
 → "Easy Mode real-install session" and "Easy Mode emulator/core install sweep".
 
+**ARM64 bundles (2026-11-19):** `release_5.8.4_win-arm64.zip` — both `SimpleLauncher.exe` (WPF) and
+`SimpleLauncher.Avalonia.exe` launched and rendered on Windows 11 ARM64 (Azure `winarm-test`).
+`release_5.8.4_linux-arm64.tar.gz` and the natively built
+`SimpleLauncher-5.8.4-linux-arm64.AppImage` launched and rendered on Ubuntu 24.04.5 ARM64
+(Azure `linuxarm-test`). The arm64 Flatpak remains structurally verified only (the guest has
+no `flatpak-builder` or 25.08 SDK).
+
 **Linux bundles (2026-11-18, real Linux Mint 22.3 x64 machine, Intel GPU, X11):**
 
 - [X] **AppImage** — `SimpleLauncher-5.8.4-linux-x64.AppImage` launched from the release payload, showed the existing library and did **not** show the read-only-folder warning; clicking `Alpha Quest` launched the host dummy emulator with the ROM path.
 - [X] **Flatpak** — `flatpak install --user --bundle SimpleLauncher-5.8.4-linux-x64.flatpak` installed and launched on `org.freedesktop.Platform//25.08`; host ROM folders/emulator paths were visible; `Alpha Quest` launched the host dummy emulator through `flatpak-spawn --host`, and `Zipped Quest.zip` used the extraction fallback (host emulator received the extracted `.nes`).
 - [X] **Portable tar.gz** — `tar -xzf release_5.8.4_linux-x64.tar.gz` restored `0755` on `SimpleLauncher.Avalonia`, `Updater` and the bundled tools; the app launched with the .NET 11 runtime from a writable folder.
-- [X] **ARM64 bundles** — the AppImage outer runtime is AArch64, the Flatpak commit is `aarch64`, and the tarball carries AArch64 ELF binaries with executable modes (no ARM64 hardware available).
+- [X] **ARM64 bundles** — the portable tarball and native AppImage were launched on the Azure `linuxarm-test` host (Ubuntu 24.04.5 aarch64, 2026-11-19); the AppImage outer runtime is AArch64, and the Flatpak commit is structurally `aarch64` but was not run there (no `flatpak-builder`/25.08 SDK).
 - [ ] **AppImage in-place self-update** — needs a published newer AppImage; the replacement path is unit-asset-tested but not yet exercised against a live release.
 - [ ] **Flatpak software-center update** — needs a published Flatpak repository.
 

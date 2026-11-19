@@ -88,9 +88,16 @@ Linux x64 is verified end-to-end on:
 - Linux Mint 22.3 x64 (X11): AppImage, Flatpak and portable tarball launched from the release
   payloads, including Flatpak host-emulator launches through `flatpak-spawn`.
 
-The `linux-arm64` bundles are built and structurally verified (AArch64 ELF AppImage runtime and
-payload, AArch64 Flatpak commit and tar/ZIP executable bits); ARM64 hardware is not available
-in the release pipeline.
+Linux ARM64 is verified on the Azure `linuxarm-test` host (Ubuntu 24.04.5, Neoverse-N2,
+2 vCPU):
+
+- `release_5.8.4_linux-arm64.tar.gz` extracted with AArch64 ELF binaries and executable modes,
+  then launched under Xvfb; the library window rendered (2026-11-19).
+- `SimpleLauncher-5.8.4-linux-arm64.AppImage`, built natively on that host, launched with
+  `APPIMAGE_EXTRACT_AND_RUN=1` and rendered the same window.
+- The arm64 Flatpak was not run there because the guest has no `flatpak-builder` or
+  `org.freedesktop.Sdk//25.08`; CI still builds it and structurally verifies the aarch64
+  commit. The release pipeline itself builds on x86_64.
 
 ## Building the bundles
 
