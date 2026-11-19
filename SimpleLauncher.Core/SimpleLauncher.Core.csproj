@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CHDSharp" Version="1.7.0" />
+        <PackageReference Include="CHDSharp" Version="1.7.1" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="Meziantou.Analyzer" Version="3.0.341">
@@ -56,7 +56,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="SharpCompress" Version="0.50.9" />
+        <PackageReference Include="SharpCompress" Version="0.50.10" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
         <PackageReference Include="Tomlyn" Version="2.11.1" />
