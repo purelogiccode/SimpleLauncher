@@ -76,22 +76,16 @@ public class AvaloniaContextMenuFunctions(
     {
         try
         {
-            // Add the new favorite if it doesn't already exist
-            var alreadyFavorite = context.FavoritesManager.FavoriteList.Any(f =>
-                f.FileName.Equals(context.FileNameWithExtension, StringComparison.OrdinalIgnoreCase)
-                && f.SystemName.Equals(context.SelectedSystemName, StringComparison.OrdinalIgnoreCase));
+            // Add the new favorite if it doesn't already exist (file name + system, WPF parity)
+            var alreadyFavorite = context.FavoritesManager.IsFavorite(
+                context.FileNameWithExtension, context.SelectedSystemName);
 
             if (!alreadyFavorite)
             {
-                context.FavoritesManager.FavoriteList.Add(new Favorite
-                {
-                    FileName = context.FileNameWithExtension,
-                    SystemName = context.SelectedSystemName
-                });
+                await context.FavoritesManager.AddFavoriteAsync(
+                    context.FileNameWithExtension, context.SelectedSystemName);
 
                 _playSoundEffects.PlayNotificationSound();
-
-                await context.FavoritesManager.SaveFavoritesAsync();
 
                 if (context.SourceCard is { } card) card.IsFavorite = true;
 
@@ -126,22 +120,17 @@ public class AvaloniaContextMenuFunctions(
     {
         try
         {
-            var favoriteToRemove = context.FavoritesManager.FavoriteList.FirstOrDefault(f =>
-                f.FileName.Equals(context.FileNameWithExtension, StringComparison.OrdinalIgnoreCase)
-                && f.SystemName.Equals(context.SelectedSystemName, StringComparison.OrdinalIgnoreCase));
+            var removed = await context.FavoritesManager.RemoveFavoriteAsync(
+                context.FileNameWithExtension, context.SelectedSystemName);
 
-            if (favoriteToRemove == null)
+            if (!removed)
             {
                 _logErrors.Debug("[ContextMenu] No favorite entry found for '{File}' of system '{System}'",
                     context.FileNameWithExtension, context.SelectedSystemName);
                 return;
             }
 
-            context.FavoritesManager.FavoriteList.Remove(favoriteToRemove);
-
             _playSoundEffects.PlayTrashSound();
-
-            await context.FavoritesManager.SaveFavoritesAsync();
 
             if (context.SourceCard is { } card) card.IsFavorite = false;
 

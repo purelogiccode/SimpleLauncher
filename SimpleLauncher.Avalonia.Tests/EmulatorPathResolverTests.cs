@@ -70,6 +70,13 @@ public class EmulatorPathResolverTests : IDisposable
                                            <SystemConfigs>
                                                <SystemConfig>
                                                    <SystemName>GameCube</SystemName>
+                                                   <SystemFolders>
+                                                       <SystemFolder>{_tempDir}</SystemFolder>
+                                                   </SystemFolders>
+                                                   <SystemImageFolder>{_tempDir}</SystemImageFolder>
+                                                   <FileFormatsToSearch>
+                                                       <FormatToSearch>iso</FormatToSearch>
+                                                   </FileFormatsToSearch>
                                                    <Emulators>
                                            {emulatorXml}
                                                    </Emulators>
@@ -184,12 +191,18 @@ public class EmulatorPathResolverTests : IDisposable
                                            <SystemConfigs>
                                                 <SystemConfig>
                                                     <SystemName>Switch</SystemName>
+                                                    <SystemFolders><SystemFolder>{_tempDir}</SystemFolder></SystemFolders>
+                                                    <SystemImageFolder>{_tempDir}</SystemImageFolder>
+                                                    <FileFormatsToSearch><FormatToSearch>zip</FormatToSearch></FileFormatsToSearch>
                                                     <Emulators>
                                                         <Emulator><EmulatorName>Yuzu</EmulatorName><EmulatorPath>{_fakeExePath}</EmulatorPath></Emulator>
                                                     </Emulators>
                                                 </SystemConfig>
                                                <SystemConfig>
                                                    <SystemName>GameCube</SystemName>
+                                                   <SystemFolders><SystemFolder>{_tempDir}</SystemFolder></SystemFolders>
+                                                   <SystemImageFolder>{_tempDir}</SystemImageFolder>
+                                                   <FileFormatsToSearch><FormatToSearch>iso</FormatToSearch></FileFormatsToSearch>
                                                    <Emulators>
                                                        <Emulator><EmulatorName>Dolphin 5.0</EmulatorName><EmulatorPath>{_fakeExePath}</EmulatorPath></Emulator>
                                                    </Emulators>

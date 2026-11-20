@@ -172,6 +172,8 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
                     if (!processStarted)
                         throw new InvalidOperationException("Failed to start Commander Genius process.");
 
+                    launcher.ReportGameLaunchStarted();
+
                     if (!process.HasExited)
                     {
                         process.BeginOutputReadLine();

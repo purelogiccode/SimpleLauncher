@@ -621,8 +621,11 @@ public static partial class PathHelper
 
             try
             {
+                // Legacy favorites/history entries may store a bare name without its
+                // extension; match any extension in that case (WPF stores the full name).
+                var searchPattern = Path.HasExtension(fileName) ? fileName : fileName + ".*";
                 var match = Directory
-                    .EnumerateFiles(resolvedFolder, fileName, new EnumerationOptions
+                    .EnumerateFiles(resolvedFolder, searchPattern, new EnumerationOptions
                     {
                         MatchCasing = MatchCasing.CaseInsensitive,
                         RecurseSubdirectories = true,

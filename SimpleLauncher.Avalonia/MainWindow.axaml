@@ -799,8 +799,10 @@
                                      Classes="search-textbox"
                                      VerticalAlignment="Center"
                                      TextChanged="SearchBox_TextChanged"
+                                     KeyDown="SearchBox_KeyDown"
                                      ToolTip.Tip="{ext:Translate TooltipSearch}"
-                                     AutomationProperties.Name="{ext:Translate SearchTextBoxLabel}" />
+                                     AutomationProperties.Name="{ext:Translate SearchTextBoxLabel}"
+                                     AutomationProperties.AutomationId="SearchTextBox" />
                             <Button x:Name="SearchButton"
                                     Classes="toolbar-icon" Padding="6,4"
                                     AutomationProperties.Name="{ext:Translate TooltipSearch}"
@@ -946,7 +948,7 @@
                                          (Classes="game-button-3d" — see DarkTheme.axaml). -->
                                         <Button Classes="game-button-3d"
                                                 Width="{Binding DataContext.CardWidth, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=168}"
-                                                AutomationProperties.Name="{Binding DisplayTitle}"
+                                                AutomationProperties.Name="{Binding AccessibleName}"
                                                 Click="GameCard_Click"
                                                 PointerPressed="GameCard_PointerPressed">
                                             <Button.Height>
@@ -1047,6 +1049,18 @@
                                                                        Stretch="Uniform" />
                                                             </Button>
                                                         </StackPanel>
+
+                                                        <!-- Kebab "More Options" button (WPF GameButtonFactory
+                                                             parity: bottom-right, opens the same context menu) -->
+                                                        <Button Classes="overlay-button"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Bottom"
+                                                                Margin="5"
+                                                                AutomationProperties.Name="{ext:Translate MoreOptions}"
+                                                                ToolTip.Tip="{ext:Translate MoreOptions}"
+                                                                Click="GameCardMoreOptions_Click">
+                                                            <TextBlock Text="..." FontWeight="Bold" />
+                                                        </Button>
                                                     </Grid>
                                                 </Border>
 
@@ -1057,9 +1071,22 @@
                                                         Foreground="{DynamicResource TextPrimaryBrush}"
                                                         FontFamily="{DynamicResource PrimaryFont}"
                                                         FontSize="{Binding DataContext.CaptionFontSize, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=13}"
+                                                        FontWeight="Bold"
                                                         MaxHeight="32"
                                                         TextTrimming="CharacterEllipsis"
                                                         ToolTip.Tip="{Binding DisplayTitle}" />
+                                                    <!-- MAME machine description (Options → Display Machine Name,
+                                                         WPF GameButtonFactory parity) -->
+                                                    <TextBlock
+                                                        Text="{Binding MachineDescription}"
+                                                        IsVisible="{Binding ShowMachineDescription}"
+                                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                                        FontFamily="{DynamicResource PrimaryFont}"
+                                                        FontSize="{Binding DataContext.MachineNameFontSize, RelativeSource={RelativeSource AncestorType=ListBox}, FallbackValue=15}"
+                                                        MaxHeight="34"
+                                                        TextTrimming="CharacterEllipsis"
+                                                        TextWrapping="Wrap"
+                                                        ToolTip.Tip="{Binding MachineDescription}" />
                                                     <!-- Rating stars -->
                                                     <StackPanel Orientation="Horizontal"
                                                                 IsVisible="{Binding Rating, Converter={StaticResource NullToVisibility}}"

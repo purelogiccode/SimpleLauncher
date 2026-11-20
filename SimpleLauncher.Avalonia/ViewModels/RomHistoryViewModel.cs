@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SimpleLauncher.Core.Interfaces;
@@ -16,6 +17,12 @@ public partial class RomHistoryViewModel : ObservableObject
     private readonly IMessageBoxLibraryService _messageBox;
     private readonly IResourceProvider _resourceProvider;
     [ObservableProperty] public partial string HistoryText { get; set; } = null!;
+
+    /// <summary>
+    ///     The same history text with bare URLs converted to Markdown links, rendered by
+    ///     Markdown.Avalonia (WPF RomHistoryWindow parity).
+    /// </summary>
+    [ObservableProperty] public partial string HistoryMarkdown { get; set; } = "";
 
     [ObservableProperty] public partial bool IsDescriptionVisible { get; set; }
 
@@ -75,6 +82,7 @@ public partial class RomHistoryViewModel : ObservableObject
                 var nohistoryxmlfilefound2 = _resourceProvider.GetString("Nohistoryxmlfilefound2",
                     "No 'history.dat' or 'history.xml' file found in the application folder.");
                 HistoryText = nohistoryxmlfilefound2;
+                HistoryMarkdown = nohistoryxmlfilefound2;
 
                 await _messageBox.NoHistoryXmlOrDatFoundMessageBoxAsync();
                 return;
@@ -92,6 +100,7 @@ public partial class RomHistoryViewModel : ObservableObject
                 var notextavailable2 = _resourceProvider.GetString("Notextavailable", "No text available.");
                 var historyText = entry.Element("text")?.Value ?? notextavailable2;
                 HistoryText = historyText;
+                HistoryMarkdown = ConvertUrlsToMarkdown(historyText);
             }
             else
             {
@@ -115,6 +124,7 @@ public partial class RomHistoryViewModel : ObservableObject
         var noRoMhistoryfoundinthelocal2 = _resourceProvider.GetString("NoROMhistoryfoundinthelocal",
             "No ROM history found in the local database for the selected file.");
         HistoryText = noRoMhistoryfoundinthelocal2;
+        HistoryMarkdown = noRoMhistoryfoundinthelocal2;
 
         var result = await _messageBox.SearchOnlineForRomHistoryMessageBoxAsync();
         if (result == MessageBoxResult.Yes) await OpenGoogleSearchAsync();
@@ -139,4 +149,25 @@ public partial class RomHistoryViewModel : ObservableObject
             await _messageBox.ErrorOpeningBrowserMessageBoxAsync();
         }
     }
+
+    /// <summary>
+    ///     Converts bare http(s) URLs to Markdown links so the history renders clickable
+    ///     links, matching WPF RomHistoryViewModel.ConvertUrlsToMarkdown.
+    /// </summary>
+    private static string ConvertUrlsToMarkdown(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+
+        return UrlRegex().Replace(text, static match =>
+        {
+            var url = match.Value;
+            var fullUrl = url.StartsWith("www.", StringComparison.OrdinalIgnoreCase)
+                ? "https://" + url
+                : url;
+            return $"[{url}]({fullUrl})";
+        });
+    }
+
+    [GeneratedRegex(@"https?://[^\s""\]>)]+", RegexOptions.None, 1000)]
+    private static partial Regex UrlRegex();
 }

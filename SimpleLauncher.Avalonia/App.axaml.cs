@@ -3,6 +3,8 @@ using System.Security.Authentication;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +48,7 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckForFileLock;
 using SimpleLauncher.Core.Services.CleanAndDeleteFiles;
+using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.Converters;
 using SimpleLauncher.Core.Services.DebugAndBugReport;
 using SimpleLauncher.Core.Services.DownloadService;
@@ -183,6 +186,25 @@ public class App : Application, IDisposable
             Log.Debug(ex, "Error disposing the game file watcher service");
         }
 
+        // WPF parity: close the debug window singleton and flush the log tail before exit.
+        try
+        {
+            DebugWindow.ShutdownWindow();
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Error shutting down the debug window");
+        }
+
+        try
+        {
+            Log.CloseAndFlush();
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Error flushing the log on shutdown");
+        }
+
         ReleaseSingleInstanceMutex();
         _singleInstanceMutex?.Dispose();
         _instanceSignal?.Dispose();
@@ -201,6 +223,16 @@ public class App : Application, IDisposable
         // It must never acquire the single-instance mutex or start DI/logging,
         // otherwise real launches silently exit as "second instance".
         if (Design.IsDesignMode) return;
+
+        // Detect if the application is running from a temporary extraction folder
+        // (e.g., user double-clicked the .exe inside a ZIP/RAR archive). Shared with WPF.
+        if (TemporaryExtractionGuard.IsRunningFromTemporaryExtraction() && ShowTemporaryExtractionWarning())
+        {
+            base.OnFrameworkInitializationCompleted();
+            return;
+        }
+
+        var startupSw = System.Diagnostics.Stopwatch.StartNew();
 
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         Dispatcher.UIThread.UnhandledException += App_DispatcherUnhandledException;
@@ -353,12 +385,14 @@ public class App : Application, IDisposable
             .WriteTo.Sink(bugReportSink)
             .CreateLogger();
         Log.Information("SimpleLauncher.Avalonia starting up");
+        Log.Debug("Startup phase: logging ready at {ElapsedMs} ms", startupSw.ElapsedMilliseconds);
 
         // DI container
         var serviceCollection = new ServiceCollection();
         ConfigureServices(serviceCollection, configuration, bugReportSink);
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
+        Log.Debug("Startup phase: DI container built at {ElapsedMs} ms", startupSw.ElapsedMilliseconds);
 
         // One-time migration from the legacy files (favorites.dat, playhistory.dat,
         // settings.xml, system.xml) into the unified SQLite database (settings.dat in
@@ -376,16 +410,18 @@ public class App : Application, IDisposable
         {
             Log.Error(ex, "Legacy settings migration failed; continuing with legacy files");
         }
+        Log.Debug("Startup phase: legacy migration done at {ElapsedMs} ms", startupSw.ElapsedMilliseconds);
 
         // Apply the saved language (from settings.xml) once at startup, BEFORE any UI is
         // constructed. Resolving SettingsManagerService here also forces the settings ->
         // message-box-library -> localization chain to build once, in a safe order.
         var localizationService = ServiceProvider.GetRequiredService<LocalizationService>();
         var savedLanguage = ServiceProvider.GetRequiredService<SettingsManagerService>().Language;
-        if (!string.IsNullOrEmpty(savedLanguage) &&
-            !string.Equals(savedLanguage, "en", StringComparison.OrdinalIgnoreCase))
+        var startupLanguage = ResolveStartupLanguage(startupArgs, savedLanguage);
+        if (!string.IsNullOrEmpty(startupLanguage) &&
+            !string.Equals(startupLanguage, "en", StringComparison.OrdinalIgnoreCase))
         {
-            localizationService.LoadLanguage(savedLanguage);
+            localizationService.LoadLanguage(startupLanguage);
         }
 
 
@@ -430,8 +466,10 @@ public class App : Application, IDisposable
 
             // Show main window
             var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+            Log.Debug("Startup phase: MainWindow resolved at {ElapsedMs} ms", startupSw.ElapsedMilliseconds);
             lifetime.MainWindow = mainWindow;
             mainWindow.Show();
+            Log.Debug("Startup phase: MainWindow shown at {ElapsedMs} ms", startupSw.ElapsedMilliseconds);
 
             // WPF parity: open the debug window when launched with -debug
             if (isDebugMode) DebugWindow.ShowDebugWindow();
@@ -525,6 +563,98 @@ public class App : Application, IDisposable
         {
             Log.Error(ex, "Failed to apply the saved theme at startup");
         }
+    }
+
+    /// <summary>
+    ///     Shows a blocking warning window and makes it the main window, so closing it
+    ///     exits the application (same outcome as the WPF message box + Shutdown).
+    /// </summary>
+    private bool ShowTemporaryExtractionWarning()
+    {
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime) return false;
+
+        var okButton = new Button
+        {
+            Content = "OK",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 18),
+            Padding = new Thickness(24, 6),
+            IsDefault = true
+        };
+        okButton.Classes.Add("primary");
+
+        var messageText = new TextBlock
+        {
+            Text = TemporaryExtractionGuard.WarningMessage,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 14
+        };
+
+        var panel = new Grid
+        {
+            RowDefinitions = new RowDefinitions("*,Auto"),
+            Margin = new Thickness(20)
+        };
+        panel.Children.Add(messageText);
+        Grid.SetRow(okButton, 1);
+        panel.Children.Add(okButton);
+
+        var warningWindow = new Window
+        {
+            Title = TemporaryExtractionGuard.WarningTitle,
+            Width = 560,
+            Height = 260,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            Content = panel
+        };
+
+        okButton.Click += (_, _) => warningWindow.Close();
+
+        lifetime.ShutdownMode = ShutdownMode.OnMainWindowClose;
+        lifetime.MainWindow = warningWindow;
+        warningWindow.Show();
+        return true;
+    }
+
+    /// <summary>
+    ///     Extracts a language code from the "--language"/"-language"/"--language=" launch argument.
+    /// </summary>
+    internal static string? TryGetLanguageArg(string[] args)
+    {
+        for (var i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            if (arg.StartsWith("--language=", StringComparison.OrdinalIgnoreCase)) return arg["--language=".Length..];
+
+            if (arg.Equals("--language", StringComparison.OrdinalIgnoreCase) ||
+                arg.Equals("-language", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length) return args[i + 1];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     Resolves the startup language: an explicit --language launch argument wins when
+    ///     it names a supported language, otherwise the configured language is used.
+    /// </summary>
+    internal static string ResolveStartupLanguage(string[] args, string configuredLanguage)
+    {
+        var argLanguage = TryGetLanguageArg(args);
+        if (string.IsNullOrWhiteSpace(argLanguage)) return configuredLanguage;
+
+        var canonical = LocalizationService.AvailableLanguages.Keys
+            .FirstOrDefault(code => string.Equals(code, argLanguage, StringComparison.OrdinalIgnoreCase));
+        if (canonical is not null) return canonical;
+
+        // Expected user input (e.g. --language zz): fall back to English.
+        Log.Information("Unsupported language launch argument '{Language}'. Falling back to English", argLanguage);
+        return "en";
     }
 
     /// <summary>
@@ -664,7 +794,7 @@ public class App : Application, IDisposable
         services.AddSingleton<IFindCoverImageService>(sp => sp.GetRequiredService<FindCoverImageService>());
         services.AddSingleton<ExtractionService>();
         services.AddSingleton<IExtractionService>(sp => sp.GetRequiredService<ExtractionService>());
-        services.AddSingleton<DownloadManager>();
+        services.AddTransient<DownloadManager>();
         services.AddSingleton<DiscConverter>();
         services.AddSingleton<IDiscConverter>(sp => sp.GetRequiredService<DiscConverter>());
         services.AddSingleton<EasyModeManager>();
@@ -898,7 +1028,6 @@ public class App : Application, IDisposable
         // NOTE: GameDetailWindow is intentionally NOT registered — it takes per-game
         // constructor arguments (GameCardViewModel + MainViewModel) and is created manually.
         services.AddTransient<MainWindow>();
-        services.AddTransient<PreferencesWindow>();
         services.AddTransient<EasyModeWindow>();
         services.AddTransient<FirstRunWizardWindow>();
         services.AddTransient<EditSystemWindow>();

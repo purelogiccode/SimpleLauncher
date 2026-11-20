@@ -56,6 +56,10 @@ public class PlayHistoryManager
         logErrors?.Information("Loaded {Count} play history item(s) from the unified database",
             manager.PlayHistoryList.Count);
 
+        // Migrate legacy non-ISO date/time strings so sorting and display stay correct
+        // (WPF PlayHistoryManager parity).
+        manager.MigrateOldDateFormats();
+
         return manager;
     }
 
@@ -501,6 +505,117 @@ public class PlayHistoryManager
                 return new Dictionary<(string FileName, string SystemName), PlayHistoryItem>(
                     HistoryKeyComparer.Instance);
             }
+        }
+    }
+
+    /// <summary>
+    ///     Migrates legacy date/time strings to the ISO formats used by new records.
+    ///     WPF parity: old favorites/history files used the OS's short date/time format,
+    ///     which made sorting and display inconsistent between regions.
+    /// </summary>
+    private void MigrateOldDateFormats()
+    {
+        var needsSaving = false;
+        foreach (var item in PlayHistoryList)
+        {
+            var isIsoDate = IsIsoDateFormat(item.LastPlayDate);
+            var isIsoTime = IsIsoTimeFormat(item.LastPlayTime);
+            if (isIsoDate && isIsoTime) continue;
+
+            if (!TryParseAndConvertDate(item.LastPlayDate, item.LastPlayTime,
+                    out var newDate, out var newTime))
+            {
+                continue;
+            }
+
+            item.LastPlayDate = newDate;
+            item.LastPlayTime = newTime;
+            needsSaving = true;
+        }
+
+        if (needsSaving) _ = SavePlayHistoryAsync();
+    }
+
+    private static bool IsIsoDateFormat(string? dateStr)
+    {
+        return DateTime.TryParseExact(dateStr, IsoDateFormat,
+            CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+    }
+
+    private static bool IsIsoTimeFormat(string? timeStr)
+    {
+        return DateTime.TryParseExact(timeStr, IsoTimeFormat,
+            CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+    }
+
+    private bool TryParseAndConvertDate(string? dateStr, string? timeStr,
+        out string newDateStr, out string newTimeStr)
+    {
+        newDateStr = "";
+        newTimeStr = "";
+        dateStr ??= "";
+        timeStr ??= "";
+
+        try
+        {
+            if (DateTime.TryParseExact($"{dateStr} {timeStr}", $"{IsoDateFormat} {IsoTimeFormat}",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime))
+            {
+                newDateStr = dateTime.ToString(IsoDateFormat, CultureInfo.InvariantCulture);
+                newTimeStr = dateTime.ToString(IsoTimeFormat, CultureInfo.InvariantCulture);
+                return true;
+            }
+
+            string[] dateFormats =
+            [
+                "yyyy/MM/dd", "yyyy.MM.dd", "dd.MM.yyyy",
+                "MM/dd/yyyy", "dd/MM/yyyy", "d", "D"
+            ];
+            foreach (var df in dateFormats)
+            {
+                if (DateTime.TryParseExact($"{dateStr} {timeStr}",
+                        $"{df} {IsoTimeFormat}", CultureInfo.InvariantCulture,
+                        DateTimeStyles.None, out dateTime))
+                {
+                    newDateStr = dateTime.ToString(IsoDateFormat, CultureInfo.InvariantCulture);
+                    newTimeStr = dateTime.ToString(IsoTimeFormat, CultureInfo.InvariantCulture);
+                    return true;
+                }
+            }
+
+            if (DateTime.TryParse($"{dateStr} {timeStr}",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime))
+            {
+                newDateStr = dateTime.ToString(IsoDateFormat, CultureInfo.InvariantCulture);
+                newTimeStr = dateTime.ToString(IsoTimeFormat, CultureInfo.InvariantCulture);
+                return true;
+            }
+
+            foreach (var df in dateFormats)
+            {
+                if (!DateTime.TryParseExact(dateStr, df, CultureInfo.InvariantCulture,
+                        DateTimeStyles.None, out dateTime))
+                {
+                    continue;
+                }
+
+                newDateStr = dateTime.ToString(IsoDateFormat, CultureInfo.InvariantCulture);
+                newTimeStr = TimeSpan.TryParse(timeStr, CultureInfo.InvariantCulture, out var timeSpan)
+                    ? timeSpan.ToString(IsoTimeFormat, CultureInfo.InvariantCulture)
+                    : "00:00:00";
+                return true;
+            }
+
+            dateTime = DateTime.Now;
+            newDateStr = dateTime.ToString(IsoDateFormat, CultureInfo.InvariantCulture);
+            newTimeStr = dateTime.ToString(IsoTimeFormat, CultureInfo.InvariantCulture);
+            _logger?.Warning("Failed to parse date/time, using current time as fallback");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger?.Error(ex, "Error in date format migration");
+            return false;
         }
     }
 

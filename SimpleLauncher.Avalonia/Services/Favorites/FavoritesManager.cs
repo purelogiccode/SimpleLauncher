@@ -417,16 +417,38 @@ public class FavoritesManager
     }
 
     /// <summary>
-    ///     Checks whether a game is in the favorites list (WPF compares bare file names).
+    ///     Checks whether a game is in the favorites list. Matching is by bare file name
+    ///     and, when a system is supplied, by system name (WPF parity). Legacy entries
+    ///     without a system still match by file name so existing favorites survive.
     /// </summary>
     public bool IsFavorite(string filePath)
+    {
+        return IsFavorite(filePath, null);
+    }
+
+    /// <summary>
+    ///     Checks whether a game is in the favorites list for a specific system.
+    /// </summary>
+    public bool IsFavorite(string filePath, string? systemName)
     {
         var bareName = ToBareName(filePath);
         lock (ListLock)
         {
-            return FavoriteList.Any(f =>
-                string.Equals(ToBareName(f.FileName), bareName, StringComparison.OrdinalIgnoreCase));
+            return FavoriteList.Any(f => IsSameFavorite(f, bareName, systemName));
         }
+    }
+
+    private static bool IsSameFavorite(Favorite favorite, string bareName, string? systemName)
+    {
+        if (!string.Equals(ToBareName(favorite.FileName), bareName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // A null/empty system on either side is a legacy entry or an "any system" query;
+        // keep the old file-name-only behavior for those so existing favorites still match.
+        if (string.IsNullOrEmpty(systemName) || string.IsNullOrEmpty(favorite.SystemName))
+            return true;
+
+        return string.Equals(favorite.SystemName, systemName, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -438,16 +460,17 @@ public class FavoritesManager
         var bareName = ToBareName(filePath);
         lock (ListLock)
         {
-            if (FavoriteList.Any(f =>
-                    string.Equals(ToBareName(f.FileName), bareName, StringComparison.OrdinalIgnoreCase)))
+            if (FavoriteList.Any(f => IsSameFavorite(f, bareName, systemName)))
             {
-                _logger?.Debug("Favorite already present, skipping: {FileName}", bareName);
+                _logger?.Debug("Favorite already present, skipping: {FileName} ({System})", bareName, systemName);
                 return false;
             }
 
             FavoriteList.Add(new Favorite
             {
-                FileName = bareName,
+                // Store the file name with its extension (WPF Favorite.FileName parity);
+                // matching still compares bare names so older entries keep working.
+                FileName = Path.GetFileName(filePath),
                 SystemName = systemName
             });
         }
@@ -461,16 +484,24 @@ public class FavoritesManager
     ///     Removes a game from favorites. Returns true if removed, false if not found.
     ///     Matches by bare file name so legacy full-path entries are found too.
     /// </summary>
-    public async Task<bool> RemoveFavoriteAsync(string filePath)
+    public Task<bool> RemoveFavoriteAsync(string filePath)
+    {
+        return RemoveFavoriteAsync(filePath, null);
+    }
+
+    /// <summary>
+    ///     Removes a game from favorites for a specific system (WPF parity). A matching
+    ///     legacy entry without a system is also removed.
+    /// </summary>
+    public async Task<bool> RemoveFavoriteAsync(string filePath, string? systemName)
     {
         var bareName = ToBareName(filePath);
         lock (ListLock)
         {
-            var toRemove = FavoriteList.FirstOrDefault(f =>
-                string.Equals(ToBareName(f.FileName), bareName, StringComparison.OrdinalIgnoreCase));
+            var toRemove = FavoriteList.FirstOrDefault(f => IsSameFavorite(f, bareName, systemName));
             if (toRemove is null)
             {
-                _logger?.Debug("Favorite not found for removal: {FileName}", bareName);
+                _logger?.Debug("Favorite not found for removal: {FileName} ({System})", bareName, systemName);
                 return false;
             }
 
@@ -478,7 +509,7 @@ public class FavoritesManager
         }
 
         await SaveFavoritesAsync();
-        _logger?.Information("Favorite removed: {FileName}", bareName);
+        _logger?.Information("Favorite removed: {FileName} ({System})", bareName, systemName);
         return true;
     }
 
@@ -487,9 +518,9 @@ public class FavoritesManager
     /// </summary>
     public async Task<bool> ToggleAsync(string filePath, string systemName)
     {
-        if (IsFavorite(filePath))
+        if (IsFavorite(filePath, systemName))
         {
-            await RemoveFavoriteAsync(filePath);
+            await RemoveFavoriteAsync(filePath, systemName);
             return false;
         }
 

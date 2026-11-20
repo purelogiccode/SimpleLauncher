@@ -119,6 +119,12 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.4 -BuildSelfContainedPayload
 # -> <WorkDir>\linux-x64\selfcontained, <WorkDir>\linux-arm64\selfcontained
 ```
 
+> **Planned for the next release cycle:** native `.deb` and `.rpm` packages are not part of
+> this script or the release workflow yet. The target matrix, runtime/install-layout decisions
+> and acceptance checklist are in
+> [21 - Release Artifacts](21-release-artifacts.md). Do not add them to `release.yml`,
+> `package-dry-run.yml` or `publish-fallback-r2.ps1` before that checklist is complete.
+
 - The portable payload is published **framework-dependent single-file** for `net11.0` (the
   **.NET 11 runtime** is required; managed assemblies are bundled into the
   `SimpleLauncher.Avalonia` binary with only the native libraries beside it, mirroring the

@@ -9,6 +9,7 @@
 - **New Linux bundles**: self-contained AppImage (`SimpleLauncher-{version}-linux-{x64,arm64}.AppImage`), Flatpak (`SimpleLauncher-{version}-linux-{x64,arm64}.flatpak`) and a portable `release_{version}_linux-{x64,arm64}.tar.gz` next to the existing ZIP. The AppImage and Flatpak carry the .NET runtime; the portable formats still require .NET 11.
 - **Package-aware updates**: AppImages download and replace the outer file, Flatpak installs defer to the software center (repository installs) or a reinstall of the newer bundle (direct `.flatpak`), and portable ZIP/tarball installs keep the existing Updater. Flatpak emulators run on the host through `flatpak-spawn`, and the sandbox uses the extraction/conversion fallbacks instead of FUSE mounts.
 - **Read-only installs**: AppImage and Flatpak no longer trigger the "move to a writable folder" warning; user data stays in the XDG folder (Flatpak uses `~/.var/app/com.purelogiccode.SimpleLauncher/data/SimpleLauncher`).
+- **Planned for the next cycle (not in this release)**: native Debian/Ubuntu/Mint `.deb` and Fedora/RHEL/openSUSE `.rpm` packages for x64/ARM64, alongside the existing Windows ZIP/setup, macOS DMG, AppImage, Flatpak and tar.gz. Matrix and implementation checklist: [21 - Release Artifacts](21-release-artifacts.md).
 
 ## 5.8.4 — 2026-10-20 (current)
 

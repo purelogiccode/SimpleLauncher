@@ -1402,11 +1402,22 @@ public partial class EditSystemWindow : Window
                 if (isUpdate && !string.Equals(_originalSystemName, systemNameText, StringComparison.OrdinalIgnoreCase))
                 {
                     var oldSystemName = _originalSystemName!;
-                    await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);
-                    await _playHistoryManager.RenameSystemAsync(oldSystemName, systemNameText);
-                    _logger.Information(
-                        "System renamed from {OldSystemName} to {NewSystemName}. Favorites and play history migrated",
-                        oldSystemName, systemNameText);
+                    try
+                    {
+                        await _favoritesManager.RenameSystemAsync(oldSystemName, systemNameText);
+                        await _playHistoryManager.RenameSystemAsync(oldSystemName, systemNameText);
+                        _logger.Information(
+                            "System renamed from {OldSystemName} to {NewSystemName}. Favorites and play history migrated",
+                            oldSystemName, systemNameText);
+                    }
+                    catch (Exception ex)
+                    {
+                        // The system itself was saved; a failed migration must not turn that
+                        // into a save error (WPF parity). The stale entries are reconciled later.
+                        _logger.Error(ex,
+                            "System renamed from {OldSystemName} to {NewSystemName}, but favorites/play history migration failed",
+                            oldSystemName, systemNameText);
+                    }
                 }
 
                 // Create folders based on the resolved paths
@@ -1587,7 +1598,10 @@ public partial class EditSystemWindow : Window
             return (true, formatsToSearch);
         }
 
-        if (extractFileBeforeLaunch && !formatsToSearch.All(static f => f is "zip" or "7z" or "rar"))
+        if (extractFileBeforeLaunch && !formatsToSearch.All(static f =>
+                f.Equals("zip", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("7z", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("rar", StringComparison.OrdinalIgnoreCase)))
         {
             await _messageBox.FileMustBeCompressedMessageBoxAsync();
             return (true, formatsToSearch);

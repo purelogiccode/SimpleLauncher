@@ -34,7 +34,49 @@ public class AvaloniaGameFileLoadingOrchestrator
     /// <param name="system">The system configuration.</param>
     public List<string> GetGameFiles(SystemManagerConfig system)
     {
-        return _cache.GetCachedOrScan(system, EnumerateSystemFiles);
+        return _cache.GetCachedOrScan(system, BuildFileList);
+    }
+
+    /// <summary>
+    ///     Enumerates the system files, de-duplicates paths shared by overlapping
+    ///     configured folders, and collapses subfolders into one entry when the system
+    ///     has "Group Files by Folder" enabled (WPF GameFileLoadingOrchestrator parity).
+    /// </summary>
+    private List<string> BuildFileList(SystemManagerConfig system)
+    {
+        var pathComparer = OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
+
+        var files = EnumerateSystemFiles(system)
+            .Distinct(pathComparer)
+            .ToList();
+
+        if (!system.GroupByFolder) return files;
+
+        static string EnsureTrailingSlash(string path)
+        {
+            return path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                   Path.DirectorySeparatorChar;
+        }
+
+        var rootFolders = system.SystemFolders
+            .Select(PathHelper.ResolveRelativeToAppDirectory)
+            .Where(static path => !string.IsNullOrEmpty(path))
+            .Select(path => EnsureTrailingSlash(path!))
+            .ToHashSet(pathComparer);
+
+        // Files directly inside a configured root folder stay individual entries;
+        // files in subfolders collapse to one entry per folder (a directory path).
+        return files
+            .GroupBy(file =>
+            {
+                var fileDirectory = Path.GetDirectoryName(file) ?? "";
+                var normalizedDirectory = EnsureTrailingSlash(fileDirectory);
+                return rootFolders.Contains(normalizedDirectory) ? file : fileDirectory;
+            }, StringComparer.Ordinal)
+            .Select(static group => group.Key)
+            .ToList();
     }
 
     /// <summary>

@@ -49,6 +49,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     private readonly IRetroAchievementsHashScanner _raHashScanner;
     private readonly IRetroAchievementsHashStore _raHashStore;
     private readonly RetroAchievementsManager _raManager;
+    private readonly IRetroAchievementsSystemMatcher? _raSystemMatcher;
     private readonly SettingsManagerService _settings;
     private readonly ISystemImageResolverService? _systemImageResolver;
     private readonly SystemManagerService _systemManager;
@@ -64,6 +65,13 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     [ObservableProperty]
     public partial double CaptionFontSize { get; set; }
+
+    /// <summary>
+    ///     Font size for the MAME machine description line on cards
+    ///     (from the Machine Name Font Size setting, WPF parity).
+    /// </summary>
+    [ObservableProperty]
+    public partial double MachineNameFontSize { get; set; } = 15;
 
     [ObservableProperty] public partial double CardWidth { get; set; } = 168;
 
@@ -92,8 +100,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     The DataGrid header sort reads this list so the sort is applied before pagination.
     /// </summary>
     public IReadOnlyList<GameCardViewModel> CurrentBaseGames => _currentBaseGames;
-
-    private HashSet<string> _favoritePaths;
 
     [ObservableProperty] public partial string GameCountText { get; set; } = "0 games";
 
@@ -183,7 +189,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         AvaloniaGameFilterService gameFilter,
         AvaloniaLoadingOverlayService loadingOverlay,
         LocalizationService localization,
-        ISystemImageResolverService? systemImageResolver = null)
+        ISystemImageResolverService? systemImageResolver = null,
+        IRetroAchievementsSystemMatcher? raSystemMatcher = null)
     {
         _favoritesManager = favoritesManager;
         _playHistoryManager = playHistoryManager;
@@ -197,6 +204,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _raHashScanner = raHashScanner;
         _raHashStore = raHashStore;
         _raManager = raManager;
+        _raSystemMatcher = raSystemMatcher;
         _messageBox = messageBox;
         _mameData = mameData;
         _gameFilter = gameFilter;
@@ -205,7 +213,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         _localization = localization;
         Sidebar = new SidebarViewModel();
 
-        _favoritePaths = _favoritesManager.GetFavoritePaths();
         _allSystems = _systemManager.LoadSystems();
 
         // Apply the saved preferences (settings.xml): default view mode and card size
@@ -218,6 +225,13 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             "Small" => 11,
             "Big" => 16,
             _ => 13
+        };
+
+        MachineNameFontSize = settings.MachineNameFontSize switch
+        {
+            "Small" => 13,
+            "Big" => 17,
+            _ => 15
         };
 
         // NOTE: game loading is deferred to InitializeAsync() (called after the window
@@ -252,6 +266,12 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     Used by the UI reset host to read and restore the filter state.
     /// </summary>
     public string LetterFilter { get; private set; } = "";
+
+    /// <summary>
+    ///     Raised when a navigation action forces the Show Games filter to ShowAll, so the
+    ///     window can refresh the Options menu check mark (WPF ApplyShowGamesSetting parity).
+    /// </summary>
+    public event Action? ShowGamesFilterChanged;
 
     /// <summary>
     ///     ILaunchFeedback implementation for the launcher: raises the toast event.
@@ -316,6 +336,23 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         Log.Debug("Refreshing filename display titles ({FilenameDisplayMode})", _settings.FilenameDisplayMode);
         foreach (var game in _currentBaseGames)
             game.DisplayTitle = GetDisplayTitle(game.FilePath);
+    }
+
+    /// <summary>
+    ///     Shows or hides the MAME machine-description line on the loaded cards after the
+    ///     Options → Filename Preferences toggle (WPF GameButtonFactory parity). The
+    ///     description is already on each card; no disk scan is needed.
+    /// </summary>
+    public void RefreshMachineNameVisibility()
+    {
+        if (_currentBaseGames.Count == 0) return;
+
+        Log.Debug("Refreshing machine name visibility ({DisplayMachineName})", _settings.DisplayMachineName);
+        foreach (var game in _currentBaseGames)
+        {
+            game.ShowMachineDescription = _settings.DisplayMachineName &&
+                                          !string.IsNullOrWhiteSpace(game.MachineDescription);
+        }
     }
 
     /// <summary>
@@ -637,6 +674,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         {
             _settings.ShowGames = "ShowAll";
             await _settings.SaveAsync();
+            ShowGamesFilterChanged?.Invoke();
         }
 
         // Reset every active filter (letter / search / favorites / RetroAchievements)
@@ -668,7 +706,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             if (pool.Count > 0)
             {
                 picked = pool[Random.Shared.Next(pool.Count)];
-                picked.IsFavorite = _favoritesManager.GetFavoritePaths().Contains(Path.GetFileName(picked.FilePath));
+                picked.IsFavorite = _favoritesManager.IsFavorite(picked.FilePath, picked.SystemName);
 
                 var historyLookup = _playHistoryManager.GetHistoryLookup();
                 if (historyLookup.TryGetValue((picked.FilePath, picked.SystemName), out var history))
@@ -1119,7 +1157,8 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             if (validSystemNames.Count != 0)
             {
                 var removedCount = await _favoritesManager.RemoveFavoritesForMissingSystemsAsync(validSystemNames);
-                if (removedCount > 0) _favoritePaths = _favoritesManager.GetFavoritePaths();
+                if (removedCount > 0)
+                    Log.Debug("Removed {Count} favorite(s) for missing systems", removedCount);
             }
 
             // WPF parity: do not build the full cross-system game list at startup.
@@ -1201,8 +1240,14 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
                 if (string.IsNullOrWhiteSpace(query))
                 {
-                    await LoadAllGamesAsync();
-                    StatusText = _localization.GetString("Status.Ready", "Ready");
+                    // Clearing the box returns to the current context. Do not call
+                    // LoadAllGamesAsync here when a system is selected: it clears
+                    // SelectedSystem, and the next search would then fail validation
+                    // with "select a system before searching".
+                    if (!string.IsNullOrEmpty(SelectedSystem))
+                        await NavigateToSystemCoreAsync(SelectedSystem, preservePagination: false);
+                    else
+                        await LoadAllGamesAsync();
                 }
                 else
                 {
@@ -1260,11 +1305,26 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         IsShowingRetroAchievements = false;
         LetterFilter = "";
 
+        // WPF parity: the main search applies to the selected system, not to every
+        // configured system. Prefer the live system-manager configuration so a system
+        // edited after the navigation snapshot is searched with its current folders.
+        var systems = new List<SystemManagerConfig>();
+        var currentSystem = _systemManager.GetSystem(SelectedSystem);
+        if (currentSystem is not null)
+        {
+            systems.Add(currentSystem);
+        }
+        else
+        {
+            systems.AddRange(_allSystems.Where(s =>
+                string.Equals(s.SystemName, SelectedSystem, StringComparison.OrdinalIgnoreCase)));
+        }
+
         var results = await RunViewLoadAsync(
             _localization.GetString("Searchingpleasewait", "Searching, please wait..."),
             () =>
             {
-                var allGames = ScanGames(_allSystems);
+                var allGames = ScanGames(systems);
                 var filtered = AvaloniaGameFilterService.FilterBySearchQuery(allGames, validation.ValidatedQuery);
                 ApplyFavoritesAndHistory(filtered);
                 return filtered;
@@ -1276,6 +1336,31 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         var searchResultsTemplate = _localization.GetString("Status.SearchResults", "{0} result(s) for \"{1}\"");
         StatusText = string.Format(CultureInfo.InvariantCulture, searchResultsTemplate, results.Count,
             validation.ValidatedQuery);
+    }
+
+    /// <summary>
+    ///     Executes a search immediately (the Search button and Enter key), bypassing the
+    ///     text-change debounce. Assigning <see cref="SearchText" /> alone does not fire a
+    ///     reload when the query is unchanged, which made the button a no-op after a
+    ///     debounce cancellation.
+    /// </summary>
+    public async Task SearchAsync(string? query)
+    {
+        var value = query ?? "";
+        CancelPendingSearch();
+
+        // Set the VM value without scheduling the debounced search we are about to run.
+        _suppressSearchReload = true;
+        try
+        {
+            SearchText = value;
+        }
+        finally
+        {
+            _suppressSearchReload = false;
+        }
+
+        await ExecuteSearchAsync(value);
     }
 
     [RelayCommand]
@@ -1362,7 +1447,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             IsShowingFavorites = true;
             IsShowingRetroAchievements = false;
             LetterFilter = "";
-            _favoritePaths = _favoritesManager.GetFavoritePaths();
 
             // Force the Show Games filter to ShowAll and persist it (WPF parity)
             // Favorites might not have covers, so we need to show all games
@@ -1370,6 +1454,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             {
                 _settings.ShowGames = "ShowAll";
                 _ = _settings.SaveAsync();
+                ShowGamesFilterChanged?.Invoke();
             }
 
             var favorites = await RunViewLoadAsync(
@@ -1406,7 +1491,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             IsShowingFavorites = true;
             IsShowingRetroAchievements = false;
             LetterFilter = "";
-            _favoritePaths = _favoritesManager.GetFavoritePaths();
 
             // Force the Show Games filter to ShowAll and persist it (WPF parity)
             // Favorites might not have covers, so we need to show all games
@@ -1414,6 +1498,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
             {
                 _settings.ShowGames = "ShowAll";
                 _ = _settings.SaveAsync();
+                ShowGamesFilterChanged?.Invoke();
             }
 
             var systems = string.IsNullOrEmpty(SelectedSystem)
@@ -1544,12 +1629,6 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         var isNowFavorite = await _favoritesManager.ToggleAsync(game.FilePath, game.SystemName);
         game.IsFavorite = isNowFavorite;
         Log.Information("Favorite {Action}: {Game}", isNowFavorite ? "added" : "removed", game.DisplayTitle);
-
-        var favoriteName = Path.GetFileName(game.FilePath);
-        if (isNowFavorite)
-            _favoritePaths.Add(favoriteName);
-        else
-            _favoritePaths.Remove(favoriteName);
 
         StatusText = isNowFavorite
             ? string.Format(_localization.GetString("Favorites.Added", "Added to favorites: {0}"),
@@ -1723,12 +1802,17 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
         {
             foreach (var file in _loadingOrchestrator.GetGameFiles(system))
             {
+                // Group Files by Folder emits a directory: use the folder name for cover
+                // lookup, MAME lookup and the card caption (WPF folder-card parity).
+                var fileNameWithoutExt = Directory.Exists(file)
+                    ? Path.GetFileName(file)
+                    : Path.GetFileNameWithoutExtension(file);
+
                 var coverPath = _findCoverImage.FindCoverImagePath(
-                    Path.GetFileNameWithoutExtension(file),
+                    fileNameWithoutExt,
                     system.SystemName,
                     system.SystemImageFolder);
 
-                var fileNameWithoutExt = Path.GetFileNameWithoutExtension(file);
                 var machineDescription = _mameData.Lookup.TryGetValue(fileNameWithoutExt, out var desc) ? desc : "";
                 var folderPath = Path.GetDirectoryName(file) ?? "";
 
@@ -1739,12 +1823,15 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
                     FilePath = file,
                     FolderPath = folderPath,
                     MachineDescription = machineDescription,
+                    ShowMachineDescription = _settings.DisplayMachineName &&
+                                             !string.IsNullOrWhiteSpace(machineDescription),
                     SystemName = system.SystemName,
                     CoverPath = coverPath,
                     // Show art only when the file actually exists (the service falls back
                     // to default.png, which may itself be missing → placeholder instead)
                     HasCover = File.Exists(coverPath),
-                    IsRaSupported = GameCardViewModel.IsSystemRaSupported(system.SystemName),
+                    IsRaSupported = _raSystemMatcher?.IsSystemSupportedForHashing(system.SystemName)
+                                    ?? GameCardViewModel.IsSystemRaSupported(system.SystemName),
                     // Overlay buttons follow the Options menu settings (WPF parity: RA also
                     // requires a supported system, video/info are setting-only).
                     ShowRetroAchievementOverlay = _settings.OverlayRetroAchievementButton &&
@@ -1768,7 +1855,9 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     /// </summary>
     private string GetDisplayTitle(string filePath)
     {
-        var name = Path.GetFileNameWithoutExtension(filePath);
+        var name = Directory.Exists(filePath)
+            ? Path.GetFileName(filePath)
+            : Path.GetFileNameWithoutExtension(filePath);
 
         return _settings.FilenameDisplayMode switch
         {
@@ -1846,12 +1935,11 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
 
     private void ApplyFavoritesAndHistory(List<GameCardViewModel> games)
     {
-        _favoritePaths = _favoritesManager.GetFavoritePaths();
         var historyLookup = _playHistoryManager.GetHistoryLookup();
 
         foreach (var game in games)
         {
-            game.IsFavorite = _favoritePaths.Contains(Path.GetFileName(game.FilePath));
+            game.IsFavorite = _favoritesManager.IsFavorite(game.FilePath, game.SystemName);
 
             if (historyLookup.TryGetValue((game.FilePath, game.SystemName), out var history))
             {

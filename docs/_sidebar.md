@@ -33,6 +33,7 @@
 - [15 — Development](15-development.md)
 - [16 — Updater](16-updater.md)
 - [17 — Release Notes](17-release-notes.md)
+- [21 — Release Artifacts (planned)](21-release-artifacts.md)
 
 - **Appendices**
 - [GUI Test Harness](gui-test-harness.md)

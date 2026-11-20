@@ -204,10 +204,16 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
             // Remove invalid control characters that may appear in PowerShell output
             // (e.g., game names containing control characters like 0x07 BEL)
             jsonStr = SanitizeJsonControlCharacters(jsonStr);
+            // Repair raw backslashes that ConvertTo-Json leaves before non-ASCII characters
+            // (bug #68895) so one odd Store name cannot abort the whole scan.
+            jsonStr = SanitizeJsonEscapes(jsonStr);
 
             var allInstalledApps = new List<StoreAppInfo>();
 
-            using var doc = JsonDocument.Parse(jsonStr);
+            var parsed = TryParseJson(jsonStr);
+            if (parsed is null) return;
+
+            using var doc = parsed;
             if (doc.RootElement.ValueKind != JsonValueKind.Array) return;
 
             // Track seen AppIds to avoid duplicates from multiple Start Menu entries
@@ -640,6 +646,82 @@ public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
         }
 
         return null;
+    }
+
+    /// <summary>
+    ///     Parses the PowerShell JSON, reporting malformed external-tool output at Information
+    ///     level (the Store scan is optional, so it is not an application bug).
+    /// </summary>
+    private JsonDocument? TryParseJson(string json)
+    {
+        try
+        {
+            return JsonDocument.Parse(json);
+        }
+        catch (JsonException ex)
+        {
+            _logger.Information(ex,
+                "[ScanMicrosoftStoreGames] Could not parse the PowerShell JSON output. Skipping Microsoft Store scan");
+            return null;
+        }
+    }
+
+    /// <summary>
+    ///     Repairs backslashes that are not valid JSON escape sequences.
+    ///     PowerShell's ConvertTo-Json can leave a raw backslash before a non-ASCII
+    ///     character (for example a game name containing '\Å'), which makes
+    ///     JsonDocument.Parse fail with an "invalid escapable character" error (bug #68895).
+    /// </summary>
+    internal static string SanitizeJsonEscapes(string json)
+    {
+        if (string.IsNullOrEmpty(json) || json.IndexOf('\\') < 0) return json;
+
+        var builder = new StringBuilder(json.Length + 16);
+        for (var i = 0; i < json.Length; i++)
+        {
+            var current = json[i];
+            if (current != '\\')
+            {
+                builder.Append(current);
+                continue;
+            }
+
+            if (i + 1 >= json.Length)
+            {
+                builder.Append('\\').Append('\\');
+                continue;
+            }
+
+            var next = json[i + 1];
+            switch (next)
+            {
+                case '"' or '\\' or '/' or 'b' or 'f' or 'n' or 'r' or 't':
+                    builder.Append(current).Append(next);
+                    i++;
+                    break;
+                case 'u' when HasFourHexDigits(json, i + 2):
+                    builder.Append(current).Append(next).Append(json, i + 2, 4);
+                    i += 5;
+                    break;
+                default:
+                    builder.Append('\\').Append('\\');
+                    break;
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool HasFourHexDigits(string json, int startIndex)
+    {
+        if (startIndex + 4 > json.Length) return false;
+
+        for (var i = startIndex; i < startIndex + 4; i++)
+        {
+            if (!char.IsAsciiHexDigit(json[i])) return false;
+        }
+
+        return true;
     }
 
     /// <summary>

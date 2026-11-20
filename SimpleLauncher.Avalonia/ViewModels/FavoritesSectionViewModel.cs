@@ -221,9 +221,10 @@ public partial class FavoritesSectionViewModel : ObservableObject
 
             foreach (var row in rows)
             {
-                // WPF parity: favorites are matched by their stored file name (the
-                // exact value persisted in favorites.dat — bare name or legacy full path).
-                await _favoritesManager.RemoveFavoriteAsync(row.StoredFileName);
+                // WPF parity: favorites are matched by their stored file name and system
+                // (the exact values persisted in favorites.dat; legacy full-path entries
+                // and entries without a system still match by file name).
+                await _favoritesManager.RemoveFavoriteAsync(row.StoredFileName, row.SystemName);
                 Favorites.Remove(row);
             }
 

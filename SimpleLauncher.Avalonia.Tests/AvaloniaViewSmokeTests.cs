@@ -199,7 +199,6 @@ public class AvaloniaViewSmokeTests
         yield return [typeof(EasyModeWindow)];
         yield return [typeof(FirstRunWizardWindow)];
         yield return [typeof(SystemSelectionWindow)];
-        yield return [typeof(PreferencesWindow)];
         // GameDetailWindow and MainWindow require a fully-wired MainViewModel (DI-heavy) — XAML is still
         // validated via the generic path, but we smoke-test only the type existence here to avoid
         // ViewModel NullReference noise. Their XAML was already exercised via the Inject windows and

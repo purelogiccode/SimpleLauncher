@@ -48,9 +48,13 @@ public partial class GameCardViewModel : ObservableObject
 
     [ObservableProperty] public partial string CoverPath { get; set; } = "";
 
-    [ObservableProperty] public partial string DisplayTitle { get; set; } = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AccessibleName))]
+    public partial string DisplayTitle { get; set; } = "";
 
-    [ObservableProperty] public partial string FileName { get; set; } = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AccessibleName))]
+    public partial string FileName { get; set; } = "";
 
     [ObservableProperty] public partial string FilePath { get; set; } = "";
 
@@ -89,7 +93,25 @@ public partial class GameCardViewModel : ObservableObject
 
     [ObservableProperty] public partial string? LastPlayed { get; set; }
 
-    [ObservableProperty] public partial string MachineDescription { get; set; } = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AccessibleName))]
+    public partial string MachineDescription { get; set; } = "";
+
+    /// <summary>
+    ///     True when the MAME machine description is shown as a second caption line
+    ///     (Options → Display Machine Name, WPF GameButtonFactory parity).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AccessibleName))]
+    public partial bool ShowMachineDescription { get; set; }
+
+    /// <summary>
+    ///     Accessible name of the card: the machine description when it is displayed
+    ///     (WPF parity), otherwise the visible title.
+    /// </summary>
+    public string AccessibleName => ShowMachineDescription && !string.IsNullOrWhiteSpace(MachineDescription)
+        ? MachineDescription
+        : !string.IsNullOrWhiteSpace(DisplayTitle) ? DisplayTitle : FileName;
 
     [ObservableProperty] public partial string PlaceholderColor { get; set; } = "#15FFFFFF";
 

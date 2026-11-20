@@ -391,6 +391,89 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
+    public async Task Search_AfterSelectingSystem_MatchesMameMachineDescription()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        _viewModel.SearchText = "Beyond the Beyond";
+
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            !_viewModel.IsLoading && _viewModel.Games.Count == 1);
+
+        Assert.Equal("beyond", _viewModel.Games[0].FileName, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal("Test System", _viewModel.Games[0].SystemName);
+    }
+
+    [Fact]
+    public async Task Search_AfterSelectingSystem_MatchesFileNameWhenDisplayTitleIsHidden()
+    {
+        _settings.FilenameDisplayMode = "NoFilename";
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        _viewModel.SearchText = "abyss";
+
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            !_viewModel.IsLoading && _viewModel.Games.Count == 1);
+
+        Assert.Equal("abyss", _viewModel.Games[0].FileName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task DisplayMachineName_Toggle_ShowsMameDescriptionOnLoadedCards()
+    {
+        _settings.DisplayMachineName = true;
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        var beyond = _viewModel.Games.Single(static g => string.Equals(g.FileName, "beyond", StringComparison.Ordinal));
+        Assert.True(beyond.ShowMachineDescription);
+        Assert.Equal("Beyond the Beyond", beyond.AccessibleName);
+
+        _settings.DisplayMachineName = false;
+        _viewModel.RefreshMachineNameVisibility();
+
+        Assert.False(beyond.ShowMachineDescription);
+        Assert.Equal(beyond.DisplayTitle, beyond.AccessibleName);
+    }
+
+    [Fact]
+    public async Task SearchAsync_ExecutesEvenWhenQueryIsAlreadyInSearchText()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+
+        // Run the debounced search once, then replace the view with the full library.
+        _viewModel.SearchText = "abyss";
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            !_viewModel.IsLoading && _viewModel.Games.Count == 1);
+        await _viewModel.ApplyLetterFilterAsync("");
+        Assert.Equal(5, _viewModel.Games.Count);
+
+        // The Search button/Enter path must run even though SearchText was previously
+        // "abyss": assigning the same value alone would not fire OnSearchTextChanged.
+        await _viewModel.SearchAsync("abyss");
+
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            !_viewModel.IsLoading && _viewModel.Games.Count == 1);
+        Assert.Equal("abyss", _viewModel.Games[0].FileName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ClearingSearchText_KeepsSelectedSystemAndReloadsItsGames()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+        _viewModel.SearchText = "abyss";
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            !_viewModel.IsLoading && _viewModel.Games.Count == 1);
+
+        _viewModel.SearchText = "";
+
+        await HeadlessAvalonia.WaitUntilAsync(() =>
+            !_viewModel.IsLoading &&
+            string.Equals(_viewModel.SelectedSystem, "Test System", StringComparison.Ordinal) &&
+            _viewModel.Games.Count == 5);
+        Assert.Equal("Test System", _viewModel.SelectedSystem);
+    }
+
+    [Fact]
     public async Task PickRandomGame_ReplacesViewWithSingleGameFromSelectedSystem()
     {
         await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
@@ -499,7 +582,8 @@ public class MainViewModelQuickActionsTests : IDisposable
         var folders = string.Join('\u001E', system.SystemFolders ?? []);
         var formats = string.Join('\u001E', system.FileFormatsToSearch ?? []);
         var recursion = system is { DisableRecursiveSearch: true, GroupByFolder: false } ? '0' : '1';
-        return $"{folders}\u001F{formats}\u001F{recursion}";
+        var groupByFolder = system.GroupByFolder ? '1' : '0';
+        return $"{folders}\u001F{formats}\u001F{recursion}\u001F{groupByFolder}";
     }
 
     [Fact]

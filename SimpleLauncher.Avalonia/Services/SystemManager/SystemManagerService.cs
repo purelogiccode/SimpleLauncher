@@ -281,24 +281,75 @@ public class SystemManagerService
         }
     }
 
-    /// <summary>Parses a single SystemConfig element and throws if it is invalid.</summary>
+    /// <summary>
+    ///     Parses a single SystemConfig element and throws if it is invalid.
+    ///     Validation rules and messages match the WPF SystemManagerService
+    ///     (ParseSystemConfiguration) exactly so both variants accept the same systems.
+    /// </summary>
     private static SystemManagerConfig ParseSystemElement(XElement element)
     {
         var systemName = element.Element("SystemName")?.Value?.Trim();
         if (string.IsNullOrEmpty(systemName))
-            throw new InvalidOperationException("SystemName is missing or empty.");
+            throw new InvalidOperationException("Missing or empty 'System Name' in XML.");
+
+        var systemFolders = ParseFoldersCompat(element);
+        if (systemFolders.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': At least one 'System Folder' is required in XML.");
+        }
+
+        var systemImageFolder = element.Element("SystemImageFolder")?.Value;
+        if (string.IsNullOrEmpty(systemImageFolder))
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': Missing or empty 'System Image Folder' in XML.");
+        }
+
+        var formatsToSearch = ParseListCompat(element, "FileFormatsToSearch", "FormatToSearch");
+        if (formatsToSearch.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': 'File Extension To Search' should have at least one value.");
+        }
+
+        var extractFileBeforeLaunch =
+            bool.TryParse(element.Element("ExtractFileBeforeLaunch")?.Value, out var extract) && extract;
+
+        if (extractFileBeforeLaunch && !formatsToSearch.All(static f =>
+                f.Equals("zip", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("7z", StringComparison.OrdinalIgnoreCase) ||
+                f.Equals("rar", StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': When 'Extract File Before Launch' is set to true, 'Extension to Search in the System Folder' must ONLY contain 'zip', '7z', or 'rar'.");
+        }
+
+        var formatsToLaunch = ParseListCompat(element, "FileFormatsToLaunch", "FormatToLaunch");
+        if (extractFileBeforeLaunch && formatsToLaunch.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': 'File Extension To Launch' should have at least one value when 'Extract File Before Launch' is set to true.");
+        }
+
+        var emulators = ParseEmulators(element.Element("Emulators"));
+        if (emulators.Any(static emulator => string.IsNullOrEmpty(emulator.EmulatorName)))
+        {
+            throw new InvalidOperationException(
+                $"System '{systemName}': An 'Emulator Name' should not be empty or null.");
+        }
 
         return new SystemManagerConfig
         {
             SystemName = systemName,
-            SystemFolders = ParseFoldersCompat(element),
-            SystemImageFolder = element.Element("SystemImageFolder")?.Value ?? "",
-            FileFormatsToSearch = ParseListCompat(element, "FileFormatsToSearch", "FormatToSearch"),
-            FileFormatsToLaunch = ParseListCompat(element, "FileFormatsToLaunch", "FormatToLaunch"),
-            ExtractFileBeforeLaunch = bool.TryParse(element.Element("ExtractFileBeforeLaunch")?.Value, out var b) && b,
+            SystemFolders = systemFolders,
+            SystemImageFolder = systemImageFolder,
+            FileFormatsToSearch = formatsToSearch,
+            FileFormatsToLaunch = formatsToLaunch,
+            ExtractFileBeforeLaunch = extractFileBeforeLaunch,
             GroupByFolder = bool.TryParse(element.Element("GroupByFolder")?.Value, out var g) && g,
             DisableRecursiveSearch = bool.TryParse(element.Element("DisableRecursiveSearch")?.Value, out var d) && d,
-            Emulators = ParseEmulators(element.Element("Emulators"))
+            Emulators = emulators
         };
     }
 

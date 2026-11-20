@@ -106,6 +106,10 @@ public class LauncherService : ILauncherService
     /// </summary>
     public TimeSpan LastPlayTime { get; private set; }
 
+    // WPF parity: set by every launch path that actually starts a process; the launch
+    // pipeline records play history/stats when the process ran for more than 5 seconds.
+    private bool _gameLaunchStarted;
+
     public async Task LaunchRegularEmulatorAsync(
         string resolvedFilePath,
         string selectedEmulatorName,
@@ -123,7 +127,10 @@ public class LauncherService : ILauncherService
         var displayFilePath = originalFilePathForDisplay ?? resolvedFilePath;
         var originalFileName = Path.GetFileNameWithoutExtension(displayFilePath);
 
-        var ext = Path.GetExtension(resolvedFilePath).ToUpperInvariant();
+        // Group Files by Folder passes a directory: never treat its name as a file
+        // extension (e.g., a folder named "Game.ZIP" must not enter the ZIP branch).
+        var isDirectory = Directory.Exists(resolvedFilePath);
+        var ext = isDirectory ? "" : Path.GetExtension(resolvedFilePath).ToUpperInvariant();
         var actualFilePath = resolvedFilePath;
         string? cleanupPath = null; // temp dir to clean up after launch
         var emulatorName = selectedEmulatorManager.EmulatorName ?? "";
@@ -216,11 +223,8 @@ public class LauncherService : ILauncherService
                     // archive path unchanged. Emulators needing real files (or the system's
                     // ExtractFileBeforeLaunch flag) get the archive extracted first.
                     var requiresRealFiles = selectedSystemManager.ExtractFileBeforeLaunch ||
-                                            emulatorName.Contains("DuckStation", StringComparison.OrdinalIgnoreCase) ||
-                                            emulatorName.Contains("Azahar", StringComparison.OrdinalIgnoreCase) ||
-                                            emulatorName.Contains("Citra", StringComparison.OrdinalIgnoreCase) ||
-                                            emulatorName.Contains("Ootake", StringComparison.OrdinalIgnoreCase) ||
-                                            emulatorName.Contains("SameBoy", StringComparison.OrdinalIgnoreCase) ||
+                                            EmulatorMatches(emulatorName, emulatorLocation,
+                                                "DuckStation", "Azahar", "Citra", "Ootake", "SameBoy") ||
                                             emulatorName.Contains("Ymir", StringComparison.OrdinalIgnoreCase) ||
                                             emulatorName.Contains("Yumir", StringComparison.OrdinalIgnoreCase) ||
                                             IsYmirEmulatorLocation(emulatorLocation);
@@ -377,10 +381,10 @@ public class LauncherService : ILauncherService
             // here via rawEmulatorParameters.)
             var launchParameters = rawEmulatorParameters;
             var emulatorPath = selectedEmulatorManager.EmulatorLocation ?? "";
-            var isRetroArch = emulatorName.Contains("RetroArch", StringComparison.OrdinalIgnoreCase);
+            var isRetroArch = EmulatorMatches(emulatorName, emulatorPath, "RetroArch");
             var isMame = PathHelper.IsMameFamilyEmulator(emulatorName, emulatorPath);
             var isRaine = emulatorName.Contains("Raine", StringComparison.OrdinalIgnoreCase);
-            var isXemu = emulatorName.Contains("Xemu", StringComparison.OrdinalIgnoreCase);
+            var isXemu = EmulatorMatches(emulatorName, emulatorPath, "Xemu");
 
             if (isRetroArch && !PathHelper.ContainsStandaloneFlag(launchParameters, "-L"))
             {
@@ -394,6 +398,8 @@ public class LauncherService : ILauncherService
                     "RetroArch parameters must contain \"-L\" pointing to the desired core.\n\n" +
                     "Example: -L \"cores\\snes9x_libretro.dll\"",
                     "RetroArch Parameter Issue");
+                await _askAiToFixParameters.ExecuteAsync(
+                    selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
                 return;
             }
 
@@ -410,6 +416,8 @@ public class LauncherService : ILauncherService
                     "Xemu parameters must contain \"-dvd_path\" pointing to the disc image.\n\n" +
                     "Example: -dvd_path \"%ROM%\"",
                     "Xemu Parameter Issue");
+                await _askAiToFixParameters.ExecuteAsync(
+                    selectedSystemManager, selectedEmulatorManager, loadingStateProvider);
                 return;
             }
 
@@ -475,7 +483,11 @@ public class LauncherService : ILauncherService
 
             // Resolve all placeholders (%ROM%, %BASEFOLDER%, %EMULATORFOLDER%, %NAME%,
             // %ROMSYSTEMFOLDER%, ...) exactly like the original SimpleLauncher
-            var romName = Path.GetFileNameWithoutExtension(actualFilePath);
+            // Folder cards (Group Files by Folder) pass a directory: its folder name is
+            // the ROM name, not "folder name without extension".
+            var romName = Directory.Exists(actualFilePath)
+                ? Path.GetFileName(actualFilePath)
+                : Path.GetFileNameWithoutExtension(actualFilePath);
             var resolvedEmulatorFolderPath = Path.GetDirectoryName(resolvedEmulatorPath) ?? "";
             if (string.IsNullOrEmpty(resolvedEmulatorFolderPath) ||
                 !Directory.Exists(PathHelper.GetLongPath(resolvedEmulatorFolderPath)))
@@ -593,6 +605,7 @@ public class LauncherService : ILauncherService
                     }
 
                     process.Start();
+                    _gameLaunchStarted = true;
 
                     if (!isBatchFile)
                     {
@@ -683,14 +696,8 @@ public class LauncherService : ILauncherService
                 selectedEmulatorManager, selectedSystemManager,
                 loadingStateProvider);
 
-            // ── Play history & stats integration (ported from WPF) ──
-            if (LastPlayTime.TotalSeconds > 5)
-            {
-                await UpdateStatsAndPlayCountAsync(
-                    LastPlayTime, resolvedFilePath, selectedSystemManager.SystemName,
-                    emulatorName, loadingStateProvider);
-                GamePlayed?.Invoke(this, new GamePlayedEventArgs(resolvedFilePath, selectedSystemManager.SystemName));
-            }
+            // ── Play history & stats are recorded by the launch pipeline
+            // (HandleButtonClickAsync) for every path, using the original game path.
         }
         finally
         {
@@ -762,6 +769,9 @@ public class LauncherService : ILauncherService
         ILoadingState? loadingStateProvider)
     {
         // 1. Create Context
+        var launchStartedAt = DateTime.Now;
+        _gameLaunchStarted = false;
+
         var context = new LaunchContext
         {
             FilePath = filePath,
@@ -847,6 +857,18 @@ public class LauncherService : ILauncherService
             finally
             {
                 loadingStateProvider?.SetLoadingState(false);
+            }
+
+            // WPF parity: record play history and stats for every launch path (regular
+            // emulator, batch, executable, Commander Genius) once the process has run for
+            // more than 5 seconds. The original game path is recorded, not a mounted or
+            // extracted temporary path.
+            var playTime = DateTime.Now - launchStartedAt;
+            if (_gameLaunchStarted && playTime.TotalSeconds > 5)
+            {
+                await UpdateStatsAndPlayCountAsync(playTime, context.FilePath, context.SystemName,
+                    context.EmulatorName, loadingStateProvider);
+                GamePlayed?.Invoke(this, new GamePlayedEventArgs(context.FilePath, context.SystemName));
             }
         }
         catch (Exception ex)
@@ -1047,6 +1069,13 @@ public class LauncherService : ILauncherService
             // Expected user condition (batch file folder moved/deleted) — Information level (WPF parity).
             Log.Information("The working directory for the batch file does not exist: {WorkingDirectory}",
                 batchWorkingDirectory);
+            if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBox.BatchFileFailedMessageBoxAsync(resolvedFilePath,
+                    $"Working directory not found: {batchWorkingDirectory}", LogFilePath());
+            }
+
+            return;
         }
 
         Log.Debug("RunBatchFileAsync:\n\n");
@@ -1054,6 +1083,9 @@ public class LauncherService : ILauncherService
         Log.Debug("Working Directory: {WorkingDirectory}\n", batchWorkingDirectory);
 
         Exception? error = null;
+        var timedOut = false;
+        string? failureReason = null;
+        int? failureExitCode = null;
         await Task.Run(() =>
         {
             try
@@ -1066,6 +1098,7 @@ public class LauncherService : ILauncherService
                     WorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? ""
                 };
                 process.Start();
+                _gameLaunchStarted = true;
 
                 // 5-minute timeout (matches the original launcher), then kill
                 if (!process.WaitForExit(300_000))
@@ -1086,6 +1119,7 @@ public class LauncherService : ILauncherService
                         Log.Debug(killEx, "Failed to kill timed-out batch file {Path}", resolvedFilePath);
                     }
 
+                    timedOut = true;
                     return;
                 }
 
@@ -1097,6 +1131,8 @@ public class LauncherService : ILauncherService
                     Log.Information("Batch file exited with code {ExitCode}: {Path}", process.ExitCode,
                         resolvedFilePath);
                     LogBatchFileContentsOnError(resolvedFilePath);
+                    failureReason = $"Exit code: {process.ExitCode}";
+                    failureExitCode = process.ExitCode;
                     launchFeedback?.ShowToast("Simple Launcher", $"Error: {batchShortName} failed");
                     launchFeedback?.SetStatusText($"Error: {batchShortName} failed");
                     return;
@@ -1143,7 +1179,33 @@ public class LauncherService : ILauncherService
         if (error is not null)
         {
             launchFeedback?.SetStatusText($"Error: {batchShortName} failed");
-            await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
+            if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBox.BatchFileFailedMessageBoxAsync(resolvedFilePath, error.Message, LogFilePath());
+            }
+            else
+            {
+                await _messageBox.CouldNotLaunchGameMessageBoxAsync(LogFilePath());
+            }
+
+            return;
+        }
+
+        if (timedOut)
+        {
+            if (selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+            {
+                await _messageBox.BatchFileFailedMessageBoxAsync(resolvedFilePath,
+                    "Process timed out after 5 minutes", LogFilePath());
+            }
+
+            return;
+        }
+
+        if (failureReason is not null && selectedEmulatorManager.ReceiveANotificationOnEmulatorError)
+        {
+            await _messageBox.BatchFileFailedMessageBoxAsync(resolvedFilePath, failureReason, LogFilePath(),
+                failureExitCode);
         }
     }
 
@@ -1240,9 +1302,14 @@ public class LauncherService : ILauncherService
                 {
                     // Launch the extracted URL directly for .url files, not the shortcut itself
                     FileName = targetUrl ?? resolvedFilePath,
-                    UseShellExecute = true
+                    UseShellExecute = true,
+                    // WPF parity: shortcuts may resolve relative targets from their own folder.
+                    WorkingDirectory = targetUrl is null
+                        ? Path.GetDirectoryName(resolvedFilePath) ?? AppDomain.CurrentDomain.BaseDirectory
+                        : ""
                 };
                 process.Start();
+                _gameLaunchStarted = true;
             }
             catch (Exception ex)
             {
@@ -1303,6 +1370,7 @@ public class LauncherService : ILauncherService
                     WorkingDirectory = Path.GetDirectoryName(resolvedFilePath) ?? ""
                 };
                 process.Start();
+                _gameLaunchStarted = true;
                 process.WaitForExit();
 
                 if (process.ExitCode != 0 && !IsInEmulatorsToSkipList(selectedEmulatorManager.EmulatorName))
@@ -1401,8 +1469,20 @@ public class LauncherService : ILauncherService
     /// <inheritdoc />
     public void ReportGameLaunchStarted()
     {
-        // No-op in Avalonia: play history is recorded inside LaunchRegularEmulatorAsync,
-        // which only runs on paths where a launch actually starts.
+        // Strategies that start the process themselves (e.g. Commander Genius) call this
+        // so the launch pipeline records play history/stats after the process exits.
+        _gameLaunchStarted = true;
+    }
+
+    /// <summary>
+    ///     True when the emulator display name or executable path contains one of the
+    ///     keywords (WPF parity: emulator behavior is keyed on either name or path).
+    /// </summary>
+    private static bool EmulatorMatches(string emulatorName, string emulatorLocation, params string[] keywords)
+    {
+        return keywords.Any(keyword =>
+            emulatorName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+            emulatorLocation.Contains(keyword, StringComparison.OrdinalIgnoreCase));
     }
 
     // ── Post-exit error analysis constants ──

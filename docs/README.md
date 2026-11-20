@@ -62,7 +62,8 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 | [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.8.4 → 1.1 |
 | [18 — Emulator Parameters](18-emulator-parameters.md) | parameters.md conventions + full system → emulator index (84 systems / 352 entries) |
 | [19 — Linux Packages](19-linux-packages.md) | AppImage, Flatpak and portable Linux formats, install and update behavior |
-| [20 — macOS Package](20-macos-packages.md) | Unsigned Apple Silicon DMG, Gatekeeper, Easy Mode catalog, build and NoMac validation |
+| [20 - macOS Package](20-macos-packages.md) | Unsigned Apple Silicon DMG, Gatekeeper, Easy Mode catalog, build and NoMac validation |
+| [21 - Release Artifacts (planned)](21-release-artifacts.md) | Next-cycle download matrix: Windows ZIP/setup, macOS DMG, DEB/RPM, AppImage, Flatpak, tar.gz |
 | [FAQ](faq.md) | Runtime, Dokan/FUSE, first system, data locations, updates, SmartScreen, Steam Deck |
 | [Comparison](comparison.md) | Honest table vs LaunchBox, ES-DE, RetroBat and Playnite, with a last-verified date |
 | [Privacy](privacy.md) | What the app stores locally, what it sends, and how to disable automatic reports |

@@ -563,14 +563,12 @@ public partial class App : IDisposable
         serviceCollection.AddSingleton<ILaunchStrategy, DefaultLaunchStrategy>();
 
         // Detect if the application is running from a temporary extraction folder
-        // (e.g., user double-clicked the .exe inside a ZIP/RAR archive)
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        var tempDir = Path.GetTempPath();
-        if (baseDir.StartsWith(tempDir, StringComparison.OrdinalIgnoreCase))
+        // (e.g., user double-clicked the .exe inside a ZIP/RAR archive). Shared with Avalonia.
+        if (TemporaryExtractionGuard.IsRunningFromTemporaryExtraction())
         {
             MessageBox.Show(
-                "Please extract the application first.\n\nIt looks like you are running SimpleLauncher from inside a ZIP or RAR archive.\n\nPlease extract the archive to a folder on your computer and run the application from there.",
-                "SimpleLauncher",
+                TemporaryExtractionGuard.WarningMessage,
+                TemporaryExtractionGuard.WarningTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Shutdown();

@@ -226,7 +226,7 @@ public class GameScannerServiceTests : IDisposable
                                           <SystemFolders>
                                             <SystemFolder>{customRoms}</SystemFolder>
                                           </SystemFolders>
-                                          <SystemImageFolder />
+                                          <SystemImageFolder>{DefaultImagesPath}</SystemImageFolder>
                                           <FileFormatsToSearch>
                                             <FormatToSearch>url</FormatToSearch>
                                           </FileFormatsToSearch>
@@ -271,7 +271,7 @@ public class GameScannerServiceTests : IDisposable
                                           <SystemFolders>
                                             <SystemFolder>{blockedRoms}</SystemFolder>
                                           </SystemFolders>
-                                          <SystemImageFolder />
+                                          <SystemImageFolder>{DefaultImagesPath}</SystemImageFolder>
                                           <FileFormatsToSearch>
                                             <FormatToSearch>url</FormatToSearch>
                                           </FileFormatsToSearch>

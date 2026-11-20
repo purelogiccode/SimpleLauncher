@@ -1,7 +1,9 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -50,6 +52,15 @@ public partial class MainWindow : Window, IPaginationHost
     private static readonly string BoundsFilePath = Path.Combine(
         AppDataPaths.SimpleLauncherDataFolder, "window_bounds_avalonia.json");
 
+    // Decoded system icons keyed by path + decode width + last-write time. The system
+    // grid is rebuilt after Edit/Delete and when returning to the selection screen;
+    // re-decoding every icon each time made that rebuild needlessly slow.
+    private static readonly ConcurrentDictionary<string, Bitmap> SystemIconCache =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private sealed record SystemIconRequest(string Path, int DecodeWidth, double DisplayWidth,
+        double DisplayHeight, Border Holder);
+
     private readonly AvaloniaContextMenuService _contextMenuService;
     private readonly ExternalToolLauncherService _externalToolLauncher;
     private readonly AvaloniaGameFileWatcherService _fileWatcher;
@@ -70,6 +81,8 @@ public partial class MainWindow : Window, IPaginationHost
 
     // Event handler references for cleanup
     private readonly Action<string, string> _toastRequestedHandler;
+    private readonly Action _showGamesFilterChangedHandler;
+    private readonly System.ComponentModel.PropertyChangedEventHandler _viewModelPropertyChangedHandler;
     private readonly UiResetService _uiResetService;
     private readonly MainViewModel _viewModel;
     private bool _wasControllerRunningBeforeDeactivation;
@@ -97,6 +110,7 @@ public partial class MainWindow : Window, IPaginationHost
         AvaloniaQuitSimpleLauncher quitSimpleLauncher,
         AvaloniaStartupInitializationService startupInitializationService)
     {
+        var ctorSw = System.Diagnostics.Stopwatch.StartNew();
         _viewModel = viewModel;
         _systemManagerService = systemManagerService;
         _settings = settings;
@@ -123,11 +137,32 @@ public partial class MainWindow : Window, IPaginationHost
         _toastRequestedHandler = (title, message) => ShowToast(title, message);
         _viewModel.ToastRequested += _toastRequestedHandler;
 
+        // Favorites/random navigation force Show Games to ShowAll; keep the menu check mark
+        // in sync (WPF ApplyShowGamesSetting parity).
+        _showGamesFilterChangedHandler = () => UpdateShowGamesCheckMarks(_settings.ShowGames);
+        _viewModel.ShowGamesFilterChanged += _showGamesFilterChangedHandler;
+
+        // WPF parity: every status message auto-clears after the configured timeout.
+        _viewModelPropertyChangedHandler = (_, e) =>
+        {
+            if (!string.Equals(e.PropertyName, nameof(MainViewModel.StatusText), StringComparison.Ordinal))
+                return;
+
+            // StatusText can be set from batch-launch background threads; DispatcherTimer
+            // must be created/restarted on the UI thread.
+            if (Dispatcher.UIThread.CheckAccess())
+                _startupInitializationService.RestartStatusBarTimer();
+            else
+                Dispatcher.UIThread.Post(() => _startupInitializationService.RestartStatusBarTimer());
+        };
+        _viewModel.PropertyChanged += _viewModelPropertyChangedHandler;
+
         // Initialize converter with ratio service
         ConsoleToCardHeightConverter.SetRatioService(ratioService);
         BooleanToFavoriteStatusConverter.SetLocalizationService(localization);
 
         InitializeComponent();
+        Log.Debug("Ctor phase: InitializeComponent done at {ElapsedMs} ms", ctorSw.ElapsedMilliseconds);
 
         // Windows ships the full external-tool set. Linux ships XISOStudio, CHDStudio, RVZStudio
         // and FindRomCover (one payload per OS/architecture each); the other tools are Windows
@@ -181,6 +216,7 @@ public partial class MainWindow : Window, IPaginationHost
         // resolving every system icon here delayed the first frame and was not visible
         // on the startup screen.
         _systemSelectionOrchestrator.LoadOrReloadSystemManager();
+        Log.Debug("Ctor phase: systems loaded at {ElapsedMs} ms", ctorSw.ElapsedMilliseconds);
 
         // NOTE: no initial System ComboBox selection here — selecting a system would
         // fire SystemComboBox_SelectionChanged synchronously and trigger a full library
@@ -189,6 +225,7 @@ public partial class MainWindow : Window, IPaginationHost
 
         // Restore window position/size before the window is shown
         RestoreWindowBounds();
+        Log.Debug("Ctor phase: window bounds restored at {ElapsedMs} ms", ctorSw.ElapsedMilliseconds);
 
         // Pause/resume gamepad controller on window focus changes to prevent
         // mouse input leaking to other windows (mirrors the WPF app behavior).
@@ -257,6 +294,8 @@ public partial class MainWindow : Window, IPaginationHost
             try
             {
                 _viewModel.ToastRequested -= _toastRequestedHandler;
+                _viewModel.ShowGamesFilterChanged -= _showGamesFilterChangedHandler;
+                _viewModel.PropertyChanged -= _viewModelPropertyChangedHandler;
                 _fileWatcher.GameFilesChanged -= _gameFilesChangedHandler;
                 RemoveHandler(PointerWheelChangedEvent, _pointerWheelChangedHandler);
 
@@ -371,6 +410,7 @@ public partial class MainWindow : Window, IPaginationHost
         _fileWatcher.GameFilesChanged += _gameFilesChangedHandler;
 
         Log.Information("Main window initialized");
+        Log.Debug("Ctor phase: completed at {ElapsedMs} ms", ctorSw.ElapsedMilliseconds);
     }
 
     /// <summary>
@@ -598,6 +638,11 @@ public partial class MainWindow : Window, IPaginationHost
     {
         try
         {
+            // Let the first frame and the system-icon decode finish before starting the
+            // full disk scan (84 systems on a large library). The badges are cosmetic;
+            // competing with startup decoding and layout only made the window feel slow.
+            await Task.Delay(TimeSpan.FromMilliseconds(750));
+
             await _viewModel.RefreshSystemCountsAsync();
             RefreshSidebarCounts();
         }
@@ -764,6 +809,7 @@ public partial class MainWindow : Window, IPaginationHost
     /// </summary>
     public void ResetStatusText()
     {
+        _viewModel.StatusText = "";
         StatusRight.Text = "";
     }
 
@@ -1209,7 +1255,34 @@ public partial class MainWindow : Window, IPaginationHost
         };
         button.Classes.Add("toolbar-icon");
         button.Click += (_, _) => LetterFilterButton_Click(letter, button);
+        button.KeyDown += OnLetterFilterButtonKeyDown;
         LetterFilterBar.Children.Add(button);
+    }
+
+    /// <summary>
+    ///     Arrow-key navigation inside the letter filter bar (WPF FilterMenu parity):
+    ///     Left/Right move between letters, Home/End jump to the ends.
+    /// </summary>
+    private void OnLetterFilterButtonKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (sender is not Button button) return;
+
+        var index = LetterFilterBar.Children.IndexOf(button);
+        if (index < 0) return;
+
+        var targetIndex = e.Key switch
+        {
+            Key.Left => index - 1,
+            Key.Right => index + 1,
+            Key.Home => 0,
+            Key.End => LetterFilterBar.Children.Count - 1,
+            _ => index
+        };
+
+        if (targetIndex == index || targetIndex < 0 || targetIndex >= LetterFilterBar.Children.Count) return;
+
+        if (LetterFilterBar.Children[targetIndex] is Button target) target.Focus();
+        e.Handled = true;
     }
 
     private async void LetterFilterButton_Click(string letter, Button _)
@@ -1417,15 +1490,41 @@ public partial class MainWindow : Window, IPaginationHost
             : string.Format(_localization.GetString("Status.SearchQuery", "Search: \"{0}\""), query);
     }
 
-    /// <summary>Search button (WPF SearchButton parity): re-applies the current filter.</summary>
-    private void SearchButton_Click(object? sender, RoutedEventArgs e)
+    /// <summary>Enter in the main search box executes the search immediately (WPF parity).</summary>
+    private async void SearchBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+
+        e.Handled = true;
+        try
+        {
+            await _viewModel.SearchAsync(SearchBox.Text);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in the method SearchBox_KeyDown");
+            var messageBox = App.ServiceProvider.GetRequiredService<IMessageBoxLibraryService>();
+            await messageBox.MainWindowSearchEngineErrorMessageBoxAsync();
+        }
+    }
+
+    /// <summary>Search button (WPF SearchButton parity): executes the current search.</summary>
+    private async void SearchButton_Click(object? sender, RoutedEventArgs e)
     {
         var query = SearchBox.Text;
         Log.Debug("Search button clicked for query '{Query}'", query);
-        _viewModel.SearchText = query ?? "";
-        _viewModel.StatusText = string.IsNullOrEmpty(query)
-            ? _localization.GetString("Status.Ready", "Ready")
-            : string.Format(_localization.GetString("Status.SearchQuery", "Search: \"{0}\""), query);
+
+        try
+        {
+            await _viewModel.SearchAsync(query);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in the method SearchButton_Click");
+            var messageBox = App.ServiceProvider.GetRequiredService<IMessageBoxLibraryService>();
+            await messageBox.MainWindowSearchEngineErrorMessageBoxAsync();
+        }
+
         SearchBox.Focus();
     }
 
@@ -1615,6 +1714,19 @@ public partial class MainWindow : Window, IPaginationHost
                 e.Handled = true; // prevent the popup from closing on the subsequent mouse-up
             }
         }
+    }
+
+    /// <summary>
+    ///     Kebab "More Options" button on a card (WPF GameButtonFactory parity): opens the
+    ///     same context menu as a right-click without launching the game.
+    /// </summary>
+    private void GameCardMoreOptions_Click(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // do not launch the game
+        if (sender is not Control { DataContext: GameCardViewModel game } card) return;
+
+        _playSound.PlayNotificationSound();
+        ShowGameContextMenu(game, card);
     }
 
     private void ShowGameContextMenu(GameCardViewModel game, Control placementTarget)
@@ -2410,9 +2522,9 @@ public partial class MainWindow : Window, IPaginationHost
             _settings.DisplayMachineName = item.IsChecked;
             await _settings.SaveAsync();
             UpdateFilenameCheckMarks();
-            // No view refresh needed: no Avalonia games view binds this setting (only the
-            // WPF button factory embeds the machine name). A full reload here would rescan
-            // every system and reset the view for zero visible change.
+            // In-place refresh: show/hide the MAME description line on the loaded cards.
+            // A full reload would rescan every system and reset the current view.
+            _viewModel.RefreshMachineNameVisibility();
             Log.Information("Display machine name changed to {DisplayMachineName}", _settings.DisplayMachineName);
             _playSound.PlayNotificationSound();
         }
@@ -2468,6 +2580,12 @@ public partial class MainWindow : Window, IPaginationHost
 
             _settings.MachineNameFontSize = size;
             await _settings.SaveAsync();
+            _viewModel.MachineNameFontSize = size switch
+            {
+                "Small" => 13,
+                "Big" => 17,
+                _ => 15
+            };
             UpdateFilenameCheckMarks();
             Log.Information("Machine name font size changed to {FontSize}", size);
             _playSound.PlayNotificationSound();
@@ -2533,6 +2651,14 @@ public partial class MainWindow : Window, IPaginationHost
 
             var window = App.ServiceProvider.GetRequiredService<SetFuzzyMatchingWindow>();
             await window.ShowDialog(this);
+
+            // WPF parity: a changed threshold only takes effect on the next library scan,
+            // so reload the current view when fuzzy matching is enabled.
+            if (_settings.EnableFuzzyMatching)
+            {
+                _viewModel.StatusText = _localization.GetString("ReloadingGames", "Reloading games...");
+                await _viewModel.RefreshCurrentViewAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -2570,7 +2696,7 @@ public partial class MainWindow : Window, IPaginationHost
         }
     }
 
-    private async void GlobalStats_Click(object? sender, RoutedEventArgs e)
+    private void GlobalStats_Click(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -2578,7 +2704,9 @@ public partial class MainWindow : Window, IPaginationHost
 
             var window = App.ServiceProvider.GetRequiredService<GlobalStatsWindow>();
             window.Initialize(_systemManagerService.LoadSystems());
-            await window.ShowDialog(this);
+            // WPF parity: the stats window is modeless and can stay open while the
+            // library is used (ShowDialog blocked the whole main window during the scan).
+            window.Show(this);
         }
         catch (Exception ex)
         {
@@ -2879,6 +3007,7 @@ public partial class MainWindow : Window, IPaginationHost
         // ComboBox to the identical item raises no SelectionChanged, so the games
         // were never loaded. A restart worked because UiResetService clears it.
         SystemComboBox.SelectedItem = null;
+        _viewModel.SelectedSystem = "";
 
         // WPF parity: both the top system-selection bar and the status bar are hidden
         // while the full-screen system selection grid is shown
@@ -2925,6 +3054,13 @@ public partial class MainWindow : Window, IPaginationHost
 
         var systemImageSize = _settings.ThumbnailSizeForSystem;
 
+        // Icons are decoded off the UI thread in batches after the cards are on screen:
+        // decoding 80+ system icons synchronously kept the whole grid blank for ~1 s
+        // (and delayed the first frame far more than the WPF app, which caches its
+        // BitmapImages). Each card is still created here so the system names appear
+        // immediately and every icon slot keeps its final size (no layout shift).
+        var iconRequests = new List<SystemIconRequest>();
+
         foreach (var sidebarItem in _viewModel.Sidebar.Systems)
         {
             var systemName = sidebarItem.SystemName;
@@ -2936,44 +3072,7 @@ public partial class MainWindow : Window, IPaginationHost
                 HorizontalAlignment = HorizontalAlignment.Center
             };
 
-            // System icon image — or fallback glyph if no icon resolved
-            if (!string.IsNullOrEmpty(iconPath) && File.Exists(iconPath))
-            {
-                try
-                {
-                    await using var stream = File.OpenRead(iconPath);
-                    var bitmap = Bitmap.DecodeToWidth(stream, (int)(systemImageSize * 1.3 * 1.6));
-                    var image = new Image
-                    {
-                        Source = bitmap,
-                        Height = systemImageSize * 1.3,
-                        Width = systemImageSize * 1.3 * 1.6,
-                        Stretch = Stretch.Uniform,
-                        Margin = new Thickness(5)
-                    };
-                    buttonContentPanel.Children.Add(image);
-                }
-                catch
-                {
-                    buttonContentPanel.Children.Add(new TextBlock
-                    {
-                        Text = "🎮",
-                        FontSize = 36,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 10, 0, 0)
-                    });
-                }
-            }
-            else
-            {
-                buttonContentPanel.Children.Add(new TextBlock
-                {
-                    Text = "🎮",
-                    FontSize = 36,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 10, 0, 0)
-                });
-            }
+            buttonContentPanel.Children.Add(CreateSystemIconSlot(iconPath, systemImageSize, iconRequests));
 
             buttonContentPanel.Children.Add(new TextBlock
             {
@@ -3000,6 +3099,15 @@ public partial class MainWindow : Window, IPaginationHost
             };
             systemButton.Classes.Add("game-button-3d"); // WPF SystemButton3DTemplate parity
             systemButton.Click += SystemCard_Click;
+
+            // Accessibility parity with the WPF system grid: dynamic cards need an
+            // accessible name/help text because their content is a panel, not literal text.
+            AutomationProperties.SetName(systemButton, systemName);
+            var selectHelpTemplate = _localization.GetString("SelectSystemButtonHelpText");
+            if (string.Equals(selectHelpTemplate, "SelectSystemButtonHelpText", StringComparison.Ordinal))
+                selectHelpTemplate = "Select {config.SystemName} system";
+            AutomationProperties.SetHelpText(systemButton,
+                selectHelpTemplate.Replace("{config.SystemName}", systemName, StringComparison.Ordinal));
 
             // Right-click context menu (WPF parity: Select / Edit / Delete)
             var contextMenu = new ContextMenu();
@@ -3031,7 +3139,128 @@ public partial class MainWindow : Window, IPaginationHost
         Log.Debug("System selection cards built in {ElapsedMilliseconds} ms",
             populateStopwatch.ElapsedMilliseconds);
 
+        // Decode the missing icons after the card grid is on screen. The fire-and-forget
+        // task observes its own failures; each decoded icon is applied on the UI thread.
+        if (iconRequests.Count > 0) _ = LoadSystemIconsAsync(iconRequests);
+
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     Creates the fixed-size icon slot for a system card. A cached icon is applied
+    ///     immediately; otherwise the fallback glyph is shown and the path is queued for
+    ///     background decoding.
+    /// </summary>
+    private static Border CreateSystemIconSlot(string? iconPath, int systemImageSize,
+        List<SystemIconRequest> requests)
+    {
+        var displayWidth = systemImageSize * 1.3 * 1.6;
+        var displayHeight = systemImageSize * 1.3;
+
+        var holder = new Border
+        {
+            Width = displayWidth,
+            Height = displayHeight,
+            Margin = new Thickness(5),
+            Child = CreateSystemFallbackGlyph()
+        };
+
+        if (string.IsNullOrEmpty(iconPath) || !File.Exists(iconPath)) return holder;
+
+        var decodeWidth = (int)displayWidth;
+        if (SystemIconCache.TryGetValue(GetSystemIconCacheKey(iconPath, decodeWidth), out var cached))
+        {
+            holder.Child = CreateSystemIconImage(cached, displayWidth, displayHeight);
+            return holder;
+        }
+
+        requests.Add(new SystemIconRequest(iconPath, decodeWidth, displayWidth, displayHeight, holder));
+        return holder;
+    }
+
+    private static TextBlock CreateSystemFallbackGlyph()
+    {
+        return new TextBlock
+        {
+            Text = "🎮",
+            FontSize = 36,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+    }
+
+    private static Image CreateSystemIconImage(Bitmap bitmap, double displayWidth, double displayHeight)
+    {
+        return new Image
+        {
+            Source = bitmap,
+            Height = displayHeight,
+            Width = displayWidth,
+            Stretch = Stretch.Uniform
+        };
+    }
+
+    private static string GetSystemIconCacheKey(string path, int decodeWidth)
+    {
+        long lastWriteTicks = 0;
+        try
+        {
+            lastWriteTicks = File.GetLastWriteTimeUtc(path).Ticks;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The file disappeared between the existence check and here; the caller's
+            // decode attempt will fall back to the glyph.
+        }
+
+        return $"{path}|{decodeWidth}|{lastWriteTicks}";
+    }
+
+    /// <summary>
+    ///     Decodes queued system icons on the thread pool in small batches and applies
+    ///     them to their original slots as they finish, so the grid stays responsive and
+    ///     the first paint never waits for disk image decoding.
+    /// </summary>
+    private static async Task LoadSystemIconsAsync(List<SystemIconRequest> requests)
+    {
+        const int batchSize = 8;
+
+        for (var offset = 0; offset < requests.Count; offset += batchSize)
+        {
+            var batch = requests.GetRange(offset, Math.Min(batchSize, requests.Count - offset));
+
+            var decoded = await Task.Run(() =>
+            {
+                var results = new List<(SystemIconRequest Request, Bitmap? Bitmap)>(batch.Count);
+                foreach (var request in batch)
+                {
+                    try
+                    {
+                        using var stream = File.OpenRead(request.Path);
+                        var bitmap = Bitmap.DecodeToWidth(stream, request.DecodeWidth,
+                            BitmapInterpolationMode.LowQuality);
+                        SystemIconCache[GetSystemIconCacheKey(request.Path, request.DecodeWidth)] = bitmap;
+                        results.Add((request, bitmap));
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Debug(ex, "Failed to decode the system icon '{IconPath}'", request.Path);
+                        results.Add((request, null));
+                    }
+                }
+
+                return results;
+            });
+
+            foreach (var (request, bitmap) in decoded)
+            {
+                // The grid may have been rebuilt (Edit/Delete) while the decode ran;
+                // only apply the icon when its slot is still in the visual tree.
+                if (bitmap is null || request.Holder.Parent is null) continue;
+                request.Holder.Child = CreateSystemIconImage(bitmap, request.DisplayWidth,
+                    request.DisplayHeight);
+            }
+        }
     }
 
     /// <summary>

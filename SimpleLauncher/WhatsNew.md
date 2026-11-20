@@ -22,6 +22,29 @@
 - **Portable ZIP still available** - the ZIP remains the no-installer option, and both the ZIP and
   installer builds use the built-in updater.
 
+## Fixes
+- **Avalonia library search** - searching after loading a system now matches the raw file name and
+  the MAME machine description instead of only the visible title, so MAME names and cover-only
+  (NoFilename) libraries are found. It also supports the WPF `AND` / `OR` / quoted-phrase rules,
+  stays scoped to the selected system, and runs from the Search button or Enter. Clearing the box
+  no longer drops the selected system.
+- **Avalonia startup** - the main window now opens about a second sooner on large libraries. The
+  MAME database loads in the background, system icons are decoded off the UI thread in batches
+  (cached for later visits), and the background per-system count scan waits until the first frame
+  is on screen.
+- **Avalonia parity fixes** - play history, play counts and system play time are now recorded for
+  batch, executable and Commander Genius launches (using the original game path, not a mounted or
+  extracted temporary file); favorites are matched per system; "Group Files by Folder" collapses
+  folders into one card and overlapping folders no longer duplicate games; the Display Machine
+  Name and machine-name font size options now work; cards have a visible "More Options" button;
+  the status bar auto-clears; Global Stats opens modelessly with its green/red row highlights;
+  ROM history renders Markdown; changing the fuzzy-matching threshold reloads the list; and
+  `--language` works on startup.
+- **Startup and configuration guards** - both apps now refuse to run directly from a ZIP/RAR
+  temporary extraction folder and show the same warning. The Avalonia system.xml loader now
+  applies the same strict validation as WPF (required folders, image folder, formats, archive
+  rules and emulator names), and the unused Avalonia-only Preferences window was removed.
+
 ## Linux Packaging
 - **Linux is out of beta** — x64 and ARM64 are supported release targets.
 - **AppImage** — self-contained `SimpleLauncher-{version}-linux-{x64,arm64}.AppImage` with the

@@ -21,6 +21,17 @@ public class AvaloniaGameCacheServiceTests
         };
     }
 
+    private static SystemManagerConfig GroupedSystem(string name, params string[] folders)
+    {
+        return new SystemManagerConfig
+        {
+            SystemName = name,
+            SystemFolders = [.. folders],
+            FileFormatsToSearch = [".zip", ".iso"],
+            GroupByFolder = true
+        };
+    }
+
     [Fact]
     public void GetCachedFiles_ReturnsNull_WhenNotCached()
     {
@@ -281,6 +292,49 @@ public class AvaloniaGameCacheServiceTests
 
         Assert.Single(files);
         Assert.Contains(files, f => f.EndsWith("nested.zip", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void GetGameFiles_GroupsSubfoldersWhenEnabled()
+    {
+        using var tempDir = CreateTempDir();
+        File.WriteAllText(Path.Combine(tempDir, "root.zip"), "x");
+        var sub1 = Path.Combine(tempDir, "Game A");
+        var sub2 = Path.Combine(tempDir, "Game B");
+        Directory.CreateDirectory(sub1);
+        Directory.CreateDirectory(sub2);
+        File.WriteAllText(Path.Combine(sub1, "a.zip"), "x");
+        File.WriteAllText(Path.Combine(sub1, "b.zip"), "x");
+        File.WriteAllText(Path.Combine(sub2, "c.zip"), "x");
+
+        var system = GroupedSystem("DOS", tempDir);
+        var orchestrator =
+            new AvaloniaGameFileLoadingOrchestrator(new AvaloniaGameCacheService(), new Mock<ILogger>().Object);
+
+        var files = orchestrator.GetGameFiles(system);
+
+        // Root files stay individual; each subfolder collapses to one entry.
+        Assert.Equal(3, files.Count);
+        Assert.Contains(files, f => f.EndsWith("root.zip", StringComparison.Ordinal));
+        Assert.Contains(files, f => string.Equals(f, sub1, StringComparison.Ordinal));
+        Assert.Contains(files, f => string.Equals(f, sub2, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void GetGameFiles_DeduplicatesOverlappingFolders()
+    {
+        using var tempDir = CreateTempDir();
+        var sub = Path.Combine(tempDir, "sub");
+        Directory.CreateDirectory(sub);
+        File.WriteAllText(Path.Combine(sub, "nested.zip"), "x");
+
+        var system = System("Arcade", tempDir, sub);
+        var orchestrator =
+            new AvaloniaGameFileLoadingOrchestrator(new AvaloniaGameCacheService(), new Mock<ILogger>().Object);
+
+        var files = orchestrator.GetGameFiles(system);
+
+        Assert.Single(files);
     }
 
     [Fact]

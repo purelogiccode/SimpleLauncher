@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -29,6 +30,9 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
     private readonly PlaySoundEffects _playSoundEffects;
     private readonly SystemManagerService _systemManagerService;
     private CancellationTokenSource _cancellationTokenSource = new();
+
+    /// <summary>The localized "All Systems" entry in the system filter.</summary>
+    private string AllSystemsLabel => _localization.GetString("AllSystems", "All Systems");
 
     [ObservableProperty] public partial bool IsLoading { get; set; }
 
@@ -96,7 +100,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
             ? SystemNames[SelectedSystemIndex]
             : null;
 
-        var names = new List<string> { "All Systems" };
+        var names = new List<string> { AllSystemsLabel };
         names.AddRange(_systemManagerService.LoadSystems()
             .Select(static s => s.SystemName)
             .OrderBy(static name => name, StringComparer.Ordinal));
@@ -175,7 +179,8 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
                 {
                     SearchResults = new ObservableCollection<SearchResult>(results);
                     NoResultsVisible = false;
-                    ResultsCountText = $"Found {results.Count} results";
+                    ResultsCountText = string.Format(CultureInfo.InvariantCulture,
+                        _localization.GetString("FoundResults", "Found {0} results"), results.Count);
                 }
                 else
                 {
@@ -237,7 +242,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
 
         IEnumerable<SystemManagerConfig> systemsToSearch = systems;
         if (!string.IsNullOrEmpty(selectedSystem) &&
-            !string.Equals(selectedSystem, "All Systems", StringComparison.Ordinal))
+            !string.Equals(selectedSystem, AllSystemsLabel, StringComparison.Ordinal))
         {
             systemsToSearch = systems.Where(sm =>
                 sm.SystemName.Equals(selectedSystem, StringComparison.OrdinalIgnoreCase));

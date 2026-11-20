@@ -191,7 +191,8 @@ public sealed class AvaloniaGameCacheService
         // Same recursion rule as AvaloniaGameFileLoadingOrchestrator.EnumerateSystemFiles:
         // recursion stays on while GroupByFolder is enabled, even when disabled in settings.
         var recursion = system is { DisableRecursiveSearch: true, GroupByFolder: false } ? '0' : '1';
-        return $"{folders}\u001F{formats}\u001F{recursion}";
+        var groupByFolder = system.GroupByFolder ? '1' : '0';
+        return $"{folders}\u001F{formats}\u001F{recursion}\u001F{groupByFolder}";
     }
 
     /// <summary>

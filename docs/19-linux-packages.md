@@ -1,4 +1,9 @@
-# 19 — Linux Packages
+# 19 - Linux Packages
+
+> **Planned for the next release cycle:** native Debian (`.deb`) and RPM (`.rpm`) packages for
+> x64 and ARM64 are not shipped yet. Their target matrix, design decisions and acceptance
+> checklist are documented in [21 - Release Artifacts](21-release-artifacts.md). Until that
+> work is complete, use AppImage, Flatpak, the portable tarball or the portable ZIP.
 
 Simple Launcher ships four Linux formats for **x64** (`linux-x64`) and **ARM64**
 (`linux-arm64`). They contain the same Avalonia application, bundled tools and documents;
