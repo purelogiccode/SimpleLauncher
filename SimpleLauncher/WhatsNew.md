@@ -3,14 +3,24 @@
 ---
 
 ## First-Run Wizard
-- **Guided setup on first launch** — When no systems are configured, both apps now open a
+- **Guided setup on first launch** - When no systems are configured, both apps now open a
   Welcome → Add System → Finish wizard instead of the Yes/No prompt followed by a separate
   Easy Mode window. Add System reuses the same Easy Mode view (system picker, downloads,
   image packs).
-- **Back, Next, Skip and progress** — The wizard shows "Step n of 3" progress, lets you go back
+- **Back, Next, Skip and progress** - The wizard shows "Step n of 3" progress, lets you go back
   or skip without a system, and keeps download progress and Stop available on the Add System step.
-- **Errors stay visible** — A failed catalog load, download or add shows a dismissible error
+- **Errors stay visible** - A failed catalog load, download or add shows a dismissible error
   banner on the wizard instead of leaving only a transient message box.
+
+## Windows Installer
+- **Per-user installer** - `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` installs under
+  `%LocalAppData%\SimpleLauncher`, adds Start Menu shortcuts and can download/install the
+  .NET 11 Desktop Runtime when it is missing. Only that runtime step asks for administrator
+  approval; the app install does not.
+- **Uninstall keeps your data** - settings, game lists, logs and game media stay in place. Delete
+  the install folder after uninstalling to remove everything.
+- **Portable ZIP still available** - the ZIP remains the no-installer option, and both the ZIP and
+  installer builds use the built-in updater.
 
 ## Linux Packaging
 - **Linux is out of beta** — x64 and ARM64 are supported release targets.

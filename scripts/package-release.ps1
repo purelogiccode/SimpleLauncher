@@ -11,6 +11,10 @@ For every runtime identifier this produces, in the output folder:
                                 the content files (images, tools, samples, appsettings.json)
   updater_{rid}.zip             the single standalone Updater.exe (framework-dependent,
                                 single-file) used by both apps
+  SimpleLauncher-{version}-{rid}-setup.exe
+                                the optional per-user Inno Setup installer built from the
+                                same payload. It is produced with -BuildInstaller and needs
+                                Inno Setup 6.5+ (ISCC.exe); see installer/SimpleLauncher.iss.
 
 Both apps are published framework-dependent (the .NET 11 Desktop Runtime is required on
 the target machine), so the payload does not carry a runtime. Each app ships as a single
@@ -56,8 +60,18 @@ Where the zips are written. Defaults to artifacts\release.
 .PARAMETER WorkDir
 Scratch folder for the publish outputs. Defaults to artifacts\publish.
 
+.PARAMETER BuildInstaller
+Also compile the per-user Inno Setup installer for every RID. Requires Inno Setup 6.5+
+(ISCC.exe on PATH or in the default install location).
+
+.PARAMETER IsccPath
+Optional explicit path to ISCC.exe when -BuildInstaller is used.
+
 .EXAMPLE
 pwsh scripts/package-release.ps1 -Version 5.8.1
+
+.EXAMPLE
+pwsh scripts/package-release.ps1 -Version 5.8.1 -BuildInstaller
 #>
 [CmdletBinding()]
 param(
@@ -68,7 +82,11 @@ param(
 
     [string]$OutputDir,
 
-    [string]$WorkDir
+    [string]$WorkDir,
+
+    [switch]$BuildInstaller,
+
+    [string]$IsccPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -98,6 +116,107 @@ foreach ($rid in $RuntimeIdentifiers) {
     if ($rid -notin @('win-x64', 'win-arm64')) {
         throw "Unsupported runtime identifier '$rid'. Expected win-x64 or win-arm64."
     }
+}
+
+function Find-InnoSetupCompiler {
+    param([string]$ExplicitPath)
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitPath)) {
+        $resolved = [System.IO.Path]::GetFullPath($ExplicitPath)
+        if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+            throw "Inno Setup compiler not found at '$resolved'."
+        }
+        return $resolved
+    }
+
+    $command = Get-Command 'ISCC.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($command) {
+        return $command.Source
+    }
+
+    foreach ($candidate in @(
+            'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+            'C:\Program Files\Inno Setup 6\ISCC.exe'
+        )) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return $candidate
+        }
+    }
+
+    throw ("Inno Setup 6.5+ (ISCC.exe) was not found. Install it with " +
+        "'winget install JRSoftware.InnoSetup' or 'choco install innosetup', or pass -IsccPath.")
+}
+
+# Compiles the per-user installer from the payload that was just assembled. The
+# script itself owns the runtime bootstrap and data-preserving uninstall behaviour;
+# this function only supplies the version, RID and payload paths.
+function Invoke-InnoSetup {
+    param(
+        [Parameter(Mandatory = $true)][string]$Iscc,
+        [Parameter(Mandatory = $true)][string]$Version,
+        [Parameter(Mandatory = $true)][string]$Rid,
+        [Parameter(Mandatory = $true)][string]$PayloadDir,
+        [Parameter(Mandatory = $true)][string]$OutputDir,
+        [Parameter(Mandatory = $true)][string]$RepoDir,
+        [Parameter(Mandatory = $true)][string]$WorkDir
+    )
+
+    $architecturesAllowed = if ($Rid -eq 'win-arm64') { 'arm64' } else { 'x64compatible and not arm64' }
+    $architectures64 = if ($Rid -eq 'win-arm64') { 'arm64' } else { 'x64compatible' }
+    $runtimeArch = if ($Rid -eq 'win-arm64') { 'arm64' } else { 'x64' }
+    $runtimeFileName = "windowsdesktop-runtime-11.0-win-$runtimeArch.exe"
+    $runtimeUrl = "https://aka.ms/dotnet/11.0/windowsdesktop-runtime-win-$runtimeArch.exe"
+    $runtimePageUrl = 'https://dotnet.microsoft.com/download/dotnet/11.0'
+    $script = Join-Path $RepoDir 'installer\SimpleLauncher.iss'
+
+    $setupPath = Join-Path $OutputDir "SimpleLauncher-${Version}-${Rid}-setup.exe"
+    if (Test-Path -LiteralPath $setupPath) {
+        Remove-Item -LiteralPath $setupPath -Force
+    }
+
+    # Inno uses the temp folder for compression scratch. Keep it on the work
+    # drive instead of assuming the system drive has room for another payload.
+    $isccTemp = Join-Path $WorkDir 'innosetup-temp'
+    $null = New-Item -ItemType Directory -Path $isccTemp -Force
+
+    $previousTemp = $env:TEMP
+    $previousTmp = $env:TMP
+    try {
+        $env:TEMP = $isccTemp
+        $env:TMP = $isccTemp
+
+        Write-Host "Compiling installer $(Split-Path -Leaf $setupPath) with $Iscc"
+        $isccOutput = & $Iscc `
+            "/DAppVersion=$Version" `
+            "/DRid=$Rid" `
+            "/DPayloadDir=$PayloadDir" `
+            "/DOutputDir=$OutputDir" `
+            "/DRepoDir=$RepoDir" `
+            "/DArchitecturesAllowed=$architecturesAllowed" `
+            "/DArchitecturesInstallIn64BitMode=$architectures64" `
+            "/DRuntimeArch=$runtimeArch" `
+            "/DRuntimeUrl=$runtimeUrl" `
+            "/DRuntimeFileName=$runtimeFileName" `
+            "/DRuntimePageUrl=$runtimePageUrl" `
+            $script 2>&1
+        $isccExitCode = $LASTEXITCODE
+        foreach ($line in @($isccOutput)) {
+            Write-Host $line
+        }
+        if ($isccExitCode -ne 0) {
+            throw "Inno Setup failed with exit code $isccExitCode."
+        }
+    }
+    finally {
+        $env:TEMP = $previousTemp
+        $env:TMP = $previousTmp
+    }
+
+    if (-not (Test-Path -LiteralPath $setupPath -PathType Leaf)) {
+        throw "Inno Setup did not produce $setupPath."
+    }
+
+    return $setupPath
 }
 
 function Get-CsprojVersion {
@@ -366,6 +485,11 @@ function New-FilesZipArchive {
 
 Assert-Versions -Version $Version
 
+$iscc = $null
+if ($BuildInstaller) {
+    $iscc = Find-InnoSetupCompiler -ExplicitPath $IsccPath
+}
+
 $null = New-Item -ItemType Directory -Path $OutputDir -Force
 if (Test-Path -LiteralPath $WorkDir) { Remove-Item -LiteralPath $WorkDir -Recurse -Force }
 $null = New-Item -ItemType Directory -Path $WorkDir -Force
@@ -429,6 +553,18 @@ foreach ($rid in $RuntimeIdentifiers) {
         (Join-Path $payloadDir 'WhatsNew.md')
     ) -ZipPath $updaterZip
     [void]$produced.Add($updaterZip)
+
+    if ($BuildInstaller) {
+        $setup = Invoke-InnoSetup `
+            -Iscc $iscc `
+            -Version $Version `
+            -Rid $rid `
+            -PayloadDir $payloadDir `
+            -OutputDir $OutputDir `
+            -RepoDir $repoDir `
+            -WorkDir $WorkDir
+        [void]$produced.Add($setup)
+    }
 }
 
 Write-Host ""

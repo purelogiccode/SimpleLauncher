@@ -1,8 +1,9 @@
 # How Simple Launcher compares
 
-> **Last verified: 2026-11-19.** Compared versions: Simple Launcher (this repository),
-> LaunchBox 14.1, ES-DE 3.5.0, RetroBat 8.3.1.1, Playnite 10.65. Competitor features and prices
-> change; check their sites before deciding.
+> **Last verified: 2026-11-20 (Simple Launcher installer); competitor data verified 2026-11-19.**
+> Compared versions: Simple Launcher (this repository), LaunchBox 14.1, ES-DE 3.5.0,
+> RetroBat 8.3.1.1, Playnite 10.65. Competitor features and prices change; check their sites
+> before deciding.
 
 Simple Launcher is an open-source emulator frontend that also imports PC store games. The other
 projects in this table are good at different things, and this page says so. "Better" depends on
@@ -39,7 +40,8 @@ whether you want a cross-platform desktop launcher, a TV/arcade interface, or a 
   needs an extension; LaunchBox and RetroBat are Windows-only.
 - **Bundled power tools** for CHD/RVZ/XISO conversion, validation, cover finding and batch file
   creation - tools the other frontends do not ship.
-- **Lightweight, portable and GPLv3.** No installer, no account, no ads.
+- **Lightweight, portable and GPLv3.** A portable ZIP or a per-user Windows installer, no account,
+  no ads.
 
 ## Where the others are stronger
 
@@ -55,8 +57,9 @@ whether you want a cross-platform desktop launcher, a TV/arcade interface, or a 
   community content, tutorials and testing.
 - **macOS build is unsigned and not notarized.** Gatekeeper requires a right-click -> Open on
   first launch.
-- **No Windows installer yet.** The release is a portable ZIP that requires the .NET 11 Desktop
-  Runtime; the installer and winget package are still planned.
+- **No winget or Store package yet.** The Windows installer is per user and bootstraps the
+  .NET 11 Desktop Runtime; winget and MSIX are still planned. The portable ZIP still needs the
+  runtime installed manually.
 - **Flatpak is sandboxed.** FUSE-based ZIP/CHD/Xbox-image mounts are unavailable inside Flatpak,
   so the app falls back to extraction/conversion.
 

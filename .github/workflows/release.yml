@@ -2,8 +2,9 @@ name: Publish release
 
 # Manual release. Packages:
 #
-#   Windows (windows-latest)  win-x64 / win-arm64 portable ZIPs + updater ZIPs
-#                             via scripts/package-release.ps1
+#   Windows (windows-latest)  win-x64 / win-arm64 portable ZIPs, updater ZIPs and
+#                             per-user Inno Setup installers via
+#                             scripts/package-release.ps1 -BuildInstaller
 #   Linux   (ubuntu-latest)   linux-x64 / linux-arm64 framework-dependent ZIP + tar.gz,
 #                             self-contained AppImage and Flatpak, and the updater ZIPs
 #                             via scripts/package-release-linux.ps1 +
@@ -20,6 +21,7 @@ name: Publish release
 #                                      Linux:   framework-dependent SimpleLauncher.Avalonia payload
 #   release_{version}_{rid}.tar.gz     Linux:   the same portable payload as a tarball
 #   updater_{rid}.zip                  the standalone updater shared by the apps
+#   SimpleLauncher-{version}-{rid}-setup.exe  Windows: per-user Inno Setup installer
 #   SimpleLauncher-{version}-{rid}.AppImage   Linux: self-contained (bundled .NET runtime)
 #   SimpleLauncher-{version}-{rid}.flatpak    Linux: Flatpak bundle (org.freedesktop.Platform)
 #   SimpleLauncher-{version}-osx-arm64.dmg    macOS: unsigned, ad-hoc signed `.app`
@@ -64,6 +66,10 @@ jobs:
         with:
           dotnet-version: '11.0.x'
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
       - name: Package Windows release
         shell: pwsh
         env:
@@ -71,6 +77,7 @@ jobs:
         run: >
           ./scripts/package-release.ps1
           -Version $env:VERSION
+          -BuildInstaller
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
 
@@ -219,6 +226,8 @@ jobs:
             "updater_win-arm64.zip"
             "updater_linux-x64.zip"
             "updater_linux-arm64.zip"
+            "SimpleLauncher-$($env:VERSION)-win-x64-setup.exe"
+            "SimpleLauncher-$($env:VERSION)-win-arm64-setup.exe"
             "SimpleLauncher-$($env:VERSION)-linux-x64.AppImage"
             "SimpleLauncher-$($env:VERSION)-linux-arm64.AppImage"
             "SimpleLauncher-$($env:VERSION)-linux-x64.flatpak"
@@ -237,6 +246,24 @@ jobs:
             Sort-Object Name |
             Select-Object Name, @{ Name = 'MB'; Expression = { [math]::Round($_.Length / 1MB, 1) } } |
             Format-Table -AutoSize
+
+      - name: Generate SHA256SUMS.txt
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem -LiteralPath 'artifacts/release' -File |
+            Where-Object { $_.Name -ne 'SHA256SUMS.txt' } |
+            Sort-Object Name)
+          if ($files.Count -eq 0) {
+            throw 'No release assets were found in artifacts/release.'
+          }
+
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($file.Name)"
+          }
+
+          Set-Content -LiteralPath 'artifacts/release/SHA256SUMS.txt' -Value $lines -Encoding ascii
+          Get-Content -LiteralPath 'artifacts/release/SHA256SUMS.txt'
 
       - name: Create or update GitHub release
         if: ${{ inputs.create_release }}

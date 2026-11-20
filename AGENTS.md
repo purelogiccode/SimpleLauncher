@@ -32,24 +32,27 @@ disk.
     Debug/Release and the updater `net11.0` build on `ubuntu-latest`. Builds pass
     `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.**
   - `.github/workflows/package-dry-run.yml` — packages every release asset exactly like the
-    release workflow (version read from `SimpleLauncher.csproj`): Windows bundles on
-    `windows-latest`; portable ZIP/tar.gz + AppImage/Flatpak for both Linux RIDs on
-    `ubuntu-latest`; the arm64 DMG on `macos-15`; then verifies the archives, executable bits,
-    AppImage architectures, Flatpak commits and the DMG bundle layout, but **never creates or
-    updates a GitHub release**. Runs on PRs/pushes touching the app projects or packaging
-    scripts, and on manual dispatch.
+    release workflow (version read from `SimpleLauncher.csproj`): Windows bundles and per-user
+    Inno Setup installers on `windows-latest`; portable ZIP/tar.gz + AppImage/Flatpak for both
+    Linux RIDs on `ubuntu-latest`; the arm64 DMG on `macos-15`; then verifies the archives, the
+    installers, executable bits, AppImage architectures, Flatpak commits and the DMG bundle
+    layout, but **never creates or updates a GitHub release**. Runs on PRs/pushes touching the app
+    projects or packaging scripts, and on manual dispatch.
   - `.github/workflows/release.yml` — manual (`workflow_dispatch`); packages the unified WPF +
-    Avalonia bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1` on
-    `windows-latest`, and every Linux bundle for `linux-x64` / `linux-arm64` on `ubuntu-latest`:
+    Avalonia bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1
+    -BuildInstaller` on `windows-latest` (Chocolatey installs Inno Setup 6.5+), and every Linux
+    bundle for `linux-x64` / `linux-arm64` on `ubuntu-latest`:
     portable `release_{version}_{rid}.zip` + `release_{version}_{rid}.tar.gz` and updater ZIPs
     via `scripts/package-release-linux.ps1`, plus self-contained
     `SimpleLauncher-{version}-{rid}.AppImage` and `.flatpak` via
     `scripts/package-linux-native.sh`. On Windows the payload places `SimpleLauncher.exe` and
-    `SimpleLauncher.Avalonia.exe` next to each other (both framework-dependent); the portable
+    `SimpleLauncher.Avalonia.exe` next to each other (both framework-dependent) and also ships
+    `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` with the .NET 11 bootstrap; the portable
     Linux formats require the .NET 11 runtime, while AppImage/Flatpak bundle it. The same
     workflow builds the **macOS Apple Silicon DMG** on `macos-15` (arm64) via
     `scripts/package-release-macos.ps1`. A publish job then creates/updates the GitHub release
-    and mirrors every asset (including the DMG and the macOS Easy Mode catalog) to R2.
+    (with `SHA256SUMS.txt`) and mirrors every asset (including the DMG and the macOS Easy Mode
+    catalog) to R2.
   - `.github/workflows/docs.yml` — on `docs/**` pushes to `master`; deploys GitHub Pages from
     `docs/` and syncs the wiki via `scripts/sync-wiki.py` (needs the `WIKI_PAT` secret, skipped
     with a warning when absent).
@@ -147,11 +150,13 @@ is served from the Cloudflare R2 bucket `simplelauncher-thumbnails` under the pr
 
 - After local packaging, publish the fallback copy with:
   `pwsh scripts/publish-fallback-r2.ps1 -Version <version>`
+  Build the Windows installers first (`pwsh scripts/package-release.ps1 -Version <version>
+  -BuildInstaller`); the publisher requires them alongside the portable bundles.
 - The script uploads the four `release_{version}_{rid}.zip` and four `updater_{rid}.zip`
-  assets, the Linux tar.gz/AppImage/Flatpak bundles, the Apple Silicon
-  `SimpleLauncher-{version}-osx-arm64.dmg` and `easymode_macos_arm64.xml`, verifies their
-  public URLs, and updates `version.txt` **last** — never update `version.txt` before all
-  bundles exist.
+  assets, the two `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` installers, the Linux
+  tar.gz/AppImage/Flatpak bundles, the Apple Silicon `SimpleLauncher-{version}-osx-arm64.dmg`,
+  `easymode_macos_arm64.xml` and (when present) `SHA256SUMS.txt`, verifies their public URLs,
+  and updates `version.txt` **last** — never update `version.txt` before all bundles exist.
 - R2 credentials live in the gitignored `AGENTS.local.md` `R2_*` block (or environment
   variables); never commit them. `-DryRun` prints the upload plan without touching R2.
 - The manual `release.yml` workflow runs the publisher automatically after creating/updating the

@@ -105,7 +105,7 @@
           "name": "What do I need installed?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "On Windows the portable ZIP needs the .NET 11 Desktop Runtime. On Linux the AppImage and Flatpak bundle the runtime; the portable tar.gz/ZIP needs the .NET 11 runtime. The macOS DMG bundles the runtime."
+            "text": "The Windows installer downloads and installs the .NET 11 Desktop Runtime when it is missing (administrator approval is needed for that step only). The portable ZIP and the portable Linux tar.gz/ZIP need the .NET 11 runtime installed; the Linux AppImage/Flatpak and the macOS DMG bundle it."
           }
         },
         {
@@ -114,6 +114,14 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "Yes. Simple Launcher is free software under the GPLv3, with no ads and no account."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does uninstalling remove my settings?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The Windows uninstaller removes the program files but keeps settings.dat, system.xml, logs and game media. To remove everything, delete the install folder (default %LocalAppData%\\SimpleLauncher) after uninstalling."
           }
         },
         {
@@ -295,12 +303,12 @@
                 <a class="download-card" data-download="windows-x64" data-platform="windows" data-arch="x64" data-asset="win-x64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
                     <span class="download-os">Windows</span>
                     <strong>x64</strong>
-                    <span class="download-format">Portable ZIP &middot; .NET 11 Desktop Runtime</span>
+                    <span class="download-format">Installer or portable ZIP</span>
                 </a>
                 <a class="download-card" data-download="windows-arm64" data-platform="windows" data-arch="arm64" data-asset="win-arm64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
                     <span class="download-os">Windows</span>
                     <strong>ARM64</strong>
-                    <span class="download-format">Portable ZIP &middot; .NET 11 Desktop Runtime</span>
+                    <span class="download-format">Installer or portable ZIP</span>
                 </a>
                 <a class="download-card" data-download="linux-x64" data-platform="linux" data-arch="x64" data-asset="linux-x64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
                     <span class="download-os">Linux</span>
@@ -325,9 +333,11 @@
             </div>
 
             <p class="download-note">
-                Windows portable ZIPs need the <a href="https://dotnet.microsoft.com/download">.NET 11 Desktop Runtime</a>.
-                Linux AppImage/Flatpak and the macOS DMG include the runtime. The macOS build is unsigned:
-                on first launch, right-click the app and choose <strong>Open</strong>.
+                The Windows installer installs per user and downloads the
+                <a href="https://dotnet.microsoft.com/download">.NET 11 Desktop Runtime</a> only when it is missing.
+                Windows portable ZIPs and the Linux portable tar.gz/ZIP need the runtime already installed.
+                Linux AppImage/Flatpak and the macOS DMG include it. The macOS build is unsigned: on first launch,
+                right-click the app and choose <strong>Open</strong>.
             </p>
         </div>
     </section>
@@ -346,11 +356,15 @@
                 </details>
                 <details>
                     <summary>What do I need installed?</summary>
-                    <p>On Windows the portable ZIP needs the .NET 11 Desktop Runtime. On Linux the AppImage and Flatpak bundle the runtime; the portable tar.gz/ZIP needs the .NET 11 runtime. The macOS DMG bundles the runtime.</p>
+                    <p>The Windows installer downloads the <strong>.NET 11 Desktop Runtime</strong> when it is missing (administrator approval is needed for that step only). The portable ZIPs and the Linux portable tar.gz/ZIP need the runtime already installed. Linux AppImage/Flatpak and the macOS DMG bundle it.</p>
                 </details>
                 <details>
                     <summary>Is Simple Launcher free?</summary>
                     <p>Yes. Simple Launcher is free software under the GPLv3, with no ads and no account.</p>
+                </details>
+                <details>
+                    <summary>Does uninstalling remove my settings?</summary>
+                    <p>No. The Windows uninstaller removes the program files but keeps <code>settings.dat</code>, <code>system.xml</code>, logs and game media. To remove everything, delete the install folder (default <code>%LocalAppData%\SimpleLauncher</code>) after uninstalling.</p>
                 </details>
                 <details>
                     <summary>Does it work on a Steam Deck?</summary>

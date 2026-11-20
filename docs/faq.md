@@ -20,15 +20,17 @@ dumps. Easy Mode can download emulators, cores and image packs, but not games.
 
 ## Which app should I run: `SimpleLauncher.exe` or `SimpleLauncher.Avalonia.exe`?
 
-On Windows both are in the same release ZIP and share the same `settings.dat`. `SimpleLauncher.exe`
-is the original WPF app; `SimpleLauncher.Avalonia.exe` is the cross-platform port used on Linux
-and macOS. Run whichever you prefer - only one can run at a time (single-instance guard).
+On Windows both are in the same release ZIP or installer and share the same `settings.dat`.
+`SimpleLauncher.exe` is the original WPF app; `SimpleLauncher.Avalonia.exe` is the cross-platform
+port used on Linux and macOS. Run whichever you prefer - only one can run at a time
+(single-instance guard).
 
 ## What do I need installed?
 
-- **Windows:** the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download). The release is
-  framework-dependent and portable - no installer is required, though installing the runtime may
-  ask for administrator rights.
+- **Windows:** the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download). The
+  **installer** downloads and installs it when missing (administrator approval is needed for
+  that step only). The **portable ZIP** needs it already installed; the app itself needs no
+  admin rights.
 - **Linux portable (ZIP/tar.gz):** the .NET 11 runtime. The **AppImage** and **Flatpak** bundle it.
 - **macOS:** nothing extra; the Apple Silicon DMG bundles the runtime.
 
@@ -52,7 +54,8 @@ manually in **Edit System** (Expert Mode).
 
 Settings, favorites, play history and system definitions live in `settings.dat`:
 
-- Windows: `%LocalAppData%\SimpleLauncher` (or next to the exe in portable mode)
+- Windows: `%LocalAppData%\SimpleLauncher` (the installer default, and also the data folder) or
+  next to the exe in portable mode
 - Linux: `~/.local/share/SimpleLauncher`
 - macOS: `~/Library/Application Support/SimpleLauncher`
 
@@ -80,12 +83,25 @@ to disable automatic bug reports.
 - **Flatpak:** update through your software center (or install a newer `.flatpak`).
 - **macOS:** download the next DMG and drag the app to Applications; user data is kept.
 
+## How do I uninstall?
+
+- **Windows installer:** **Settings → Apps → Installed apps → Simple Launcher → Uninstall**, or
+  the **Uninstall** shortcut in its Start Menu group. The uninstaller removes the program files
+  but keeps `settings.dat`, `system.xml`, logs and game media. To remove everything, delete the
+  install folder (default `%LocalAppData%\SimpleLauncher`) after uninstalling.
+- **Portable Windows ZIP:** delete the extracted folder. In portable mode the data is inside it,
+  so copy `settings.dat` / `system.xml` first if you want to keep it.
+- **Linux/macOS:** delete the app, then remove `~/.local/share/SimpleLauncher` or
+  `~/Library/Application Support/SimpleLauncher` to delete your settings.
+
 ## Why does Windows SmartScreen warn me?
 
-The builds are not code-signed yet, so Windows shows "Unknown publisher". Download only from the
+The builds are not code-signed yet, so Windows shows "Unknown publisher" for the installer and
+the apps. Download only from the
 [official GitHub Releases](https://github.com/purelogiccode/SimpleLauncher/releases) page, then
-choose **More info -> Run anyway** if you trust the source. Do not use third-party download
-sites.
+choose **More info -> Run anyway** if you trust the source. Newer releases include
+`SHA256SUMS.txt`; compare its hash with `Get-FileHash` (Windows) or `sha256sum -c` before running
+the file. Do not use third-party download sites.
 
 ## Can I use it on a Steam Deck?
 

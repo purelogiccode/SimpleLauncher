@@ -24,12 +24,22 @@ Windows.
 
 ## 📥 Install (Windows)
 
-1. **Download** the release ZIP from the [latest release](https://github.com/purelogiccode/SimpleLauncher/releases/latest).
-2. **Extract** it to a writable folder, for example `C:\Games\SimpleLauncher` (not `C:\Program Files`).
-3. **Run** `SimpleLauncher.exe` - or `SimpleLauncher.Avalonia.exe` for the cross-platform UI. If Windows asks, install the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download).
+**Recommended - the installer.** Download `SimpleLauncher-{version}-win-x64-setup.exe` (or
+`-win-arm64`) from the [latest release](https://github.com/purelogiccode/SimpleLauncher/releases/latest)
+and run it. It installs for your Windows account under `%LocalAppData%\SimpleLauncher`, adds Start
+Menu shortcuts, and downloads the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download)
+only when it is missing (that runtime step asks for administrator approval; the app install does not).
+Older releases only include the portable ZIP; use the ZIP steps in that case.
 
-No installer and no account. Both apps share the same `settings.dat`; the app itself needs no
-admin rights (installing the .NET runtime may).
+**Portable ZIP.** Prefer no installer? Download `release_{version}_win-x64.zip` (or `-win-arm64`),
+extract it to a writable folder such as `C:\Games\SimpleLauncher` (not `C:\Program Files`), and run
+`SimpleLauncher.exe` - or `SimpleLauncher.Avalonia.exe` for the cross-platform UI. Both apps share
+the same `settings.dat`.
+
+No account is needed either way. Uninstalling removes the program files but **keeps your settings,
+game lists and media**; delete the install folder afterwards to remove everything. Newer releases
+also publish `SHA256SUMS.txt`; verify a download with `Get-FileHash` (Windows) or
+`sha256sum -c` (Linux/macOS) before running it.
 
 **Linux:** use the **AppImage** (no runtime needed), the **Flatpak**, or the portable tar.gz/ZIP
 with the .NET 11 runtime - see [Linux packages](docs/19-linux-packages.md).

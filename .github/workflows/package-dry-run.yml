@@ -1,9 +1,9 @@
 name: Package dry run
 
 # Packages every release asset exactly like the release workflow, but never creates or
-# updates a GitHub release. It validates the Windows, Linux and macOS packaging scripts,
-# the Linux ZIP/tar.gz permissions, the AppImage architecture, the Flatpak bundles and
-# the macOS DMG bundle layout.
+# updates a GitHub release. It validates the Windows portable bundles and per-user
+# installer, the Linux packaging scripts, the Linux ZIP/tar.gz permissions, the
+# AppImage architecture, the Flatpak bundles and the macOS DMG bundle layout.
 # The version is read from the canonical SimpleLauncher.csproj, so this workflow never
 # needs a version input and can never publish a version that is not consistent across
 # the projects and manifests.
@@ -19,6 +19,7 @@ on:
       - 'scripts/package-release-linux.ps1'
       - 'scripts/package-release-macos.ps1'
       - 'scripts/package-linux-native.sh'
+      - 'installer/**'
       - 'SimpleLauncher.sln'
       - 'SimpleLauncher/**'
       - 'SimpleLauncher.Core/**'
@@ -32,6 +33,7 @@ on:
       - 'scripts/package-release-linux.ps1'
       - 'scripts/package-release-macos.ps1'
       - 'scripts/package-linux-native.sh'
+      - 'installer/**'
       - 'SimpleLauncher.sln'
       - 'SimpleLauncher/**'
       - 'SimpleLauncher.Core/**'
@@ -70,13 +72,33 @@ jobs:
           }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
       - name: Package Windows release (no GitHub release)
         shell: pwsh
         run: >
           ./scripts/package-release.ps1
           -Version $env:VERSION
+          -BuildInstaller
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
+
+      - name: Verify Windows installer artifacts
+        shell: pwsh
+        run: |
+          foreach ($rid in @('win-x64', 'win-arm64')) {
+            $path = Join-Path 'artifacts/release' "SimpleLauncher-$($env:VERSION)-$rid-setup.exe"
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Missing installer: $path"
+            }
+            $sizeMb = [math]::Round((Get-Item -LiteralPath $path).Length / 1MB, 1)
+            if ($sizeMb -lt 20) {
+              throw "Installer looks too small ($sizeMb MB): $path"
+            }
+            Write-Host "$path ($sizeMb MB)"
+          }
 
       - name: Upload Windows packages
         uses: actions/upload-artifact@v7

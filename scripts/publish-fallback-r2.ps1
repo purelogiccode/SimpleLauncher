@@ -11,6 +11,7 @@ every object is publicly readable, and only then updates version.txt:
   release_{version}_{rid}.zip            Windows and portable Linux bundles
   release_{version}_linux-{arch}.tar.gz  portable Linux tarballs
   updater_{rid}.zip                      standalone updater bundles
+  SimpleLauncher-{version}-win-{arch}-setup.exe  per-user Windows installers
   SimpleLauncher-{version}-linux-*.AppImage  self-contained AppImage bundles
   SimpleLauncher-{version}-linux-*.flatpak   Flatpak bundles
   SimpleLauncher-{version}-osx-arm64.dmg     unsigned macOS Apple Silicon DMG
@@ -106,6 +107,9 @@ $requiredAssets = [System.Collections.Generic.List[string]]::new()
 foreach ($rid in @('win-x64', 'win-arm64', 'linux-x64', 'linux-arm64')) {
     $requiredAssets.Add("release_${Version}_$rid.zip")
     $requiredAssets.Add("updater_$rid.zip")
+}
+foreach ($rid in @('win-x64', 'win-arm64')) {
+    $requiredAssets.Add("SimpleLauncher-${Version}-$rid-setup.exe")
 }
 foreach ($rid in @('linux-x64', 'linux-arm64')) {
     $requiredAssets.Add("release_${Version}_$rid.tar.gz")
@@ -220,8 +224,14 @@ function Get-AssetContentType {
     if ($AssetName.EndsWith('.dmg', [StringComparison]::OrdinalIgnoreCase)) {
         return 'application/x-apple-diskimage'
     }
+    if ($AssetName.EndsWith('.exe', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'application/vnd.microsoft.portable-executable'
+    }
     if ($AssetName.EndsWith('.xml', [StringComparison]::OrdinalIgnoreCase)) {
         return 'application/xml'
+    }
+    if ($AssetName.EndsWith('.txt', [StringComparison]::OrdinalIgnoreCase)) {
+        return 'text/plain'
     }
     if ($AssetName.EndsWith('.zip', [StringComparison]::OrdinalIgnoreCase)) {
         return 'application/zip'
@@ -340,6 +350,19 @@ foreach ($asset in $requiredAssets) {
         Invoke-R2Put -LocalPath $localPath -Key $objectKey -ContentType (Get-AssetContentType -AssetName $asset)
     }
     Test-PublicAsset -AssetName $asset -ExpectedLength $localLength
+}
+
+# The GitHub release workflow generates SHA256SUMS.txt for every asset. Local
+# packaging may not have one, so it is mirrored when present but not required.
+$checksumsPath = Join-Path $ReleaseDir 'SHA256SUMS.txt'
+if (Test-Path -LiteralPath $checksumsPath -PathType Leaf) {
+    if (-not $VerifyOnly) {
+        Invoke-R2Put -LocalPath $checksumsPath -Key ($prefix + 'SHA256SUMS.txt') -ContentType 'text/plain'
+    }
+    Test-PublicAsset -AssetName 'SHA256SUMS.txt' -ExpectedLength (Get-Item -LiteralPath $checksumsPath).Length
+}
+else {
+    Write-Warning 'SHA256SUMS.txt was not found next to the release assets; skipping its R2 mirror.'
 }
 
 # The macOS Easy Mode catalog is not versioned: every release refreshes the same

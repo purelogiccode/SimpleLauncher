@@ -2,7 +2,7 @@
  * Landing page behaviour:
  *   - detect the visitor's OS/architecture and recommend the matching release asset;
  *   - fill the download cards and the primary button from the latest GitHub release;
- *   - emit a cookie-free "download" analytics event (via analytics.js).
+ *   - emit a cookie-free "download-click" analytics event (via analytics.js).
  *
  * If the GitHub API is unavailable, every link falls back to the release page.
  */
@@ -18,8 +18,15 @@
     var cards = Array.prototype.slice.call(document.querySelectorAll('.download-card[data-asset]'));
 
     var patterns = {
-        'win-x64': [/^release_.+_win-x64\.zip$/i],
-        'win-arm64': [/^release_.+_win-arm64\.zip$/i],
+        // Windows prefers the per-user installer; older releases only have the ZIP.
+        'win-x64': [
+            /^SimpleLauncher-.+-win-x64-setup\.exe$/i,
+            /^release_.+_win-x64\.zip$/i
+        ],
+        'win-arm64': [
+            /^SimpleLauncher-.+-win-arm64-setup\.exe$/i,
+            /^release_.+_win-arm64\.zip$/i
+        ],
         'linux-x64': [
             /^SimpleLauncher-.+-linux-x64\.AppImage$/i,
             /^SimpleLauncher-.+-linux-x64\.flatpak$/i,
@@ -104,6 +111,7 @@
         if (/\.AppImage$/i.test(name)) return 'AppImage · self-contained';
         if (/\.flatpak$/i.test(name)) return 'Flatpak · self-contained';
         if (/\.dmg$/i.test(name)) return 'DMG · unsigned, not notarized';
+        if (/win-.*-setup\.exe$/i.test(name)) return 'Installer · per-user, .NET 11 bootstrapped';
         if (/linux-.*\.zip$/i.test(name)) return 'Portable ZIP · .NET 11 runtime';
         if (/win-.*\.zip$/i.test(name)) return 'Portable ZIP · .NET 11 Desktop Runtime';
         return '';
@@ -136,7 +144,10 @@
 
         var key = detected.key;
         var asset = findAsset(key, assets);
-        var label = key ? 'Download for ' + platformName(detected) : 'Download the latest release';
+        var installer = asset && /-setup\.exe$/i.test(asset.name);
+        var label = key
+            ? 'Download' + (installer ? ' installer' : '') + ' for ' + platformName(detected)
+            : 'Download the latest release';
 
         primaryLabel.textContent = label;
         primary.setAttribute('data-platform', detected.os);
@@ -225,11 +236,19 @@
             key = detected.key || 'unknown';
         }
 
+        // Distinguish the Windows installer from the portable ZIP in the event.
+        if (/-setup\.exe(\?|$)/i.test(link.getAttribute('href') || '')) {
+            key += '-setup';
+        }
+
+        var downloadTitle = platform || 'unknown';
+        if (arch) downloadTitle += ' ' + arch;
+
         window.slAnalytics.track('download-click', {
             platform: platform || 'unknown',
             arch: arch || 'unknown',
             format: key,
-            title: 'Download: ' + (platform || key)
+            title: 'Download: ' + downloadTitle
         });
     });
 

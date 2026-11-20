@@ -57,6 +57,11 @@ dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
 pwsh scripts/package-release.ps1 -Version 5.8.4
 # -> artifacts\release\release_5.8.4_win-x64.zip, release_5.8.4_win-arm64.zip
 # -> artifacts\release\updater_win-x64.zip, updater_win-arm64.zip
+
+pwsh scripts/package-release.ps1 -Version 5.8.4 -BuildInstaller
+# -> the same files plus
+#    artifacts\release\SimpleLauncher-5.8.4-win-x64-setup.exe
+#    artifacts\release\SimpleLauncher-5.8.4-win-arm64-setup.exe
 ```
 
 - The bundle places `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other and ships one shared set of content files (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Users choose which app to run.
@@ -66,6 +71,40 @@ pwsh scripts/package-release.ps1 -Version 5.8.4
 - Merges the two publish outputs and fails loudly when a shared file has different content (for example `appsettings.json` drift); `AppSettingsFilesAreIdentical` guards the two appsettings sources in the test suite.
 - Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` with `LICENSE.txt`, `README.md` and `WhatsNew.md` into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID tools (`FindRomCover`, `RetroAchievementsSharp`, `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target `win-{x64,arm64}` subfolder.
 - Prunes debug symbol files (`*.pdb`) — never needed at runtime; the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
+
+### Windows installer (`installer/SimpleLauncher.iss`)
+
+`-BuildInstaller` compiles a per-user **Inno Setup** installer from the same merged payload. It
+requires Inno Setup 6.5+ (`ISCC.exe` on `PATH`, in the default install folder, or passed with
+`-IsccPath`); CI installs it with Chocolatey before packaging.
+
+- **Per-user install**, default `%LocalAppData%\SimpleLauncher`, no elevation for the app files.
+  The user can pick another writable folder on the Select Destination page.
+- **.NET 11 bootstrap**: Setup looks for a `Microsoft.WindowsDesktop.App\11.*` folder under
+  `DOTNET_ROOT`, `%ProgramFiles%\dotnet` (native and the matching `x64`/`arm64` subfolder) or
+  `%LocalAppData%\Microsoft\dotnet`. If it is missing, it offers to download
+  `windowsdesktop-runtime-11.0-win-{x64,arm64}.exe` from Microsoft (or use an offline copy named
+  `windowsdesktop-runtime-11.0*-win-{x64,arm64}.exe` placed next to Setup), then elevates only
+  that runtime installer. `No` opens the Microsoft download
+  page and keeps Setup on the Ready page so the user can retry.
+- **Uninstall keeps user data**: Inno removes only the files it installed. `settings.dat`,
+  `system.xml`, logs and game media remain in the install folder; the quickstart/FAQ document how
+  to delete them.
+- Setup and uninstall share the app's single-instance mutex, so a running app is closed before
+  files are replaced (the built-in updater still handles normal in-app updates).
+- The installer is unsigned like the rest of the release; `SHA256SUMS.txt` is attached to the
+  GitHub release and `docs/faq.md` explains the SmartScreen prompt.
+
+Local smoke test (installs to a scratch folder, keeps a fake data file, then uninstalls):
+
+```powershell
+$setup = 'artifacts\release\SimpleLauncher-5.8.4-win-x64-setup.exe'
+$target = 'D:\Temp\sl-install-test'
+Start-Process $setup -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS',"/DIR=$target" -Wait
+New-Item -ItemType File -Path (Join-Path $target 'settings.dat') -Force | Out-Null
+Start-Process (Join-Path $target 'unins000.exe') -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+Test-Path (Join-Path $target 'settings.dat')   # True: user data kept
+```
 
 ### Linux release packaging script
 
