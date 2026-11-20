@@ -34,7 +34,7 @@
 ## settings.xml details
 
 - LINQ-to-XML, root `<Application>`; atomic save via temp file + `File.Move` with 3 retries + exponential backoff; portable → LocalAppData fallback (`SettingsManagerService.SaveAsync`, `:565-685`).
-- Emulator settings blocks (`EmulatorSettings\` ×21) are serialized as child elements; RA credentials are **DPAPI-encrypted** (Base64) before writing (`:717-719`).
+- Emulator settings blocks (`EmulatorSettings\` ×21) are serialized as child elements; RA credentials are **protected** before writing (`:717-719`): DPAPI on Windows, Base64 obfuscation (not encryption) on Linux/macOS.
 
 ## system.xml details
 

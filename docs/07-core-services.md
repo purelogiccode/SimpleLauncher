@@ -9,7 +9,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 
 | Class | Purpose / key API |
 |---|---|
-| `SettingsManager\SettingsManagerService` | User preferences (`settings.dat` SQLite; legacy `settings.xml`): load/save with atomic temp-file move, 3 retries, whitelist validation, DPAPI-encrypted RA credentials. See [05 — Configuration](05-configuration.md) |
+| `SettingsManager\SettingsManagerService` | User preferences (`settings.dat` SQLite; legacy `settings.xml`): load/save with atomic temp-file move, 3 retries, whitelist validation, protected RA credentials (DPAPI on Windows; Base64 obfuscation on Linux/macOS). See [05 — Configuration](05-configuration.md) |
 | `SettingsDatabase\UnifiedSettingsDatabase` | Schema/read/write for the shared `settings.dat` (app + emulator settings, favorites, play history, systems, play times) used by both apps |
 | `SettingsDatabase\WpfLegacyMigrator` / `SettingsDatabase\AvaloniaLegacyMigrator` (each app) | First-launch/merge migration of `settings.xml`, `system.xml`, `favorites.dat`, `playhistory.dat` into `settings.dat` with verification and `.bak` shelving |
 | `SettingsManager\EmulatorXmlHelpers` | Static typed XML readers (`ReadBool/ReadInt/ReadDouble/ReadString`) with section → flattened-root → default fallback |
@@ -86,7 +86,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `RetroAchievements\RetroAchievementsFileHasher` | Hash logic: standard MD5, header-based (NES/SNES/Atari…), N64 byte-swap, arcade filename, Arduboy line-endings |
 | `RetroAchievements\RetroAchievementsEmulatorConfiguratorService` | Inject RA credentials into RetroArch, PCSX2, DuckStation (encrypted token), PPSSPP (+ `.dat`), Dolphin, Flycast, BizHawk (JSON); restore from samples |
 | `RetroAchievements\EncryptDuckStationToken` | DuckStation token encryption |
-| `WpfServices\WindowsCredentialProtector` | DPAPI protect/unprotect (`ICredentialProtector`) |
+| `WpfServices\WindowsCredentialProtector` | DPAPI protect/unprotect on Windows; Base64 obfuscation fallback on Linux/macOS (`ICredentialProtector`) |
 
 ## Input, audio & UI helpers
 

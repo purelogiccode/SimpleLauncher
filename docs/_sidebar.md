@@ -1,4 +1,5 @@
-- [Home](README.md)
+- [Project home](https://purelogiccode.github.io/SimpleLauncher/)
+- [Docs home](README.md)
 
 - **Getting started**
 - [01 — Overview](01-overview.md)
@@ -21,6 +22,11 @@
 - [09 — RetroAchievements](09-retroachievements.md)
 - [10 — Game Scanning](10-game-scanning.md)
 - [11 — Bundled Tools](11-bundled-tools.md)
+
+- **Help & trust**
+- [FAQ](faq.md)
+- [Comparison](comparison.md)
+- [Privacy](privacy.md)
 
 - **Maintenance**
 - [14 — Testing](14-testing.md)

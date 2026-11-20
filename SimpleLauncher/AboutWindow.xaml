@@ -4,7 +4,7 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       Title="{DynamicResource About}"
                       Width="450"
-                      Height="420"
+                      Height="460"
                       ResizeMode="NoResize"
                       WindowStartupLocation="CenterScreen">
     <Grid>
@@ -40,6 +40,14 @@
                            CommandParameter="https://github.com/purelogiccode/SimpleLauncher"
                            ToolTip="{DynamicResource TooltipNavigateToGithub}">
                     https://github.com/purelogiccode/SimpleLauncher
+                </Hyperlink>
+            </TextBlock>
+            <TextBlock Margin="0,0,0,10">
+                <Hyperlink Command="{Binding OpenWebsiteCommand}"
+                           CommandParameter="https://purelogiccode.github.io/SimpleLauncher/docs.html#/privacy"
+                           ToolTip="{DynamicResource PrivacyPolicy}"
+                           AutomationProperties.Name="{DynamicResource PrivacyPolicy}">
+                    <Run Text="{DynamicResource PrivacyPolicy}" />
                 </Hyperlink>
             </TextBlock>
         </StackPanel>

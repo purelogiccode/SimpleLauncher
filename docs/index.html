@@ -2,68 +2,416 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Simple Launcher — Documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark light">
-    <link id="theme-style" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
-    <link rel="stylesheet" href="site.css">
+    <meta name="color-scheme" content="dark">
+    <title>Simple Launcher - Open-Source Emulator Frontend</title>
+    <meta name="description" content="Organize your ROMs, download and configure emulators with Easy Mode, and play with RetroAchievements on Windows, Linux and macOS. Free and open source.">
+    <link rel="canonical" href="https://purelogiccode.github.io/SimpleLauncher/">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="author" content="PureLogicCode">
+    <meta name="theme-color" content="#0b0f14">
+    <link rel="icon" type="image/png" href="media/logo.png">
+    <link rel="apple-touch-icon" href="media/logo.png">
+    <link rel="sitemap" type="application/xml" href="sitemap.xml">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://purelogiccode.github.io/SimpleLauncher/">
+    <meta property="og:title" content="Simple Launcher - Open-Source Emulator Frontend">
+    <meta property="og:description" content="Organize your ROM library, download and configure emulators with Easy Mode, and play with RetroAchievements on Windows, Linux and macOS.">
+    <meta property="og:image" content="https://purelogiccode.github.io/SimpleLauncher/media/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Simple Launcher's system selection and game library screens">
+    <meta property="og:site_name" content="Simple Launcher">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://purelogiccode.github.io/SimpleLauncher/">
+    <meta name="twitter:title" content="Simple Launcher - Open-Source Emulator Frontend">
+    <meta name="twitter:description" content="Organize your ROM library, download and configure emulators with Easy Mode, and play with RetroAchievements on Windows, Linux and macOS.">
+    <meta name="twitter:image" content="https://purelogiccode.github.io/SimpleLauncher/media/og-image.png">
+    <meta name="twitter:image:alt" content="Simple Launcher's system selection and game library screens">
+    <meta name="twitter:site" content="@purelogiccode">
+
+    <link rel="stylesheet" href="landing.css">
+
     <script>
-        // Apply the saved theme before the page paints to avoid a flash.
-        // "?theme=light" / "?theme=dark" in the URL sets (and persists) the choice too.
-        (function () {
-            var requested = new URLSearchParams(location.search).get('theme');
-            if (requested === 'light' || requested === 'dark') {
-                localStorage.setItem('sl-docs-theme', requested);
-            }
-            if (localStorage.getItem('sl-docs-theme') === 'light') {
-                document.getElementById('theme-style').href =
-                    'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css';
-            }
-        })();
+        // Old documentation links used the site root with a docsify hash (#/privacy,
+        // #/03-quickstart, ...). Keep them working after the landing page moved in.
+        if (location.hash.indexOf('#/') === 0) {
+            location.replace('docs.html' + location.search + location.hash);
+        }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Simple Launcher",
+      "description": "An open-source emulator frontend for Windows, Linux and macOS with one-click Easy Mode emulator setup, RetroAchievements and PC store game scanning.",
+      "url": "https://purelogiccode.github.io/SimpleLauncher/",
+      "downloadUrl": "https://github.com/purelogiccode/SimpleLauncher/releases/latest",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Windows, Linux, macOS",
+      "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "PureLogicCode",
+        "url": "https://www.purelogiccode.com/"
+      },
+      "sameAs": [
+        "https://github.com/purelogiccode/SimpleLauncher",
+        "https://github.com/purelogiccode/SimpleLauncher/wiki"
+      ],
+      "screenshot": [
+        "https://purelogiccode.github.io/SimpleLauncher/media/screenshot-systems.jpg",
+        "https://purelogiccode.github.io/SimpleLauncher/media/screenshot-grid.jpg",
+        "https://purelogiccode.github.io/SimpleLauncher/media/screenshot-achievements.jpg"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "Simple Launcher - 20-second tour",
+      "description": "A 20-second tour of Simple Launcher: system selection, grid and list libraries, PC store games and RetroAchievements.",
+      "thumbnailUrl": "https://purelogiccode.github.io/SimpleLauncher/media/demo-poster.jpg",
+      "contentUrl": "https://purelogiccode.github.io/SimpleLauncher/media/demo.mp4",
+      "uploadDate": "2026-11-19",
+      "duration": "PT20S"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Does Simple Launcher include ROMs or BIOS files?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Simple Launcher does not provide games, ROMs or BIOS files. Easy Mode can download emulators, cores and image packs, but you bring your own legally obtained game files."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What do I need installed?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "On Windows the portable ZIP needs the .NET 11 Desktop Runtime. On Linux the AppImage and Flatpak bundle the runtime; the portable tar.gz/ZIP needs the .NET 11 runtime. The macOS DMG bundles the runtime."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Simple Launcher free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Simple Launcher is free software under the GPLv3, with no ads and no account."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does it work on a Steam Deck?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Use the Linux AppImage or the Flatpak. Flatpak launches emulators on the host through flatpak-spawn, but FUSE-based image mounting is unavailable inside the sandbox."
+          }
+        }
+      ]
+    }
     </script>
 </head>
 <body>
-<div id="app"></div>
-<script>
-    window.$docsify = {
-      name: 'Simple Launcher',
-      repo: 'https://github.com/purelogiccode/SimpleLauncher',
-      loadSidebar: true,
-      maxLevel: 3,
-      subMaxLevel: 2,
-      search: 'auto',
-      themeColor: '#58a6ff'
-    };
-  </script>
-<button id="theme-toggle" type="button" title="Switch to light theme" aria-label="Switch to light theme">☀️</button>
-<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
-<script>
-    (function () {
-        var DARK = 'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css';
-        var LIGHT = 'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css';
-        var link = document.getElementById('theme-style');
-        var btn = document.getElementById('theme-toggle');
-        var dark = localStorage.getItem('sl-docs-theme') !== 'light';
+<a class="skip-link" href="#main">Skip to content</a>
 
-        function apply() {
-            link.href = dark ? DARK : LIGHT;
-            document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-            document.body.classList.toggle('sl-light', !dark);
-            var label = dark ? 'Switch to light theme' : 'Switch to dark theme';
-            btn.textContent = dark ? '☀️' : '🌙';
-            btn.title = label;
-            btn.setAttribute('aria-label', label);
-        }
+<header class="site-header">
+    <div class="shell header-inner">
+        <a class="brand" href="index.html" aria-label="Simple Launcher home">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 8h12a4 4 0 0 1 3.8 5.2l-1.6 4.3a2.3 2.3 0 0 1-3.9.8L14 16h-4l-2.3 2.3a2.3 2.3 0 0 1-3.9-.8l-1.6-4.3A4 4 0 0 1 6 8Z"></path>
+                    <path d="M8 11v4M6 13h4"></path>
+                    <circle cx="16.5" cy="12" r=".8" fill="currentColor" stroke="none"></circle>
+                    <circle cx="18.5" cy="14" r=".8" fill="currentColor" stroke="none"></circle>
+                </svg>
+            </span>
+            <span>Simple Launcher</span>
+        </a>
 
-        btn.addEventListener('click', function () {
-            dark = !dark;
-            localStorage.setItem('sl-docs-theme', dark ? 'dark' : 'light');
-            apply();
-        });
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="#features">Features</a>
+            <a href="#tour">Tour</a>
+            <a href="#screenshots">Screenshots</a>
+            <a href="#faq">FAQ</a>
+            <a href="docs.html">Docs</a>
+            <a class="nav-github" href="https://github.com/purelogiccode/SimpleLauncher" aria-label="Simple Launcher on GitHub">
+                <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
+            </a>
+            <a class="btn btn-small" href="#download">Download</a>
+        </nav>
+    </div>
+</header>
 
-        apply();
-    })();
-</script>
+<main id="main">
+    <section class="hero">
+        <div class="shell hero-grid">
+            <div class="hero-copy">
+                <p class="eyebrow">Free &amp; open source &middot; GPLv3</p>
+                <h1>Your retro library,<br><span>ready in minutes.</span></h1>
+                <p class="lede">
+                    Simple Launcher organizes your ROMs, downloads and configures the emulators with
+                    Easy Mode, and puts your games, PC store titles (on Windows) and RetroAchievements in one clean library.
+                </p>
+
+                <div class="hero-actions">
+                    <a id="primary-download" class="btn btn-primary" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest" data-download="primary">
+                        <span id="primary-download-label">Download for your PC</span>
+                        <span class="btn-arrow" aria-hidden="true">&darr;</span>
+                    </a>
+                    <a class="btn btn-ghost" href="#tour">Watch the 20-second tour</a>
+                </div>
+                <p id="detection-note" class="detection-note" aria-live="polite">Detecting your platform&hellip;</p>
+
+                <ul class="hero-points" aria-label="Highlights">
+                    <li><strong>100+</strong> systems</li>
+                    <li><strong>11</strong> PC stores on Windows</li>
+                    <li><strong>18</strong> languages</li>
+                    <li><strong>$0</strong> forever</li>
+                </ul>
+            </div>
+
+            <div class="hero-visual">
+                <div class="screen-frame">
+                    <img src="media/screenshot-grid.jpg" width="1280" height="720" alt="Simple Launcher's Atari 2600 game library in grid view" fetchpriority="high">
+                    <span class="screen-badge badge-green">RetroAchievements built in</span>
+                    <span class="screen-badge badge-blue">Easy Mode</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tour" class="section tour-section">
+        <div class="shell">
+            <div class="section-head">
+                <p class="eyebrow">20-second tour</p>
+                <h2>See the whole flow in 20 seconds.</h2>
+                <p>No RetroArch cores to assemble, no emulator paths to guess. This is the flow.</p>
+            </div>
+
+            <figure class="tour-video">
+                <video controls muted loop playsinline preload="metadata" poster="media/demo-poster.jpg" aria-label="20-second tour of Simple Launcher">
+                    <source src="media/demo.mp4" type="video/mp4">
+                    Your browser does not support the video element. <a href="media/demo.mp4">Download the 20-second tour</a>.
+                </video>
+                <figcaption>
+                    System selection &rarr; grid and list libraries &rarr; PC store games &rarr; RetroAchievements.
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <section id="features" class="section">
+        <div class="shell">
+            <div class="section-head">
+                <p class="eyebrow">Why Simple Launcher</p>
+                <h2>Less setup. More playing.</h2>
+            </div>
+
+            <div class="feature-grid">
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path>
+                        </svg>
+                    </div>
+                    <h3>One-click Easy Mode</h3>
+                    <p>Pick a system and Simple Launcher downloads the emulator, the core and an optional image pack. Expert Mode is there when you want to tune everything by hand.</p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"></path><path d="M17 5h2a2 2 0 0 1 0 4h-2"></path><path d="M7 5H5a2 2 0 0 0 0 4h2"></path>
+                        </svg>
+                    </div>
+                    <h3>RetroAchievements built in</h3>
+                    <p>Browse profiles, filter games by hash, and see achievements without leaving the launcher. On Windows it also signs supported emulators in automatically.</p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8"></path><path d="M12 16v4"></path>
+                        </svg>
+                    </div>
+                    <h3>Windows, Linux &amp; macOS</h3>
+                    <p>The same Avalonia app runs natively on Windows x64/ARM64, Linux x64/ARM64 and Apple Silicon. Your data stays in the portable <code>settings.dat</code>.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="screenshots" class="section section-alt">
+        <div class="shell">
+            <div class="section-head">
+                <p class="eyebrow">A closer look</p>
+                <h2>Built for big libraries.</h2>
+                <p>Grid or list, gamepad or mouse and keyboard, 100 systems or 10,000 games.</p>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <img src="media/screenshot-systems.jpg" width="1280" height="720" loading="lazy" alt="System selection screen with dozens of console and computer tiles">
+                    <figcaption>Every system in one place</figcaption>
+                </figure>
+                <figure>
+                    <img src="media/screenshot-list.jpg" width="1280" height="720" loading="lazy" alt="Game library in list view with metadata columns">
+                    <figcaption>Grid or list, your choice</figcaption>
+                </figure>
+                <figure>
+                    <img src="media/screenshot-achievements.jpg" width="1280" height="720" loading="lazy" alt="RetroAchievements window with achievement progress and unlock list">
+                    <figcaption>RetroAchievements, in the launcher</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <section id="download" class="section download-section">
+        <div class="shell">
+            <div class="section-head">
+                <p class="eyebrow">Download</p>
+                <h2>Get Simple Launcher.</h2>
+                <p>Free, open source, no account. The recommended download is picked from your platform; the main options are below.</p>
+            </div>
+
+            <div class="download-grid">
+                <a class="download-card" data-download="windows-x64" data-platform="windows" data-arch="x64" data-asset="win-x64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
+                    <span class="download-os">Windows</span>
+                    <strong>x64</strong>
+                    <span class="download-format">Portable ZIP &middot; .NET 11 Desktop Runtime</span>
+                </a>
+                <a class="download-card" data-download="windows-arm64" data-platform="windows" data-arch="arm64" data-asset="win-arm64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
+                    <span class="download-os">Windows</span>
+                    <strong>ARM64</strong>
+                    <span class="download-format">Portable ZIP &middot; .NET 11 Desktop Runtime</span>
+                </a>
+                <a class="download-card" data-download="linux-x64" data-platform="linux" data-arch="x64" data-asset="linux-x64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
+                    <span class="download-os">Linux</span>
+                    <strong>x64</strong>
+                    <span class="download-format">AppImage, Flatpak or portable ZIP</span>
+                </a>
+                <a class="download-card" data-download="linux-arm64" data-platform="linux" data-arch="arm64" data-asset="linux-arm64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
+                    <span class="download-os">Linux</span>
+                    <strong>ARM64</strong>
+                    <span class="download-format">AppImage, Flatpak or portable ZIP</span>
+                </a>
+                <a class="download-card" data-download="macos-arm64" data-platform="macos" data-arch="arm64" data-asset="osx-arm64" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
+                    <span class="download-os">macOS</span>
+                    <strong>Apple Silicon</strong>
+                    <span class="download-format">DMG &middot; unsigned, not notarized</span>
+                </a>
+                <a class="download-card download-card-more" href="https://github.com/purelogiccode/SimpleLauncher/releases/latest">
+                    <span class="download-os">All releases</span>
+                    <strong>GitHub Releases</strong>
+                    <span class="download-format">Every architecture, format and changelog</span>
+                </a>
+            </div>
+
+            <p class="download-note">
+                Windows portable ZIPs need the <a href="https://dotnet.microsoft.com/download">.NET 11 Desktop Runtime</a>.
+                Linux AppImage/Flatpak and the macOS DMG include the runtime. The macOS build is unsigned:
+                on first launch, right-click the app and choose <strong>Open</strong>.
+            </p>
+        </div>
+    </section>
+
+    <section id="faq" class="section section-alt">
+        <div class="shell faq-shell">
+            <div class="section-head">
+                <p class="eyebrow">FAQ</p>
+                <h2>Quick answers.</h2>
+            </div>
+
+            <div class="faq-list">
+                <details>
+                    <summary>Does Simple Launcher include ROMs or BIOS files?</summary>
+                    <p>No. Simple Launcher does not provide games, ROMs or BIOS files. Easy Mode can download emulators, cores and image packs, but you bring your own legally obtained game files.</p>
+                </details>
+                <details>
+                    <summary>What do I need installed?</summary>
+                    <p>On Windows the portable ZIP needs the .NET 11 Desktop Runtime. On Linux the AppImage and Flatpak bundle the runtime; the portable tar.gz/ZIP needs the .NET 11 runtime. The macOS DMG bundles the runtime.</p>
+                </details>
+                <details>
+                    <summary>Is Simple Launcher free?</summary>
+                    <p>Yes. Simple Launcher is free software under the GPLv3, with no ads and no account.</p>
+                </details>
+                <details>
+                    <summary>Does it work on a Steam Deck?</summary>
+                    <p>Yes. Use the Linux AppImage or the Flatpak. Flatpak launches emulators on the host through <code>flatpak-spawn</code>, but FUSE-based image mounting is unavailable inside the sandbox.</p>
+                </details>
+            </div>
+
+            <p class="faq-more"><a href="docs.html#/faq">Read the full FAQ</a> &middot; <a href="docs.html#/comparison">Compare with LaunchBox, ES-DE, RetroBat and Playnite</a></p>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <div class="footer-brand">
+            <a class="brand" href="index.html">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 8h12a4 4 0 0 1 3.8 5.2l-1.6 4.3a2.3 2.3 0 0 1-3.9.8L14 16h-4l-2.3 2.3a2.3 2.3 0 0 1-3.9-.8l-1.6-4.3A4 4 0 0 1 6 8Z"></path>
+                        <path d="M8 11v4M6 13h4"></path>
+                    </svg>
+                </span>
+                <span>Simple Launcher</span>
+            </a>
+            <p>An open-source emulator frontend by <a href="https://www.purelogiccode.com/">PureLogicCode</a>. Free under the <a href="https://github.com/purelogiccode/SimpleLauncher/blob/master/LICENSE.txt">GPLv3</a>.</p>
+        </div>
+
+        <div class="footer-col">
+            <h2>Product</h2>
+            <a href="#features">Features</a>
+            <a href="#screenshots">Screenshots</a>
+            <a href="#download">Download</a>
+            <a href="https://github.com/purelogiccode/SimpleLauncher/releases">Release notes</a>
+        </div>
+
+        <div class="footer-col">
+            <h2>Documentation</h2>
+            <a href="docs.html">Docs home</a>
+            <a href="docs.html#/03-quickstart">Quickstart</a>
+            <a href="docs.html#/faq">FAQ</a>
+            <a href="docs.html#/comparison">Comparison</a>
+        </div>
+
+        <div class="footer-col">
+            <h2>Project</h2>
+            <a href="https://github.com/purelogiccode/SimpleLauncher">GitHub</a>
+            <a href="https://github.com/purelogiccode/SimpleLauncher/issues">Report a bug</a>
+            <a href="https://github.com/purelogiccode/SimpleLauncher/wiki">Wiki</a>
+            <a href="docs.html#/privacy">Privacy</a>
+            <a href="https://www.purelogiccode.com/donate">Donate</a>
+        </div>
+    </div>
+
+    <div class="shell footer-bottom">
+        <p>Simple Launcher is not affiliated with Nintendo, Sony, Microsoft, Sega or any emulator project. No ROMs, BIOS files or games are included.</p>
+        <p>No cookies, no ads, no personal data sold. <a href="docs.html#/privacy">Privacy policy</a>.</p>
+    </div>
+</footer>
+
+<script src="analytics-config.js" defer></script>
+<script src="analytics.js" defer></script>
+<script src="landing.js" defer></script>
 </body>
 </html>

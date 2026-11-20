@@ -169,7 +169,7 @@ Missing/0-byte configs are restored from `samples\{emulatorFolderName}\{filename
 - `RetroAchievementsSettingsWindow` — credentials + "Configure Emulator" for the 7 supported emulators (the Emulator Integration section is hidden outside Windows: the configurator writes Windows config locations — LB-08).
 - `SystemSelectionWindow` — system picker when auto-matching is unsure.
 
-Credentials (username/API key/password/token) are stored **DPAPI-encrypted** in the unified `settings.dat` database (legacy: `settings.xml`) — see [05 — Configuration](05-configuration.md#credentials).
+Credentials (username/API key/password/token) are **protected** in the unified `settings.dat` database (legacy: `settings.xml`): DPAPI on Windows; Base64 obfuscation (not encryption) on Linux/macOS, which have no OS keychain here — see [05 — Configuration](05-configuration.md#credentials) and [Privacy](privacy.md).
 
 ## Related docs
 

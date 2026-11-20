@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://purelogiccode.github.io/SimpleLauncher/sitemap.xml

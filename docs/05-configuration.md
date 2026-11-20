@@ -11,7 +11,7 @@
 | User preferences (UI, theme, gamepad, RA…) | `settings.dat` (SQLite `AppSettings` table, both apps); legacy `settings.xml` (LINQ-to-XML) | `SettingsManagerService` + `UnifiedSettingsDatabase` |
 | System/game definitions | `settings.dat` (SQLite `Systems` table, both apps); legacy `system.xml` | `SystemManagerService` / `SystemConfigurationWriterService` |
 | Favorites / play history / RA data / MAME data | Favorites + play history in `settings.dat` (`Favorites`/`PlayHistory` tables); `history.dat`, `mame.dat`, `RetroAchievements.dat` (MessagePack) | see [12 — Data Formats](12-data-formats.md) |
-| Credentials (RA) | DPAPI-encrypted values inside `settings.dat` (`AppSettings`; legacy `settings.xml`) | `WindowsCredentialProtector` |
+| Credentials (RA) | Protected values inside `settings.dat` (`AppSettings`; legacy `settings.xml`): DPAPI on Windows, Base64 obfuscation on Linux/macOS | `WindowsCredentialProtector` |
 | Emulator-specific settings | each emulator's own config file + `samples\{Emulator}\*` templates | `InjectEmulatorConfig` services |
 
 ## appsettings.json keys (as read in code)
@@ -66,7 +66,7 @@ and can be exported, but the database is the live store.
 - **Load:** `XElement.Load`; missing or corrupt → defaults + save. `LoadFromXml` (`:395-560`) validates values against whitelists (`:23-33`) and reads both `<Application>` children and legacy root-level elements.
 - **Save:** read-lock snapshot (`CopyFrom` `:324-393`) → background thread → `BuildXElement` (`:687-764`) → temp file → atomic `File.Move` with 3 retries + exponential backoff; portable → LocalAppData fallback (`:627-642`); failure → `FailedToSaveSettingsMessageBoxAsync` (`:683`).
 
-Persisted categories (`:38-155`): thumbnail sizes (games + system screen), `GamesPerPage`, `ShowGames`, `ViewMode`, `EnableGamePadNavigation`, `VideoUrl`/`InfoUrl` templates, `BaseTheme`/`AccentColor`/`StyleVariant`/`Language`, `DeadZoneX`/`DeadZoneY`, `ButtonAspectRatio`, `FilenameDisplayMode`, `DisplayMachineName`, filename/machine-name font sizes, `EnableFuzzyMatching` + `FuzzyMatchingThreshold` + `EnableAnnotationStripping`, notification sound setting, RA credentials (`RaUsername`/`RaApiKey`/`RaPassword`/`RaToken`, **DPAPI-encrypted** via `EncryptString/DecryptString` `:225-264`, written encrypted in `BuildXElement` `:717-719`), overlay-button booleans, emulator-section expansion states, `SystemPlayTimes`.
+Persisted categories (`:38-155`): thumbnail sizes (games + system screen), `GamesPerPage`, `ShowGames`, `ViewMode`, `EnableGamePadNavigation`, `VideoUrl`/`InfoUrl` templates, `BaseTheme`/`AccentColor`/`StyleVariant`/`Language`, `DeadZoneX`/`DeadZoneY`, `ButtonAspectRatio`, `FilenameDisplayMode`, `DisplayMachineName`, filename/machine-name font sizes, `EnableFuzzyMatching` + `FuzzyMatchingThreshold` + `EnableAnnotationStripping`, notification sound setting, RA credentials (`RaUsername`/`RaApiKey`/`RaPassword`/`RaToken`, **protected** via `EncryptString/DecryptString` `:225-264` - DPAPI on Windows, Base64 obfuscation on Linux/macOS - written protected in `BuildXElement` `:717-719`), overlay-button booleans, emulator-section expansion states, `SystemPlayTimes`.
 
 Plus 21 emulator settings classes (`SettingsManager\EmulatorSettings\`: Ares…Yumir incl. Xenia, Yumir, Mesen, Rpcs3…) used by the inject-config ViewModels.
 
@@ -123,6 +123,7 @@ If none of the ROM placeholders is present, the ROM path is auto-appended (MAME/
 ## Credentials
 
 - `ICredentialProtector` → `WindowsCredentialProtector` (DPAPI, `DataProtectionScope.CurrentUser`, fixed entropy `"SimpleLauncher.Salt"`; Base64 ciphertext; empty in → empty out; tampered data → null). Used for RA credentials and DuckStation token encryption.
+- On Linux/macOS, where this app has no OS keychain, the same class uses a portable fallback: Base64 encoding (obfuscation only, **not encryption**) with an Information log on first use. This matches [Privacy](privacy.md).
 - `NoOpCredentialProtector` exists in tests.
 
 ## Related docs

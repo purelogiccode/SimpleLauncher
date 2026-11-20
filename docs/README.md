@@ -1,11 +1,19 @@
 [![CI](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/ci.yml)
 [![Docs deploy](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/docs.yml/badge.svg)](https://github.com/purelogiccode/SimpleLauncher/actions/workflows/docs.yml)
 [![GitHub release](https://img.shields.io/github/v/release/purelogiccode/SimpleLauncher)](https://github.com/purelogiccode/SimpleLauncher/releases)
-[![Docs: GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://purelogiccode.github.io/SimpleLauncher/)
+[![Docs: GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://purelogiccode.github.io/SimpleLauncher/docs.html)
 [![Wiki](https://img.shields.io/badge/docs-GitHub%20Wiki-blue)](https://github.com/purelogiccode/SimpleLauncher/wiki)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/purelogiccode/SimpleLauncher/blob/master/LICENSE.txt)
 
 # Simple Launcher — Documentation
+
+**Start here:** [Quickstart](03-quickstart.md) · [FAQ](faq.md) · [How it compares](comparison.md) · [Privacy](privacy.md)
+
+## 20-second tour
+
+<a href="https://purelogiccode.github.io/SimpleLauncher/media/demo.mp4"><img src="https://purelogiccode.github.io/SimpleLauncher/media/demo-poster.jpg" alt="20-second tour of Simple Launcher" width="720" style="max-width:100%;height:auto;"></a>
+
+System selection, grid and list libraries, PC store games and RetroAchievements.
 
 Developer and user documentation for the main projects:
 
@@ -19,7 +27,7 @@ Companion files: [`ManualTests.md`](manual-tests.md) (manual test checklist for 
 
 These files are published **twice from the same `docs/` folder**:
 
-- **GitHub Pages** — [purelogiccode.github.io/SimpleLauncher](https://purelogiccode.github.io/SimpleLauncher/) renders the folder with docsify (`index.html` + `site.css`).
+- **GitHub Pages** - [purelogiccode.github.io/SimpleLauncher](https://purelogiccode.github.io/SimpleLauncher/) serves a static landing page (`index.html` + `landing.css`); the docs are at [docs.html](https://purelogiccode.github.io/SimpleLauncher/docs.html), rendered with docsify (`docs.html` + `site.css`).
 - **GitHub Wiki** — [github.com/purelogiccode/SimpleLauncher/wiki](https://github.com/purelogiccode/SimpleLauncher/wiki) is synced by `scripts/sync-wiki.py`, which also translates `docs/README.md` into the wiki `Home` page.
 
 Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigation, and the sync script converts it into the wiki `_Sidebar.md` (preserving its sections, order and labels). Add or rename a page in `docs/_sidebar.md` and re-run the sync to update both menus; keep every entry pointing at a page that exists in `docs/`.
@@ -55,6 +63,9 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 | [18 — Emulator Parameters](18-emulator-parameters.md) | parameters.md conventions + full system → emulator index (84 systems / 352 entries) |
 | [19 — Linux Packages](19-linux-packages.md) | AppImage, Flatpak and portable Linux formats, install and update behavior |
 | [20 — macOS Package](20-macos-packages.md) | Unsigned Apple Silicon DMG, Gatekeeper, Easy Mode catalog, build and NoMac validation |
+| [FAQ](faq.md) | Runtime, Dokan/FUSE, first system, data locations, updates, SmartScreen, Steam Deck |
+| [Comparison](comparison.md) | Honest table vs LaunchBox, ES-DE, RetroBat and Playnite, with a last-verified date |
+| [Privacy](privacy.md) | What the app stores locally, what it sends, and how to disable automatic reports |
 | [GUI Test Harness](gui-test-harness.md) | AT-SPI + vision harness for the Linux VM manual checklist |
 | [Manual Tests](manual-tests.md) | Manual test checklist for areas without unit tests |
 | [Parameters](parameters.md) | Emulator command-line reference with official download links |

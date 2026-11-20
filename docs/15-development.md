@@ -283,13 +283,13 @@ The `docs\` folder is published in two places:
 
 ### GitHub Pages (via Actions)
 
-The site is served from `docs/` via **docsify** (client-side rendering, no build step):
+The site is served from `docs/` as a **static landing page** plus the **docsify** documentation (client-side rendering, no build step):
 
 1. Enable once in repo settings: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 2. The `docs.yml` workflow deploys `docs/` on every push to `master` that touches docs (or manually).
-3. URL: `https://purelogiccode.github.io/SimpleLauncher/`.
+3. URLs: landing page `https://purelogiccode.github.io/SimpleLauncher/`, docs `https://purelogiccode.github.io/SimpleLauncher/docs.html`.
 
-`docs/index.html` (docsify loader), `docs/site.css` (the dark/light theme), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. `docs/_sidebar.md` is the **single source for both side menus**: docsify reads it directly, and the wiki sync preserves its headings, group labels and order when it writes `_Sidebar.md`. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
+`docs/index.html` (landing page), `docs/landing.css` / `docs/landing.js` (landing assets), `docs/analytics.js` + `docs/analytics-config.js` (opt-in cookie-free analytics), `docs/media/` (screenshots, 20-second tour, OG image), `docs/docs.html` (docsify loader), `docs/site.css` (the docs dark/light theme), `docs/_sidebar.md` (TOC) and `docs/.nojekyll` are the site assets. The landing page redirects old `#/...` documentation links to `docs.html#/...`. To enable analytics, set the GoatCounter code or Plausible domain in `docs/analytics-config.js` and redeploy; while `provider` is `none`, no analytics requests are made. `docs/_sidebar.md` is the **single source for both side menus**: docsify reads it directly, and the wiki sync preserves its headings, group labels and order when it writes `_Sidebar.md`. `docs/parameters.md` and `docs/manual-tests.md` are **copies** kept for the site and wiki:
 
 - `docs/parameters.md` ← `SimpleLauncher/parameters.md` — refresh it whenever the canonical file changes.
 - `docs/manual-tests.md` ← `ManualTests.md` (repo root) — refresh likewise.
