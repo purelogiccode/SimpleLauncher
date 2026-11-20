@@ -3367,24 +3367,6 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
     /// <summary>
-    ///     Displays a welcome message for first-time users with no systems configured, offering to add a system via Easy Mode.
-    /// </summary>
-    public Task<CoreMessageBoxResult> FirstRunWelcomeMessageBoxAsync()
-    {
-        var welcomeToSimpleLauncher =
-            _resourceProvider.GetString("WelcomeToSimpleLauncher", "Welcome to 'Simple Launcher'!");
-        var noSystemsFound =
-            _resourceProvider.GetString("NoSystemsFound", "No systems were found in your configuration.");
-        var easyModeGuide = _resourceProvider.GetString("DoyouwanttoaddyourfirstsystemusingtheEasyMode",
-            "Do you want to add your first system using the Easy Mode?");
-        var welcome = _resourceProvider.GetString("Welcome", "Welcome");
-        return _messageDialog.ShowAsync($"{welcomeToSimpleLauncher}\n\n" +
-                                        $"{noSystemsFound}\n\n" +
-                                        $"{easyModeGuide}", welcome, CoreMessageBoxButton.YesNo,
-            CoreMessageBoxImage.Question);
-    }
-
-    /// <summary>
     ///     Displays a warning that the specified emulator's path is required.
     /// </summary>
     public Task EmulatorLocationRequiredMessageBoxAsync(int emulatorNumber)

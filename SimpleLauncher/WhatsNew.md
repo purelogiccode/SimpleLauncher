@@ -2,6 +2,16 @@
 *Unreleased*
 ---
 
+## First-Run Wizard
+- **Guided setup on first launch** — When no systems are configured, both apps now open a
+  Welcome → Add System → Finish wizard instead of the Yes/No prompt followed by a separate
+  Easy Mode window. Add System reuses the same Easy Mode view (system picker, downloads,
+  image packs).
+- **Back, Next, Skip and progress** — The wizard shows "Step n of 3" progress, lets you go back
+  or skip without a system, and keeps download progress and Stop available on the Add System step.
+- **Errors stay visible** — A failed catalog load, download or add shows a dismissible error
+  banner on the wizard instead of leaving only a transient message box.
+
 ## Linux Packaging
 - **Linux is out of beta** — x64 and ARM64 are supported release targets.
 - **AppImage** — self-contained `SimpleLauncher-{version}-linux-{x64,arm64}.AppImage` with the

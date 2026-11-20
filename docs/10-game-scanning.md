@@ -5,7 +5,7 @@
 
 **Platform note:** storefront scanning reads the Windows registry and storefront install databases, so it only
 works on Windows. On Linux/macOS the Avalonia app returns an empty result, hides the **Scan for Microsoft Windows
-games** menu item, and skips the first-run scan (it goes straight to the Easy Mode prompt); the click handler and
+games** menu item, and skips the first-run scan (it goes straight to the first-run wizard's Add System step); the click handler and
 the scanners are guarded too, so even a programmatic invocation is a no-op (LB-22). A Linux-native game
 scanner would be a separate engine.
 
@@ -13,7 +13,7 @@ scanner would be a separate engine.
 
 `SimpleLauncher\Services\GameScan\GameScannerService.cs`
 
-- `ScanForStoreGamesAsync` (`:77-97`): ensures the **"Microsoft Windows"** system exists (`roms\Microsoft Windows` + images; `FileFormatsToSearch = url, lnk, bat`; existing system paths reused — `:99-170`), then runs **all scanners in parallel** (`Task.WhenAll`, `:87-89`).
+- `ScanForStoreGamesAsync` (`:77-97`): computes the **"Microsoft Windows"** paths (`roms\Microsoft Windows` + images; `FileFormatsToSearch = url, lnk, bat`; existing system paths reused - `:99-170`), then runs **all scanners in parallel** (`Task.WhenAll`, `:87-89`). The system entry is saved **only when at least one game shortcut was created** (2026-11-19 fix): an empty scan leaves the configuration empty so the first-run wizard can start; previously the empty system was saved before scanning, which made the first-run prompt unreachable on Windows.
 - `IgnoredGameNames` (`:28-41`): Steamworks Common Redistributables, Unreal Engine, Fab UE Plugin, Quixel Bridge, DirectX, Google Earth VR, Spacewar, PC Health Check, Rockstar Games Launcher, Battle.net, Ubisoft Connect.
 - **Image handling:** `TryDownloadImageFromApiAsync` (`:180-258`, `GameImageClient`, 2 attempts with 5 s retry), `FindAndSaveGameImageAsync` (`:269-293`), `ExtractIconFromGameFolderAsync` (`:303-332`), `FindMainExecutable` heuristics (`:334-379`: name match → contains → largest non-setup/launcher/unins exe), `TryGetExeFiles` (`:381-399`, returns null instead of throwing when the folder vanished between the `Directory.Exists` check and enumeration — Microsoft Store `WindowsApps` race).
 - **Interface:** `IGamePlatformScanner.ScanAsync(GameScannerService, ILogger, windowsRomsPath, windowsImagesPath, ignoredGameNames)` — single method, one class per storefront.

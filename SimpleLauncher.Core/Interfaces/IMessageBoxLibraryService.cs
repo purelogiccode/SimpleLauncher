@@ -1199,12 +1199,6 @@ public interface IMessageBoxLibraryService
     Task<MessageBoxResult> GroupByFolderWarningMessageBoxAsync();
 
     /// <summary>
-    ///     Displays a welcome message for first-time users with no systems configured, offering to add a system via Easy Mode.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation, resulting in the user's selection.</returns>
-    Task<MessageBoxResult> FirstRunWelcomeMessageBoxAsync();
-
-    /// <summary>
     ///     Displays a warning that the specified emulator's path is required.
     /// </summary>
     /// <param name="emulatorNumber">The 1-based emulator number whose path is required.</param>

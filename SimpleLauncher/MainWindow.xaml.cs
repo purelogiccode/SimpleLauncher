@@ -25,7 +25,6 @@ using Application = System.Windows.Application;
 using Button = System.Windows.Controls.Button;
 using MessageBoxButton = System.Windows.MessageBoxButton;
 using MessageBoxImage = System.Windows.MessageBoxImage;
-using MessageBoxResult = System.Windows.MessageBoxResult;
 using SystemManager = SimpleLauncher.Services.SystemManager.SystemManagerService;
 
 namespace SimpleLauncher;
@@ -475,17 +474,16 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
                 }
 
                 // After the scan, check again if any systems exist.
-                // If still no systems, show the Easy Mode prompt.
+                // If still no systems, guide the user through the first-run wizard, whose
+                // Add System step embeds Easy Mode; Skip leaves the library empty.
                 if (_systemManagers == null || _systemManagers.Count == 0)
                 {
-                    var result =
-                        (MessageBoxResult)(int)await _messageBox.FirstRunWelcomeMessageBoxAsync();
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
-                        easyModeWindow.Owner = this;
-                        easyModeWindow.ShowDialog();
+                    var wizard = App.ServiceProvider.GetRequiredService<FirstRunWizardWindow>();
+                    wizard.Owner = this;
+                    wizard.ShowDialog();
 
+                    if (wizard.SystemAdded)
+                    {
                         await _gameBrowser.LoadOrReloadSystemManagerAsync();
                         await _gameBrowser.DisplaySystemSelectionScreenAsync(((IMenuActionHost)this)
                             .CurrentCancellationToken); // Await this now

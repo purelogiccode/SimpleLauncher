@@ -48,7 +48,7 @@ public class EasyModeViewModelTests
                                         ]
                                         """;
 
-    private static EasyModeViewModel CreateVm(Mock<IExtractionService>? extraction = null)
+    internal static EasyModeViewModel CreateVm(Mock<IExtractionService>? extraction = null)
     {
         HeadlessAvalonia.EnsureInitialized();
 

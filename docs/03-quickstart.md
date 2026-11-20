@@ -26,7 +26,7 @@ On first launch the app:
 
 1. checks required files and folder writability;
 2. scans installed storefront games (Steam, Epic, GOG, …) into a **"Microsoft Windows"** system — this is skipped if systems already exist, and is a Windows-only step (other platforms go straight to step 3);
-3. if still no systems, shows the welcome message and opens **Easy Mode** (or you can close it and use Expert Mode).
+3. if still no systems, opens the **first-run wizard** (Welcome → Add System → Finish). Add System embeds Easy Mode; **Skip** finishes without a system, and Expert Mode remains available later.
 
 ## Folder structure
 

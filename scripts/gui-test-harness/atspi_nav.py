@@ -628,10 +628,15 @@ class Nav:
         time.sleep(0.35)
 
     def close_welcome(self):
-        """Dismiss the modal first-run Welcome dialog (blocks all clicks)."""
+        """Dismiss the modal first-run window (blocks all clicks).
+
+        Current builds show the first-run wizard (P1-33), whose Cancel button
+        closes it; older builds showed the Yes/No Welcome message box. Both
+        windows are titled "Welcome" in the AT-SPI tree.
+        """
         if not self.frame_present("Welcome"):
             return "absent"
-        for button in ("No", "Close", "OK"):
+        for button in ("Cancel", "No", "Close", "OK"):
             hits = self.find_all(name=button, role="push button")
             if hits:
                 self.click(hits[0])

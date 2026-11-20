@@ -1593,15 +1593,6 @@ public class NoOpMessageBoxLibraryService : IMessageBoxLibraryService
     }
 
     /// <summary>
-    ///     Returns <see cref="MessageBoxResult.No" /> without displaying a message box.
-    /// </summary>
-    /// <returns><see cref="MessageBoxResult.No" />.</returns>
-    public Task<MessageBoxResult> FirstRunWelcomeMessageBoxAsync()
-    {
-        return Task.FromResult(MessageBoxResult.No);
-    }
-
-    /// <summary>
     ///     Does nothing. Does not display the emulator-location-required message box.
     /// </summary>
     public Task EmulatorLocationRequiredMessageBoxAsync(int emulatorNumber)

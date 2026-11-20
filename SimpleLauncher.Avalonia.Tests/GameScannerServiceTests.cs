@@ -122,6 +122,24 @@ public class GameScannerServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Scan_NoGames_DoesNotCreateSystemEntry()
+    {
+        var systemXml = Path.Combine(_tempRoot, "system.xml");
+        var scanner = CreateScanner(systemXml, new FakeScanner([]));
+
+        var result = await scanner.ScanForStoreGamesCoreAsync();
+
+        Assert.Equal(0, result.GamesFound);
+        Assert.Equal(0, result.ShortcutsCreated);
+        Assert.False(result.SystemWasCreated);
+        Assert.False(scanner.WasNewSystemCreated);
+
+        // Regression: an empty scan used to save a "Microsoft Windows" system before
+        // scanning, so the first-run wizard was never reached on Windows.
+        Assert.Empty(UnifiedSettingsDatabase.LoadSystems());
+    }
+
+    [Fact]
     public async Task Scan_SecondRun_AddsOnlyNewGames()
     {
         var systemXml = Path.Combine(_tempRoot, "system.xml");

@@ -53,6 +53,7 @@ using SimpleLauncher.Core.Services.EasyMode;
 using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using SimpleLauncher.Core.Services.ExtractFiles;
 using SimpleLauncher.Core.Services.FindCoverImage;
+using SimpleLauncher.Core.Services.FirstRun;
 using SimpleLauncher.Core.Services.GameFileWatcher;
 using SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 using SimpleLauncher.Core.Services.GameLauncher.Strategies;
@@ -738,6 +739,8 @@ public class App : Application, IDisposable
         // ── ViewModels ──
         services.AddSingleton<MainViewModel>();
         services.AddTransient<EasyModeViewModel>();
+        services.AddTransient<FirstRunWizardState>();
+        services.AddTransient<FirstRunWizardViewModel>();
 
         // ── MainWindow page sections (WPF FavoritesPage / PlayHistoryPage / GlobalSearchPage equivalents) ──
         services.AddSingleton<FavoritesSectionViewModel>();
@@ -897,6 +900,7 @@ public class App : Application, IDisposable
         services.AddTransient<MainWindow>();
         services.AddTransient<PreferencesWindow>();
         services.AddTransient<EasyModeWindow>();
+        services.AddTransient<FirstRunWizardWindow>();
         services.AddTransient<EditSystemWindow>();
         // Factory so callers can pass a pre-selected system name to EditSystemWindow
         // (the plain AddTransient above always resolves with the optional null default).

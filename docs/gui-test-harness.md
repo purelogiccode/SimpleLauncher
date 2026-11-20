@@ -223,7 +223,7 @@ Invoke-VmPython -Script $py
 
 `atspi_nav.py` also runs standalone on the guest:
 `python3 /home/vm/vision/atspi_nav.py dump` (full tree JSON), `tree` (indented text),
-`ready` (activate/maximize/dismiss Welcome), `selftest` (API smoke test).
+`ready` (activate/maximize/dismiss the first-run window), `selftest` (API smoke test).
 
 ---
 
@@ -383,9 +383,9 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 
 - **Avalonia AT-SPI server** starts unconditionally on X11 (Avalonia 12.1); `at-spi2-core` is
   enough. `AutomationId` falls back to `x:Name`.
-- **BUG-02 (upstream)**: dismissing the first modal (`Welcome`) collapses `MainContentGrid`'s
-  children from the tree while menus/dialogs stay exposed. Restarting the app restores the tree;
-  the seeded fixture avoids the Welcome dialog entirely.
+- **BUG-02 (upstream)**: dismissing the first modal (`Welcome` — now the first-run wizard, formerly
+  the Yes/No dialog) collapses `MainContentGrid`'s children from the tree while menus/dialogs stay
+  exposed. Restarting the app restores the tree; the seeded fixture avoids the first-run window entirely.
 - **Grid peers go stale**: after the first render / a letter click, game list items lose their
   names in the tree. Use `PaginationLabel`, `StatusLeft`, the DB and the emulator log for
   assertions; interact with cards via fixed coordinates (1920x1080 maximized: first card after a
@@ -421,6 +421,8 @@ A 30-scenario pass is a few cents. If `content` comes back empty, raise `--max-t
 | Menus/dialogs ignore clicks | A modal is open; start with `n.close_dialogs()`, or restart the app |
 | Vision says "empty content" / provider 5xx | `Invoke-VisionCheck` retries 3× automatically; raise `--max-tokens` if the model returns nothing |
 | AT-SPI tree empty for new app starts | Known registration flake; `Start-VmApp` waits up to 60 s and retries (3 starts). After a restart `run-suite.ps1` also checks `Test-VmNavHealth`, retries once and aborts with `AT-SPI tree not ready before <Id>` rather than recording false failures - rerun, and reboot the VM if it keeps failing. Never kill `at-spi-bus-launcher`/`at-spi2-registryd` (leaves a stale `AT_SPI_BUS` guid) |
+| AT-SPI tree still empty on every restart (Hyper-V VM, 2026-11-19) | Seen with the .NET 11/Avalonia 12.1.6 self-contained payload: the app renders and even calls `org.a11y.Bus.GetAddress`, but `pyatspi` sees 0 nodes. `org.a11y.Status` `IsEnabled`/`ScreenReaderEnabled` were false; setting both true via `gdbus` and restarting did not restore it. Verify the wizard with xdotool + `gnome-screenshot`; the same payload registers normally on the real `linuxgpu` host, so treat this as a VM/harness issue first |
+| `Nav.snapshot()` hangs on the real `linuxgpu` host | The full desktop has ~27 AT-SPI applications (Mint Update, portals, Cinnamon helpers) and one traversal can block. Traverse only the `Simple Launcher` application root with targeted pyatspi (find the app by name, then descend its windows) and invoke buttons via their AT-SPI `click` action; use xdotool for ComboBox item clicks |
 | App window frozen / UI unresponsive | Triage: `ps -o stat,pcpu,wchan -p <pid>` (a blocked main thread sits in `futex_do_wait` at 0% CPU) and `sudo gdb -p <pid> -batch -ex "thread apply all bt 10"`; a `Nav().snapshot()` subprocess probe (25 s timeout) tells "slow" from "dead" (a dead UI returns a tiny/empty tree). Reusable repro: 300 `xdotool` clicks @15 ms on the nav aspect-ratio button. BUG-19 (2026-09-28) was exactly this - sound Stop/Dispose joined the playback thread on the UI thread; see `ManualTests.md` §8 |
 | Fixture changes not visible | The app must be **stopped** while `fixture.py` writes the DB; use `Restart-VmApp -Fixture` |
 | `fixture.py` warning about the DB | Brand-new VM: run the app once so it creates `settings.dat` |

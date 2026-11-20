@@ -65,7 +65,7 @@ covered by this pass.
 
 ## 1. Startup & app lifecycle
 
-- [X] **First-run flow** (`StartupInitializationService`) — with an empty config, the app auto-scans the machine for installed games (Steam, Epic, GOG, Microsoft Store, etc.) and creates the "Microsoft Windows" system; the Easy Mode welcome prompt appears only if that scan finds no games; with an existing config it loads straight into the main window.
+- [X] **First-run flow** (`StartupInitializationService`) — with an empty config, the app auto-scans the machine for installed games (Steam, Epic, GOG, Microsoft Store, etc.) and creates the "Microsoft Windows" system; the first-run wizard appears only if that scan finds no games; with an existing config it loads straight into the main window.
 - [X] **Closing behavior** (`MainWindow.CloseWindowEvents`) — close the app then immediately check the settings file: close is deferred until settings are saved. Close while a CHD mount or scan is active → child processes killed, no crash.
 - [X] **Minimize to tray** — minimize hides the window from the taskbar, tray icon remains; tray menu has Open / Minimize to Tray / Debug Window / Exit; double-click the tray icon restores the window; Exit fully quits (icon disappears).
 - [X] **Quit** (`QuitSimpleLauncher`) — menu quit exits;
@@ -105,8 +105,13 @@ covered by this pass.
 
 ## 5. Easy Mode & Edit System
 
-### Easy Mode wizard (`EasyModeWindow`)
-- [X] With zero systems configured → welcome prompt opens Easy Mode; system dropdown sorted, only systems with download links listed.
+### First-run wizard (`FirstRunWizardWindow`, P1-33)
+- [X] With zero systems configured → the wizard's Welcome step opens; Next shows the Add System step (embedded `EasyModeView`); Back returns to Welcome, Skip goes to Finish without a system, and Finish closes/reloads. (Verified 2026-11-19 on Windows x64 by the user, the real Linux x64 host `linuxgpu` at 192.168.1.108 — 72-system catalog loaded and sorted, screenshots in the session — and the Hyper-V Linux VM with an empty fixture.)
+- [X] Download progress/Stop work in the Add System step; a failed catalog load or download shows the error banner and Dismiss clears it; Cancel/window-close mid-download cancels cleanly. (The Hyper-V VM's unreachable Easy Mode API exercised the error path: banner + existing dialog, Dismiss cleared the banner, Back/Skip stayed usable; Cancel/Alt+F4 closed the wizard and left the main window alive. Download progress/Stop is shared with Easy Mode and covered by the existing Easy Mode checks.)
+- [X] Adding a system advances to Finish automatically and the new system appears in the main window after closing. (Verified 2026-11-19 on the real Linux x64 host: Atari 2600 selected with its emulator/core present, Add System showed the success dialog, the wizard auto-advanced to "Your system 'Atari 2600' is ready", Finish closed it and the main window showed Atari 2600. Also user-confirmed on Windows x64.)
+
+### Easy Mode dialog (`EasyModeWindow`)
+- [X] The standalone Easy Mode menu entry opens the same `EasyModeView`; system dropdown sorted, only systems with download links listed.
 - [X] Selecting a system enables emulator/core/image-pack buttons only when a download link exists; "Add System" stays disabled until the required emulator/core is downloaded or already on disk.
 - [X] Start each download → progress bar + status text; **Stop** mid-download → "Download canceled", button re-enables; closing the window during a download cancels cleanly (no crash, temp cleanup). (Verified 2026-09-26 on Linux Mint 22.3: Stop mid-download showed `Download of Image Pack 1 was canceled.`, the Stop button disabled and the pack button re-enabled; **the cancel left the partial archive in `/tmp/SimpleLauncher` - BUG-07 in `ManualTests.md` §8**. Closing the window during a download was not exercised.)
 - [X] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk. (Verified 2026-09-26 with the default folder: Easy Mode installed PPSSPP and Redream, created `roms/<System>` and `images/<System>` and the DB rows. The custom picker was verified end-to-end the same day: choosing `/home/vm/custom-roms` in the GTK folder dialog for Sony PSP produced `SystemFolders: ["/home/vm/custom-roms"]` in the DB and created `images/Sony PSP`. 2026-09-28: a user-reported "Add System stuck on the loading overlay" was **BUG-16** - the success dialog was owned by MainWindow while Easy Mode is a modal child of it, so X11 could stack the dialog behind Easy Mode; dialogs now use the active window as owner. Verified with `WM_TRANSIENT_FOR` and a full 6->7 system add.)

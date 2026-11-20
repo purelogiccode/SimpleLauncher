@@ -4,6 +4,7 @@
 
 ## Next release — Unreleased
 
+- **First-run wizard**: when no systems are configured, both apps show Welcome → Add System → Finish with Back/Next/Skip, step progress, the Easy Mode downloads (with Stop) and a dismissible error banner. The old Yes/No prompt + separate Easy Mode window is gone.
 - **Linux leaves beta**: x64 and ARM64 are supported release targets.
 - **New Linux bundles**: self-contained AppImage (`SimpleLauncher-{version}-linux-{x64,arm64}.AppImage`), Flatpak (`SimpleLauncher-{version}-linux-{x64,arm64}.flatpak`) and a portable `release_{version}_linux-{x64,arm64}.tar.gz` next to the existing ZIP. The AppImage and Flatpak carry the .NET runtime; the portable formats still require .NET 11.
 - **Package-aware updates**: AppImages download and replace the outer file, Flatpak installs defer to the software center (repository installs) or a reinstall of the newer bundle (direct `.flatpak`), and portable ZIP/tarball installs keep the existing Updater. Flatpak emulators run on the host through `flatpak-spawn`, and the sandbox uses the extraction/conversion fallbacks instead of FUSE mounts.

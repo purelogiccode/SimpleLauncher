@@ -454,9 +454,9 @@ public partial class MainWindow : Window, IPaginationHost
 
     /// <summary>
     ///     Mirrors WPF MainWindow.HandleLoadedAsync first-run flow: scans for Windows
-    ///     Store games when no systems exist, then offers Easy Mode if still empty.
+    ///     Store games when no systems exist, then opens the first-run wizard if still empty.
     ///     Storefront scanning reads the Windows registry and store databases, so other
-    ///     platforms skip it entirely and go straight to the Easy Mode prompt.
+    ///     platforms skip it entirely and go straight to the wizard.
     /// </summary>
     private async Task RunFirstRunExperienceAsync()
     {
@@ -494,17 +494,14 @@ public partial class MainWindow : Window, IPaginationHost
         var systems = _systemManagerService.LoadSystems();
         if (systems.Count == 0)
         {
-            var messageBox = App.ServiceProvider.GetRequiredService<IMessageBoxLibraryService>();
-            var welcome = await messageBox.FirstRunWelcomeMessageBoxAsync();
-            if (welcome == MessageBoxResult.Yes)
-            {
-                Log.Information("User accepted the Easy Mode prompt");
+            Log.Information("No systems configured; opening the first-run wizard");
 
-                var easyModeWindow = App.ServiceProvider.GetRequiredService<EasyModeWindow>();
-                await easyModeWindow.ShowDialog(this);
-                if (easyModeWindow.DataContext is EasyModeViewModel { SystemAdded: true })
-                    await RefreshAfterSystemConfigurationChangeAsync();
-            }
+            var wizard = App.ServiceProvider.GetRequiredService<FirstRunWizardWindow>();
+            await wizard.ShowDialog(this);
+
+            // The wizard embeds Easy Mode for the Add System step; refresh the grid/sidebar
+            // when a system was actually saved (Skip/Finish without adding leaves it untouched).
+            if (wizard.SystemAdded) await RefreshAfterSystemConfigurationChangeAsync();
         }
     }
 

@@ -3215,21 +3215,6 @@ public class MessageBoxLibraryService : IMessageBoxLibraryService
             MessageButtons.YesNo, MessageIcon.Question);
     }
 
-    public async Task<MessageBoxResult> FirstRunWelcomeMessageBoxAsync()
-    {
-        if (O == null) return MessageBoxResult.Cancel;
-        var welcomeToSimpleLauncher =
-            _localization.GetString("WelcomeToSimpleLauncher", "Welcome to 'Simple Launcher'!");
-        var noSystemsFound =
-            _localization.GetString("NoSystemsFound", "No systems were found in your configuration.");
-        var easyModeGuide = _localization.GetString("DoyouwanttoaddyourfirstsystemusingtheEasyMode",
-            "Do you want to add your first system using the Easy Mode?");
-        var welcome = _localization.GetString("Welcome", "Welcome");
-        return await ShowAsync(O, $"{welcomeToSimpleLauncher}\n\n{noSystemsFound}\n\n{easyModeGuide}", welcome,
-            MessageButtons.YesNo, MessageIcon.Question);
-    }
-
-
     public Task SettingsSavedMessageBoxAsync()
     {
         if (O == null) return Task.CompletedTask;

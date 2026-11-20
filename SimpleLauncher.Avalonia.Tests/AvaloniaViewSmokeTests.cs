@@ -6,6 +6,8 @@ using Moq;
 using SimpleLauncher.Avalonia.Converters;
 using SimpleLauncher.Avalonia.InjectConfigWindows;
 using SimpleLauncher.Avalonia.Services;
+using SimpleLauncher.Avalonia.ViewModels;
+using SimpleLauncher.Core.Services.FirstRun;
 
 namespace SimpleLauncher.Avalonia.Tests;
 
@@ -45,6 +47,16 @@ public class AvaloniaViewSmokeTests
             {
                 // ignored
             }
+        }
+
+        // The first-run wizard subscribes to its state/VM in the constructor, so an
+        // uninitialized fake (null fields) would throw. Build it with a real state.
+        if (type == typeof(FirstRunWizardViewModel))
+        {
+            return new FirstRunWizardViewModel(
+                new FirstRunWizardState(),
+                (EasyModeViewModel)CreateFake(typeof(EasyModeViewModel)),
+                (LocalizationService)CreateFake(typeof(LocalizationService)));
         }
 
         // Interface / abstract -> Moq (use base Mock to avoid ambiguous Object property)
@@ -185,6 +197,7 @@ public class AvaloniaViewSmokeTests
         yield return [typeof(SetLinksWindow)];
         yield return [typeof(SoundConfigurationWindow)];
         yield return [typeof(EasyModeWindow)];
+        yield return [typeof(FirstRunWizardWindow)];
         yield return [typeof(SystemSelectionWindow)];
         yield return [typeof(PreferencesWindow)];
         // GameDetailWindow and MainWindow require a fully-wired MainViewModel (DI-heavy) — XAML is still

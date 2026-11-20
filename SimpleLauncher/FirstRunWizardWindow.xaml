@@ -1,0 +1,202 @@
+<controls:MetroWindow x:Class="SimpleLauncher.FirstRunWizardWindow"
+                      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                      mc:Ignorable="d"
+                      Title="{DynamicResource FirstRunWizardTitle}"
+                      Width="1000"
+                      MinWidth="860"
+                      Height="760"
+                      MinHeight="680"
+                      WindowStartupLocation="CenterOwner"
+                      x:ClassModifier="internal">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header: title, step counter and progress -->
+        <Grid Grid.Row="0" Margin="28,24,28,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Light" />
+                <ProgressBar Height="6" Margin="0,12,0,0"
+                             Minimum="0" Maximum="100"
+                             Value="{Binding StepProgress, Mode=OneWay}"
+                             AutomationProperties.Name="{DynamicResource WizardProgress}" />
+            </StackPanel>
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding StepCounterText}"
+                       Margin="24,4,0,0"
+                       VerticalAlignment="Top"
+                       FontSize="12"
+                       Opacity="0.6"
+                       AutomationProperties.LiveSetting="Polite" />
+        </Grid>
+
+        <!-- Error banner -->
+        <Border Grid.Row="1" Margin="28,0,28,12"
+                Padding="12,10"
+                CornerRadius="6"
+                Background="#33D9534F"
+                BorderBrush="#66D9534F"
+                BorderThickness="1"
+                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding ErrorTitle}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding ErrorText}"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0"
+                               Opacity="0.8"
+                               AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="{Binding DismissButtonText}"
+                        Command="{Binding DismissErrorCommand}"
+                        Style="{DynamicResource MahApps.Styles.Button.Square}"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{Binding DismissButtonText}" />
+            </Grid>
+        </Border>
+
+        <!-- Step pages -->
+        <Grid Grid.Row="2" Margin="28,4,28,16">
+
+            <!-- Welcome -->
+            <StackPanel VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        MaxWidth="640"
+                        Visibility="{Binding IsWelcomeStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{Binding WelcomeTitle}"
+                           FontSize="30" FontWeight="Light"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding WelcomeBody}"
+                           FontSize="14"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,16,0,0"
+                           Opacity="0.8" />
+            </StackPanel>
+
+            <!-- Add System (embedded Easy Mode view) -->
+            <Grid Visibility="{Binding IsAddSystemStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="{Binding AddSystemTitle}" FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding AddSystemBody}"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0"
+                               Opacity="0.7" />
+                </StackPanel>
+
+                <Border Grid.Row="1"
+                        BorderBrush="{DynamicResource MahApps.Brushes.Gray7}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        ClipToBounds="True">
+                    <ContentControl x:Name="EasyModeHost"
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalContentAlignment="Stretch" />
+                </Border>
+            </Grid>
+
+            <!-- Finish -->
+            <StackPanel VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        MaxWidth="640"
+                        Visibility="{Binding IsFinishStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{Binding FinishTitle}"
+                           FontSize="30" FontWeight="Light"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding FinishBody}"
+                           FontSize="14"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,16,0,0"
+                           Opacity="0.8" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Footer navigation -->
+        <Border Grid.Row="3"
+                BorderBrush="{DynamicResource MahApps.Brushes.Gray7}"
+                BorderThickness="0,1,0,0"
+                Background="{DynamicResource MahApps.Brushes.Gray10}"
+                Padding="28,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Content="{Binding CancelButtonText}"
+                        Command="{Binding CancelCommand}"
+                        Style="{DynamicResource MahApps.Styles.Button.Square}"
+                        Padding="18,8"
+                        AutomationProperties.Name="{Binding CancelButtonText}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="{Binding BackButtonText}"
+                            Command="{Binding BackCommand}"
+                            Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{DynamicResource MahApps.Styles.Button.Square}"
+                            Padding="18,8"
+                            Margin="0,0,10,0"
+                            AutomationProperties.Name="{Binding BackButtonText}"
+                            AutomationProperties.AutomationId="FirstRunBackButton" />
+                    <Button Content="{Binding SkipButtonText}"
+                            Command="{Binding SkipCommand}"
+                            Visibility="{Binding CanSkip, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{DynamicResource MahApps.Styles.Button.Square}"
+                            Padding="18,8"
+                            Margin="0,0,10,0"
+                            AutomationProperties.Name="{Binding SkipButtonText}"
+                            AutomationProperties.AutomationId="FirstRunSkipButton" />
+                    <Button Content="{Binding NextButtonText}"
+                            Command="{Binding NextCommand}"
+                            IsEnabled="{Binding CanGoNext}"
+                            Visibility="{Binding ShowNextButton, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                            Padding="24,8"
+                            AutomationProperties.Name="{Binding NextButtonText}"
+                            AutomationProperties.AutomationId="FirstRunNextButton" />
+                    <Button Content="{Binding FinishButtonText}"
+                            Command="{Binding FinishCommand}"
+                            Visibility="{Binding IsFinishStep, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{DynamicResource MahApps.Styles.Button.Square.Accent}"
+                            Padding="24,8"
+                            AutomationProperties.Name="{Binding FinishButtonText}"
+                            AutomationProperties.AutomationId="FirstRunFinishButton" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</controls:MetroWindow>

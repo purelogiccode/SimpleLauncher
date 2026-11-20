@@ -22,7 +22,7 @@ RetroAchievements → a download → a store-game scan covers most of this check
 
 ## 1. Startup & app lifecycle
 
-- [ ] **First-run flow** (`StartupInitializationService`) — with an empty config, the app auto-scans the machine for installed games (Steam, Epic, GOG, Microsoft Store, etc.) and creates the "Microsoft Windows" system; the Easy Mode welcome prompt appears only if that scan finds no games; with an existing config it loads straight into the main window.
+- [X] **First-run flow** (`StartupInitializationService`) — with an empty config, the app auto-scans the machine for installed games (Steam, Epic, GOG, Microsoft Store, etc.) and creates the "Microsoft Windows" system **only when the scan finds games** (2026-11-19 fix); the first-run wizard (Welcome → Add System → Finish) appears when the scan finds none. Add System embeds the Easy Mode view; Back/Next/Skip, step progress, download progress/Stop and the error banner all work; Skip finishes without a system; with an existing config it loads straight into the main window. Verified 2026-11-19: Windows x64 user pass with an empty profile (no store games) and Linux x64 with `fixture.py empty` (no store scan); see the wizard section below.
 - [ ] **Closing behavior** (`MainWindow.CloseWindowEvents`) — close the app then immediately check the settings file: close is deferred until settings are saved. Close while a CHD mount or scan is active → child processes killed, no crash.
 - [ ] **Minimize to tray** — minimize hides the window from the taskbar, tray icon remains; tray menu has Open / Minimize to Tray / Debug Window / Exit; double-click the tray icon restores the window; Exit fully quits (icon disappears).
 - [ ] **Quit / Restart** (`QuitSimpleLauncher`) — menu quit exits; restart (`--restarting`) starts a new process and exits the old one; failed restart shows "FailedToRestart" and the app stays alive.
@@ -61,8 +61,13 @@ RetroAchievements → a download → a store-game scan covers most of this check
 
 ## 5. Easy Mode & Edit System
 
-### Easy Mode wizard (`EasyModeWindow`)
-- [ ] With zero systems configured → welcome prompt opens Easy Mode; system dropdown sorted, only systems with download links listed.
+### First-run wizard (`FirstRunWizardWindow`)
+- [X] With zero systems configured → the wizard's Welcome step opens; Next shows the Add System step (embedded `EasyModeView`); Back returns to Welcome and Skip goes to Finish with "no system added". **Verified 2026-11-19 on Windows x64 (user run), the real Linux x64 host `linuxgpu` (192.168.1.108, 72-system catalog loaded and sorted: Amstrad CPC, Amstrad GX4000, Arcade, Atari 2600…) and the Hyper-V Linux VM** (`fixture.py empty`; Welcome/Next/Add System/Back/Skip/Finish screenshots).
+- [X] Close/Cancel at any step (including mid-download) closes the wizard cleanly; a failed catalog load or download shows the error banner and the Dismiss button clears it. **Verified 2026-11-19 on the Hyper-V Linux VM:** the unavailable API produced the "Something went wrong / Easy Mode is unavailable" banner plus the existing dialog; Dismiss cleared the banner and Back/Skip stayed usable. Alt+F4/Cancel closed the wizard and left the main window alive. The real host exercised the normal catalog path instead.
+- [X] Adding a system advances to Finish automatically; Finish reloads the main window and selects the new system's grid. **Verified 2026-11-19 on the real Linux x64 host:** selected Atari 2600 with the emulator/core present, Add System showed the success dialog, then the wizard auto-advanced to "Your system 'Atari 2600' is ready"; Finish closed the wizard and the main window showed Atari 2600. Also user-confirmed on Windows x64 (Easy Mode download completed).
+
+### Easy Mode dialog (`EasyModeWindow`)
+- [ ] The standalone Easy Mode menu entry still opens the same content (`EasyModeView`); system dropdown sorted, only systems with download links listed.
 - [ ] Selecting a system enables emulator/core/image-pack buttons only when a download link exists; "Add System" stays disabled until the required emulator/core is downloaded or already on disk.
 - [ ] Start each download → progress bar + status text; **Stop** mid-download → "Download canceled", button re-enables; closing the window during a download cancels cleanly (no crash, temp cleanup).
 - [ ] Custom ROM folder picker works; blank → defaults to `%BASEFOLDER%\roms\<System>`; **Add System** → loading overlay, success message, system appears after reload, folders created on disk.
@@ -369,14 +374,24 @@ Lessons baked into the library:
   item sits ~4 px below the bar). Use the `[menu]` node extents.
 - **Duplicated names:** a submenu item can repeat its parent's name (Sound Configuration); the rightmost
   match is the flyout entry. Click the parent once to open the flyout, then click again.
-- **Modal dialogs:** the first-run `Welcome` dialog is modal; dismiss it (`No`) before clicking. Menus,
-  Easy Mode and dialogs stay usable afterwards (see BUG-02 for the main-content caveat).
+- **Modal dialogs:** the first-run `Welcome` wizard (or, on older builds, the `Welcome` dialog) is modal;
+  dismiss it (`Cancel`, or `No` on older builds) before clicking. Menus, Easy Mode and dialogs stay usable
+  afterwards (see BUG-02 for the main-content caveat).
 - **One assertion per scenario** and prefer tree assertions (names, enabled/disabled via
   `pyatspi.STATE_ENABLED`, sorted item lists) over screenshots; keep vision for visual-only claims.
 - **Reasoning model:** `xiaomi/mimo-v2.6-flash` spends tokens on hidden reasoning. If `content` comes
   back empty, raise `--max-tokens` (lib.ps1 default is now 8000).
 - **Interference:** Mint Update may pop up or run an `apt` upgrade; it starves the app and the AT-SPI
   tree degrades. Wait for `apt`/`dpkg` to finish and restart the app before trusting a red run.
+- **Real Linux x64 host (`linuxgpu`, 192.168.1.108):** `Nav.snapshot()` over the full desktop can hang
+  with ~27 registered applications (Mint Update, portals, Cinnamon helpers). For the first-run wizard,
+  traverse only the `Simple Launcher` application root with pyatspi and invoke buttons via their AT-SPI
+  `click` action; xdotool mouse clicks reliably select ComboBox items but can be swallowed for buttons.
+  AT-SPI itself works on this host (the Hyper-V VM below is the exception).
+- **Hyper-V VM + current .NET 11/Avalonia 12.1.6 payload (2026-11-19):** the app renders but the AT-SPI
+  tree exposes 0 nodes. `org.a11y.Status` `IsEnabled`/`ScreenReaderEnabled` were false; setting them true
+  and restarting the app did not restore registration. The wizard was verified there with xdotool +
+  `gnome-screenshot`; treat the VM AT-SPI tree as a harness issue, not a wizard failure.
 - **Evidence:** keep every screenshot; the report references it.
 
 ### Legacy coordinate map (fallback only)
@@ -408,7 +423,7 @@ tree is still missing, instead of recording a block of false failures.
 
 | Id | Covers | Fixture | Status (2026-09-27) | Notes |
 |---|---|---|---|---|
-| EASY-01 | Welcome -> Easy Mode; dropdown populated + sorted; Add/Download disabled | empty | PASS | waits for the config-loading overlay to clear |
+| EASY-01 | First-run wizard Welcome -> Next -> Add System; dropdown populated + sorted; Add/Download disabled | empty | PASS | waits for the config-loading overlay to clear |
 | EASY-02 | Missing emulator (Sony PlayStation 4/shadPS4) enables Download Emulator; Add System + Download Core disabled | seeded | PASS | rewritten 2026-09-27: the VM now has RetroArch and every other Easy Mode emulator installed, so the old Atari 2600 expectation no longer applied; the dropdown is wheel-scrolled to reach PS4 |
 | MENU-00 | Main window renders; menu bar exact; no Windows-only Tools | seeded | PASS | |
 | MENU-01 | Options menu exact 14 items; no "Inject Emulator Config" | seeded | PASS | |

@@ -122,7 +122,13 @@ public class GameScannerService
             if (!romsWritable || !imagesReady)
                 await _messageBoxLibrary.MoveToWritableFolderMessageBoxAsync();
 
-            if (!romsWritable) return new StorefrontScanResult(0, 0, WasNewSystemCreated);
+            if (!romsWritable)
+            {
+                // Nothing was saved yet; a failed scan must not leave the first-run flow
+                // thinking a usable system was configured.
+                WasNewSystemCreated = false;
+                return new StorefrontScanResult(0, 0, false);
+            }
 
             var shortcutsBefore = EnumerateShortcutFiles(_windowsRomsPath);
 
@@ -137,6 +143,24 @@ public class GameScannerService
 
             _logger.Debug("[GameScannerService] All store game scans completed");
 
+            // Persist the "Microsoft Windows" system only when the scan actually produced
+            // games. Saving it unconditionally made an empty first run look configured, so
+            // the first-run wizard was never reached on Windows even when zero games were
+            // found.
+            if (WasNewSystemCreated)
+            {
+                if (shortcutsAfter.Count > 0)
+                {
+                    await SaveWindowsSystemAsync();
+                }
+                else
+                {
+                    WasNewSystemCreated = false;
+                    _logger.Debug(
+                        "[GameScannerService] No store games found; leaving the configuration empty for the first-run wizard");
+                }
+            }
+
             // GamesFound counts every game shortcut present after the scan (new and
             // pre-existing): reporting only the new shortcuts made a re-scan of an
             // already-configured library say "No PC games were found".
@@ -145,7 +169,9 @@ public class GameScannerService
         catch (Exception ex)
         {
             _logger.Error(ex, "An error occurred during the game scanning process");
-            return new StorefrontScanResult(0, 0, WasNewSystemCreated);
+            // A failed scan never saved the system entry, so report that no system exists.
+            WasNewSystemCreated = false;
+            return new StorefrontScanResult(0, 0, false);
         }
     }
 
@@ -222,41 +248,16 @@ public class GameScannerService
                 return (resolvedRomsPath, resolvedImagesPath, false);
             }
 
-            // System doesn't exist, create it with default paths
-            _logger.Debug($"[GameScannerService] '{WindowsSystemName}' system not found. Creating it now.");
+            // System doesn't exist yet: compute the default paths and report that the entry
+            // will be created only if the scan finds games (see SaveWindowsSystemAsync).
+            _logger.Debug($"[GameScannerService] '{WindowsSystemName}' system not found; using default paths");
 
             var defaultRomsPath = Path.Combine(PathHelper.BaseFolder, "roms", WindowsSystemName);
             var defaultImagesPath = Path.Combine(PathHelper.BaseFolder, "images", WindowsSystemName);
 
-            await SystemManagerService.SaveSystemConfigurationAsync(
-                WindowsSystemName,
-                [$@"%BASEFOLDER%\roms\{WindowsSystemName}"],
-                $@"%BASEFOLDER%\images\{WindowsSystemName}",
-                ["url", "lnk", "bat"],
-                [],
-                false,
-                new Emulator
-                {
-                    EmulatorName = "Direct Launch",
-                    EmulatorLocation = "",
-                    EmulatorParameters = "",
-                    ReceiveANotificationOnEmulatorError = true
-                },
-                WindowsSystemName,
-                _configuration,
-                _logger,
-                _systemManager);
-
-            // The SystemManagerService cache is stale now — subsequent scans must see
-            // the entry as existing instead of re-creating it.
-            _systemManager.InvalidateCache();
-
-            // Create the necessary directories
+            // Create the directories now so the scanners can write shortcuts.
             Directory.CreateDirectory(defaultRomsPath);
             Directory.CreateDirectory(defaultImagesPath);
-
-            _logger.Debug(
-                $"[GameScannerService] Created new '{WindowsSystemName}' system with default paths: ROMs='{defaultRomsPath}', Images='{defaultImagesPath}'");
 
             return (defaultRomsPath, defaultImagesPath, true);
         }
@@ -283,6 +284,37 @@ public class GameScannerService
 
             return (fallbackRomsPath, fallbackImagesPath, false);
         }
+    }
+
+    /// <summary>
+    ///     Persists the "Microsoft Windows" system after a successful first scan. Called only
+    ///     when the scan produced at least one shortcut, so an empty first run stays empty and
+    ///     can be handled by the first-run wizard.
+    /// </summary>
+    private async Task SaveWindowsSystemAsync()
+    {
+        await SystemManagerService.SaveSystemConfigurationAsync(
+            WindowsSystemName,
+            [$@"%BASEFOLDER%\roms\{WindowsSystemName}"],
+            $@"%BASEFOLDER%\images\{WindowsSystemName}",
+            ["url", "lnk", "bat"],
+            [],
+            false,
+            new Emulator
+            {
+                EmulatorName = "Direct Launch",
+                EmulatorLocation = "",
+                EmulatorParameters = "",
+                ReceiveANotificationOnEmulatorError = true
+            },
+            WindowsSystemName,
+            _configuration,
+            _logger,
+            _systemManager);
+
+        // The SystemManagerService cache is stale now — subsequent scans must see
+        // the entry as existing instead of re-creating it.
+        _systemManager.InvalidateCache();
     }
 
     /// <summary>

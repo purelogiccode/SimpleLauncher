@@ -95,10 +95,10 @@ Key properties: `net11.0` + `net11.0-windows` (dual target — the `net11.0` TFM
 SimpleLauncher/
 ├── App.xaml(.cs)            DI composition root, startup sequence
 ├── MainWindow.xaml(.cs)     + 12 partials (hosts, menus, pagination, search, close events…)
-├── *.xaml(.cs)              22 root windows (About, Debug, EasyMode, EditSystem, InjectConfig…)
+├── *.xaml(.cs)              23 root windows (About, Debug, EasyMode, FirstRunWizard, EditSystem, InjectConfig…)
 ├── InjectConfigWindows/     21 emulator config-injection dialogs
 ├── Pages/                   Favorites, GlobalSearch, PlayHistory
-├── ViewModels/              44 ViewModels (incl. 21 Inject*ConfigViewModel)
+├── ViewModels/              45 ViewModels (incl. 21 Inject*ConfigViewModel)
 ├── Services/                UI services, launch handlers, scanners, RA, favorites, play history…
 ├── Interfaces/              host & service interfaces (29)
 ├── Models/                  app-side models (SearchResult, WindowScreenshot, RaAchievement…)

@@ -26,7 +26,7 @@ Partials:
 
 Key behaviors: system-combo change (`:472`), token cancellation (`:504`), page navigation (`:527-552`), mouse-wheel pagination (`:560`), favorites/feeling-lucky filters (`:637`, `:670`), `RefreshGameListAfterPlay` (`:713`), `SetLoadingState` (`:767`), selection/double-click/right-click (`:824-964`), `LoadGameFilesAsync` (`:1071`).
 
-## Windows (22 root + 21 inject)
+## Windows (23 root + 21 inject)
 
 | Window | Purpose |
 |---|---|
@@ -34,7 +34,8 @@ Key behaviors: system-combo change (`:472`), token cancellation (`:504`), page n
 | `DebugWindow` | Live Serilog log viewer (singleton; `-debug` flag; hide-on-close) |
 | `DosBoxFileSelectionWindow` | DOSBox multi-file picker (`.conf/.bat/.exe/.com`) |
 | `DownloadImagePackWindow` | Download & extract image packs |
-| `EasyModeWindow` | Guided system setup wizard (downloads, add system) |
+| `EasyModeWindow` | Guided system setup wizard (downloads, add system); hosts `EasyModeView` |
+| `FirstRunWizardWindow` | First-run Welcome → Add System (embedded `EasyModeView`) → Finish (P1-33) |
 | `EditSystemWindow` (+ `EditSystemWindow.SaveSystem` partial) | Expert Mode system editor with validation |
 | `FlashOverlayWindow` | Full-screen white flash for screenshots |
 | `GlobalStatsWindow` | Play-time statistics per system (with emergency overlay release) |
@@ -62,14 +63,14 @@ Key behaviors: system-combo change (`:472`), token cancellation (`:504`), page n
 | `GlobalSearchPage` | Cross-system search (filters, relevance sort, cancel) |
 | `PlayHistoryPage` | History table with sorting, launch-refresh, remove-all |
 
-## ViewModels (`ViewModels\`, 44 total)
+## ViewModels (`ViewModels\`, 45 total)
 
 All use **CommunityToolkit.Mvvm** (`ObservableObject` + `[RelayCommand]`). Groups:
 
 - **Pages:** `FavoritesViewModel`, `GlobalSearchViewModel` (AND/OR parsing, scoring, cancel), `PlayHistoryViewModel` (multi-format date parsing, sorts).
 - **Emulator settings:** `Inject{Emulator}ConfigViewModel` ×21 — each maps `XxxSettings` to fields and calls the matching Core `XxxConfigurationService`.
 - **RA:** `RetroAchievementsViewModel`, `RetroAchievementsSettingsViewModel` (saves credentials; "Configure Emulator" dispatch to `RetroAchievementsEmulatorConfiguratorService`).
-- **Dialogs:** `AboutViewModel`, `DosBoxFileSelectionViewModel`, `DownloadImagePackViewModel`, `FlashOverlayViewModel`, `ImageViewerViewModel`, `RomHistoryViewModel`, `SetFuzzyMatchingViewModel`, `SetGamepadDeadZoneViewModel`, `SetLinksViewModel`, `SoundConfigurationViewModel`, `SupportViewModel`, `SystemSelectionViewModel`, `UpdateHistoryViewModel`, `UpdateLogViewModel`, `WindowSelectionDialogViewModel`.
+- **Dialogs:** `AboutViewModel`, `DosBoxFileSelectionViewModel`, `DownloadImagePackViewModel`, `FirstRunWizardViewModel`, `FlashOverlayViewModel`, `ImageViewerViewModel`, `RomHistoryViewModel`, `SetFuzzyMatchingViewModel`, `SetGamepadDeadZoneViewModel`, `SetLinksViewModel`, `SoundConfigurationViewModel`, `SupportViewModel`, `SystemSelectionViewModel`, `UpdateHistoryViewModel`, `UpdateLogViewModel`, `WindowSelectionDialogViewModel`.
 - **Infrastructure:** `GameButtonViewModel` (grid item), `DebugViewModel`.
 
 ## UI services (by area)

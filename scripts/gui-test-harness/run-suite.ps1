@@ -53,14 +53,20 @@ $scenarios = @(
         Py      = $pyCommon + @'
     n.activate_window(); n.maximize_window()
     wel = n.wait_for(name="Welcome", role="frame", timeout=25)
-    checks["welcome_present"] = wel is not None
+    checks["first_run_wizard_present"] = wel is not None
     if wel:
-        yes = n.find(name="Yes", role="push button")
-        checks["welcome_yes_found"] = yes is not None
-        if yes: n.click(yes)
-    easy = n.wait_for(name="Add New System", role="frame", timeout=30)
-    checks["easy_mode_open"] = easy is not None
-    if easy:
+        # The first-run wizard (P1-33) replaces the old Yes/No prompt: advance to
+        # the Add System step, which embeds the Easy Mode view.
+        nxt = n.find(name="Next", role="push button")
+        checks["wizard_next_found"] = nxt is not None
+        if nxt: n.click(nxt)
+    combo = None
+    deadline = time.time() + 45
+    while time.time() < deadline and not combo:
+        combo = n.find(id="SystemNameCombo")
+        if not combo: time.sleep(1.0)
+    checks["easy_mode_open"] = combo is not None
+    if combo:
         # The system list loads from local XML/API/fallback; wait for the loading overlay to clear.
         deadline = time.time() + 90
         while time.time() < deadline:
@@ -105,7 +111,7 @@ $scenarios = @(
 '@ + $pyTail
         Shot    = 'EASY-01-dropdown'
         Prompt  = @'
-The "Add New System" window of Simple Launcher (Avalonia, Linux) should be open, with its "Select a system to add" dropdown expanded.
+The first-run wizard of Simple Launcher (Avalonia, Linux) should be on its "Add your first system" step (the embedded Easy Mode view), with its "Select a system to add" dropdown expanded.
 Expected:
 - The dropdown lists game systems (e.g. Amstrad CPC, Arcade, Atari 2600, Commodore 64...) in alphabetical order and is not empty.
 - The "Download Emulator" and "Download Core" buttons appear disabled because no system is selected.

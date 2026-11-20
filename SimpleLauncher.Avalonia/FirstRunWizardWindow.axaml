@@ -1,0 +1,181 @@
+<Window x:Class="SimpleLauncher.Avalonia.FirstRunWizardWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="using:SimpleLauncher.Avalonia.Converters"
+        xmlns:ext="using:SimpleLauncher.Avalonia.Extensions"
+        Title="{ext:Translate FirstRunWizardTitle}"
+        Width="1000" MinWidth="860"
+        Height="760" MinHeight="680"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgPrimaryBrush}">
+
+    <Window.Resources>
+        <converters:InverseBoolConverter x:Key="InverseBool" />
+    </Window.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- Header: title, step counter and progress -->
+        <Grid Grid.Row="0" Margin="28,24,28,12" ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding Title}"
+                           FontSize="24" FontWeight="Light"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <ProgressBar Height="6" Margin="0,12,0,0"
+                             Minimum="0" Maximum="100"
+                             Value="{Binding StepProgress, Mode=OneWay}"
+                             AutomationProperties.Name="{ext:Translate WizardProgress}" />
+            </StackPanel>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding StepCounterText}"
+                       Margin="24,4,0,0"
+                       VerticalAlignment="Top"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextMutedBrush}"
+                       AutomationProperties.LiveSetting="Polite" />
+        </Grid>
+
+        <!-- Error banner -->
+        <Border Grid.Row="1" Margin="28,0,28,12"
+                Padding="12,10"
+                CornerRadius="6"
+                Background="#33D9534F"
+                BorderBrush="#66D9534F"
+                BorderThickness="1"
+                IsVisible="{Binding HasError}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding ErrorTitle}"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding ErrorText}"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="{Binding DismissButtonText}"
+                        Command="{Binding DismissErrorCommand}"
+                        Classes="secondary"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{Binding DismissButtonText}" />
+            </Grid>
+        </Border>
+
+        <!-- Step pages -->
+        <Grid Grid.Row="2" Margin="28,4,28,16">
+
+            <!-- Welcome -->
+            <StackPanel IsVisible="{Binding IsWelcomeStep}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        MaxWidth="640">
+                <TextBlock Text="{Binding WelcomeTitle}"
+                           FontSize="30" FontWeight="Light"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <TextBlock Text="{Binding WelcomeBody}"
+                           FontSize="14"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,16,0,0"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+
+            <!-- Add System (embedded Easy Mode view) -->
+            <Grid IsVisible="{Binding IsAddSystemStep}" RowDefinitions="Auto,*">
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="{Binding AddSystemTitle}"
+                               FontSize="18" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding AddSystemBody}"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0"
+                               Foreground="{DynamicResource TextMutedBrush}" />
+                </StackPanel>
+                <Border Grid.Row="1"
+                        Background="{DynamicResource BgSecondaryBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        ClipToBounds="True">
+                    <ContentControl x:Name="EasyModeHost"
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalContentAlignment="Stretch" />
+                </Border>
+            </Grid>
+
+            <!-- Finish -->
+            <StackPanel IsVisible="{Binding IsFinishStep}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        MaxWidth="640">
+                <TextBlock Text="{Binding FinishTitle}"
+                           FontSize="30" FontWeight="Light"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <TextBlock Text="{Binding FinishBody}"
+                           FontSize="14"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="0,16,0,0"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Footer navigation -->
+        <Border Grid.Row="3"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="0,1,0,0"
+                Background="{DynamicResource BgSecondaryBrush}"
+                Padding="28,16">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0"
+                        Content="{Binding CancelButtonText}"
+                        Command="{Binding CancelCommand}"
+                        Classes="secondary"
+                        Padding="18,8"
+                        AutomationProperties.Name="{Binding CancelButtonText}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                    <Button Content="{Binding BackButtonText}"
+                            Command="{Binding BackCommand}"
+                            IsVisible="{Binding CanGoBack}"
+                            IsEnabled="{Binding CanGoBack}"
+                            Classes="secondary"
+                            Padding="18,8"
+                            AutomationProperties.Name="{Binding BackButtonText}"
+                            AutomationProperties.AutomationId="FirstRunBackButton" />
+                    <Button Content="{Binding SkipButtonText}"
+                            Command="{Binding SkipCommand}"
+                            IsVisible="{Binding CanSkip}"
+                            IsEnabled="{Binding CanSkip}"
+                            Classes="secondary"
+                            Padding="18,8"
+                            AutomationProperties.Name="{Binding SkipButtonText}"
+                            AutomationProperties.AutomationId="FirstRunSkipButton" />
+                    <Button Content="{Binding NextButtonText}"
+                            Command="{Binding NextCommand}"
+                            IsVisible="{Binding IsFinishStep, Converter={StaticResource InverseBool}}"
+                            IsEnabled="{Binding CanGoNext}"
+                            Classes="primary"
+                            Padding="24,8"
+                            AutomationProperties.Name="{Binding NextButtonText}"
+                            AutomationProperties.AutomationId="FirstRunNextButton" />
+                    <Button Content="{Binding FinishButtonText}"
+                            Command="{Binding FinishCommand}"
+                            IsVisible="{Binding IsFinishStep}"
+                            Classes="primary"
+                            Padding="24,8"
+                            AutomationProperties.Name="{Binding FinishButtonText}"
+                            AutomationProperties.AutomationId="FirstRunFinishButton" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

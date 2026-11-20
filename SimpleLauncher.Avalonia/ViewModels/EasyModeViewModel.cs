@@ -46,6 +46,17 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] public partial string DownloadStatus { get; set; } = "";
 
+    /// <summary>
+    ///     Last failure shown by the wizard error banner. Downloads keep their detailed
+    ///     status text in <see cref="DownloadStatus" />; this is the short, persistent
+    ///     message the first-run wizard can display without a modal dialog.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
+    public partial string? ErrorMessage { get; set; }
+
+    public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+
     [ObservableProperty] public partial bool IsAddSystemEnabled { get; set; }
 
     // WPF parity: controls are disabled when no systems are configured
@@ -122,6 +133,9 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
     /// </summary>
     public bool SystemAdded { get; private set; }
 
+    /// <summary>Name of the system added by the last successful save (wizard summary).</summary>
+    public string LastAddedSystemName { get; private set; } = "";
+
     /// <summary>
     ///     Callback invoked when the window should close (after successful add).
     ///     Set by the window code-behind.
@@ -156,6 +170,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
     {
         IsLoading = true;
         LoadingMessage = "Loading configuration...";
+        ErrorMessage = null;
         try
         {
             await Task.Yield();
@@ -165,6 +180,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             if (_manager is not { Systems.Count: > 0 })
             {
                 _logger.Information("EasyMode configuration is unavailable or empty; disabling the Add System window");
+                ErrorMessage = _localization.GetString("FirstRunWizardUnavailable",
+                    "Easy Mode is unavailable right now. Skip this step and try again later.");
                 await _messageBox.EasyModeUnavailableMessageBoxAsync();
                 // WPF parity: disable all controls when no systems are configured
                 IsContentEnabled = false;
@@ -193,6 +210,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
     partial void OnSelectedSystemChanged(EasyModeSystemConfig? value)
     {
         if (_disposed) return;
+
+        ErrorMessage = null;
 
         if (value == null)
         {
@@ -337,6 +356,12 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private void DismissError()
+    {
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
     private void StopDownload()
     {
         _playSoundEffects.PlayNotificationSound();
@@ -370,6 +395,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             _playSoundEffects.PlayNotificationSound();
             if (!TryStartOperation()) return;
 
+            ErrorMessage = null;
             var selectedSystem = SelectedSystem;
             if (selectedSystem == null)
             {
@@ -428,6 +454,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 // Signal success so the window can close
                 _logger.Information("System added to configuration: {SystemName}", selectedSystem.SystemName);
                 SystemAdded = true;
+                LastAddedSystemName = selectedSystem.SystemName;
+                ErrorMessage = null;
                 RequestClose?.Invoke();
             }
             catch (InvalidOperationException ex)
@@ -435,11 +463,13 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 _logger.Information(ex, "Add system validation failed for {SystemName}", selectedSystem.SystemName);
                 DownloadStatus =
                     $"{_localization.GetString("ErrorFailedtoaddsystem", "Error: Failed to add system.")} {ex.Message}";
+                ErrorMessage = DownloadStatus;
                 await _messageBox.AddSystemFailedMessageBoxAsync(ex.Message);
             }
             catch (Exception ex)
             {
                 DownloadStatus = _localization.GetString("ErrorFailedtoaddsystem", "Error: Failed to add system.");
+                ErrorMessage = DownloadStatus;
                 _logger.Error(ex, "Unexpected error adding system");
                 await _messageBox.AddSystemFailedMessageBoxAsync();
             }
@@ -467,6 +497,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
             if (_disposed || SelectedSystem == null) return;
             if (!TryStartOperation()) return;
 
+            ErrorMessage = null;
             var selectedSystem = SelectedSystem;
             var emulatorConfig = selectedSystem.Emulators?.Emulator;
 
@@ -519,6 +550,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                         selectedSystem.SystemName);
                     DownloadStatus =
                         $"{_localization.GetString("ErrorNodownloadURLfor", "Error: No download URL for")} {componentName}";
+                    ErrorMessage = DownloadStatus;
                     EndOperation();
                     SetDownloadState(type, DownloadButtonState.Idle);
                     return;
@@ -528,6 +560,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 {
                     DownloadStatus =
                         $"{_localization.GetString("ErrorInvalidDestinationPath", "Error: Invalid destination path for")} {componentName}";
+                    ErrorMessage = DownloadStatus;
                     _logger.Warning("[EasyMode] Invalid destination path for {Component}: {Path}", componentName,
                         easyModeExtractPath);
                     EndOperation();
@@ -582,6 +615,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                     _logger.Information("{Component} downloaded and installed successfully", componentName);
                     DownloadStatus =
                         $"{componentName} {_localization.GetString("hasbeensuccessfullydownloadedandinstalled", "has been successfully downloaded and installed.")}";
+                    ErrorMessage = null;
                     CanStopDownload = false;
 
                     // Archives (zip/7z/tar) do not reliably carry the Unix execute bits into
@@ -616,6 +650,8 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                         _logger.Information(
                             "Download of {Component} failed because a file is locked in the temp folder",
                             componentName);
+                        ErrorMessage = _localization.GetString("DownloadFileLockedMessage",
+                            "The download could not be completed because the temporary file is locked by another process (e.g., antivirus software).");
                         await _messageBox.ShowDownloadFileLockedMessageBoxAsync(_downloadManager.TempFolder);
                         EndOperation();
                     }
@@ -623,6 +659,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                     {
                         DownloadStatus =
                             $"{_localization.GetString("ErrorFailedtoextract", "Error: Failed to extract")} {componentName}.";
+                        ErrorMessage = DownloadStatus;
                         EndOperation();
                         SetDownloadState(type, DownloadButtonState.Failed);
                         await _messageBox.ShowExtractionFailedMessageBoxAsync(_downloadManager.TempFolder);
@@ -631,6 +668,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                     {
                         DownloadStatus =
                             $"{_localization.GetString("Errorduringdownload", "Error during download")}: {componentName}.";
+                        ErrorMessage = DownloadStatus;
                         EndOperation();
                         await ShowDownloadErrorDialogAsync(type, selectedSystem);
                         SetDownloadState(type, DownloadButtonState.Failed);
@@ -650,6 +688,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
                 // WPF parity: "{Error during} {component} {download process.}" from resources.
                 DownloadStatus =
                     $"{_localization.GetString("Errorduring", "Error during")} {componentName} {_localization.GetString("downloadprocess", "download process.")}";
+                ErrorMessage = DownloadStatus;
 
                 // Notify developer only if it's not an expected condition.
                 // Disk space errors are user-environment issues; timeouts/connection failures are
@@ -702,6 +741,7 @@ public partial class EasyModeViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             EndOperation();
+            ErrorMessage = DownloadStatus;
             _logger.Error(ex, "Error in DownloadComponentAsync");
         }
     }
