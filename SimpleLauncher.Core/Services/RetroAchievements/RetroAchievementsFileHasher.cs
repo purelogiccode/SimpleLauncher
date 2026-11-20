@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using SimpleLauncher.Core.Interfaces;
-using SimpleLauncher.Core.Services.ExternalToolLauncher;
+using SimpleLauncher.Core.Services.BundledTools;
 
 namespace SimpleLauncher.Core.Services.RetroAchievements;
 
@@ -423,12 +423,8 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
     /// </summary>
     private static string? GetToolExecutablePath()
     {
-        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
-        if (runtimeIdentifier == null) return null;
-
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", ToolFolderName,
-            runtimeIdentifier, ExternalToolLauncherService.GetPlatformExecutableName(ToolBaseName));
-        return File.Exists(path) ? path : null;
+        var path = BundledToolPathResolver.GetToolExecutablePath(ToolFolderName, ToolBaseName);
+        return path != null && File.Exists(path) ? path : null;
     }
 
     /// <summary>

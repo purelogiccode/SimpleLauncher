@@ -8,8 +8,8 @@ using SimpleLauncher.Avalonia.Updater.Services;
 namespace SimpleLauncher.Avalonia.Updater;
 
 /// <summary>
-///     Main window for the single updater that manages the update process for both the
-///     WPF and the Avalonia SimpleLauncher applications (shipped side by side in one bundle).
+///     Main window for the single updater that manages the update process for the Avalonia
+///     SimpleLauncher app and migrates legacy WPF installs to it.
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -193,7 +193,7 @@ public partial class MainWindow : Window
             // name as a fallback (defaulting to the WPF app, the only legacy caller).
             var targetAppProcessName =
                 ProcessService.TryResolveAppProcessName(_args.Length > 1 ? _args[1] : null, parsedPid)
-                ?? ProcessService.WpfAppProcessName;
+                ?? ProcessService.WindowsAppProcessName;
 
             int? processId = null;
             if (parsedPid.HasValue)

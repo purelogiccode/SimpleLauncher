@@ -7,7 +7,7 @@
              (framework-dependent) and copies it next to itself, so a different runtime pin here
              could make the updater require a runtime the apps do not. -->
         <RuntimeFrameworkVersion>11.0.0</RuntimeFrameworkVersion>
-        <!-- The single updater shared by the WPF and Avalonia apps ships as Updater.exe. -->
+        <!-- The single updater ships as Updater.exe; it also migrates legacy WPF installs. -->
         <AssemblyName>Updater</AssemblyName>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>

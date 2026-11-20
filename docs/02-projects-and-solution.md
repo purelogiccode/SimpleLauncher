@@ -7,12 +7,12 @@
 
 | Project | Kind | Role |
 |---|---|---|
-| `SimpleLauncher` | WPF app (WinExe) | **The launcher** — UI, ViewModels, services, launch handlers, scanners, DI composition root |
-| `SimpleLauncher.Core` | Class library | **Shared logic** — services, models, interfaces, persistence, emulator config injection |
-| `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (and transitively Core) |
+| `SimpleLauncher` | WPF app (WinExe) | **Reference implementation, not shipped** - kept in the solution and tests for parity checks while the Avalonia app remains the release target |
+| `SimpleLauncher.Core` | Class library | **Shared logic** - services, models, interfaces, persistence, emulator config injection |
+| `SimpleLauncher.Tests` | xUnit test project | ~154 test files; references `SimpleLauncher` (reference implementation) and transitively Core |
 | `SimpleLauncher.Avalonia.Tests` | xUnit test project | 725 tests (`net11.0`, runs on Windows + Linux/WSL2 + macOS via `Avalonia.Headless`) |
-| `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) for both apps — downloads the unified release zip, extracts over the app folder, relaunches the app that launched it |
-| `SimpleLauncher.Avalonia` | Avalonia UI app | Cross-platform port (Windows + Linux + macOS, x64/ARM64). Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`); macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE, no bundled tools, no in-app updater) |
+| `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) - downloads the release zip, extracts over the app folder, relaunches the app that launched it and migrates legacy WPF installs to the Avalonia `SimpleLauncher.exe` |
+| `SimpleLauncher.Avalonia` | Avalonia UI app | **The shipped launcher** (Windows + Linux + macOS, x64/ARM64), published on Windows as `SimpleLauncher.exe`. Windows-only features (Dokan mounting, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`); macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE, no bundled helpers, no in-app updater) |
 | `SimpleLauncher.ResourceTranslator` | Tool | Translates missing keys in the shared packs (`SimpleLauncher.Core\Localization\strings.*.json`) via the OpenRouter API (default `z-ai/glm-5.3-flash`); see its [README](../SimpleLauncher.ResourceTranslator/README.md) |
 | `Tools\Mame.DatCreator` | WPF tool | Builds `mame.dat` (MessagePack) from MAME `-listxml` + software lists |
 | `Tools\RetroAchievements.DataFetcher` | CLI tool | Fetches the RA game database into `RetroAchievements.dat` |
@@ -43,7 +43,7 @@ Key properties:
 - **`InternalsVisibleTo("SimpleLauncher.Tests")`** — tests reach internal members.
 - **Copy-to-output payloads** (`<None Update=... CopyToOutputDirectory>`):
   - `appsettings.json` (Always), `WhatsNew.md` (PreserveNewest), `mame.dat` (Always), system images `images\systems\*.png` (Always), `audio\*.mp3`.
-  - `tools\*` payloads: `findromcover\`, `createbatchfilesforscummvmgames\`, `createbatchfilesforwindowsgames\`, `BatchConvertTo7z\`, `CreateBatchFilesForPS3Games\` (stale entries for `ps3batchlaunchercreator\` remain in the csproj but have no folder on disk — see [11 — Bundled Tools](11-bundled-tools.md)), plus 7za binaries, system images, and more.
+  - `tools\*` runtime helpers: `CHDMounter\`, `RetroAchievementsSharp\`, `SimpleXisoDrive\`, `SimpleZipDrive\` (one subfolder per OS/architecture) and the `SevenZip\` fallback binaries - see [11 — Bundled Tools](11-bundled-tools.md).
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog`.
 - **`NoWarn`: NU1903;CS0436**.
 - Startup object is `SimpleLauncher.App` (see [04 — Architecture](04-architecture.md#startup-sequence)).
@@ -78,11 +78,11 @@ Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangV
 - **`InternalsVisibleTo`:** `SimpleLauncher.Tests`, `SimpleLauncher`, `SimpleLauncher.New`, `SimpleLauncher.Avalonia`, `SimpleLauncher.New.Tests`.
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog` — so every Core service takes a Serilog `ILogger` by convention.
 - Packages: the same core set as the app (CommunityToolkit.Mvvm, MessagePack, Microsoft.Extensions.*, SharpCompress, NAudio, SharpDX*, Serilog, Tomlyn, YamlDotNet, SourceGear.sqlite3, Meziantou.Analyzer) — no WPF/MahApps (it targets `net11.0-windows` because of DPAPI `ProtectedData`, `System.Drawing`-adjacent helpers, and Windows-specific services, but stays UI-agnostic). RetroAchievements hashing is **not** a package: all hash computation is delegated to the bundled `tools\RetroAchievementsSharp\` CLI binaries (see [09 — RetroAchievements](09-retroachievements.md#hashing)).
-- **Shared localization packs:** `Localization\strings.{lang}.json` (18 languages, canonical `strings.en.json`) are the single source for both apps — both embed them in their assemblies (WPF pack resources, Avalonia manifest resources; see [15 — Development](15-development.md#localization)).
+- **Shared localization packs:** `Localization\strings.{lang}.json` (18 languages, canonical `strings.en.json`) are the single source for the shipped Avalonia app and the WPF reference — both embed them in their assemblies (WPF pack resources, Avalonia manifest resources; see [15 — Development](15-development.md#localization)).
 
-## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the cross-platform port)
+## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the shipped app)
 
-Key properties: `net11.0` + `net11.0-windows` (dual target — the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.4`, `UseWindowsForms=False`, version synced to the WPF app (5.8.4), `StartupObject = SimpleLauncher.Avalonia.Program`.
+Key properties: `net11.0` + `net11.0-windows` (dual target - the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.4`, `UseWindowsForms=False`, version synced to the WPF reference (5.8.4), `StartupObject = SimpleLauncher.Avalonia.Program`. The Windows release publishes this project as `SimpleLauncher.exe`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
 - **Windows-only services** (`#if WINDOWS`, `net11.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).

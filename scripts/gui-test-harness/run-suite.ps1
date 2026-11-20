@@ -170,7 +170,7 @@ Then report the button appearances and any mismatch. Be brief.
     },
     @{
         Id      = 'MENU-00'
-        Name    = 'Main window renders; Tools menu shows the cross-platform tools'
+        Name    = 'Main window renders; Tools menu is absent'
         Fixture = 'seeded'
         Py      = $pyCommon + @'
     n.close_welcome(); n.press("Escape"); n.close_dialogs(); n.activate_window(); n.maximize_window()
@@ -182,24 +182,20 @@ Then report the button appearances and any mismatch. Be brief.
         if e.extents and ext and e.extents[1] < ext[1] + 40 and e.name:
             tops[e.name] = e.extents[0]
     got = [k for k, _ in sorted(tops.items(), key=lambda kv: kv[1])]
-    expected = ["Options", "Edit System", "Select Window", "Tools", "Donate", "About"]
+    expected = ["Options", "Edit System", "Select Window", "Donate", "About"]
     checks["menu_exact"] = got == expected
-    # Linux ships only the cross-platform tools (the studios plus FindRomCover, commit
-    # bff12568 and the 2026-10-13 tool refresh); every other tool entry is hidden.
-    n.open_menu("Tools")
-    items = sorted({e.name for e in n.popup_items() if e.name})
-    checks["tools_menu_linux_set"] = items == ["CHDStudio", "Find Rom Cover", "RVZStudio", "XISOStudio"]
-    extra["tools_items"] = items
+    # Optional GUI apps are no longer bundled, so the Tools menu was removed.
+    checks["tools_menu_removed"] = "Tools" not in got
     extra["menu"] = got
 '@ + $pyTail
         Shot    = 'MENU-00-tools'
         Prompt  = @'
-This is the main window of Simple Launcher (Avalonia build) on Linux Mint, with the "Tools" menu opened.
+This is the main window of Simple Launcher (Avalonia build) on Linux Mint.
 Expected:
 - The main window is rendered (no blank/garbled areas).
 - Window title is "Simple Launcher".
-- The menu bar contains exactly these top-level items: Options, Edit System, Select Window, Tools, Donate, About.
-- The opened "Tools" popup lists exactly these entries: XISOStudio, CHDStudio, RVZStudio, Find Rom Cover. (Linux ships only these cross-platform tools; every other tool entry is Windows-only and hidden.)
+- The menu bar contains exactly these top-level items: Options, Edit System, Select Window, Donate, About.
+- There is no "Tools" menu: the optional GUI apps are no longer bundled.
 First line of your answer must be exactly "VERDICT: PASS" or "VERDICT: FAIL".
 Then list any mismatches briefly.
 '@

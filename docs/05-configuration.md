@@ -8,8 +8,8 @@
 | Concern | Storage | Class |
 |---|---|---|
 | App-level keys (URLs, paths, lists) | `appsettings.json` (copied to output) | `Microsoft.Extensions.Configuration` |
-| User preferences (UI, theme, gamepad, RA…) | `settings.dat` (SQLite `AppSettings` table, both apps); legacy `settings.xml` (LINQ-to-XML) | `SettingsManagerService` + `UnifiedSettingsDatabase` |
-| System/game definitions | `settings.dat` (SQLite `Systems` table, both apps); legacy `system.xml` | `SystemManagerService` / `SystemConfigurationWriterService` |
+| User preferences (UI, theme, gamepad, RA…) | `settings.dat` (SQLite `AppSettings` table, shipped app and WPF reference); legacy `settings.xml` (LINQ-to-XML) | `SettingsManagerService` + `UnifiedSettingsDatabase` |
+| System/game definitions | `settings.dat` (SQLite `Systems` table, shipped app and WPF reference); legacy `system.xml` | `SystemManagerService` / `SystemConfigurationWriterService` |
 | Favorites / play history / RA data / MAME data | Favorites + play history in `settings.dat` (`Favorites`/`PlayHistory` tables); `history.dat`, `mame.dat`, `RetroAchievements.dat` (MessagePack) | see [12 — Data Formats](12-data-formats.md) |
 | Credentials (RA) | Protected values inside `settings.dat` (`AppSettings`; legacy `settings.xml`): DPAPI on Windows, Base64 obfuscation on Linux/macOS | `WindowsCredentialProtector` |
 | Emulator-specific settings | each emulator's own config file + `samples\{Emulator}\*` templates | `InjectEmulatorConfig` services |
@@ -43,7 +43,7 @@ Affected files (legacy): `settings.xml`, `favorites.dat`, `playhistory.dat`, `Re
 
 ## Unified database (`settings.dat`)
 
-Since 5.8.0 both apps persist **all** user data in one SQLite database (`settings.dat`).
+Since 5.8.0 the app and the WPF reference persist **all** user data in one SQLite database (`settings.dat`).
 `UnifiedSettingsDatabase.ResolveDatabasePath` (Core) decides where it lives:
 
 1. **An existing database always wins**: a portable `settings.dat` next to the exe is kept;

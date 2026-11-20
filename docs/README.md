@@ -17,9 +17,9 @@ System selection, grid and list libraries, PC store games and RetroAchievements.
 
 Developer and user documentation for the main projects:
 
-- [`SimpleLauncher`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher/SimpleLauncher.csproj) — WPF desktop app (the launcher)
-- [`SimpleLauncher.Core`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher.Core/SimpleLauncher.Core.csproj) — class library (services, models, persistence)
-- [`SimpleLauncher.Avalonia`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj) - cross-platform Avalonia port for Windows x64/ARM64, Linux x64/ARM64 (AppImage, Flatpak, tar.gz, ZIP) and macOS Apple Silicon (unsigned DMG); remaining work is tracked in [`References/TODO.md`](https://github.com/purelogiccode/SimpleLauncher/blob/master/References/TODO.md)
+- [`SimpleLauncher.Avalonia`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj) - the shipped app for Windows x64/ARM64 (as `SimpleLauncher.exe`), Linux x64/ARM64 (AppImage, Flatpak, tar.gz, ZIP) and macOS Apple Silicon (unsigned DMG); remaining work is tracked in [`References/TODO.md`](https://github.com/purelogiccode/SimpleLauncher/blob/master/References/TODO.md)
+- [`SimpleLauncher.Core`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher.Core/SimpleLauncher.Core.csproj) - class library (services, models, persistence)
+- [`SimpleLauncher`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher/SimpleLauncher.csproj) - WPF reference implementation, kept in the solution/tests but not shipped
 
 Companion files: [`ManualTests.md`](manual-tests.md) (manual test checklist for areas without unit tests) · [`WhatsNew.md`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher/WhatsNew.md) (changelog) · [`parameters.md`](parameters.md) (emulator parameter reference).
 
@@ -53,7 +53,7 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 | [08 — UI Layer](08-ui-layer.md) | Windows, pages, ViewModels, UI services, menus, themes, languages |
 | [09 — RetroAchievements](09-retroachievements.md) | RA API client, system matcher, hashing, credential injection, RA windows |
 | [10 — Game Scanning](10-game-scanning.md) | GameScannerService + the 11 storefront scanners |
-| [11 — Bundled Tools](11-bundled-tools.md) | Shipped `tools\` payloads, ExternalToolLauncherService, Tools\ source projects |
+| [11 - Bundled Tools](11-bundled-tools.md) | Shipped `tools\` helper payloads, BundledToolPathResolver, Tools\ source projects |
 | [12 — Data Formats](12-data-formats.md) | XML / MessagePack / SQLite / JSON / YAML / TOML usage across the app |
 | [13 — Logging & Debug](13-logging-and-debug.md) | Serilog setup, sinks, Debug Window, bug-report pipeline |
 | [14 — Testing](14-testing.md) | Test projects (fast/slow split), helpers, coverage summary, running tests |

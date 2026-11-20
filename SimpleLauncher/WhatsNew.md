@@ -3,7 +3,7 @@
 ---
 
 ## First-Run Wizard
-- **Guided setup on first launch** - When no systems are configured, both apps now open a
+- **Guided setup on first launch** - When no systems are configured, the app opens a
   Welcome → Add System → Finish wizard instead of the Yes/No prompt followed by a separate
   Easy Mode window. Add System reuses the same Easy Mode view (system picker, downloads,
   image packs).
@@ -12,7 +12,13 @@
 - **Errors stay visible** - A failed catalog load, download or add shows a dismissible error
   banner on the wizard instead of leaving only a transient message box.
 
-## Windows Installer
+## Windows App
+- **Avalonia-only bundle** - the Windows ZIP and installer now ship the Avalonia app as
+  `SimpleLauncher.exe`. The WPF app remains in the source tree as the reference implementation
+  but is no longer bundled or installed.
+- **In-place migration** - existing WPF and `SimpleLauncher.Avalonia.exe` installs update to the
+  new executable through the built-in updater; the obsolete Avalonia binary is removed on the
+  next launch.
 - **Per-user installer** - `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` installs under
   `%LocalAppData%\SimpleLauncher`, adds Start Menu shortcuts and can download/install the
   .NET 11 Desktop Runtime when it is missing. Only that runtime step asks for administrator
@@ -21,6 +27,18 @@
   the install folder after uninstalling to remove everything.
 - **Portable ZIP still available** - the ZIP remains the no-installer option, and both the ZIP and
   installer builds use the built-in updater.
+
+## Bundled Tools
+- **Much smaller download** - Simple Launcher now bundles only the helpers it calls while
+  launching games: CHDMounter 1.4.0, RetroAchievementsSharp 1.0.0, SimpleXisoDrive 1.6.0,
+  SimpleZipDrive 3.1.3 and the 7-Zip 26.06 fallback, for Windows and Linux on x64/ARM64. The
+  portable bundles are roughly half their previous size.
+- **Optional GUI apps are no longer bundled** - CHDStudio, XISOStudio, RVZStudio, Batch Convert
+  to Compressed File, Find Rom Cover, Retro Game Cover Downloader, ROM Validator and the Create
+  Batch Files tools are distributed separately from their own repositories. Their old folders are
+  removed automatically on upgrade.
+- **Tools menu removed** - mounting, extraction and RetroAchievements hashing still run
+  automatically; there is no separate app launcher menu.
 
 ## Fixes
 - **Avalonia library search** - searching after loading a system now matches the raw file name and

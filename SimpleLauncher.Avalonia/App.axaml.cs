@@ -53,7 +53,6 @@ using SimpleLauncher.Core.Services.Converters;
 using SimpleLauncher.Core.Services.DebugAndBugReport;
 using SimpleLauncher.Core.Services.DownloadService;
 using SimpleLauncher.Core.Services.EasyMode;
-using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using SimpleLauncher.Core.Services.ExtractFiles;
 using SimpleLauncher.Core.Services.FindCoverImage;
 using SimpleLauncher.Core.Services.FirstRun;
@@ -798,7 +797,7 @@ public class App : Application, IDisposable
         services.AddSingleton<DiscConverter>();
         services.AddSingleton<IDiscConverter>(sp => sp.GetRequiredService<DiscConverter>());
         services.AddSingleton<EasyModeManager>();
-        services.AddSingleton<ExternalToolLauncherService>();
+
         services.AddSingleton<PlaySoundEffects>();
         services.AddSingleton<IPlaySoundEffects>(sp => sp.GetRequiredService<PlaySoundEffects>());
         services.AddSingleton<GamePadController>();

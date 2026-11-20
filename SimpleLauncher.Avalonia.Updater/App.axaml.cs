@@ -9,7 +9,7 @@ using SimpleLauncher.Avalonia.Updater.Services.DebugAndBugReport;
 namespace SimpleLauncher.Avalonia.Updater;
 
 /// <summary>
-///     Application entry point for the single updater (Updater.exe) shared by the WPF
+///     Application entry point for the single updater (Updater.exe), compatible with the WPF
 ///     and Avalonia apps — sets up logging, global exception handling, and shows the
 ///     update window.
 /// </summary>

@@ -49,11 +49,11 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies the Avalonia app consumes the unified release bundle and the single
-    ///     Updater.exe asset shared with the WPF app.
+    ///     Verifies the Avalonia app consumes the release bundle and the single Updater.exe
+    ///     asset, and passes the canonical Windows executable name to the updater.
     /// </summary>
     [Fact]
-    public void AssetNamesMatchUnifiedBundle()
+    public void AssetNamesMatchTheReleaseBundle()
     {
         Assert.Equal($"release_9.9.9_{Rid}.zip",
             AvaloniaCheckForUpdatesService.ReleaseAssetName("9.9.9", Rid));
@@ -62,6 +62,8 @@ public class AvaloniaCheckForUpdatesServiceTests : IDisposable
             AvaloniaCheckForUpdatesService.AppImageAssetName("9.9.9", Rid));
         Assert.Equal(OperatingSystem.IsWindows() ? "Updater.exe" : "Updater",
             AvaloniaCheckForUpdatesService.UpdaterExecutableName);
+        Assert.Equal(OperatingSystem.IsWindows() ? "SimpleLauncher.exe" : "SimpleLauncher.Avalonia",
+            AvaloniaCheckForUpdatesService.AppExecutableName);
     }
 
     private static byte[] FakeAppImage()

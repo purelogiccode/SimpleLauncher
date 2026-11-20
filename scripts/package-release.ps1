@@ -1,45 +1,42 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-Packages the unified SimpleLauncher release artifacts (win-x64 / win-arm64).
+Packages the SimpleLauncher Windows release artifacts (win-x64 / win-arm64).
 
 .DESCRIPTION
 For every runtime identifier this produces, in the output folder:
 
-  release_{version}_{rid}.zip   the unified payload: SimpleLauncher.exe (WPF) and
-                                SimpleLauncher.Avalonia.exe next to each other, sharing
-                                the content files (images, tools, samples, appsettings.json)
+  release_{version}_{rid}.zip   the Avalonia payload published as SimpleLauncher.exe,
+                                with the content files (images, tools, samples, appsettings.json)
   updater_{rid}.zip             the single standalone Updater.exe (framework-dependent,
-                                single-file) used by both apps
+                                single-file), compatible with legacy WPF installs
   SimpleLauncher-{version}-{rid}-setup.exe
                                 the optional per-user Inno Setup installer built from the
                                 same payload. It is produced with -BuildInstaller and needs
                                 Inno Setup 6.5+ (ISCC.exe); see installer/SimpleLauncher.iss.
 
-Both apps are published framework-dependent (the .NET 11 Desktop Runtime is required on
-the target machine), so the payload does not carry a runtime. Each app ships as a single
+The Avalonia app is published framework-dependent (the .NET 11 Desktop Runtime is required
+on the target machine), so the payload does not carry a runtime. It ships as a single
 executable containing its managed assemblies; the small set of native libraries it needs
-(SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater
-is additionally published with its Avalonia natives bundled for self-extraction, so it is
-one file that also works from a legacy WPF-only install. The updater is the same binary for
-both apps: it receives the target application in its command line (older WPF releases pass
-only the PID and the updater detects the app from the process name).
+(Skia/HarfBuzz/GLES/SQLite) stays next to the exe. The published
+SimpleLauncher.Avalonia.exe is renamed to SimpleLauncher.exe, the canonical Windows name.
+The WPF project stays in the solution as a source reference but is NOT published or bundled.
+
+The updater is additionally published with its Avalonia natives bundled for self-extraction,
+so it is one file that also works from a legacy WPF-only install. It receives the target
+application in its command line (older WPF releases pass only the PID and the updater
+detects the app from the process name).
 
 The payload also carries LICENSE.txt, README.md and WhatsNew.md at its root.
 
-The WPF and Avalonia payloads are merged into one folder. Files that exist in both
-payloads must be byte-identical (the two appsettings.json sources are kept in sync and
-guarded by a unit test); any other content conflict fails the build loudly.
-
-The other architecture's bundled tools are pruned from the payload:
-  win-x64   : drops *_arm64 files (legacy flat tools)
+The other architecture's bundled helpers are pruned from the payload:
+  win-x64   : drops *_arm64 files (legacy flat helpers)
   win-arm64 : drops *_x64 files and the unsuffixed executables that have an
               _arm64 sibling (7z.dll is kept)
 Both RIDs drop the Linux-only extension-less 7-Zip (7zz/7zzs) binaries.
-tools/XISOStudio, tools/CHDStudio, tools/RVZStudio, tools/CHDMounter, tools/FindRomCover,
-tools/RetroAchievementsSharp, tools/SimpleXisoDrive and tools/SimpleZipDrive ship one payload
-per OS/architecture (win-x64, win-arm64, linux-x64, linux-arm64), so both RIDs keep only the
-matching subfolder.
+tools/CHDMounter, tools/RetroAchievementsSharp, tools/SimpleXisoDrive and tools/SimpleZipDrive
+ship one payload per OS/architecture (win-x64, win-arm64, linux-x64, linux-arm64), so both RIDs
+keep only the matching subfolder.
 
 Debug symbol files (*.pdb) are pruned from the payload: they are never needed at runtime
 and the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
@@ -276,53 +273,6 @@ function Invoke-DotnetPublish {
     }
 }
 
-# Merges the WPF and Avalonia publish outputs into one payload folder. Files present in
-# both outputs must have identical content — anything else indicates the two apps have
-# drifted apart (for example appsettings.json, which the unified bundle ships once).
-function Merge-Payload {
-    param(
-        [Parameter(Mandatory = $true)][string[]]$SourceDirs,
-        [Parameter(Mandatory = $true)][string]$DestinationDir
-    )
-
-    $null = New-Item -ItemType Directory -Path $DestinationDir -Force
-    $hashes = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $conflicts = [System.Collections.Generic.List[string]]::new()
-    $copied = 0
-
-    foreach ($sourceDir in $SourceDirs) {
-        $files = @(Get-ChildItem -LiteralPath $sourceDir -Recurse -File -Force)
-        foreach ($file in $files) {
-            $relative = [System.IO.Path]::GetRelativePath($sourceDir, $file.FullName)
-            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
-
-            if ($hashes.ContainsKey($relative)) {
-                if ($hashes[$relative] -ne $hash) {
-                    [void]$conflicts.Add($relative)
-                }
-                continue
-            }
-
-            $hashes[$relative] = $hash
-            $destination = Join-Path $DestinationDir $relative
-            $destinationDirectory = Split-Path -Parent $destination
-            if (-not (Test-Path -LiteralPath $destinationDirectory)) {
-                $null = New-Item -ItemType Directory -Path $destinationDirectory -Force
-            }
-            Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
-            $copied++
-        }
-    }
-
-    if ($conflicts.Count -gt 0) {
-        throw ("The WPF and Avalonia payloads contain files with the same relative path but different content: " +
-            ($conflicts -join ', ') +
-            ". Keep the shared files in sync (see AppSettingsFilesAreIdentical in VersionConsistencyTests).")
-    }
-
-    Write-Host "Merged payload: $copied files copied from $($SourceDirs.Count) publish outputs."
-}
-
 # Safety net: the app project references the updater with ReferenceOutputAssembly=false and
 # Private=false, so the SDK must not contribute the updater's plain build outputs (dll / deps /
 # runtimeconfig) next to the single-file Updater.exe. Remove any that still show up so the
@@ -385,7 +335,7 @@ function Remove-OtherArchitectureFiles {
 
         # Tools that ship one payload per OS/architecture (tools\<Tool>\<rid>\) keep only the
         # subfolder matching the target RID; the suffix rules below do not apply inside them.
-        if ($relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter|FindRomCover|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
+        if ($relative -match '^tools/(?:CHDMounter|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
             if ($Matches[1] -ne $Rid) { $remove = $true }
         }
         elseif ($Rid -eq 'win-x64') {
@@ -497,31 +447,16 @@ $null = New-Item -ItemType Directory -Path $WorkDir -Force
 $produced = [System.Collections.Generic.List[string]]::new()
 
 foreach ($rid in $RuntimeIdentifiers) {
-    $wpfPublishDir = Join-Path $WorkDir "$rid\wpf"
-    $avaloniaPublishDir = Join-Path $WorkDir "$rid\avalonia"
     $payloadDir = Join-Path $WorkDir "$rid\payload"
 
     Write-Host ""
-    Write-Host "=== SimpleLauncher (WPF + Avalonia) $Version ($rid) ==="
-
-    # WPF: framework-dependent single file (managed assemblies bundled into SimpleLauncher.exe;
-    # the native SQLite library ships beside the exe). Never enable native self-extraction here:
-    # that would pull the Windows Desktop runtime's native components into the bundle.
-    Invoke-DotnetPublish @(
-        'publish',
-        $wpfProject,
-        '-c', 'Release',
-        '-r', $rid,
-        '--self-contained', 'false',
-        '-p:PublishSingleFile=true',
-        '--nologo',
-        '-o', $wpfPublishDir
-    )
+    Write-Host "=== SimpleLauncher (Avalonia) $Version ($rid) ==="
 
     # Avalonia: framework-dependent single file (managed assemblies bundled; the Avalonia/Skia/
     # HarfBuzz/GLES/SQLite native libraries ship beside the exe). The app project publishes the
     # single updater (framework-dependent single file, Avalonia natives bundled for
-    # self-extraction) and copies Updater.exe into this output.
+    # self-extraction) and copies Updater.exe into this output. The WPF project is intentionally
+    # not published; it remains the in-repo reference implementation.
     Invoke-DotnetPublish @(
         'publish',
         $avaloniaProject,
@@ -531,10 +466,18 @@ foreach ($rid in $RuntimeIdentifiers) {
         '--self-contained', 'false',
         '-p:PublishSingleFile=true',
         '--nologo',
-        '-o', $avaloniaPublishDir
+        '-o', $payloadDir
     )
 
-    Merge-Payload -SourceDirs @($wpfPublishDir, $avaloniaPublishDir) -DestinationDir $payloadDir
+    # The Windows release ships the Avalonia app under the canonical SimpleLauncher.exe name.
+    $avaloniaExe = Join-Path $payloadDir 'SimpleLauncher.Avalonia.exe'
+    $canonicalExe = Join-Path $payloadDir 'SimpleLauncher.exe'
+    if (-not (Test-Path -LiteralPath $avaloniaExe -PathType Leaf)) {
+        throw "The Avalonia publish output does not contain SimpleLauncher.Avalonia.exe: $payloadDir"
+    }
+    Move-Item -LiteralPath $avaloniaExe -Destination $canonicalExe -Force
+    Write-Host 'Renamed SimpleLauncher.Avalonia.exe to SimpleLauncher.exe.'
+
     Remove-UpdaterSidecars -PayloadDir $payloadDir
     Remove-DebugSymbols -PayloadDir $payloadDir
     Remove-OtherArchitectureFiles -PublishDir $payloadDir -Rid $rid

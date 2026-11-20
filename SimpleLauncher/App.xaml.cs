@@ -26,7 +26,6 @@ using SimpleLauncher.Core.Services.Converters;
 using SimpleLauncher.Core.Services.DebugAndBugReport;
 using SimpleLauncher.Core.Services.DownloadService;
 using SimpleLauncher.Core.Services.EasyMode;
-using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using SimpleLauncher.Core.Services.ExtractFiles;
 using SimpleLauncher.Core.Services.FindCoverImage;
 using SimpleLauncher.Core.Services.FirstRun;
@@ -298,7 +297,7 @@ public partial class App : IDisposable
         serviceCollection.AddSingleton<GamePadController>();
         serviceCollection.AddTransient<DownloadManager>();
         serviceCollection.AddSingleton<GameLauncherService>();
-        serviceCollection.AddSingleton<IExternalToolLauncher, ExternalToolLauncherService>();
+
         serviceCollection.AddSingleton<IDeleteFilesService, DeleteFilesService>();
         serviceCollection.AddSingleton<ICleanTempFolderService, CleanTempFolderService>();
         serviceCollection.AddSingleton<ICleanSimpleLauncherFolderService, CleanSimpleLauncherFolderService>();

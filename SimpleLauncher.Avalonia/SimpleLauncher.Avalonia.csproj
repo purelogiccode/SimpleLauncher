@@ -491,45 +491,6 @@
 
     <!-- Batch/utility tools — mirrors the file list shipped by the WPF csproj -->
     <ItemGroup>
-        <None Include="..\SimpleLauncher\tools\CHDStudio\**\*"
-              Link="tools\CHDStudio\%(RecursiveDir)%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\BatchConvertToCompressedFile\*"
-              Link="tools\BatchConvertToCompressedFile\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\RVZStudio\**\*"
-              Link="tools\RVZStudio\%(RecursiveDir)%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\CreateBatchFilesForPS3Games\*"
-              Link="tools\CreateBatchFilesForPS3Games\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\CreateBatchFilesForScummVMGames\*"
-              Link="tools\CreateBatchFilesForScummVMGames\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\CreateBatchFilesForWindowsGames\*"
-              Link="tools\CreateBatchFilesForWindowsGames\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\CreateBatchFilesForXbox360XBLAGames\*"
-              Link="tools\CreateBatchFilesForXbox360XBLAGames\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\FindRomCover\**\*"
-              Link="tools\FindRomCover\%(RecursiveDir)%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\RetroGameCoverDownloader\*"
-              Link="tools\RetroGameCoverDownloader\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Include="..\SimpleLauncher\tools\RomValidator\*" Link="tools\RomValidator\%(Filename)%(Extension)">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Include="..\SimpleLauncher\tools\SevenZip\*" Link="tools\SevenZip\%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -541,9 +502,16 @@
               Link="tools\SimpleZipDrive\%(RecursiveDir)%(Filename)%(Extension)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Include="..\SimpleLauncher\tools\XISOStudio\**\*"
-              Link="tools\XISOStudio\%(RecursiveDir)%(Filename)%(Extension)">
+    </ItemGroup>
+    <!-- Keep the native tool payloads outside the single-file app bundle. Without these
+         metadata entries the .NET 11 single-file publish target drops Windows .exe/.dll files
+         from the publish output even though they are copied to bin\, leaving the released app
+         without its bundled tools. -->
+    <ItemGroup>
+        <None Update="..\SimpleLauncher\tools\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         </None>
     </ItemGroup>
     <ItemGroup>
@@ -552,11 +520,11 @@
         <Using Include="Serilog" />
     </ItemGroup>
 
-    <!-- ── Single updater (Updater.exe, shared by the WPF and Avalonia apps) ──
+    <!-- ── Single updater (Updater.exe) ──
          The updater is a standalone executable (no compile reference — ReferenceOutputAssembly=false),
-         but it must ship in the same folder as both apps so updates can replace the app files while
+         but it must ship in the same folder as the app so updates can replace the app files while
          the updater itself stays locked/running. It is published framework-dependent single-file so
-         the same Updater.exe works from either app's folder and in older WPF-only installs. -->
+         the same Updater.exe works from the app folder and in older WPF-only installs. -->
     <ItemGroup>
         <ProjectReference Include="..\SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj"
                           ReferenceOutputAssembly="false"

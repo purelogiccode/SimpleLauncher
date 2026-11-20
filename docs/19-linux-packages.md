@@ -6,7 +6,7 @@
 > work is complete, use AppImage, Flatpak, the portable tarball or the portable ZIP.
 
 Simple Launcher ships four Linux formats for **x64** (`linux-x64`) and **ARM64**
-(`linux-arm64`). They contain the same Avalonia application, bundled tools and documents;
+(`linux-arm64`). They contain the same Avalonia application, runtime helpers and documents;
 the difference is how much runtime they carry and how they update.
 
 | Format | File | Needs .NET 11? | Updates |

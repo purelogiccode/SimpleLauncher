@@ -7,9 +7,9 @@
 
 | Format | Files | Written/read by |
 |---|---|---|
-| **XML (LINQ-to-XML)** | `settings.xml`, `system.xml` (legacy in both apps), emulator `*.ini`-adjacent XML (Ares `settings.bml`, Cemu `settings.xml`) | `SettingsManagerService`, `SystemConfigurationWriterService`, `EmulatorXmlHelpers`, inject services |
-| **MessagePack** | `favorites.dat`, `playhistory.dat` (legacy in both apps), `history.dat`, `mame.dat`, `RetroAchievements.dat`, `all_ra_games.dat` | `FavoritesManager`, `PlayHistoryManager`, `RomHistoryLoader`, `MameManagerService`, `RetroAchievementsManager` |
-| **SQLite** | `settings.dat` (unified store, WPF + Avalonia), Amazon Games DB (read-only), Stella `stella.sqlite3` (settings upserts) | `UnifiedSettingsDatabase` + `AvaloniaLegacyMigrator`/`WpfLegacyMigrator` (Microsoft.Data.Sqlite), `ScanAmazonGames`, `StellaConfigurationService` |
+| **XML (LINQ-to-XML)** | `settings.xml`, `system.xml` (legacy in the shipped app and WPF reference), emulator `*.ini`-adjacent XML (Ares `settings.bml`, Cemu `settings.xml`) | `SettingsManagerService`, `SystemConfigurationWriterService`, `EmulatorXmlHelpers`, inject services |
+| **MessagePack** | `favorites.dat`, `playhistory.dat` (legacy in the shipped app and WPF reference), `history.dat`, `mame.dat`, `RetroAchievements.dat`, `all_ra_games.dat` | `FavoritesManager`, `PlayHistoryManager`, `RomHistoryLoader`, `MameManagerService`, `RetroAchievementsManager` |
+| **SQLite** | `settings.dat` (unified store, Avalonia app + WPF reference), Amazon Games DB (read-only), Stella `stella.sqlite3` (settings upserts) | `UnifiedSettingsDatabase` + `AvaloniaLegacyMigrator`/`WpfLegacyMigrator` (Microsoft.Data.Sqlite), `ScanAmazonGames`, `StellaConfigurationService` |
 | **JSON** | `appsettings.json` (config), `LauncherInstalled.dat`/manifests (Epic), GOG `.info`, Humble `config.json`, itch `.itch.toml`-adjacent, Mesen `settings.json`, BizHawk `config.ini` (JSON), API payloads | app config, scanners, `MesenConfigurationService`, `RetroAchievementsEmulatorConfiguratorService`, `JsonSerializer` |
 | **YAML** | RPCS3 `config.yml` | `RPCS3ConfigurationService` (YamlDotNet round-trip) |
 | **TOML** | Xenia `xenia[-canary].config.toml`, Yumir `Ymir.toml` | `XeniaConfigurationService`, `YumirConfigurationService` (Tomlyn) |

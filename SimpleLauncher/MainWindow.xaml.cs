@@ -55,7 +55,6 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
     private readonly IContextMenuFunctions _contextMenuFunctions;
     private readonly IContextMenuService _contextMenuService;
 
-    private readonly IExternalToolLauncher _externalToolLauncher;
     private readonly IGameBrowserService _gameBrowser;
     private readonly EventHandler<EventArgs<string>> _gameFilesChangedHandler;
     private readonly GameLauncherService _gameLauncherService;
@@ -112,7 +111,6 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
     /// </summary>
     /// <param name="settings">The settings manager service.</param>
     /// <param name="playHistoryManager">The play history manager.</param>
-    /// <param name="externalToolLauncher">The external tool launcher service.</param>
     /// <param name="messageBox">The message box library service.</param>
     /// <param name="updateStatusBarService">The status bar update service.</param>
     /// <param name="uiResetService">The UI reset service.</param>
@@ -129,7 +127,6 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
     public MainWindow(
         SettingsManagerService settings,
         PlayHistoryManager playHistoryManager,
-        IExternalToolLauncher externalToolLauncher,
         IMessageBoxLibraryService messageBox,
         IUpdateStatusBar updateStatusBarService,
         IUiResetService uiResetService,
@@ -148,7 +145,6 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
 
         _settings = settings;
         PlayHistoryManager = playHistoryManager;
-        _externalToolLauncher = externalToolLauncher;
         _messageBox = messageBox;
         UpdateStatusBarService = updateStatusBarService;
 

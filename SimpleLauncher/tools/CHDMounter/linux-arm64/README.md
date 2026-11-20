@@ -15,6 +15,8 @@
 [![CI](https://github.com/purelogiccode/CHDMounter/actions/workflows/ci.yml/badge.svg)](https://github.com/purelogiccode/CHDMounter/actions/workflows/ci.yml)
 [![Release](https://github.com/purelogiccode/CHDMounter/actions/workflows/release.yml/badge.svg)](https://github.com/purelogiccode/CHDMounter/actions/workflows/release.yml)
 [![Docs build](https://github.com/purelogiccode/CHDMounter/actions/workflows/docs.yml/badge.svg)](https://github.com/purelogiccode/CHDMounter/actions/workflows/docs.yml)
+[![CodeQL](https://github.com/purelogiccode/CHDMounter/actions/workflows/codeql.yml/badge.svg)](https://github.com/purelogiccode/CHDMounter/actions/workflows/codeql.yml)
+[![Security Policy](https://img.shields.io/badge/security-policy-2ea44f)](SECURITY.md)
 [![Documentation](https://img.shields.io/badge/Docs-purelogiccode.github.io-2ea44f?logo=readthedocs)](https://purelogiccode.github.io/CHDMounter/)
 [![Wiki](https://img.shields.io/badge/Wiki-GitHub-6f42c1?logo=github)](https://github.com/purelogiccode/CHDMounter/wiki)
 [![Changelog](https://img.shields.io/badge/Changelog-WhatsNew.md-blue)](WhatsNew.md)
@@ -31,7 +33,7 @@
 
 # CHDMounter
 
-Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives on Windows, Linux and macOS. Supports 37 console/format modes (console types plus generic CUE/ISO/BIN/RAW formats), selectable by CLI alias. Choose the mount core in Settings: **Dokan** (default) or **WinFsp** on Windows, **FUSE** (libfuse3 / macFUSE) on Linux and macOS.
+Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives on Windows, Linux and macOS. Supports 38 console/format modes (console types plus generic CUE/ISO/BIN/RAW formats), selectable by CLI alias. Choose the mount core in Settings: **Dokan** (default) or **WinFsp** on Windows, **FUSE** (libfuse3 / macFUSE) on Linux and macOS.
 
 ![](screenshot.png)
 
@@ -45,7 +47,7 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 
 - **Mount CHD files as virtual drives** using [Dokan](https://github.com/dokan-dev/dokany) or [WinFsp](https://winfsp.dev/) on Windows, and [FUSE 3](https://github.com/libfuse/libfuse) (libfuse3 / macFUSE) on Linux and macOS
 - **Selectable mount core in Settings** — Dokan (default) or WinFsp on Windows; FUSE on Linux/macOS
-- **37 console/format modes** — console types (ISO 9660, UDF, XDVDFS (Xbox), OperaFS (3DO), CD-i Green Book, HFS/HFS+ (Pippin), and more) plus generic CUE/ISO/BIN/WAV export modes
+- **38 console/format modes** — console types (ISO 9660, UDF, XDVDFS (Xbox), OperaFS (3DO), CD-i Green Book, HFS/HFS+ (Pippin), and more) plus generic CUE/ISO/BIN/WAV export modes
 - **Virtual CUE/BIN/ISO/WAV export** — 8 disc image export modes (2352/2048 × CUE/ISO, CUE/ISO/WAV, CUE/BIN, CUE/BIN/WAV) for emulators and burning tools
 - **SingleFile ISO passthrough** — single `image.iso` file for emulators that expect raw ISO (xemu, RPCS3)
 - **Read-only** — never modifies your CHD files
@@ -71,6 +73,7 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 | CD-i                 | `cdi`           | Green Book              | Interleaved stream support, Path Table             |
 | CUE/BIN RAW 2048     | `cuebin2048`    | Virtual                 | CUE + BIN at 2048 bytes/sector                     |
 | CUE/BIN RAW 2352     | `cuebin2352`    | Virtual                 | CUE + BIN at 2352 bytes/sector                     |
+| CUE/BIN RAW 2448     | `cuebin2448`    | Virtual                 | CUE + BIN at 2448 bytes/sector (2352 data + 96 subchannel, CD+G) |
 | CUE/BIN/WAV RAW 2048 | `cuebinwav2048` | Virtual                 | CUE + BIN + WAV audio tracks (2048-byte data)      |
 | CUE/BIN/WAV RAW 2352 | `cuebinwav2352` | Virtual                 | CUE + BIN + WAV audio tracks (2352-byte data)      |
 | CUE/ISO RAW 2048     | `cueiso2048`    | Virtual                 | CUE sheet + ISO at 2048 bytes/sector               |
@@ -168,7 +171,7 @@ CHDMounter.exe [/l] [/a] [/s:<alias>] <chd_file> [mount_point]
 
 ### Console Type Reference
 
-You can specify the console type using a **string alias** (case-insensitive). Numeric indexes are not supported — the alias list below is defined in the [VideoGameFileSystemParser](https://github.com/drpetersonfernandes/VideoGameFileSystemParser) library and is the single source of truth.
+You can specify the console type using a **string alias** (case-insensitive). Numeric indexes are not supported - the standard alias list below is defined in the [VideoGameFileSystemParser](https://github.com/drpetersonfernandes/VideoGameFileSystemParser) library; `cuebin2448` is a CHDMounter extension for CD+G images.
 
 | Console / Format     | CLI Alias       |
 |----------------------|-----------------|
@@ -179,6 +182,7 @@ You can specify the console type using a **string alias** (case-insensitive). Nu
 | CD-i                 | `cdi`           |
 | CUE/BIN RAW 2048     | `cuebin2048`    |
 | CUE/BIN RAW 2352     | `cuebin2352`    |
+| CUE/BIN RAW 2448     | `cuebin2448`    |
 | CUE/BIN/WAV RAW 2048 | `cuebinwav2048` |
 | CUE/BIN/WAV RAW 2352 | `cuebinwav2352` |
 | CUE/ISO RAW 2048     | `cueiso2048`    |
@@ -275,7 +279,7 @@ The `SectorReader` maps logical block addresses (LBAs) to byte offsets within CH
 
 ### File System Parsing
 
-CHDMounter uses the [VideoGameFileSystemParser](https://github.com/drpetersonfernandes/VideoGameFileSystemParser) NuGet package (v1.4.0) to parse various console file systems from raw sectors and reconstruct directory trees. The console alias registry lives in the library and is the single source of truth for console selection.
+CHDMounter uses the [VideoGameFileSystemParser](https://github.com/drpetersonfernandes/VideoGameFileSystemParser) NuGet package (v1.4.0) to parse various console file systems from raw sectors and reconstruct directory trees. The standard console alias registry lives in the library; CHDMounter adds the `cuebin2448` CD+G alias on top of it.
 
 Supported file systems include ISO 9660 (with Joliet/Rock Ridge), XDVDFS (Xbox), OperaFS (3DO), CD-i Green Book, UDF, and HFS/HFS+.
 
@@ -285,7 +289,7 @@ The `ChdContainer` bridges the parsed `FsNode` tree to the driver-specific VFS l
 
 - **Dokan**: `ChdFs` implements `IDokanOperations` — `CreateFile` resolves paths, `ReadFile` maps file offsets to sector reads, `FindFiles` lists directories, `GetVolumeInformation` reports "CHDFS" read-only volume.
 - **WinFsp**: `ChdFs` extends `FileSystemBase` — `Open` resolves paths and returns `FileEntry` as both file node and descriptor, `Read` copies sector data into native memory via `Marshal.Copy`, `ReadDirectoryEntry` enumerates children with `.` and `..`.
-- **FUSE**: `ChdFuseVolume` implements the `IFuseVolume` contract of the bundled `FuseSharp` layer — `GetEntry`/`GetFolderList` map POSIX paths to container entries and `ReadFile` copies sector data into the FUSE read buffer. `FuseMountService` runs the blocking FUSE session on a background thread.
+- **FUSE**: `ChdFuseVolume` implements the `IFuseVolume` contract of the `LibFuseSharp` 1.0.1 layer — `GetEntry`/`GetFolderList` map POSIX paths to container entries and `ReadFile` copies sector data into the FUSE read buffer. `FuseMountService` runs the blocking FUSE session on a background thread.
 
 For CUE/BIN/ISO/WAV modes, the container generates virtual entries dynamically:
 - The `.cue` file contains standard `FILE`, `TRACK`, and `INDEX` descriptors built from CHD track metadata.
@@ -301,7 +305,7 @@ For SingleFile mode, the container serves the entire decompressed CHD image as a
 | Aspect | Dokan (Windows, default) | WinFsp (Windows) | FUSE (Linux/macOS) |
 |--------|--------------------------|------------------|--------------------|
 | Driver | Kernel-mode (Dokan.sys) | User-mode (WinFsp) | libfuse3 / macFUSE |
-| NuGet | `DokanNet` 2.3.0.3 | `winfsp.net` 2.1.25156 | bundled `FuseSharp` |
+| NuGet | `DokanNet` 2.3.0.3 | `winfsp.net` 2.2.26286 | `LibFuseSharp` 1.0.1 |
 | FileSystem base | `IDokanOperations` | `FileSystemBase` | `IFuseVolume` |
 | Admin mount | Standard | Cross-integrity folder mounts with permissive DACL | Standard (mount points are folders) |
 
@@ -340,21 +344,21 @@ WPF desktop application (Windows only, developer tool) for **batch testing and b
 
 | Package              | Version   | Purpose                                   |
 |----------------------|-----------|-------------------------------------------|
-| `Avalonia` / `Avalonia.Desktop` | 12.1.4 | Cross-platform UI framework       |
-| `Avalonia.Themes.Fluent` | 12.1.4 | Fluent dark theme                     |
-| `Avalonia.Fonts.Inter` | 12.1.4  | Bundled UI font fallback                  |
-| `CHDSharp`           | 1.4.3     | MAME CHD format reader                    |
+| `Avalonia` / `Avalonia.Desktop` | 12.1.5 | Cross-platform UI framework       |
+| `Avalonia.Themes.Fluent` | 12.1.5 | Fluent dark theme                     |
+| `Avalonia.Fonts.Inter` | 12.1.5  | Bundled UI font fallback                  |
+| `CHDSharp`           | 1.6.3     | MAME CHD format reader                    |
 | `coverlet.collector` | 10.1.0    | Code coverage (Tests only)                |
 | `DokanNet`           | 2.3.0.3   | Dokan virtual filesystem driver bindings  |
-| `LibFuseSharp` | 1.0.0 | FUSE 3 high-level mount library ([source](https://github.com/purelogiccode/LibFuseSharp)) |
-| `Microsoft.NET.Test.Sdk` | 18.10.1 | Test SDK (Tests only)                    |
+| `LibFuseSharp` | 1.0.1 | FUSE 3 high-level mount library ([source](https://github.com/purelogiccode/LibFuseSharp)) |
+| `Microsoft.NET.Test.Sdk` | 18.11.0 | Test SDK (Tests only)                    |
 | `QuestPDF`           | 2026.9.1  | PDF report generation (Tester only)       |
 | `Serilog`            | 4.4.0     | Structured logging                        |
 | `Serilog.Sinks.Debug`| 3.0.0     | Visual Studio debug output logging        |
 | `Serilog.Sinks.File` | 7.0.0     | File-based log output                     |
-| `System.Security.Cryptography.ProtectedData` | 10.0.12 | DPAPI settings encryption (Windows) |
+| `System.Security.Cryptography.ProtectedData` | 10.0.14 | DPAPI settings encryption (Windows) |
 | `VideoGameFileSystemParser` | 1.4.0 | Console filesystem parser (NuGet package) |
-| `winfsp.net`         | 2.1.25156 | WinFsp virtual filesystem driver bindings |
+| `winfsp.net`         | 2.2.26286 | WinFsp virtual filesystem driver bindings |
 | `xUnit`              | 2.9.3     | Test framework (Tests only)               |
 | `xunit.runner.visualstudio` | 4.0.1 | VS test adapter (Tests only)              |
 
@@ -369,6 +373,13 @@ WPF desktop application (Windows only, developer tool) for **batch testing and b
 - **VideoGameFileSystemParser** — https://github.com/drpetersonfernandes/VideoGameFileSystemParser
 - **MAME** — https://github.com/mamedev/mame
 - **WinFsp** — https://github.com/winfsp/winfsp
+
+---
+
+## Security
+
+Please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Do not open a
+public issue with exploit details.
 
 ---
 

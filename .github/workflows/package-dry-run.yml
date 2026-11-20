@@ -85,9 +85,10 @@ jobs:
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
 
-      - name: Verify Windows installer artifacts
+      - name: Verify Windows installer and portable artifacts
         shell: pwsh
         run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
           foreach ($rid in @('win-x64', 'win-arm64')) {
             $path = Join-Path 'artifacts/release' "SimpleLauncher-$($env:VERSION)-$rid-setup.exe"
             if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
@@ -98,6 +99,21 @@ jobs:
               throw "Installer looks too small ($sizeMb MB): $path"
             }
             Write-Host "$path ($sizeMb MB)"
+
+            $zip = Join-Path 'artifacts/release' "release_$($env:VERSION)_$rid.zip"
+            $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+            try {
+              $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+            }
+            finally {
+              $archive.Dispose()
+            }
+            if ($entries -notcontains 'SimpleLauncher.exe') {
+              throw "The Windows bundle is missing SimpleLauncher.exe: $zip"
+            }
+            if ($entries -contains 'SimpleLauncher.Avalonia.exe') {
+              throw "The Windows bundle still ships the old SimpleLauncher.Avalonia.exe name: $zip"
+            }
           }
 
       - name: Upload Windows packages
@@ -255,7 +271,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Release zips and tar.gz must extract the launcher and bundled tools executable.
+          # Release zips and tar.gz must extract the launcher and the bundled helper binaries.
           for rid in linux-x64 linux-arm64; do
             unzip -q artifacts/release_*_${rid}.zip -d "app-${rid}"
             test -x "app-${rid}/SimpleLauncher.Avalonia"

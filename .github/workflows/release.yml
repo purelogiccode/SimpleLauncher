@@ -17,7 +17,7 @@ name: Publish release
 # scripts/publish-fallback-r2.ps1 (the macOS DMG is mirrored too).
 #
 # Assets produced per RID:
-#   release_{version}_{rid}.zip        Windows: SimpleLauncher.exe + SimpleLauncher.Avalonia.exe
+#   release_{version}_{rid}.zip        Windows: Avalonia payload as SimpleLauncher.exe
 #                                      Linux:   framework-dependent SimpleLauncher.Avalonia payload
 #   release_{version}_{rid}.tar.gz     Linux:   the same portable payload as a tarball
 #   updater_{rid}.zip                  the standalone updater shared by the apps

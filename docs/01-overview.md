@@ -5,16 +5,18 @@
 
 ## What it is
 
-**Simple Launcher** is a WPF desktop application that organizes, browses, and launches a retro (and modern PC) game collection through emulators. It is a *frontend*: it does not ship ROMs, ISOs, or BIOS files, and you must provide your own emulators.
+**Simple Launcher** is an Avalonia desktop application that organizes, browses, and launches a retro (and modern PC) game collection through emulators. It is a *frontend*: it does not ship ROMs, ISOs, or BIOS files, and you must provide your own emulators.
 
 Four application projects implement it:
 
 | Project | Role |
 |---|---|
-| `SimpleLauncher` (WPF app) | The launcher itself: windows, pages, ViewModels, UI services, launch handlers, game scanners, DI composition root |
+| `SimpleLauncher.Avalonia` (Avalonia UI app) | **The shipped launcher** on Windows, Linux and macOS (x64/ARM64): windows, pages, ViewModels, UI services, launch handlers, game scanners, DI composition root. The Windows release publishes it as `SimpleLauncher.exe` |
 | `SimpleLauncher.Core` (class library) | Platform-independent services, models, interfaces, data persistence, emulator config injection |
-| `SimpleLauncher.Avalonia` (Avalonia UI app) | Cross-platform port (Windows + Linux + macOS) reusing all of Core. Windows-only features (Dokan mounting, tools menu, emulator config injection, F8 hotkey, storefront scanning) are hidden or no-ops elsewhere; on Linux archives and disc images mount through FUSE 3, with temp extraction/conversion as automatic fallbacks; macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE) and no in-app updater |
-| `SimpleLauncher.Avalonia.Updater` (Avalonia app) | The single `Updater.exe` / `Updater` shared by both apps: checks for updates, swaps the unified payload and relaunches the app that started it |
+| `SimpleLauncher` (WPF app) | **Reference implementation, not shipped.** Kept in the source tree and test suite for parity checks while the Avalonia app remains the active target |
+| `SimpleLauncher.Avalonia.Updater` (Avalonia app) | The single `Updater.exe` / `Updater`: checks for updates, swaps the payload, relaunches the app and migrates legacy WPF installs to the Avalonia `SimpleLauncher.exe` |
+
+On Windows the Avalonia app hides Windows-only features (Dokan mounting, emulator config injection, F8 hotkey, storefront scanning) or uses platform equivalents; on Linux archives and disc images mount through FUSE 3, with temp extraction/conversion as automatic fallbacks; macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE) and no in-app updater.
 
 ## Key differentiators
 
@@ -26,7 +28,7 @@ Four application projects implement it:
 - **Easy Mode wizard** — guided download & configuration of emulators, cores, and image packs.
 - **Expert Mode** — full manual control of `system.xml`: multiple ROM folders, placeholders (`%BASEFOLDER%`, `%SYSTEMFOLDER%`, `%EMULATORFOLDER%`, `%ROM%`, `%NAME%`, `%ROMSYSTEMFOLDER%`), launch parameters.
 - **Performance** — one SQLite `settings.dat` for settings/favorites/history/systems plus MessagePack caches (`history.dat`, `mame.dat`, `RetroAchievements.dat`); async scanning/loading and pagination. The Avalonia startup shows the system-selection grid immediately and scans the ROM folders for sidebar counts in the background.
-- **Platform coverage** - native **x64 and ARM64** builds for Windows 10+ (WPF + Avalonia) and Linux (Avalonia), plus **Apple Silicon macOS**. Linux ships as a self-contained **AppImage**, a **Flatpak** bundle, and portable **tar.gz**/**ZIP** builds (the portable formats require the .NET 11 runtime). macOS ships as an unsigned, self-contained **DMG** (ad-hoc signed, not notarized; manual updates). Verified end-to-end on Ubuntu 24.04 x64, Fedora 44 KDE and Linux Mint 22.3; the `linux-arm64` portable tarball and AppImage launch on Ubuntu 24.04 ARM64; the Windows ARM64 WPF and Avalonia apps launch on Windows 11 ARM64; the macOS DMG is validated on a NoMac Apple M5 Pro host. See [19 - Linux Packages](19-linux-packages.md) and [20 - macOS Package](20-macos-packages.md).
+- **Platform coverage** - native **x64 and ARM64** builds for Windows 10+ and Linux (Avalonia), plus **Apple Silicon macOS**. Linux ships as a self-contained **AppImage**, a **Flatpak** bundle, and portable **tar.gz**/**ZIP** builds (the portable formats require the .NET 11 runtime). macOS ships as an unsigned, self-contained **DMG** (ad-hoc signed, not notarized; manual updates). Verified end-to-end on Ubuntu 24.04 x64, Fedora 44 KDE and Linux Mint 22.3; the `linux-arm64` portable tarball and AppImage launch on Ubuntu 24.04 ARM64; the Windows ARM64 Avalonia app launches on Windows 11 ARM64; the macOS DMG is validated on a NoMac Apple M5 Pro host. See [19 - Linux Packages](19-linux-packages.md) and [20 - macOS Package](20-macos-packages.md).
 
 ## Feature surface (summary)
 
@@ -34,22 +36,22 @@ Four application projects implement it:
 - **Favorites**, **Play History** (play count, play time, last played), **Global Search** with `AND`/`OR`, **Global Statistics**.
 - **Fuzzy cover-image matching** with configurable threshold + annotation stripping (`Game (USA)` → `Game`).
 - **Themes** (Light, Dark, Adaptive, High Contrast, Midnight) + 27 accent colors; **18 languages** (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-br, ru, tr, ur, vi, zh-hans).
-- **Gamepad navigation** (Xbox XInput + PlayStation DirectInput on Windows, SDL2 GameController API on Linux/macOS), dead-zone configuration, UI sound effects (NAudio). On Windows the controller moves the real mouse cursor / clicks (WPF behavior); on Linux/macOS the Avalonia app's `GamepadNavigationService` maps the pad to in-app focus navigation, activation, context menu and scrolling instead (Wayland-safe, no input-injection permissions).
+- **Gamepad navigation** (Xbox XInput + PlayStation DirectInput on Windows, SDL2 GameController API on Linux/macOS), dead-zone configuration, UI sound effects (NAudio). The shipped app's `GamepadNavigationService` maps the pad to in-app focus navigation, activation, context menu and scrolling; the WPF reference keeps the legacy cursor-injection behavior for parity checks (Wayland-safe, no input-injection permissions).
 - **Tray icon**, minimize-to-tray, **F8 global screenshot hotkey**, loading overlays, status bar, debug window (`-debug`).
 - **Built-in updater** (`Updater.exe`) with GitHub release assets, `--restarting` restart flow
   (Windows/Linux; the macOS `.app` is replaced manually with the next DMG).
-- **Bundled power tools** — conversion (CHD, RVZ, XISO, 7z/zip), batch-file creators, cover tools, ROM validator (see [11 — Bundled Tools](11-bundled-tools.md)).
+- **Bundled runtime helpers** - CHD/Xbox/archive mounting, 7-Zip extraction and RetroAchievements hashing; the optional converter/cover/validation GUI apps are distributed separately (see [11 - Bundled Tools](11-bundled-tools.md)).
 - **100+ supported systems** — Nintendo, Sony, Sega, Atari, NEC, SNK, Commodore, arcade (MAME/FBN/Raine), retro computers, and modern PC storefronts (the authoritative per-system emulator guide is [`parameters.md`](parameters.md); see also [18 — Emulator Parameters](18-emulator-parameters.md)).
 
 ## Localization
 
-18 languages ship as **one shared set of JSON packs**: `SimpleLauncher.Core\Localization\strings.{code}.json` (2671 keys per file, UTF-8 without BOM, key-sorted). Both apps embed them in their assemblies — Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService`) and WPF as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, with `App.ApplyLanguage` building the WPF `ResourceDictionary` from the JSON). Switching language restarts the app. See [08 — UI Layer](08-ui-layer.md#themes--language).
+18 languages ship as **one shared set of JSON packs**: `SimpleLauncher.Core\Localization\strings.{code}.json` (2671 keys per file, UTF-8 without BOM, key-sorted). The shipped Avalonia app embeds them as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService`); the WPF reference embeds the same packs as pack resources for parity checks. Switching language restarts the app. See [08 — UI Layer](08-ui-layer.md#themes--language).
 
 `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) propagates missing keys from `strings.en.json` to all other languages; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 
 ## Version & license
 
-- Current version: **5.8.4** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.4) and ships in the same release bundle.
+- Current version: **5.8.4** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The shipped Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.4).
 - The secondary server publishes a `version.txt` (e.g. `release5.8.4`) used by the update-check fallback.
 - Framework: **.NET 11** (`net11.0-windows`), **C# 15**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).

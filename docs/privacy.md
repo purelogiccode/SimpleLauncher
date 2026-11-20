@@ -1,7 +1,7 @@
 # Privacy Policy
 
 > **Last updated: 2026-11-20.** This policy describes the current build of Simple Launcher
-> (WPF and Avalonia apps, including the bundled updater). It does not cover emulators,
+> (the shipped Avalonia app and the WPF reference, including the bundled updater). It does not cover emulators,
 > storefronts, RetroAchievements, or websites you open from the app - each has its own policy.
 > The bundled tools have their own readmes; where they use the shared logging pipeline, the
 > diagnostic-report section below applies to them too.

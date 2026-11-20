@@ -41,17 +41,21 @@ local + WSL2. The GitHub Actions workflows only package releases and deploy the 
 ## Publish (win-x64 / win-arm64)
 
 ```bash
-dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-x64
-dotnet publish SimpleLauncher/SimpleLauncher.csproj -c Release -r win-arm64
+dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0-windows -r win-x64
+dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0-windows -r win-arm64
 ```
 
-- `RuntimeIdentifiers` are `win-x64;win-arm64`; every bundled tool ships both variants (`X.exe` + `X_arm64.exe`) and is resolved per architecture at runtime (see [11 — Bundled Tools](11-bundled-tools.md)).
-- Release zip naming for updates: `release_{version}_{rid}.zip` (the unified WPF + Avalonia payload) + `updater_{rid}.zip` (the single `Updater.exe` shared by both apps) (see [16 — Updater](16-updater.md)).
+The Windows release publishes only the Avalonia app and renames the output to `SimpleLauncher.exe`
+(`scripts/package-release.ps1` does this automatically). The WPF project can still be built with
+`dotnet build SimpleLauncher/SimpleLauncher.csproj` as the reference implementation.
+
+- `RuntimeIdentifiers` are `win-x64;win-arm64`; the runtime helpers ship one payload per OS/architecture (`tools\<tool>\<rid>\`) and are resolved at runtime (see [11 - Bundled Tools](11-bundled-tools.md)).
+- Release zip naming for updates: `release_{version}_{rid}.zip` (the Avalonia payload as `SimpleLauncher.exe`) + `updater_{rid}.zip` (the single `Updater.exe`, also compatible with legacy WPF installs) (see [16 - Updater](16-updater.md)).
 - A `publish-check\` folder with per-RID outputs is used locally to validate published payloads.
 
 ### Release packaging script
 
-`scripts/package-release.ps1` reproduces the unified release artifacts (also used by CI):
+`scripts/package-release.ps1` reproduces the Windows release artifacts (also used by CI):
 
 ```powershell
 pwsh scripts/package-release.ps1 -Version 5.8.4
@@ -64,17 +68,17 @@ pwsh scripts/package-release.ps1 -Version 5.8.4 -BuildInstaller
 #    artifacts\release\SimpleLauncher-5.8.4-win-arm64-setup.exe
 ```
 
-- The bundle places `SimpleLauncher.exe` (WPF) and `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other and ships one shared set of content files (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Users choose which app to run.
+- Publishes only `SimpleLauncher.Avalonia` for Windows and renames the published executable to `SimpleLauncher.exe`; the WPF project is **not** published or bundled and remains the in-repo reference implementation.
 - Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`).
-- Both apps are published **framework-dependent** (the **.NET 11 Desktop Runtime** is required on the target machine), so the payload carries no runtime: each is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (SQLite for WPF; Skia/HarfBuzz/GLES/SQLite for Avalonia) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
-- Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing.
-- Merges the two publish outputs and fails loudly when a shared file has different content (for example `appsettings.json` drift); `AppSettingsFilesAreIdentical` guards the two appsettings sources in the test suite.
-- Prunes the other architecture's bundled tools from the payload (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` with `LICENSE.txt`, `README.md` and `WhatsNew.md` into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID tools (`FindRomCover`, `RetroAchievementsSharp`, `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target `win-{x64,arm64}` subfolder.
+- The app is published **framework-dependent** (the **.NET 11 Desktop Runtime** is required on the target machine), so the payload carries no runtime: it is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (Skia/HarfBuzz/GLES/SQLite) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
+- Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing. The WPF project/manifest stay in the validation set because they remain the reference implementation.
+- `AppSettingsFilesAreIdentical` keeps the WPF reference and Avalonia appsettings in sync even though only the Avalonia copy ships.
+- Prunes the other architecture's helper payloads (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` with `LICENSE.txt`, `README.md` and `WhatsNew.md` into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID helpers (`CHDMounter`, `RetroAchievementsSharp`, `SimpleXisoDrive` and `SimpleZipDrive`) keep only the target `win-{x64,arm64}` subfolder.
 - Prunes debug symbol files (`*.pdb`) — never needed at runtime; the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
 
 ### Windows installer (`installer/SimpleLauncher.iss`)
 
-`-BuildInstaller` compiles a per-user **Inno Setup** installer from the same merged payload. It
+`-BuildInstaller` compiles a per-user **Inno Setup** installer from the same payload. It
 requires Inno Setup 6.5+ (`ISCC.exe` on `PATH`, in the default install folder, or passed with
 `-IsccPath`); CI installs it with Chocolatey before packaging.
 
@@ -138,10 +142,10 @@ pwsh scripts/package-release-linux.ps1 -Version 5.8.4 -BuildSelfContainedPayload
   the script runs on Linux.
 - Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to every payload root
   (`Copy-BundleDocuments`, the same helper the Windows script uses).
-- Windows-only bundled tools are pruned (`tools/**/*.exe`, `tools/**/*.dll`, the other
-  architecture's `7zz`); the per-RID tools (`FindRomCover`, `RetroAchievementsSharp`,
-  `SimpleXisoDrive`, `SimpleZipDrive`, the studios and `CHDMounter`) keep only the target
-  `linux-{x64,arm64}` subfolder; the matching `7zz` stays as the 7-Zip extraction fallback.
+- Windows-only helper files are pruned (`tools/**/*.exe`, `tools/**/*.dll`, the other
+  architecture's `7zz`); the per-RID helpers (`CHDMounter`, `RetroAchievementsSharp`,
+  `SimpleXisoDrive`, `SimpleZipDrive`) keep only the target `linux-{x64,arm64}` subfolder; the
+  matching `7zz` stays as the 7-Zip extraction fallback.
 - ZIP files written on Windows cannot carry Unix permission bits through `unzip`, so the
   script stamps the entries' external attributes (0755 for `SimpleLauncher.Avalonia`,
   `Updater`, `RetroAchievementsSharp` and `7zz`, 0644 otherwise) and patches the entries'
@@ -198,7 +202,7 @@ pwsh scripts/package-release-macos.ps1 -Version 5.8.4
 - Publishes `net11.0 -r osx-arm64 --self-contained true` (the .NET 11 runtime travels inside
   the `.app`) and lays it out as `Simple Launcher.app/Contents/MacOS`.
 - Prunes the bundled `tools/` tree and the `Updater`: there are no macOS payloads for the
-  bundled tools, and macOS updates install the next DMG instead of using the in-app updater.
+  runtime helpers, and macOS updates install the next DMG instead of using the in-app updater.
 - Generates `Info.plist` (`LSMinimumSystemVersion` 15.0, bundle id
   `com.purelogiccode.simplelauncher`) and a `.icns` from `SimpleLauncher.Avalonia/icon/icon.png`.
 - Ad-hoc signs the bundle with `codesign -s -` (skip with `-NoAdHocSign`); **it is not
@@ -244,10 +248,13 @@ dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release
 dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0 -r linux-x64
 dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release -f net11.0 -r linux-arm64
 
-# Verify the output includes the bundled tools + updater
+# Verify the output includes the runtime helpers + updater
 ls SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/ | head -20
 ls SimpleLauncher.Avalonia/bin/Release/net11.0-windows/win-x64/publish/Updater* 2>/dev/null | head
 ```
+
+The Windows publish output names the app `SimpleLauncher.Avalonia.exe`; the release packaging
+script renames it to `SimpleLauncher.exe`.
 
 - The `net11.0` TFM is **Linux/macOS-only** (audio output uses ALSA + managed decoders). Publishing it
   with a Windows RID (`-f net11.0 -r win-x64`) is rejected by a build guard: the `WINDOWS`
@@ -271,9 +278,9 @@ Version `5.8.4` must stay in sync across:
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)
 - `SimpleLauncher.Tests\SimpleLauncher.Tests.csproj`
 - `SimpleLauncher\app.manifest` (`assemblyIdentity version`)
-- `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (same three, matching the WPF app)
+- `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (same three, matching the WPF reference)
 - `SimpleLauncher.Avalonia\app.manifest` (`assemblyIdentity version`)
-- `SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj` (`Version`, matching the WPF app)
+- `SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj` (`Version`, matching the WPF reference)
 
 The test projects (`SimpleLauncher.Tests`, `SimpleLauncher.Avalonia.Tests`, `SimpleLauncher.SlowTests`,
 `SimpleLauncher.Avalonia.SlowTests`) and `SimpleLauncher.ResourceTranslator` carry the same version
@@ -285,8 +292,8 @@ packaging. Bump all of them together.
 
 ## Localization
 
-- **One shared pack set for both apps**: `SimpleLauncher.Core\Localization\strings.{code}.json` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-BR, ru, tr, ur, vi, zh-Hans) — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical key set (2671 keys, all files in full key parity).
-- Both apps **embed** the packs in their assemblies: Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService` via `Assembly.GetManifestResourceStream`; no loose `Resources` folder ships); the WPF app as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, via `<Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json" />` in `SimpleLauncher.csproj`) with `App.ApplyLanguage` building the WPF language `ResourceDictionary` from the JSON, resolving codes like `pt-br`/`zh-hans` case-insensitively.
+- **One shared pack set for the shipped app and WPF reference**: `SimpleLauncher.Core\Localization\strings.{code}.json` (ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pt-BR, ru, tr, ur, vi, zh-Hans) — UTF-8 without BOM, 2-space indent, `StringComparer.OrdinalIgnoreCase` key order. `strings.en.json` is the canonical key set (2671 keys, all files in full key parity).
+- Both **embed** the packs in their assemblies: Avalonia as manifest resources (`SimpleLauncher.Avalonia.Resources.strings.{code}.json`, loaded by `LocalizationService` via `Assembly.GetManifestResourceStream`; no loose `Resources` folder ships); the WPF reference as pack resources (`resources/strings.{code}.json` in `SimpleLauncher.g.resources`, via `<Resource Include="..\SimpleLauncher.Core\Localization\strings.*.json" />` in `SimpleLauncher.csproj`) with `App.ApplyLanguage` building the WPF language `ResourceDictionary` from the JSON, resolving codes like `pt-br`/`zh-hans` case-insensitively.
 - `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) translates missing keys into the shared packs; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 - Unit tests guard against common translation issues: keys used in source but missing from English (auto-added with fallbacks), duplicate keys, mismatched fallbacks, empty values, key parity and key counts.
   - WPF: `DetectMissingResourceProviderKeysTests` and `DetectMissingResourceStringsTests` scan the WPF sources (`_resourceProvider.GetString(...)`, `TryFindResource(...)`) and auto-add missing keys to `strings.en.json`; `DetectDuplicateResourceKeysTests`, `DetectAlphabeticalOrderingTests`, `ResourceFileLoadingTests` and `LocalizationResourcePackagingTests` cover the packs and the embedded payload.
@@ -312,7 +319,7 @@ the test suites (they include live endpoints and real app launches; run them loc
 |---|---|---|
 | `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net11.0` Debug/Release and updater `net11.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. Never runs tests. |
 | `.github/workflows/package-dry-run.yml` | push/PR touching the app projects or packaging scripts (or manual) | Packages every release asset with the same scripts as the release workflow (Windows, Linux and the macOS DMG on `macos-15`), uploads the archives as workflow artifacts and verifies the Linux payload layout/executable bits and the DMG bundle layout — without creating a GitHub release. The version is read from `SimpleLauncher/SimpleLauncher.csproj`. |
-| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the unified WPF + Avalonia bundle for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, the Linux bundles for `linux-x64` + `linux-arm64`, and the Apple Silicon `osx-arm64` DMG via `scripts/package-release-macos.ps1`; uploads the artifacts and creates/updates the `release{version}` GitHub release with every Windows/Linux/macOS asset. Options: skip release creation, provide custom release notes. |
+| `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the Avalonia-only Windows bundle (`SimpleLauncher.exe`) for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, the Linux bundles for `linux-x64` + `linux-arm64`, and the Apple Silicon `osx-arm64` DMG via `scripts/package-release-macos.ps1`; uploads the artifacts and creates/updates the `release{version}` GitHub release with every Windows/Linux/macOS asset. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |
 
 `master` requires the two build checks from `ci.yml` for pull-request merges (direct pushes are

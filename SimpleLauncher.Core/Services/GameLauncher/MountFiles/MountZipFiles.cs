@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using SharpCompress.Archives;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
-using SimpleLauncher.Core.Services.ExternalToolLauncher;
+using SimpleLauncher.Core.Services.BundledTools;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
@@ -1025,11 +1025,11 @@ public class MountZipFiles : IMountZipFiles
     /// </summary>
     private static string? GetPlatformMountExecutableRelativePath()
     {
-        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
+        var runtimeIdentifier = BundledToolPathResolver.GetPlatformRuntimeIdentifier();
         if (runtimeIdentifier == null) return null;
 
         return Path.Combine("tools", "SimpleZipDrive", runtimeIdentifier,
-            ExternalToolLauncherService.GetPlatformExecutableName("SimpleZipDrive"));
+            BundledToolPathResolver.GetPlatformExecutableName("SimpleZipDrive"));
     }
 
     private static string GetExitCodeReason(int exitCode)

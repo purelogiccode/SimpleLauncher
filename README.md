@@ -33,8 +33,8 @@ Older releases only include the portable ZIP; use the ZIP steps in that case.
 
 **Portable ZIP.** Prefer no installer? Download `release_{version}_win-x64.zip` (or `-win-arm64`),
 extract it to a writable folder such as `C:\Games\SimpleLauncher` (not `C:\Program Files`), and run
-`SimpleLauncher.exe` - or `SimpleLauncher.Avalonia.exe` for the cross-platform UI. Both apps share
-the same `settings.dat`.
+`SimpleLauncher.exe`. The Windows release now ships the Avalonia app under that name; the WPF
+project remains in the source tree as a reference and is no longer bundled.
 
 No account is needed either way. Uninstalling removes the program files but **keeps your settings,
 game lists and media**; delete the install folder afterwards to remove everything. Newer releases
@@ -92,8 +92,8 @@ System selection, grid and list libraries, PC store games and RetroAchievements 
   credentials into supported emulators automatically.
 - **Retro and PC libraries together.** Scan 11 storefronts on Windows (Steam, Epic, GOG, Amazon
   and more) alongside your emulated systems, with one search and one play history.
-- **Bundled power tools.** CHD/RVZ/XISO conversion, ROM validation, cover finding, and batch
-  launchers ship with the app.
+- **Only the helpers you need.** CHD/Xbox/archive mounting, 7-Zip extraction and
+  RetroAchievements hashing ship with the app; the optional GUI tools are separate downloads.
 - **Free and open.** GPLv3, no ads, no account, and no third-party analytics. See the
   [Privacy Policy](docs/privacy.md) for the small amount of data the app does send.
 
@@ -121,12 +121,12 @@ Want the longer story, including where the other frontends are stronger? Read th
 <summary><strong>Full feature list</strong> (click to expand)</summary>
 
 ### 🚀 Performance & Core Infrastructure
-* **Unified Settings Database:** Both apps share one SQLite `settings.dat` (settings, favorites, play history, systems) with automatic migration of the legacy XML/dat files
+* **Unified Settings Database:** The Avalonia app and the WPF reference share one SQLite `settings.dat` (settings, favorites, play history, systems) with automatic migration of the legacy XML/dat files
 * **MessagePack Engine:** High-speed MessagePack serialization for near-instant settings loading
-* **Native ARM64 Support:** ARM64 builds of the app and bundled tools for Windows on ARM (Surface Pro, Snapdragon X Elite) and Linux ARM64, alongside x64. The Windows ARM64 (WPF + Avalonia) and Linux ARM64 (portable tarball + AppImage) bundles are validated on real ARM64 hosts.
+* **Native ARM64 Support:** ARM64 builds of the app and its runtime helpers for Windows on ARM (Surface Pro, Snapdragon X Elite) and Linux ARM64, alongside x64. The Windows ARM64 (Avalonia) and Linux ARM64 (portable tarball + AppImage) bundles are validated on real ARM64 hosts.
 * **Asynchronous Architecture:** Multi-threaded game scanning and validation with a fluid UI - the Avalonia app shows the system-selection grid immediately and refreshes library counts in the background
 * **Fast Startup:** System icons resolve through a short directory cache, and sidebar counts no longer block the first frame
-* **Single Instance Enforcement:** The WPF and Avalonia apps share one guard, so only one of them runs at a time (launching the other brings the running one to the foreground)
+* **Single Instance Enforcement:** Only one Simple Launcher instance runs at a time; launching another brings the running window to the foreground (legacy WPF installs share the same guard during migration)
 * **Elevation Detection:** Automatically detects games requiring Administrator privileges
 * **Startup Validation:** Detects if running from temporary folders and prompts for proper extraction
 * **Secure Connections:** All metadata and image downloads use TLS 1.2/1.3
@@ -172,27 +172,16 @@ Want the longer story, including where the other frontends are stronger? Read th
 * **Right-Click Context Menus:** Extensive context menu options for games and systems
 * **Filter Menu System:** Advanced filtering options for game libraries
 
-### 🛠️ Bundled Power Tools
-* **CHDMounter:** Automatically handles CHD file mounting for emulators without native support
-* **Format Converters:**
-  - CHDStudio: Convert, verify, and explore CHD images (Windows/Linux)
-  - RVZStudio: Convert, verify, and explore GameCube/Wii disc images (Windows/Linux)
-  - XISOStudio: Convert, verify, and explore Xbox/Xbox 360 images (Windows/Linux)
-  - BatchConvertToCompressedFile: Convert to 7z/Zip format
-* **Metadata & Cover Tools:**
-  - FindRomCover: Intelligent cover art finder
-  - RetroGameCoverDownloader: Download retro game covers
-* **Batch File Creators:**
-  - CreateBatchFilesForPS3Games: PS3 game launchers
-  - CreateBatchFilesForScummVMGames: ScummVM game launchers
-  - CreateBatchFilesForWindowsGames: Windows game launchers
-  - CreateBatchFilesForXbox360XBLAGames: Xbox 360 XBLA launchers
-* **Validation & Organization:**
-  - RomValidator: Validate ROMs against No-Intro DAT files
-  - MAME.DatCreator: Create MAME DAT files
-  - SimpleZipDrive: ZIP file mounting utility
-  - SimpleXisoDrive: Xbox image mounting utility (XISO/CISO/ZAR/CHD)
-* **File System Tools:** 7z integration for compression/decompression
+### 🛠️ Bundled Runtime Helpers
+Simple Launcher ships only the components it calls automatically while launching games:
+* **CHDMounter:** mounts CHD images for emulators without native support
+* **SimpleXisoDrive:** mounts Xbox images (XISO/CISO/ZAR/CHD)
+* **SimpleZipDrive:** mounts ZIP/7z/RAR/TAR archives
+* **RetroAchievementsSharp:** calculates RetroAchievements hashes
+* **7-Zip:** compression/decompression fallback
+
+The optional converter, cover-art, validation and batch-file GUI tools are no longer bundled;
+they remain available as separate downloads from their own repositories.
 
 ### 🔧 Advanced Features
 * **Easy Mode:** One-click automatic download and configuration of emulators for chosen systems
@@ -203,7 +192,7 @@ Want the longer story, including where the other frontends are stronger? Read th
 * **Global Statistics:** View usage statistics and play time across all systems
 * **Image Viewer:** Built-in image viewer for game art and screenshots
 * **Debug Window:** Advanced debugging and error-reporting interface
-* **Update System:** Built-in updater with a resilient update check (GitHub `releases/latest` with multi-source fallback when GitHub is unreachable or rate-limited) and one shared `Updater.exe` that updates either app (WPF or Avalonia) and relaunches the app that started it. Updates are refused when the app runs from a WinRAR/7-Zip temporary folder, interrupted swaps are recovered safely, and transient file locks/access denials are retried
+* **Update System:** Built-in updater with a resilient update check (GitHub `releases/latest` with multi-source fallback when GitHub is unreachable or rate-limited) and one shared `Updater.exe` that updates the app and relaunches it; legacy WPF installs are migrated to the new Avalonia `SimpleLauncher.exe` on update. Updates are refused when the app runs from a WinRAR/7-Zip temporary folder, interrupted swaps are recovered safely, and transient file locks/access denials are retried
 * **Multi-language Support:** 18 languages with a localization system
 * **Accessibility Features:** Automation properties, access keys, and high contrast mode
 
@@ -241,12 +230,12 @@ Want the longer story, including where the other frontends are stronger? Read th
 | Yabause | ✅ Added | Sega Saturn |
 
 ### 💻 Technical Specifications
-* **Framework:** .NET 11 (WPF + Avalonia)
+* **Framework:** .NET 11 (Avalonia; the WPF project remains as a source reference)
 * **Language:** C# 15
 * **Data Serialization:** Unified SQLite `settings.dat` (settings, favorites, play history, systems), MessagePack (RA/MAME/history databases) & XML (legacy migration)
 * **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 + NLayer (Audio; managed MP3/WAV on Linux/macOS), YamlDotNet, Tomlyn, PBPSharp - RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)
 * **Architecture:** Modular service-based architecture with dependency injection
-* **Storage:** Unified SQLite `settings.dat` shared by both apps; legacy `settings.xml` / `favorites.dat` / `playhistory.dat` / `system.xml` are migrated automatically on first launch
+* **Storage:** Unified SQLite `settings.dat` shared by the app and the WPF reference; legacy `settings.xml` / `favorites.dat` / `playhistory.dat` / `system.xml` are migrated automatically on first launch
 
 </details>
 
@@ -263,7 +252,7 @@ Indonesian, Dutch, Turkish, Urdu, and Vietnamese.
 ## 🤝 Contributing & support
 
 * **Bug reports:** use the built-in **Support Window** or [GitHub Issues](https://github.com/purelogiccode/SimpleLauncher/issues).
-* **Documentation:** [documentation site](https://purelogiccode.github.io/SimpleLauncher/docs.html) and [GitHub Wiki](https://github.com/purelogiccode/SimpleLauncher/wiki) - guides, bundled-tool usage, and `parameters.md` with official emulator download links.
+* **Documentation:** [documentation site](https://purelogiccode.github.io/SimpleLauncher/docs.html) and [GitHub Wiki](https://github.com/purelogiccode/SimpleLauncher/wiki) - guides, runtime-helper usage, and `parameters.md` with official emulator download links.
 * **Donate:** if you find this project useful, consider [supporting the developer](https://www.purelogiccode.com/donate).
 
 **⭐ If you like this project, please give it a star on GitHub! ⭐**

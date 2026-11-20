@@ -10,7 +10,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | Class | Purpose / key API |
 |---|---|
 | `SettingsManager\SettingsManagerService` | User preferences (`settings.dat` SQLite; legacy `settings.xml`): load/save with atomic temp-file move, 3 retries, whitelist validation, protected RA credentials (DPAPI on Windows; Base64 obfuscation on Linux/macOS). See [05 — Configuration](05-configuration.md) |
-| `SettingsDatabase\UnifiedSettingsDatabase` | Schema/read/write for the shared `settings.dat` (app + emulator settings, favorites, play history, systems, play times) used by both apps |
+| `SettingsDatabase\UnifiedSettingsDatabase` | Schema/read/write for the shared `settings.dat` (app + emulator settings, favorites, play history, systems, play times) used by the shipped app and the WPF reference |
 | `SettingsDatabase\WpfLegacyMigrator` / `SettingsDatabase\AvaloniaLegacyMigrator` (each app) | First-launch/merge migration of `settings.xml`, `system.xml`, `favorites.dat`, `playhistory.dat` into `settings.dat` with verification and `.bak` shelving |
 | `SettingsManager\EmulatorXmlHelpers` | Static typed XML readers (`ReadBool/ReadInt/ReadDouble/ReadString`) with section → flattened-root → default fallback |
 | `SettingsManager\EmulatorSettings\*` (21) | `XxxSettings` classes (Ares…Yumir) backing the inject-config dialogs; stored in `settings.dat` (`EmulatorSettings`; legacy `settings.xml`) |
@@ -49,8 +49,8 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `GameLauncher\MountFiles\DokanValidation` | P/Invoke `dokan2.dll` version check |
 | `GameLauncher\ValidateBatchFile` | Pre-execution validation of batch files (missing paths) |
 | `ExtractFiles\ExtractionService` | Archive extraction: lock retry, disk-space check, path-traversal guard (platform-aware prefix comparison, backslash entry names normalized — Windows-authored archives extract into real folders on Linux, LB-16), 7-Zip fallback (Unix execute bit ensured before launch, LB-15), `.extraction_in_progress` marker. See [06](06-systems-and-launch.md#extraction) |
-| `Converters\DiscConverter` | CHD→ISO/CUE-BIN, PBP→CUE-BIN, RVZ/WBFS/GCZ→ISO via bundled tools (5-min timeouts) |
-| `ExternalToolLauncher\ExternalToolLauncherService` | Launch bundled tools: arch-aware paths, PE validation, per-tool methods. See [11](11-bundled-tools.md) |
+| `Converters\DiscConverter` | CHD→ISO/CUE-BIN and PBP→CUE-BIN with the managed CHDSharp/PBPSharp libraries (5-min timeouts) |
+| `BundledTools\BundledToolPathResolver` | Resolves the per-OS/architecture helper payloads under `tools\` (mount, hashing and extraction helpers). See [11](11-bundled-tools.md) |
 
 ## Search, scan & data
 
@@ -108,7 +108,7 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 
 ## Interfaces (`SimpleLauncher.Core\Interfaces\`)
 
-Contracts for all of the above plus app-side contracts shared with the WPF layer: `IApplicationLifetime`, `IAudioInputService`, `ICleanTempFolderService`, `ICredentialProtector`, `IDebugLogger`, `IDeleteFilesService`, `IDirectoryValidationService`, `IDiscConverter`, `IDispatcherService`, `IEmulator`, `IEmulatorConfigHandler`, `IEmulatorSettings`, `IExternalToolLauncher`, `IExtractionService`, `IFileFinderService`, `IFileLockService`, `IFilePickerService`, `IFindCoverImageService`, `IFormatFileSizeService`, `IGetListOfFilesService`, `IIconExtractor`, `IImageLoader`, `IInputSanitizerService`, `ILaunchStrategy`, `ILauncherService`, `ILoadingState`, `IMameDataService`, `IMessageBoxLibraryService`, `IMessageDialogService`, `IMountChdFiles`, `IMountIsoFiles`, `IMountXisoFiles`, `IMountZipFiles`, `IPaginationHost`, `IPaginationService`, `IParameterResolverService`, `IPlaySoundEffects`, `IResourceProvider`, `IRetroAchievementsEmulatorConfiguratorService`, `IRetroAchievementsFileHasher`, `IRetroAchievementsHasherTool`, `IRetroAchievementsSystemMatcher`, `ISearchOrchestratorService`, `ISteamVdfParser`, `ISystemConfigurationWriterService`, `ISystemManager`, `IUiResetHost`, `IUiResetService`, `IWindowContext`, `IWindowsVersionService`.
+Contracts for all of the above plus app-side contracts shared with the WPF layer: `IApplicationLifetime`, `IAudioInputService`, `ICleanTempFolderService`, `ICredentialProtector`, `IDebugLogger`, `IDeleteFilesService`, `IDirectoryValidationService`, `IDiscConverter`, `IDispatcherService`, `IEmulator`, `IEmulatorConfigHandler`, `IEmulatorSettings`, `IExtractionService`, `IFileFinderService`, `IFileLockService`, `IFilePickerService`, `IFindCoverImageService`, `IFormatFileSizeService`, `IGetListOfFilesService`, `IIconExtractor`, `IImageLoader`, `IInputSanitizerService`, `ILaunchStrategy`, `ILauncherService`, `ILoadingState`, `IMameDataService`, `IMessageBoxLibraryService`, `IMessageDialogService`, `IMountChdFiles`, `IMountIsoFiles`, `IMountXisoFiles`, `IMountZipFiles`, `IPaginationHost`, `IPaginationService`, `IParameterResolverService`, `IPlaySoundEffects`, `IResourceProvider`, `IRetroAchievementsEmulatorConfiguratorService`, `IRetroAchievementsFileHasher`, `IRetroAchievementsHasherTool`, `IRetroAchievementsSystemMatcher`, `ISearchOrchestratorService`, `ISteamVdfParser`, `ISystemConfigurationWriterService`, `ISystemManager`, `IUiResetHost`, `IUiResetService`, `IWindowContext`, `IWindowsVersionService`.
 
 ## Models (`SimpleLauncher.Core\Models\`)
 

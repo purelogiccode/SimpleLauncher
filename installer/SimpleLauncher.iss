@@ -2,9 +2,9 @@
 ;
 ; This script is compiled by scripts/package-release.ps1 with -BuildInstaller.
 ; It requires Inno Setup 6.5 or later (CreateDownloadPage / built-in download
-; support). The script installs the unified payload produced for one RID:
-; SimpleLauncher.exe (WPF) and SimpleLauncher.Avalonia.exe next to each other,
-; plus the shared content files and Updater.exe.
+; support). The script installs the Avalonia payload produced for one RID as
+; SimpleLauncher.exe, plus the shared content files and Updater.exe. The WPF
+; project remains in the source tree as a reference but is not shipped.
 ;
 ; Packaging defines (all required):
 ;   AppVersion, Rid, PayloadDir, OutputDir, RepoDir,
@@ -83,7 +83,7 @@ MinVersion=10.0.17763
 
 OutputDir={#OutputDir}
 OutputBaseFilename=SimpleLauncher-{#AppVersion}-{#Rid}-setup
-SetupIconFile={#RepoDir}\SimpleLauncher\icon\icon.ico
+SetupIconFile={#RepoDir}\SimpleLauncher.Avalonia\icon\icon.ico
 UninstallDisplayIcon={app}\SimpleLauncher.exe
 UninstallDisplayName=Simple Launcher
 WizardStyle=modern
@@ -91,9 +91,10 @@ Compression=lzma2/max
 SolidCompression=yes
 SetupLogging=yes
 
-; The two apps share one single-instance mutex. Setup asks the user to close a
-; running instance before replacing files, and does not relaunch it afterwards
-; (the built-in updater handles normal in-app updates).
+; The Avalonia app keeps the historical single-instance mutex shared with legacy
+; WPF installs. Setup asks the user to close a running instance before replacing
+; files, and does not relaunch it afterwards (the built-in updater handles normal
+; in-app updates).
 AppMutex=SimpleLauncher_SingleInstanceMutex_A8E2B9C1-F5D7-4E0A-8B3C-6D1E9F0A7B4C
 CloseApplications=yes
 RestartApplications=no
@@ -107,8 +108,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Excludes: "settings.dat,settings.xml,system.xml,favorites.dat,playhistory.dat,*.log,single-instance.lock,*.tmp"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Simple Launcher"; Filename: "{app}\SimpleLauncher.exe"; WorkingDir: "{app}"; Comment: "Simple Launcher (WPF)"
-Name: "{group}\Simple Launcher (Avalonia UI)"; Filename: "{app}\SimpleLauncher.Avalonia.exe"; WorkingDir: "{app}"; Comment: "Simple Launcher (Avalonia)"
+Name: "{group}\Simple Launcher"; Filename: "{app}\SimpleLauncher.exe"; WorkingDir: "{app}"; Comment: "Simple Launcher"
 Name: "{group}\{cm:UninstallProgram,Simple Launcher}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\Simple Launcher"; Filename: "{app}\SimpleLauncher.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 

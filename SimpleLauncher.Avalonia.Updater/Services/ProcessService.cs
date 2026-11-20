@@ -14,8 +14,11 @@ internal class ProcessService
     /// <summary>
     ///     Process names (without extension) of the applications the single updater serves.
     ///     PIDs and application arguments are only trusted when they match one of these.
+    ///     <c>SimpleLauncher</c> is the canonical Windows executable (the WPF app in legacy
+    ///     installs, the Avalonia app since the unified Windows release); Linux/macOS keep
+    ///     <c>SimpleLauncher.Avalonia</c>.
     /// </summary>
-    internal const string WpfAppProcessName = "SimpleLauncher";
+    internal const string WindowsAppProcessName = "SimpleLauncher";
 
     internal const string AvaloniaAppProcessName = "SimpleLauncher.Avalonia";
 
@@ -30,7 +33,7 @@ internal class ProcessService
     /// </summary>
     internal static bool IsKnownAppProcessName(string processName)
     {
-        return string.Equals(processName, WpfAppProcessName, StringComparison.OrdinalIgnoreCase) ||
+        return string.Equals(processName, WindowsAppProcessName, StringComparison.OrdinalIgnoreCase) ||
                string.Equals(processName, AvaloniaAppProcessName, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -266,6 +269,19 @@ internal class ProcessService
             var baseName = executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
                 ? executableName[..^4]
                 : executableName;
+
+            // Windows releases now name the Avalonia app SimpleLauncher.exe. An install
+            // updating from the old name still passes "SimpleLauncher.Avalonia"; prefer the
+            // new canonical executable so the update does not restart the stale binary.
+            if (OperatingSystem.IsWindows() &&
+                string.Equals(baseName, AvaloniaAppProcessName, StringComparison.OrdinalIgnoreCase) &&
+                File.Exists(Path.Combine(appDirectory, $"{WindowsAppProcessName}.exe")))
+            {
+                baseName = WindowsAppProcessName;
+                LogMessage?.Invoke(this, new EventArgs<string>(
+                    "Restarting the renamed application: SimpleLauncher.exe"));
+            }
+
             var executableFileName = OperatingSystem.IsWindows() ? $"{baseName}.exe" : baseName;
             var exePath = Path.Combine(appDirectory, executableFileName);
 

@@ -335,190 +335,10 @@
         <None Update="images\systems\Zeebo.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\XISOStudio\win-x64\XISOStudio.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-x64\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-x64\7-Zip-License.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-x64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-x64\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-arm64\XISOStudio.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-arm64\7za_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-arm64\7-Zip-License.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-arm64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\XISOStudio\win-arm64\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\CHDStudio.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\chdman.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\av_libglesv2.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\libHarfBuzzSharp.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\libSkiaSharp.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-x64\WhatsNew.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\CHDStudio.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\chdman_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\7za_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\av_libglesv2.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\libHarfBuzzSharp.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\libSkiaSharp.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CHDStudio\win-arm64\WhatsNew.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCompressedFile\7z_arm64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCompressedFile\7z_x64.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCompressedFile\BatchConvertToCompressedFile.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-x64\RVZStudio.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-x64\DolphinTool.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-x64\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-x64\LICENSE-7zip.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-x64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-x64\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-arm64\RVZStudio.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-arm64\DolphinTool_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-arm64\7za_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-arm64\LICENSE-7zip.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-arm64\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RVZStudio\win-arm64\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForPS3Games\CreateBatchFilesForPS3Games.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForXbox360XBLAGames\CreateBatchFilesForXbox360XBLAGames.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\RomValidator.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\BatchConvertToCompressedFile\BatchConvertToCompressedFile_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForPS3Games\CreateBatchFilesForPS3Games_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForScummVMGames\CreateBatchFilesForScummVMGames_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForWindowsGames\CreateBatchFilesForWindowsGames_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\CreateBatchFilesForXbox360XBLAGames\CreateBatchFilesForXbox360XBLAGames_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\RomValidator_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="RetroAchievements.dat">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="images\systems\Nintendo Virtual Boy.png">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroGameCoverDownloader\RetroGameCoverDownloader.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RetroGameCoverDownloader\RetroGameCoverDownloader_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\7za.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\7za_arm64.exe">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\RomValidator.xml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\LICENSE.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\ReadMe.md">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="tools\RomValidator\WhatsNew.md">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Services\EasyMode\Samples\easymode_arm64.xml">
@@ -656,9 +476,6 @@
         <None Update="history.dat">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="tools\FindRomCover\**\*">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="tools\RetroAchievementsSharp\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -717,8 +534,6 @@
         <Resource Include="images\setnumber.png" />
         <Resource Include="images\show.png" />
         <Resource Include="icon\icon.ico" />
-        <Resource Include="images\tools.png" />
-        <Resource Include="images\findromcover.png" />
         <Resource Include="images\romhistory.png" />
         <Resource Include="images\delete.png" />
         <Resource Include="images\noimage.png" />
@@ -756,7 +571,6 @@
         <Resource Include="images\sort-az.png" />
         <Resource Include="images\gamecoverscraper.png" />
         <Resource Include="images\darkmode.png" />
-        <Resource Include="images\retrogamecoverdownloader.png" />
         <Resource Include="images\inject.png" />
         <Resource Include="images\mame.png" />
         <Resource Include="images\retroarch.png" />
@@ -784,20 +598,8 @@
         <Resource Include="images\filename.png" />
         <None Remove="images\home.png" />
         <Resource Include="images\home.png" />
-        <None Remove="images\rvz.png" />
-        <Resource Include="images\rvz.png" />
-        <None Remove="images\xiso.png" />
-        <Resource Include="images\xiso.png" />
-        <None Remove="images\romvalidator.png" />
-        <Resource Include="images\romvalidator.png" />
         <None Remove="images\shrink.png" />
         <Resource Include="images\shrink.png" />
-        <None Remove="images\ps3.png" />
-        <Resource Include="images\ps3.png" />
-        <None Remove="images\scummvm.png" />
-        <Resource Include="images\scummvm.png" />
-        <None Remove="images\xboxxbla.png" />
-        <Resource Include="images\xboxxbla.png" />
         <Page Update="InjectConfigWindows\InjectAresConfigWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
             <XamlRuntime>Wpf</XamlRuntime>
@@ -909,8 +711,6 @@
         </Resource>
         <None Remove="images\add.png" />
         <Resource Include="images\add.png" />
-        <None Remove="images\chd.png" />
-        <Resource Include="images\chd.png" />
         <None Remove="images\clickheretogethelp_original.png" />
         <Resource Include="images\clickheretogethelp_original.png" />
     </ItemGroup>
@@ -1220,5 +1020,17 @@
         <Using Include="System.IO" />
         <Using Include="System.Net.Http" />
         <Using Include="Serilog" />
+    </ItemGroup>
+
+    <!-- Keep the native tool payloads outside the single-file app bundle. Without these
+         metadata entries the .NET 11 single-file publish target drops Windows .exe/.dll files
+         from the publish output even though they are copied to bin\, leaving the released app
+         without its bundled tools. -->
+    <ItemGroup>
+        <None Update="tools\**\*">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        </None>
     </ItemGroup>
 </Project>

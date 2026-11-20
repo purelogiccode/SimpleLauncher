@@ -35,7 +35,6 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
-using SimpleLauncher.Core.Services.ExternalToolLauncher;
 using SimpleLauncher.Core.Services.GamePad;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
@@ -62,7 +61,6 @@ public partial class MainWindow : Window, IPaginationHost
         double DisplayHeight, Border Holder);
 
     private readonly AvaloniaContextMenuService _contextMenuService;
-    private readonly ExternalToolLauncherService _externalToolLauncher;
     private readonly AvaloniaGameFileWatcherService _fileWatcher;
     private readonly EventHandler<EventArgs<string>> _gameFilesChangedHandler;
     private readonly GamePadController _gamePadController;
@@ -93,7 +91,6 @@ public partial class MainWindow : Window, IPaginationHost
         SystemManagerService systemManagerService,
         SettingsManagerService settings,
         LocalizationService localization,
-        ExternalToolLauncherService externalToolLauncher,
         PlaySoundEffects playSound,
         GameScannerService gameScannerService,
         FavoritesSectionViewModel favoritesSection,
@@ -115,7 +112,6 @@ public partial class MainWindow : Window, IPaginationHost
         _systemManagerService = systemManagerService;
         _settings = settings;
         _localization = localization;
-        _externalToolLauncher = externalToolLauncher;
         _playSound = playSound;
         _gameScannerService = gameScannerService;
         _pagination = pagination;
@@ -163,18 +159,6 @@ public partial class MainWindow : Window, IPaginationHost
 
         InitializeComponent();
         Log.Debug("Ctor phase: InitializeComponent done at {ElapsedMs} ms", ctorSw.ElapsedMilliseconds);
-
-        // Windows ships the full external-tool set. Linux ships XISOStudio, CHDStudio, RVZStudio
-        // and FindRomCover (one payload per OS/architecture each); the other tools are Windows
-        // executables, so the menu keeps just those entries there. macOS has no bundled payloads,
-        // so it stays hidden.
-        var isWindows = OperatingSystem.IsWindows();
-        ToolsMenuItem.IsVisible = isWindows || OperatingSystem.IsLinux();
-        if (!isWindows)
-        {
-            foreach (var toolItem in ToolsMenuItem.Items.OfType<MenuItem>())
-                toolItem.IsVisible = toolItem.Tag is "XISOStudio" or "CHDStudio" or "RVZStudio" or "FindRomCover";
-        }
 
         // Storefront scanning reads the Windows registry and store databases; it is a
         // no-op on other platforms, so hide the "Scan for Microsoft Windows games" action.
@@ -3450,128 +3434,6 @@ public partial class MainWindow : Window, IPaginationHost
         catch (Exception ex)
         {
             Log.Error(ex, "Failed to open {Emulator} config window", emulatorName);
-        }
-    }
-
-    // ── Tools (external executables) ──
-
-    private async void LaunchTool_Click(object? sender, RoutedEventArgs e)
-    {
-        var tool = "";
-        try
-        {
-            if (sender is not MenuItem { Tag: string toolTag }) return;
-
-            // XISOStudio, CHDStudio, RVZStudio and FindRomCover ship for Windows and Linux; the rest are Windows executables.
-            if (!OperatingSystem.IsWindows() &&
-                toolTag is not ("XISOStudio" or "CHDStudio" or "RVZStudio" or "FindRomCover")) return;
-
-            tool = toolTag;
-
-            Log.Information("Launching external tool {Tool}", tool);
-
-            try
-            {
-                _viewModel.StatusText = string.Format(
-                    _localization.GetString("Status.LaunchingTool", "Launching tool: {0}..."), tool);
-                _playSound.PlayNotificationSound();
-
-                var romFolder = GetSelectedRomFolder();
-                var imageFolder = GetSelectedImageFolder();
-
-                switch (tool)
-                {
-                    case "XISOStudio":
-                        await _externalToolLauncher.LaunchXisoStudioAsync();
-                        break;
-                    case "CHDStudio":
-                        Log.Debug("Called CHDStudio with args: {RomFolder}", romFolder);
-                        await _externalToolLauncher.LaunchChdStudioAsync(romFolder);
-                        break;
-                    case "BatchConvertToCompressedFile":
-                        await _externalToolLauncher.BatchConvertToCompressedFileAsync();
-                        break;
-                    case "RVZStudio":
-                        await _externalToolLauncher.LaunchRvzStudioAsync();
-                        break;
-                    case "CreateBatchFilesForPS3Games":
-                        await _externalToolLauncher.CreateBatchFilesForPs3GamesAsync();
-                        break;
-                    case "CreateBatchFilesForScummVMGames":
-                        await _externalToolLauncher.CreateBatchFilesForScummVmGamesAsync();
-                        break;
-                    case "CreateBatchFilesForWindowsGames":
-                        await _externalToolLauncher.CreateBatchFilesForWindowsGamesAsync();
-                        break;
-                    case "CreateBatchFilesForXbox360XBLAGames":
-                        await _externalToolLauncher.CreateBatchFilesForXbox360XblaGamesAsync();
-                        break;
-                    case "FindRomCover":
-                        // WPF parity: reset the UI state before handing over to the external tool.
-                        await _uiResetService.ResetUiAsync();
-                        await _externalToolLauncher.FindRomCoverLaunchAsync(imageFolder, romFolder);
-                        break;
-                    case "RetroGameCoverDownloader":
-                        await _uiResetService.ResetUiAsync();
-                        await _externalToolLauncher.RetroGameCoverDownloaderAsync(imageFolder, romFolder);
-                        break;
-                    case "RomValidator":
-                        await _externalToolLauncher.RomValidatorAsync();
-                        break;
-                    default:
-                        Log.Warning("Unknown tool menu item: {Tool}", tool);
-                        break;
-                }
-
-                _viewModel.StatusText = _localization.GetString("Status.Ready", "Ready");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error launching tool {Tool}", tool);
-                _viewModel.StatusText = _localization.GetString("Errorlaunchingtool", "Error launching tool");
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Unexpected error in LaunchTool_Click for tool {Tool}", tool);
-        }
-    }
-
-    /// <summary>
-    ///     Resolves the first ROM folder of the currently selected system (null when none).
-    /// </summary>
-    private string? GetSelectedRomFolder()
-    {
-        try
-        {
-            var system = _systemManagerService.GetSystem(_viewModel.SelectedSystem);
-            var folder = system?.SystemFolders.FirstOrDefault();
-            return folder is null ? null : PathHelper.ResolveRelativeToAppDirectory(folder);
-        }
-        catch (Exception ex)
-        {
-            Log.Debug(ex, "Failed to resolve selected ROM folder");
-            return null;
-        }
-    }
-
-    /// <summary>
-    ///     Resolves the image folder of the currently selected system (null when none).
-    /// </summary>
-    private string? GetSelectedImageFolder()
-    {
-        try
-        {
-            var system = _systemManagerService.GetSystem(_viewModel.SelectedSystem);
-            var folder = system?.SystemImageFolder;
-            return string.IsNullOrEmpty(folder)
-                ? null
-                : PathHelper.ResolveRelativeToAppDirectory(folder);
-        }
-        catch (Exception ex)
-        {
-            Log.Debug(ex, "Failed to resolve selected image folder");
-            return null;
         }
     }
 

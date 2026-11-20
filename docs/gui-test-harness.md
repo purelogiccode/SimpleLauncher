@@ -444,11 +444,11 @@ view-mode menu checkmarks, theme menu + persistence, Edit System window/help pan
 selection state, fuzzy threshold, dead-zone, Edit Links, Sound Configuration, About/Update History,
 Support validation, Favorites add/remove, Play History, ZIP extraction + temp cleanup, file watcher,
 Debug window + live log lines, ROM History message, Broken System error dialog, menu structure
-(the Linux Options set; Tools shows only the cross-platform tools), real-MAME machine
-descriptions + sort toggle (MAME-01) and a real `history.dat` entry (MAME-02).
+(the Linux Options set; no Tools menu), real-MAME machine descriptions + sort toggle (MAME-01) and
+a real `history.dat` entry (MAME-02).
 
 Manual/integration by design: store scanners, config injection (Windows-only), RetroAchievements
-login/hashing, gamepad hardware, CHD/ISO/XISO mounting, external tools, updater, Commander Genius,
+login/hashing, gamepad hardware, CHD/ISO/XISO mounting, updater, Commander Genius,
 and anything needing real network/emulators. The emulator sweep session on 2026-09-27 replaced the
 "real-ROM launches" gap with a full matrix: 36 systems seeded from the Easy Mode manifest, 29
 distinct emulators/cores launched through the UI with real ROMs, and the RetroAchievements settings
@@ -491,8 +491,8 @@ items in `ManualTests.md` §6) and the working-tree state. The 2026-10-13 tool-r
 **33/33** on the payload built from `db8f47ae` (`reports\run-20261013-171217.md`):
 `SimpleLauncher.Core.dll` md5 `6e994b5aaec82cb5b1aef32b317b00b0` + `SimpleLauncher.Avalonia.dll` md5
 `c8959c0c7c6b390f98e2ff21a629af28`; the same day's earlier release-gate pass was 33/33 on
-`5e4f4230` (`reports\run-20261013-143750.md`). MENU-00 now asserts the Linux Tools menu
-(`CHDStudio, Find Rom Cover, RVZStudio, XISOStudio`) and keeps the popup open for the vision check.
+`5e4f4230` (`reports\run-20261013-143750.md`). MENU-00 now asserts the top-level menu and
+verifies that the removed Tools menu is absent.
 The targeted Linux FUSE mount checks (SimpleZipDrive/SimpleXisoDrive direct + app-driven) are
 recorded in `ManualTests.md` §6.
 

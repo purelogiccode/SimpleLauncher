@@ -54,9 +54,9 @@ Not available on macOS (hidden or automatic fallback):
 
 * **No Dokan/FUSE drive mounting.** Xbox `.iso`/`.xiso` mounting through SimpleXisoDrive is
   Windows/Linux-only; ZIP/7z/RAR and CHD use extraction/conversion instead.
-* **Bundled tools are not shipped.** There are no macOS payloads for CHDMounter, CHDStudio,
-  FindRomCover, RetroAchievementsSharp, RVZStudio, SimpleXisoDrive, SimpleZipDrive,
-  XISOStudio or 7-Zip, so the Tools menu is hidden.
+* **Bundled helpers are not shipped.** There are no macOS payloads for CHDMounter,
+  RetroAchievementsSharp, SimpleXisoDrive, SimpleZipDrive or 7-Zip, so the services use their
+  extraction/conversion fallbacks or report the platform as unsupported.
 * **No in-app updater.** `Updater` is not included in the bundle. Download the next DMG and
   replace the app; user data stays in place. **Help → Check for Updates** points at the
   release page.
@@ -95,7 +95,7 @@ pwsh scripts/package-release-macos.ps1 -Version 5.8.4
 ```
 
 The script validates the version against `SimpleLauncher.csproj`/manifests, publishes
-`net11.0 -r osx-arm64 --self-contained true`, prunes the Windows/Linux-only bundled tools
+`net11.0 -r osx-arm64 --self-contained true`, prunes the Windows/Linux-only helper payloads
 and the Updater, builds `Simple Launcher.app` with an `Info.plist` and `.icns`, applies an
 ad-hoc signature (`codesign -s -`, skip with `-NoAdHocSign`), and creates and verifies the
 DMG with `hdiutil`.

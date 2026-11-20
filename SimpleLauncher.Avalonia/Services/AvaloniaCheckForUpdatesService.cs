@@ -80,10 +80,11 @@ public partial class AvaloniaCheckForUpdatesService
 
     /// <summary>
     ///     Name of this application's executable, passed to the updater so it waits for
-    ///     and restarts the correct app (the WPF and Avalonia apps share one updater).
+    ///     and restarts the correct app. The Windows release ships the Avalonia app as
+    ///     <c>SimpleLauncher.exe</c>; the Linux/macOS payloads keep the historical name.
     /// </summary>
     internal static string AppExecutableName => OperatingSystem.IsWindows()
-        ? "SimpleLauncher.Avalonia.exe"
+        ? "SimpleLauncher.exe"
         : "SimpleLauncher.Avalonia";
 
     /// <summary>
@@ -106,8 +107,8 @@ public partial class AvaloniaCheckForUpdatesService
 
     /// <summary>
     ///     Name of the unified release package asset for a raw version and runtime identifier,
-    ///     e.g. release_5.8.1_win-x64.zip. The bundle contains both the WPF and the Avalonia
-    ///     app next to each other.
+    ///     e.g. release_5.8.1_win-x64.zip. On Windows the bundle contains the Avalonia app as
+    ///     SimpleLauncher.exe.
     /// </summary>
     internal static string ReleaseAssetName(string rawVersion, string rid)
     {

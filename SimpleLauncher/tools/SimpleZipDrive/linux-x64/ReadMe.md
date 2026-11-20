@@ -1,16 +1,18 @@
 # Simple Zip Drive
 
-[![.NET 10.0](https://img.shields.io/badge/.NET-10.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![.NET 11.0](https://img.shields.io/badge/.NET-11.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/11.0)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/purelogiccode/SimpleZipDrive/releases)
 [![Architecture](https://img.shields.io/badge/arch-x64%20%7C%20arm64-blue)](https://github.com/purelogiccode/SimpleZipDrive/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.txt)
 [![GitHub release](https://img.shields.io/github/v/release/purelogiccode/SimpleZipDrive)](https://github.com/purelogiccode/SimpleZipDrive/releases)
 [![CI](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/ci.yml/badge.svg)](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/codeql.yml/badge.svg)](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/purelogiccode/SimpleZipDrive/badge)](https://securityscorecards.dev/viewer/?uri=github.com/purelogiccode/SimpleZipDrive)
 [![Release](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/release.yml/badge.svg)](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/release.yml)
 [![Wiki Sync](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/wiki-sync.yml/badge.svg)](https://github.com/purelogiccode/SimpleZipDrive/actions/workflows/wiki-sync.yml)
-[![Tests](https://img.shields.io/badge/tests-1466%20passing-brightgreen)](#-technical-architecture)
-[![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
-[![Avalonia](https://img.shields.io/badge/Avalonia-12.1.4-8A2BE2)](https://avaloniaui.net/)
+[![Tests](https://img.shields.io/badge/tests-1490%20passing-brightgreen)](#-technical-architecture)
+[![C#](https://img.shields.io/badge/C%23-15-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
+[![Avalonia](https://img.shields.io/badge/Avalonia-12.1.6-8A2BE2)](https://avaloniaui.net/)
 [![7-Zip](https://img.shields.io/badge/7--Zip-26.03-yellow)](https://github.com/ip7z/7zip)
 [![Downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleZipDrive/total)](https://github.com/purelogiccode/SimpleZipDrive/releases)
 [![Stars](https://img.shields.io/github/stars/purelogiccode/SimpleZipDrive?style=flat)](https://github.com/purelogiccode/SimpleZipDrive/stargazers)
@@ -45,7 +47,7 @@ Unlike traditional archive utilities that extract the entire archive to a tempor
     *   **Stored Entries (ZIP):** Uncompressed entries are read directly from the source archive with zero-copy, zero-cache performance - no RAM or disk overhead.
     *   **Small Files:** Cached in-memory for near-instantaneous access. Each file is decompressed only once and the buffer is shared across all open handles, so memory usage stays at approximately one copy per file regardless of how many applications access it. Decompression writes directly into the final buffer, halving the transient peak memory footprint during extraction of large entries.
     *   **Large Files (≥512 MB by default):** Automatically offloaded to a temporary disk cache to prevent RAM exhaustion. The per-file memory threshold can be adjusted via the Settings window.
-*   **Framework-Dependent Single Executable:** Ships as framework-dependent single-file binaries for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, and `osx-arm64`. Every package includes the platform 7-Zip fallback binary (`7za.exe` on Windows, `7zzs` on Linux, `7zz` on macOS) and its license beside the executable; Windows packages also include `winfsp-msil.dll`. Only the [.NET 10 runtime](https://dotnet.microsoft.com/download) and the filesystem driver (WinFsp/Dokan on Windows, libfuse3/macFUSE on Linux/macOS) must be installed.
+*   **Framework-Dependent Single Executable:** Ships as framework-dependent single-file binaries for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, and `osx-arm64`. Windows uses `.zip`, Linux uses `.tar.gz`, and macOS uses `.dmg` packages (each Unix bundle contains a top-level `SimpleZipDrive-<version>-<rid>/` folder with the executable bit already set). Every package includes the platform 7-Zip fallback binary (`7za.exe` on Windows, `7zzs` on Linux, `7zz` on macOS) and its license beside the executable; Windows packages also include `winfsp-msil.dll`. Only the [.NET 11 runtime](https://dotnet.microsoft.com/download) and the filesystem driver (WinFsp/Dokan on Windows, libfuse3/macFUSE on Linux/macOS) must be installed.
 *   **Streaming Architecture:** The source archive is accessed via a direct file stream, supporting archives of virtually any size.
 *   **Zero-Configuration UI:** Supports drag-and-drop functionality for automatic mounting to the first available drive letter (M-Q). The mounted drive label displays the archive filename.
 *   **Configurable Cache:** Open `Settings > RAM Limit` to adjust the per-file RAM cache limit. The value is automatically clamped to 90% of available system memory to prevent out-of-memory errors.
@@ -62,7 +64,7 @@ Unlike traditional archive utilities that extract the entire archive to a tempor
 
 Before running Simple Zip Drive, ensure your system meets the following requirements:
 
-1.  **.NET 10.0 Runtime:** Download the latest [.NET 10 runtime](https://dotnet.microsoft.com/download).
+1.  **.NET 11.0 Runtime:** Download the latest [.NET 11 runtime](https://dotnet.microsoft.com/download).
 2.  **Filesystem Driver** (depends on your platform). On Windows you can use **either Dokan or WinFsp** - install the driver for the backend you want to use (Dokan is the default; if the selected driver is missing, the app offers to open its download page):
     *   **Windows — Dokan (default):** Download and install `DokanSetup.exe` from the [Official Releases](https://github.com/dokan-dev/dokany/releases). **Dokan v2 2.3.0 or later is required** — older driver installs are refused with a *"Dokan Driver Outdated"* dialog.
     *   **Windows — WinFsp (alternative):** Download and install [WinFsp](https://github.com/winfsp/winfsp/releases) **2.1 or later** (2.1 is the latest stable release; 2.2+ are beta versions), then select *WinFsp* (or *Auto*) in *Settings → Mount backend*. Keep `winfsp-msil.dll` beside the executable — it ships with the app and is removed neither by you nor your antivirus without breaking mounts.

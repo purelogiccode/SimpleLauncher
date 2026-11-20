@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
 using PBPSharp;
@@ -10,10 +7,8 @@ using SimpleLauncher.Core.Interfaces;
 namespace SimpleLauncher.Core.Services.Converters;
 
 /// <summary>
-///     Converts disc image formats (CHD, PBP, and other disc images) to ISO or CUE/BIN. CHD
-///     conversion uses the managed CHDSharp decoder on every platform (Linux/macOS have no
-///     chdman), with the bundled chdman kept as a Windows fallback; PBP conversion uses the
-///     managed PBPSharp library and DolphinTool handles the remaining disc images.
+///     Converts CHD and PBP disc images to ISO or CUE/BIN with the managed CHDSharp and
+///     PBPSharp libraries, so no external converter executable is required.
 /// </summary>
 public class DiscConverter : IDiscConverter
 {
@@ -31,38 +26,30 @@ public class DiscConverter : IDiscConverter
     }
 
     /// <summary>
-    ///     Converts a CHD disc image to an ISO file (managed CHDSharp first, bundled chdman as
-    ///     the Windows fallback).
+    ///     Converts a CHD disc image to an ISO file with the managed CHDSharp decoder.
     /// </summary>
     /// <param name="chdPath">The path of the CHD file to convert.</param>
     /// <returns>The path of the converted ISO file, or null if the conversion failed.</returns>
     public async Task<string?> ConvertChdToIsoAsync(string chdPath)
     {
-        var managedPath = await Task.Run(() => TryExtractWithChdSharp(chdPath, ".iso", "[ConvertChdToIso]"));
-        if (managedPath != null) return managedPath;
-
-        return await RunChdmanAsync(chdPath, "extractdvd", ".iso", "[ConvertChdToIso]");
+        return await Task.Run(() => TryExtractWithChdSharp(chdPath, ".iso", "[ConvertChdToIso]"));
     }
 
     /// <summary>
-    ///     Converts a CHD disc image to a CUE/BIN pair (managed CHDSharp first, bundled chdman
-    ///     as the Windows fallback).
+    ///     Converts a CHD disc image to a CUE/BIN pair with the managed CHDSharp decoder.
     /// </summary>
     /// <param name="chdPath">The path of the CHD file to convert.</param>
     /// <returns>The path of the converted CUE file, or null if the conversion failed.</returns>
     public async Task<string?> ConvertChdToCueBinAsync(string chdPath)
     {
-        var managedPath = await Task.Run(() => TryExtractWithChdSharp(chdPath, ".cue", "[ConvertChdToCueBin]"));
-        if (managedPath != null) return managedPath;
-
-        return await RunChdmanAsync(chdPath, "extractcd", ".cue", "[ConvertChdToCueBin]");
+        return await Task.Run(() => TryExtractWithChdSharp(chdPath, ".cue", "[ConvertChdToCueBin]"));
     }
 
     /// <summary>
     ///     Extracts a CHD with the managed CHDSharp decoder into the conversion temp folder:
     ///     CD images become a CUE/BIN pair and DVD images become an ISO. Returns the path of
     ///     the requested file, or null when the CHD is not the expected media type, cannot be
-    ///     decoded, or the extraction fails (callers then try the Windows chdman fallback).
+    ///     decoded, or the extraction fails.
     /// </summary>
     private string? TryExtractWithChdSharp(string chdPath, string expectedExtension, string logTag)
     {
@@ -136,111 +123,6 @@ public class DiscConverter : IDiscConverter
         {
             // Best effort only; the OS will eventually clean up temp files.
         }
-    }
-
-    /// <summary>
-    ///     Windows fallback: runs a chdman extraction command with the bundled chdman. Returns
-    ///     null on non-Windows platforms and when chdman is not shipped.
-    /// </summary>
-    private async Task<string?> RunChdmanAsync(string chdPath, string command, string outputExtension, string logTag)
-    {
-        if (!OperatingSystem.IsWindows()) return null;
-
-        try
-        {
-            var arch = RuntimeInformation.ProcessArchitecture;
-            var exeName = arch == Architecture.Arm64 ? "chdman_arm64.exe" : "chdman.exe";
-            var payloadFolder = arch == Architecture.Arm64 ? "win-arm64" : "win-x64";
-            var chdmanPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "CHDStudio",
-                payloadFolder, exeName);
-
-            if (!File.Exists(chdmanPath))
-            {
-                _logger.Debug($"{logTag} chdman not found at {chdmanPath}. Cannot convert CHD.");
-                return null;
-            }
-
-            Directory.CreateDirectory(TempFolder);
-            var tempOutputPath = Path.Combine(TempFolder, $"{Guid.NewGuid()}{outputExtension}");
-            var args = new List<string> { command, "-i", chdPath, "-o", tempOutputPath };
-
-            if (await TryRunChdmanAsync(chdmanPath, args, tempOutputPath, logTag))
-            {
-                _logger.Debug($"{logTag} Conversion successful (chdman)");
-                return tempOutputPath;
-            }
-
-            TryDeleteFile(tempOutputPath);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, $"{logTag} Error converting CHD");
-            return null;
-        }
-    }
-
-    /// <summary>
-    ///     Runs the bundled chdman and reports whether it produced the expected output file.
-    /// </summary>
-    private async Task<bool> TryRunChdmanAsync(string chdmanPath, IReadOnlyList<string> args,
-        string expectedOutputPath, string logTag)
-    {
-        var processStartInfo = new ProcessStartInfo
-        {
-            FileName = chdmanPath,
-            RedirectStandardOutput = false,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        foreach (var argument in args) processStartInfo.ArgumentList.Add(argument);
-
-        var chdmanDir = Path.GetDirectoryName(chdmanPath);
-        if (!string.IsNullOrEmpty(chdmanDir)) processStartInfo.WorkingDirectory = chdmanDir;
-
-        using var process = new Process();
-        process.StartInfo = processStartInfo;
-
-        _logger.Debug($"{logTag} Running chdman with args: {string.Join(' ', args)}");
-
-        var errorBuilder = new StringBuilder();
-        process.ErrorDataReceived += (_, e) =>
-        {
-            if (!string.IsNullOrEmpty(e.Data))
-                errorBuilder.AppendLine(e.Data);
-        };
-
-        process.Start();
-        process.BeginErrorReadLine();
-
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-        try
-        {
-            await process.WaitForExitAsync(timeoutCts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.Debug($"{logTag} Conversion timed out after 5 minutes");
-            try
-            {
-                process.Kill();
-            }
-            catch
-            {
-                /* ignored */
-            }
-
-            return false;
-        }
-
-        if (process.ExitCode == 0 && File.Exists(expectedOutputPath))
-        {
-            return true;
-        }
-
-        _logger.Debug($"{logTag} chdman failed. ExitCode: {process.ExitCode}. Error: {errorBuilder}");
-        return false;
     }
 
     /// <summary>
@@ -327,124 +209,6 @@ public class DiscConverter : IDiscConverter
             // the non-throwing failure paths are already handled inside the conversion lambda.
             TryDeleteTempFiles(tempCuePath!, tempBinPath!);
             return null;
-        }
-    }
-
-    /// <summary>
-    ///     Converts a disc image file (such as RVZ) to an ISO file using DolphinTool.
-    /// </summary>
-    /// <param name="discImagePath">The path of the disc image file to convert.</param>
-    /// <returns>The path of the converted ISO file, or null if the conversion failed.</returns>
-    public async Task<string?> ConvertToIsoAsync(string discImagePath)
-    {
-        string? tempIsoPath = null;
-        try
-        {
-            var arch = RuntimeInformation.ProcessArchitecture;
-            var exeName = arch == Architecture.Arm64 ? "DolphinTool_arm64.exe" : "DolphinTool.exe";
-            var payloadFolder = arch == Architecture.Arm64 ? "win-arm64" : "win-x64";
-            var dolphinToolPath =
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "RVZStudio", payloadFolder, exeName);
-
-            if (!File.Exists(dolphinToolPath))
-            {
-                _logger.Debug(
-                    $"[ConvertDiscImageToIso] DolphinTool not found at {dolphinToolPath}. Cannot convert disc image.");
-                return null;
-            }
-
-            var dolphinDir = Path.GetDirectoryName(dolphinToolPath);
-
-            Directory.CreateDirectory(TempFolder);
-            tempIsoPath = Path.Combine(TempFolder, $"{Guid.NewGuid()}.iso");
-
-            var args = new List<string>
-            {
-                "convert",
-                "--format=iso",
-                $"--input={discImagePath}",
-                $"--output={tempIsoPath}"
-            };
-
-            var processStartInfo = new ProcessStartInfo
-            {
-                FileName = dolphinToolPath,
-                RedirectStandardOutput = false,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = dolphinDir
-            };
-            foreach (var argument in args) processStartInfo.ArgumentList.Add(argument);
-
-            using var process = new Process();
-            process.StartInfo = processStartInfo;
-
-            _logger.Debug($"[ConvertDiscImageToIso] Running DolphinTool with args: {string.Join(' ', args)}");
-            _logger.Debug($"[ConvertDiscImageToIso] Converting {Path.GetExtension(discImagePath)} to ISO.");
-
-            var errorBuilder = new StringBuilder();
-            process.ErrorDataReceived += (_, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                    errorBuilder.AppendLine(e.Data);
-            };
-
-            process.Start();
-            process.BeginErrorReadLine();
-
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-            try
-            {
-                await process.WaitForExitAsync(timeoutCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.Debug("[ConvertDiscImageToIso] Conversion timed out after 5 minutes");
-                try
-                {
-                    process.Kill();
-                }
-                catch
-                {
-                    /* ignored */
-                }
-
-                TryDeleteTempFile(tempIsoPath);
-                return null;
-            }
-
-            if (process.ExitCode == 0 && File.Exists(tempIsoPath))
-            {
-                _logger.Debug("[ConvertDiscImageToIso] Conversion successful");
-                return tempIsoPath;
-            }
-
-            _logger.Debug(
-                $"[ConvertDiscImageToIso] DolphinTool failed. ExitCode: {process.ExitCode}. Error: {errorBuilder}");
-            // A failed conversion can leave a multi-GB partial ISO behind.
-            TryDeleteTempFile(tempIsoPath);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "[ConvertDiscImageToIso] Error converting disc image to ISO");
-            TryDeleteTempFile(tempIsoPath);
-            return null;
-        }
-    }
-
-    private static void TryDeleteTempFile(string? path)
-    {
-        if (string.IsNullOrEmpty(path)) return;
-
-        try
-        {
-            if (File.Exists(path)) File.Delete(path);
-        }
-        catch
-        {
-            // Best effort: the startup cleanup removes anything left in TempFolder.
         }
     }
 

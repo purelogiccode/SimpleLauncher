@@ -365,8 +365,8 @@ internal class UpdateService
     /// <returns>True if the restart was successful, false otherwise.</returns>
     public bool RestartMainApplication(string targetAppProcessName)
     {
-        // ProcessService appends the platform-appropriate extension: passing the ".exe"
-        // suffix here produced "SimpleLauncher.Avalonia.exe.exe" on Windows.
+        // ProcessService appends the platform-appropriate extension and migrates the old
+        // Windows "SimpleLauncher.Avalonia" name to the renamed SimpleLauncher.exe.
         return _processService.RestartApplication(_appDirectory, targetAppProcessName, "-whatsnew");
     }
 

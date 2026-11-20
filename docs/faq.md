@@ -18,12 +18,12 @@ It is free software under the GPLv3. There are no ads and no account.
 No. Simple Launcher does not provide games, BIOS files, or ROMs. Use your own legally obtained
 dumps. Easy Mode can download emulators, cores and image packs, but not games.
 
-## Which app should I run: `SimpleLauncher.exe` or `SimpleLauncher.Avalonia.exe`?
+## Which app does the Windows release install: WPF or Avalonia?
 
-On Windows both are in the same release ZIP or installer and share the same `settings.dat`.
-`SimpleLauncher.exe` is the original WPF app; `SimpleLauncher.Avalonia.exe` is the cross-platform
-port used on Linux and macOS. Run whichever you prefer - only one can run at a time
-(single-instance guard).
+The release ships the **Avalonia app as `SimpleLauncher.exe`**. The original WPF app remains in
+the source tree as a reference implementation but is no longer bundled or installed. Existing
+WPF and Avalonia installs migrate to the new `SimpleLauncher.exe` through the updater, keeping
+the same `settings.dat` and user data.
 
 ## What do I need installed?
 

@@ -15,11 +15,10 @@ Apple Developer account, but it is NOT Developer ID signed and NOT notarized, so
 first launch goes through the Gatekeeper "Open Anyway" flow.
 
 The application payload is published self-contained (not single-file) so the macOS
-bundle keeps the conventional `Contents/MacOS/` layout. Windows- and Linux-only bundled
-tools are removed: no macOS payloads exist for CHDMounter, CHDStudio, FindRomCover,
-RetroAchievementsSharp, RVZStudio, SimpleXisoDrive, SimpleZipDrive, XISOStudio or 7-Zip,
-and the Tools menu is already hidden on macOS. The standalone Updater is removed too:
-macOS installs update by downloading the next DMG (no in-app updater).
+bundle keeps the conventional `Contents/MacOS/` layout. Windows- and Linux-only helper
+payloads are removed: no macOS payloads exist for CHDMounter, RetroAchievementsSharp,
+SimpleXisoDrive, SimpleZipDrive or 7-Zip. The standalone Updater is removed too: macOS
+installs update by downloading the next DMG (no in-app updater).
 
 The version is validated against the canonical SimpleLauncher.csproj (plus the
 Avalonia/Core/updater projects and both manifests) before publishing.

@@ -38,15 +38,16 @@ disk.
     installers, executable bits, AppImage architectures, Flatpak commits and the DMG bundle
     layout, but **never creates or updates a GitHub release**. Runs on PRs/pushes touching the app
     projects or packaging scripts, and on manual dispatch.
-  - `.github/workflows/release.yml` — manual (`workflow_dispatch`); packages the unified WPF +
-    Avalonia bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1
+  - `.github/workflows/release.yml` - manual (`workflow_dispatch`); packages the Avalonia-only
+    Windows bundle for `win-x64` / `win-arm64` via `scripts/package-release.ps1
     -BuildInstaller` on `windows-latest` (Chocolatey installs Inno Setup 6.5+), and every Linux
     bundle for `linux-x64` / `linux-arm64` on `ubuntu-latest`:
     portable `release_{version}_{rid}.zip` + `release_{version}_{rid}.tar.gz` and updater ZIPs
     via `scripts/package-release-linux.ps1`, plus self-contained
     `SimpleLauncher-{version}-{rid}.AppImage` and `.flatpak` via
-    `scripts/package-linux-native.sh`. On Windows the payload places `SimpleLauncher.exe` and
-    `SimpleLauncher.Avalonia.exe` next to each other (both framework-dependent) and also ships
+    `scripts/package-linux-native.sh`. On Windows the payload is the Avalonia app renamed to
+    `SimpleLauncher.exe` (framework-dependent); the WPF project stays in the source tree and CI
+    as the reference implementation but is **not** published or bundled. The workflow also ships
     `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` with the .NET 11 bootstrap; the portable
     Linux formats require the .NET 11 runtime, while AppImage/Flatpak bundle it. The same
     workflow builds the **macOS Apple Silicon DMG** on `macos-15` (arm64) via
@@ -63,7 +64,7 @@ disk.
   (`SimpleLauncher-{version}-osx-arm64.dmg`) built on `macos-15` from
   `SimpleLauncher.Avalonia` self-contained. It is ad-hoc signed only (`codesign -s -`) — never
   add notarization or an Apple Developer certificate without the admin's explicit approval.
-  The bundle ships no bundled tools and no `Updater`: macOS updates install the next DMG
+  The bundle ships no bundled helper payloads and no `Updater`: macOS updates install the next DMG
   manually, and `PackagingEnvironment.UpdatesManagedExternally` keeps the in-app updater off.
   The DMG and `easymode_macos_arm64.xml` are mirrored to R2 by
   `scripts/publish-fallback-r2.ps1`; never drop the Apple Silicon artifact from the release
@@ -139,8 +140,9 @@ Builds use the normal temp path; only test execution uses drive D.
 - Version metadata is centralized: `SimpleLauncher/SimpleLauncher.csproj` is canonical;
   `SimpleLauncher.Core.csproj`, `SimpleLauncher/app.manifest`, the Avalonia csproj/manifest and
   `SimpleLauncher.Avalonia.Updater.csproj` must stay in sync (`VersionConsistencyTests` enforces
-  and auto-corrects this). The two `appsettings.json` files must stay identical — the unified
-  bundle ships a single shared copy (`AppSettingsFilesAreIdentical` enforces this).
+  and auto-corrects this). The two `appsettings.json` files must stay identical even though the
+  Windows bundle ships only the Avalonia copy — the WPF project remains the reference
+  implementation (`AppSettingsFilesAreIdentical` enforces this).
 
 ## ☁️ Release download fallback (Cloudflare R2)
 

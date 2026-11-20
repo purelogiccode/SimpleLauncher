@@ -5,8 +5,8 @@
 
 ## Update check (`CheckForUpdatesService`)
 
-`SimpleLauncher\Services\CheckForUpdatesService.cs` (WPF) and
-`SimpleLauncher.Avalonia\Services\AvaloniaCheckForUpdatesService.cs` (Avalonia).
+`SimpleLauncher.Avalonia\Services\AvaloniaCheckForUpdatesService.cs` is the shipped implementation;
+`SimpleLauncher\Services\CheckForUpdatesService.cs` remains the WPF reference.
 
 - **Source fallback chain** (app + updater):
   1. GitHub API `https://api.github.com/repos/purelogiccode/SimpleLauncher/releases/latest` (primary repo),
@@ -19,21 +19,21 @@
 
 ## Update assets
 
-Both apps read the same GitHub release, which ships the Windows and Linux bundles (portable
+The app reads the GitHub release, which ships the Windows and Linux bundles (portable
 ZIP/tarball, AppImage and Flatpak), the macOS DMG, plus a standalone updater per Windows/Linux
 RID:
 
-- `release_{version}_{rid}.zip` — the unified payload: `SimpleLauncher.exe` (WPF) and
-  `SimpleLauncher.Avalonia.exe` (Avalonia) next to each other plus the shared content files
-  (`images/`, `tools/`, `samples/`, `appsettings.json`, …). Both apps are framework-dependent
-  single executables (managed assemblies bundled; native libraries such as SQLite/Skia ship
+- `release_{version}_{rid}.zip` — on Windows, the Avalonia app published as
+  `SimpleLauncher.exe` plus the content files (`images/`, `tools/`, `samples/`,
+  `appsettings.json`, …). The WPF project is no longer bundled. The app is a framework-dependent
+  single executable (managed assemblies bundled; native libraries such as Skia/HarfBuzz ship
   beside the exe), so the .NET 11 Desktop Runtime is required.
 - `updater_{rid}.zip` — the single standalone `Updater.exe` (framework-dependent single file)
-  shared by both apps. It bundles the Avalonia native libraries it needs (`libSkiaSharp.dll`,
+  used by the shipped app and legacy WPF installs. It bundles the Avalonia native libraries it needs (`libSkiaSharp.dll`,
   `libHarfBuzzSharp.dll`, `av_libglesv2.dll`, `IncludeNativeLibrariesForSelfExtract`) and
   self-extracts them at launch, so the one file runs from either app folder **and** on legacy
   WPF-only installs that never had those natives (which is how the old WPF updater asset name is
-  reused for the unified release). The updater zip also carries `LICENSE.txt`, `README.md` and
+  reused for the current release). The updater zip also carries `LICENSE.txt`, `README.md` and
   `WhatsNew.md`.
 - On Linux (`rid` = `linux-x64` / `linux-arm64`) the same asset names carry the framework-dependent
   single-file `SimpleLauncher.Avalonia` payload (managed assemblies bundled into the binary;
@@ -69,12 +69,12 @@ sequenceDiagram
     A->>A: ShutdownForUpdateAsync (QuitSimpleLauncher)
     A->>U: download fresh Updater.exe from GitHub/secondary server (if needed) + launch with current PID and target app
     A->>A: app exits
-    U->>U: download the unified release zip, extract over the shared app folder
+    U->>U: download the release zip, extract over the app folder
     U->>A: relaunch the app that launched it with -whatsnew
     A->>A: shows UpdateHistoryWindow (release notes)
 ```
 
-- `QuitSimpleLauncher` (WPF) / `AvaloniaQuitSimpleLauncher` (Avalonia):
+- `AvaloniaQuitSimpleLauncher` (shipped app) / `QuitSimpleLauncher` (WPF reference):
   - `RestartApplicationAsync` — spawns itself with `--restarting`, then shuts down; failed restart → "FailedToRestart" box, app stays alive; user-canceled launch (Win32 error 1223) → Information log + "FailedToRestart" box, app stays alive.
   - `ShutdownForUpdateAsync` — downloads a fresh `Updater.exe` from GitHub (fallback: secondary server), launches it with the current PID and the target executable name, kills the app.
 - `ReinstallSimpleLauncher` (WPF) / `ReinstallAndShutdownAsync` (Avalonia):
@@ -93,20 +93,23 @@ sequenceDiagram
 
 ## `SimpleLauncher.Avalonia.Updater` project
 
-The single updater (`Updater.exe`) shared by both apps. Responsibilities: fetch the latest
-release (GitHub API primary → secondary server as fallback), download the unified release zip
-for the current RID (retrying from the secondary server if the primary download fails), extract
-over the application folder, relaunch the app that launched it. The launching app passes its
-PID as the first argument and the target executable name (`SimpleLauncher.exe` or
-`SimpleLauncher.Avalonia.exe`) as the second; older WPF releases pass only the PID, so the
-updater detects the target from the process name. It was built from the Avalonia codebase
-(cross-platform `net11.0` / `net11.0-windows`) and replaced the former WPF-specific updater.
+The single updater (`Updater.exe`) used by the shipped app, also compatible with legacy WPF
+installs. Responsibilities: fetch the latest release (GitHub API primary → secondary server as
+fallback), download the release zip for the current RID (retrying from the secondary server if
+the primary download fails), extract over the application folder, relaunch the app that launched
+it. The launching app passes its PID as the first argument and the target executable name
+(`SimpleLauncher.exe` on Windows; `SimpleLauncher.Avalonia` on Linux/macOS) as the second; older
+WPF releases pass only the PID, so the updater detects the target from the process name. When an
+old Windows Avalonia install passes `SimpleLauncher.Avalonia.exe`, the updater prefers the new
+canonical `SimpleLauncher.exe` after extraction and restarts that. It was built from the Avalonia
+codebase (cross-platform `net11.0` / `net11.0-windows`) and replaced the former WPF-specific
+updater.
 The updater excludes its own files (`Updater*`) during extraction so it can replace the
 applications while running. Release-zip extraction is fail-closed against Zip-Slip: every entry
 must resolve under the destination root, with a case-sensitive (Ordinal) prefix comparison on
 Unix so a case-variant prefix (`/app/` vs `/APP/`) cannot pass. On Unix, a replaced file keeps
 its live mode and a file added by the update receives the mode carried by the release zip
-(0755 for executables), so newly bundled tools stay executable.
+(0755 for executables), so newly bundled helper binaries stay executable.
 - **Locked files**: extraction is staged and the live install is only swapped afterwards; before
   the swap the updater waits up to 30 s for any file still held open by another process (the
   application not fully exited, an antivirus scan, a second instance) to be released. A file that

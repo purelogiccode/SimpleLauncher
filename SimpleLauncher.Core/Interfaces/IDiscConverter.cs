@@ -25,11 +25,4 @@ public interface IDiscConverter
     /// <param name="pbpPath">The path to the PBP file.</param>
     /// <returns>The path to the generated CUE file, or null if conversion failed.</returns>
     Task<string?> ConvertPbpToCueBinAsync(string pbpPath);
-
-    /// <summary>
-    ///     Converts a disc image to ISO format, regardless of the source format.
-    /// </summary>
-    /// <param name="discImagePath">The path to the source disc image file.</param>
-    /// <returns>The path to the converted ISO file, or null if conversion failed.</returns>
-    Task<string?> ConvertToIsoAsync(string discImagePath);
 }

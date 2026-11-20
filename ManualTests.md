@@ -157,11 +157,9 @@ Shared flow per emulator (sample 3–4 in depth, then spot-check the rest):
 
 - [ ] **Extraction before launch** (`ExtractionService`) — 7z/ZIP/RAR ROM launches: multi-file archives, archives locked by antivirus (10×1 s retry), insufficient disk space, corrupted archive → 7za fallback (`tools\SevenZip\`) or failure box + partial cleanup, crafted zip-slip archive → "PotentialPathManipulation" box.
 - [ ] **CHD→CUE/BIN and PBP→CUE/BIN** (`DiscConverter`) — launch a CHD game on a CUE/BIN-only emulator → temp `.cue/.bin` in `%TEMP%\SimpleLauncher`, game boots, temp files cleaned after exit; same for PBP (PS1); corrupt file → error, no hang; huge files → 5-minute timeout path.
-- [ ] **RVZ/WBFS/GCZ→ISO** (via RetroAchievements hasher, `DiscConverter.ConvertToIsoAsync`) — GameCube/Wii game hashed → converted with `DolphinTool.exe`, temp ISO deleted afterwards.
 - [ ] **CHD mount** (`MountChdDrive`) — PSX game mounted via CHDMounter: exit game → mount process killed, drive letter disappears within ~20 s; kill CHDMounter externally while the game runs → unmount still cleans up; Dokan not installed → "Dokan driver not found" box.
 - [ ] **ISO mount** (`MountIsoFiles`) — PS3 ISO with `EBOOT.BIN` launches and the drive is dismounted after exit; ISO without EBOOT.BIN → error box + dismount; PowerShell execution-policy restricted → `UnabletomountIsOfile` box; 30 s timeout kill.
 - [ ] **XISO mount** (`MountXisoDrive`, `MountXisoFiles`) — original-Xbox XISO launches via Dokan; virtual drive letter (picked Z→D) is released after exit; missing `tools\SimpleXisoDrive\*.exe` → mount-error box; no free drive letter → error box; wrong XISO layout → timeout + error, no leaked process.
-- [ ] **External tools** (`ExternalToolLauncherService`) — run each tool from the UI: Create Batch Files (PS3/ScummVM/Windows/Xbox 360 XBLA), Batch Convert ISO→XISO, →CHD, →Compressed, →RVZ, Rom Validator, Find Rom Cover, Retro Game Cover Downloader — launches with correct folder/args; missing tool → "not found" box; UAC cancel (error 1223) → "canceled" box; corrupt exe → PE check rejects it.
 
 ## 8. Game file watcher (5.6.0) — end-to-end flow
 

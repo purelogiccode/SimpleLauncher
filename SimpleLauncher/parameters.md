@@ -1784,7 +1784,7 @@ There are multiple ways to launch this emulator.
 **Emulator Parameters (Example):** -full-screen -dvd_path<br>
 **Fullscreen Parameter:** -full-screen<br>
 
-You can find a tool in the 'Simple Launcher' tools menu that can batch convert ISOs to CHD format.<br>
+Use an external tool such as CHDStudio (https://github.com/purelogiccode/CHDStudio) to batch convert ISOs to CHD format.<br>
 'Simple Launcher' will mount the CHD file into a virtual drive, then load the game using a custom logic. You need to install Dokan from [GitHub](https://github.com/dokan-dev/dokany) for the logic to work.<br>
 You can download this emulator on the [Official Website](https://xemu.app/docs/download/).<br>
 
@@ -1800,7 +1800,7 @@ You can download this emulator on the [Official Website](https://xemu.app/docs/d
 **Emulator Parameters (Example):** -full-screen -dvd_path<br>
 **Fullscreen Parameter:** -full-screen<br>
 
-You can find a tool in the 'Simple Launcher' tools menu that can batch convert ISOs to XISO format. This will reduce the ISO filesize and optimize the Redump ISO for emulation.<br>
+Use an external tool such as XISOStudio (https://github.com/purelogiccode/XISOStudio) to batch convert ISOs to XISO format. This will reduce the ISO filesize and optimize the Redump ISO for emulation.<br>
 You can download this emulator on the [Official Website](https://xemu.app/docs/download/).<br>
 
 **Option 3 - Use CSO or ZAR files**
@@ -1838,7 +1838,7 @@ There are multiple ways to launch this emulator.
 **Fullscreen Parameter:** <br>
 
 'Simple Launcher' has logic to mount the CHD file into a virtual drive and then load the file default.xbe. For this logic to work you need to install Dokan from [GitHub](https://github.com/dokan-dev/dokany).<br>
-You can find a tool in the 'Simple Launcher' tools menu that can batch convert ISO to CHD format.<br>
+Use an external tool such as CHDStudio (https://github.com/purelogiccode/CHDStudio) to batch convert ISO to CHD format.<br>
 You can download this emulator on the [Official Website](https://cxbx-reloaded.co.uk/download).<br>
 
 **Option 2 — Use ISO (XISO) files**
@@ -1854,7 +1854,7 @@ You can download this emulator on the [Official Website](https://cxbx-reloaded.c
 **Fullscreen Parameter:** <br>
 
 'Simple Launcher' has logic to mount the ISO (XISO) file into a virtual drive and then load the file default.xbe. For this logic to work you need to install Dokan from [GitHub](https://github.com/dokan-dev/dokany).<br>
-You can find a tool in the 'Simple Launcher' tools menu that can batch convert original Redump ISOs to XISO format. This will reduce the ISO filesize and optimize the Redump ISO for emulation.<br>
+Use an external tool such as XISOStudio (https://github.com/purelogiccode/XISOStudio) to batch convert original Redump ISOs to XISO format. This will reduce the ISO filesize and optimize the Redump ISO for emulation.<br>
 You can download this emulator on the [Official Website](https://cxbx-reloaded.co.uk/download).<br>
 
 ## Microsoft Xbox 360
@@ -1888,7 +1888,7 @@ There are multiple ways to launch this emulator.
 **Fullscreen Parameter:** <br>
 
 'Simple Launcher' will mount the CHD file into a virtual drive, then load the game using a custom logic. You need to install Dokan from [GitHub](https://github.com/dokan-dev/dokany) for the logic to work.<br>
-You can find a tool in the 'Simple Launcher' tools menu that can batch convert ISOs to CHD format.<br>
+Use an external tool such as CHDStudio (https://github.com/purelogiccode/CHDStudio) to batch convert ISOs to CHD format.<br>
 You can download this emulator on the [Official Website](https://github.com/xenia-project/release-builds-windows/releases).<br>
 
 **Option 2 — Use ISO (XISO) files**
@@ -1903,7 +1903,7 @@ You can download this emulator on the [Official Website](https://github.com/xeni
 **Emulator Parameters (Example):** <br>
 **Fullscreen Parameter:** <br>
 
-You can find a tool in the 'Simple Launcher' tools menu that can batch convert original Redump ISOs to XISO format. This will reduce the ISO filesize and optimize the ISO for emulation.<br>
+Use an external tool such as XISOStudio (https://github.com/purelogiccode/XISOStudio) to batch convert original Redump ISOs to XISO format. This will reduce the ISO filesize and optimize the ISO for emulation.<br>
 You can download this emulator on the [Official Website](https://github.com/xenia-project/release-builds-windows/releases).<br>
 
 ## Microsoft Xbox 360 XBLA
@@ -1953,7 +1953,7 @@ You can download this emulator on the [Official Website](https://github.com/xeni
 **Emulator Parameters:** <br>
 **Fullscreen Parameter:** <br>
 
-'Simple Launcher' has a tool in the Tools menu that can create [Batch Files For Xbox360 XBLA Games]. Use this tool to automatically create BAT files for you.<br>
+Create the BAT files manually or with the standalone Create Batch Files For Xbox360 XBLA Games helper.<br>
 You can download this emulator on the [Official Website](https://github.com/xenia-project/release-builds-windows/releases).<br>
 
 ## NEC PC Engine / TurboGrafx 16
@@ -3908,7 +3908,7 @@ Command line parameters can be found on [ScummVM Website](https://scumm-thedocs.
 **Emulator Parameters:** <br>
 **Fullscreen Parameter:** <br>
 
-Use the tool available in the 'Simple Launcher' tools menu to generate BAT files for you.
+Create the BAT files manually or with the standalone batch-file helper.
 Command line parameters can be found on [ScummVM Website](https://scumm-thedocs.readthedocs.io/en/latest/advanced/command_line.html#command-line-interface).
 
 ## Sega Dreamcast
@@ -5671,7 +5671,7 @@ If you want to use the '--fullscreen' parameter you also need to use the '--no-g
 **Fullscreen Parameter:** --fullscreen --no-gui<br>
 
 If you want to use the '--fullscreen' parameter you also need to use the '--no-gui' parameter. This is a requirement imposed by this emulator.<br>
-Use the tool available in the 'Simple Launcher' Tools menu to generate BAT files for you.<br>
+Create the BAT files manually or with the standalone batch-file helper.<br>
 
 **Option 4 - Use ZIP files**
 

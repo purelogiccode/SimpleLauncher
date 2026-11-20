@@ -38,8 +38,8 @@ whether you want a cross-platform desktop launcher, a TV/arcade interface, or a 
 - **RetroAchievements is first-class on every platform** for profiles and hash-based filtering;
   automatic credential injection is Windows-only today. ES-DE has no built-in RA; Playnite
   needs an extension; LaunchBox and RetroBat are Windows-only.
-- **Bundled power tools** for CHD/RVZ/XISO conversion, validation, cover finding and batch file
-  creation - tools the other frontends do not ship.
+- **Bundled runtime helpers** for CHD/Xbox/archive mounting, 7-Zip extraction and
+  RetroAchievements hashing, without shipping a suite of optional GUI apps.
 - **Lightweight, portable and GPLv3.** A portable ZIP or a per-user Windows installer, no account,
   no ads.
 

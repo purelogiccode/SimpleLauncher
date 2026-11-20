@@ -52,6 +52,33 @@ public class CleanSimpleLauncherFolderServiceTests
     }
 
     /// <summary>
+    ///     Verifies that the optional GUI apps that are no longer bundled are removed from an
+    ///     upgraded installation.
+    /// </summary>
+    [Fact]
+    public void CleanupTrashRemovesOptionalAppsThatAreNoLongerBundled()
+    {
+        var deleteService = new TrackingDeleteFilesService();
+        var service = new CleanSimpleLauncherFolderService(deleteService);
+
+        service.CleanupTrash();
+
+        string[] removedApps =
+        [
+            "XISOStudio", "CHDStudio", "RVZStudio", "BatchConvertToCompressedFile",
+            "CreateBatchFilesForPS3Games", "CreateBatchFilesForScummVMGames",
+            "CreateBatchFilesForWindowsGames", "CreateBatchFilesForXbox360XBLAGames",
+            "FindRomCover", "RetroGameCoverDownloader", "RomValidator"
+        ];
+
+        foreach (var app in removedApps)
+        {
+            Assert.Contains(deleteService.DeletedFiles,
+                path => path.EndsWith(Path.Combine("tools", app), StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    /// <summary>
     ///     Verifies that calling CleanupTrash twice does not throw.
     /// </summary>
     [Fact]
@@ -164,39 +191,38 @@ public class CleanSimpleLauncherFolderServiceTests
     }
 
     /// <summary>
-    ///     Verifies that no architecture-specific folder cleanup deletes the converter tool
-    ///     folders: both ship native ARM64 variants that are resolved at runtime.
+    ///     Verifies that no architecture-specific folder cleanup deletes a bundled helper folder
+    ///     as a whole: each one ships a native ARM64 variant that is resolved at runtime.
     /// </summary>
     [Fact]
-    public void ArchitectureSpecificFolderCleanupKeepsConverterToolFolders()
+    public void ArchitectureSpecificFolderCleanupKeepsBundledHelperFolders()
     {
-        string[] converterFolders =
+        string[] helperFolders =
         [
-            Path.Combine("tools", "XISOStudio"),
-            Path.Combine("tools", "CHDStudio"),
-            Path.Combine("tools", "RVZStudio"),
-            Path.Combine("tools", "CHDMounter")
+            Path.Combine("tools", "CHDMounter"),
+            Path.Combine("tools", "RetroAchievementsSharp"),
+            Path.Combine("tools", "SimpleXisoDrive"),
+            Path.Combine("tools", "SimpleZipDrive")
         ];
 
         Assert.DoesNotContain(
             CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsArm64,
-            directory => converterFolders.Any(folder =>
+            directory => helperFolders.Any(folder =>
                 directory.EndsWith(folder, StringComparison.OrdinalIgnoreCase)));
         Assert.DoesNotContain(
             CleanSimpleLauncherFolderService.DirectoriesToDeleteIfCurrentArchitectureIsX64,
-            directory => converterFolders.Any(folder =>
+            directory => helperFolders.Any(folder =>
                 directory.EndsWith(folder, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>
     ///     Verifies that the architecture-specific cleanup removes only the other architecture's
-    ///     payload folder for the tools that ship one payload per OS/architecture
-    ///     (tools\XISOStudio, tools\CHDStudio, tools\RVZStudio and tools\CHDMounter).
+    ///     payload folder for the helpers that ship one payload per OS/architecture.
     /// </summary>
     [Fact]
     public void ArchitectureSpecificFolderCleanupRemovesOtherArchitectureToolPayloads()
     {
-        string[] tools = ["XISOStudio", "CHDStudio", "RVZStudio", "CHDMounter"];
+        string[] tools = ["CHDMounter", "RetroAchievementsSharp", "SimpleXisoDrive", "SimpleZipDrive"];
 
         foreach (var tool in tools)
         {

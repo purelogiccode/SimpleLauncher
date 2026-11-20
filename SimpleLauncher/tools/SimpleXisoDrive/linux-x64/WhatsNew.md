@@ -1,3 +1,132 @@
+# What's New in 1.6.0 (since 1.5.2)
+
+Prepared for the `release_1.6.0` tag. Framework-dependent `win-x64`/`win-arm64`,
+`linux-x64`/`linux-arm64` and `osx-x64`/`osx-arm64` builds require the .NET 10.0 Runtime (the base
+runtime; the Desktop Runtime also works but is not required).
+
+## Xbox 360 GOD/SVOD mounting
+
+- **Mount GOD/SVOD containers.** Pass the content-hash header, its `.data` fragment directory, or a
+  parent folder that contains exactly one header. The XDVDFS game partition is mapped on demand
+  through `XisoImageSource.OpenRead` (StfsSharp-backed); no extraction or temporary files.
+- **`--image-iso` for GOD.** The decompressed logical image is exposed as `image.iso` for emulators
+  that only accept a disc image.
+- **Path resolution.** An explicit `.data` directory resolves to its sibling header, and a directory
+  containing a single GOD header resolves to that header. STFS packages are rejected with a clear
+  error because they are a file table, not a disc image.
+
+## Dependencies and internals
+
+- **XISOSharp 1.8.0.** Path-based mounts now use the open-once `XisoImage` facade and
+  `XisoImageSource` detection (ISO, split ISO, CISO, CCI, GOD/SVOD). Renamed sector images keep
+  mounting through a content fallback.
+- **StfsSharp 1.0.0.** A direct dependency for the GOD/SVOD reader (`GodHeader`), matching the
+  package XISOSharp has used since 1.8.0.
+- **CCI/CCIM input.** Path resolution recognizes `.cci` and XISOSharp's `XisoImageSource` performs
+  split discovery (including multi-digit parts and standalone numeric names); CCISharp remains a
+  transitive dependency of XISOSharp rather than an application-level API.
+
+## Reliability and fixes
+
+- **Renamed containers keep `--image-iso`.** A plain ISO renamed to `.cso`/`.zar`, a CISO renamed
+  to `.zar`, and a CCI renamed to `.zar` now expose the correct decompressed image through
+  `image.iso`; the raw-image source uses the same content fallback as the volume.
+- **Renamed CCI images mount.** A CCI container whose extension does not match its content is
+  detected by its container magic instead of being read as a plain sector image.
+- **Clear STFS rejection.** Single-file Xbox 360 STFS packages (XBLA/XBLIG) report that they are a
+  file table, not an XDVDFS disc image, instead of the generic "not a valid Xbox ISO" error.
+- **Tests.** The app suite is **446 tests** (412 core + 34 Unix), including synthetic GOD header,
+  `.data` folder, parent-folder resolution, `--image-iso` and CCI path/mount coverage, plus
+  regression tests for renamed sector containers and the STFS error.
+
+# What's New in 1.5.2 (since 1.5.1)
+
+Prepared for the `release_1.5.2` tag. Framework-dependent `win-x64`/`win-arm64`,
+`linux-x64`/`linux-arm64` and `osx-x64`/`osx-arm64` builds require the .NET 10.0 Runtime (the base
+runtime; the Desktop Runtime also works but is not required).
+
+## FUSE library as a package
+
+- **`LibFuseSharp` 1.0.1 is now the single source of truth.** The vendored `FuseSharp` project was
+  removed; `SimpleXisoDrive.Unix` pins the MIT-licensed `LibFuseSharp` NuGet package
+  (`net8.0`/`net9.0`/`net10.0`). Library source, tests and releases live in
+  <https://github.com/purelogiccode/LibFuseSharp>.
+- **Clean external unmounts remain.** The package carries the `ENODEV` handling (exit code 0 after
+  `init`) and the `readdir` `ENOTDIR` behavior shipped in 1.5.1.
+- **Library override.** Use `LIBFUSESHARP_LIBRARY` to point at a custom FUSE library; the legacy
+  `SIMPLEXISODRIVE_FUSE_LIBRARY` name is still honored.
+
+## Repository and tests
+
+- **No vendored copy.** The `FuseSharp/` folder and the duplicated library tests were removed from
+  this repository; the solution and build now use the package.
+- **Test split.** The 55 FUSE library tests now live in the LibFuseSharp repository. The app suite
+  is **429 tests** (395 core + 34 Unix), including the `FuseVolumeAdapter` integration tests.
+
+## Documentation
+
+- Refreshed the FuseSharp page, Building, Testing, Architecture, Glossary and both side menus for the
+  package/repository split.
+- Added the library release routine to `AGENTS.md`; corrected the 1.5.1 release notes to reference
+  `LibFuseSharp` (MIT).
+
+# What's New in 1.5.1 (since 1.5.0)
+
+Prepared for the `release_1.5.1` tag. Framework-dependent `win-x64`/`win-arm64`,
+`linux-x64`/`linux-arm64` and `osx-x64`/`osx-arm64` builds require the .NET 10.0 Runtime (the base
+runtime; the Desktop Runtime also works but is not required).
+
+## Reliability
+
+- **External unmounts are clean.** `umount`, `fusermount3 -u` and Finder eject close the FUSE device;
+  `fuse_loop` reports `ENODEV`, which is now treated as a normal end of the session once `init` ran.
+  The process exits with code 0 and logs "The volume was unmounted externally." instead of
+  reporting a failure.
+- **`readdir` on a file returns `ENOTDIR`.** Directory listings now distinguish a missing path
+  (`ENOENT`) from a path that is a regular file (`ENOTDIR`), matching POSIX expectations.
+- **No duplicate FUSE failure reports.** A failed session is logged once at the right severity by
+  the mount layer; the front end no longer emits a second error report for the same failure.
+- **Correct FUSE entry point per platform.** Linux uses `fuse_new` with the `fuse_new_31` fallback;
+  macOS tries `fuse_new_31` first, matching macFUSE's exported symbols.
+
+## FuseSharp library
+
+- **Published as `LibFuseSharp`.** The standalone library multi-targets `net8.0`, `net9.0` and
+  `net10.0`, carries full NuGet metadata (MIT license, project/repository URLs, tags, README). The
+  app consumes the package from 1.5.2 onward.
+- **Side-effect-free capability probe.** `FuseAvailability.Check(out libraryPath, candidates,
+  printInstructions: false)` lets callers test FUSE availability without printing installation
+  guidance.
+- **External unmounts are clean.** `fuse_loop` returning `ENODEV` after `init` ends the session with
+  code 0 instead of reporting a failure.
+- See the [FuseSharp page](https://purelogiccode.github.io/SimpleXisoDrive/FuseSharp.html) and the
+  [LibFuseSharp README](https://github.com/purelogiccode/LibFuseSharp) for installation and API
+  details.
+
+## Dependencies
+
+- CHDSharp **1.5.2**, XISOSharp **1.4.4**.
+- Microsoft.NET.Test.Sdk **18.11.0**, xunit.runner.visualstudio **4.0.1**.
+- Meziantou.Analyzer **3.0.317**, Roslynator.Analyzers **5.0.1**.
+
+## Documentation and automation
+
+- **Two published renderings, one source.** `docs/` is the single source of truth: `pages.yml`
+  builds and deploys the GitHub Pages site, and `wiki.yml` mirrors the pages (including
+  `_Sidebar.md`) to the GitHub wiki. Both side menus are kept in sync.
+- **Security policy and reporting.** Added `SECURITY.md`; private vulnerability reporting, code
+  scanning, secret scanning and push protection are enabled on the repository.
+- **Release runbook.** Added `AGENTS.md` with the complete checklist for cutting and deploying a
+  release.
+- **Docs corrected.** Release history now records 1.5.0 as released, and version, test-count,
+  dependency and bundle-content references were refreshed for 1.5.1.
+
+## Tests
+
+- The suite grew to **484 tests**: 395 in `SimpleXisoDrive.Tests` and 89 in
+  `SimpleXisoDrive.Unix.Tests`. New `FuseSessionResultTests` cover clean external unmounts
+  (`ENODEV` after `init`), real loop failures and zero-result sessions.
+
 # What's New in 1.5.0 (since 1.4.0)
 
 Prepared for the `release_1.5.0` tag. Framework-dependent `win-x64`/`win-arm64`,

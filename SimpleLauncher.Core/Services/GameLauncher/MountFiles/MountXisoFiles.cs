@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using SimpleLauncher.Core.Interfaces;
-using SimpleLauncher.Core.Services.ExternalToolLauncher;
+using SimpleLauncher.Core.Services.BundledTools;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
@@ -219,11 +219,11 @@ public class MountXisoFiles : IMountXisoFiles
 
     private static string? GetToolPath()
     {
-        var runtimeIdentifier = ExternalToolLauncherService.GetPlatformRuntimeIdentifier();
+        var runtimeIdentifier = BundledToolPathResolver.GetPlatformRuntimeIdentifier();
         if (runtimeIdentifier == null) return null;
 
         return Path.Combine("tools", "SimpleXisoDrive", runtimeIdentifier,
-            ExternalToolLauncherService.GetPlatformExecutableName("SimpleXisoDrive"));
+            BundledToolPathResolver.GetPlatformExecutableName("SimpleXisoDrive"));
     }
 
     /// <summary>

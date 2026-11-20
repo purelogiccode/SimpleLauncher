@@ -35,7 +35,7 @@ namespace SimpleLauncher.Avalonia.Services.SettingsDatabase;
 ///     On failure the new database file (if newly created) is deleted and
 ///     legacy files are left untouched, so the app falls back to the legacy readers and
 ///     the next launch retries. An existing valid database is never deleted.
-///     Mirrors <c>WpfLegacyMigrator</c>; both apps share the same database format.
+///     Mirrors <c>WpfLegacyMigrator</c>; the shipped app and the WPF reference share the same database format.
 /// </remarks>
 public static class AvaloniaLegacyMigrator
 {

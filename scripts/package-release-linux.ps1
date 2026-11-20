@@ -27,13 +27,12 @@ Windows. The payload also carries LICENSE.txt, README.md and WhatsNew.md. Window
 bundled tools are pruned:
   * tools/**/*.exe and tools/**/*.dll (Windows binaries)
   * the other architecture's 7-Zip binaries
-  * the other platform payloads of tools/<tool>/<rid>/ for XISOStudio, CHDStudio, RVZStudio,
-    CHDMounter, FindRomCover, RetroAchievementsSharp, SimpleXisoDrive and SimpleZipDrive
-    (one payload per OS/architecture ships in the repo; only the matching linux-<arch> folder
-    is kept)
-XISOStudio, CHDStudio, RVZStudio, CHDMounter, FindRomCover, RetroAchievementsSharp,
-SimpleXisoDrive, SimpleZipDrive and 7-Zip ship per-architecture extension-less binaries on
-Linux; the matching ones are kept and marked executable.
+  * the other platform payloads of tools/<tool>/<rid>/ for CHDMounter, RetroAchievementsSharp,
+    SimpleXisoDrive and SimpleZipDrive (one payload per OS/architecture ships in the repo; only
+    the matching linux-<arch> folder is kept)
+CHDMounter, RetroAchievementsSharp, SimpleXisoDrive, SimpleZipDrive and 7-Zip ship
+per-architecture extension-less binaries on Linux; the matching ones are kept and marked
+executable.
 
 ZIP files cannot store Unix permissions reliably when written from Windows, so the
 script writes the permission bits into the ZIP entries' external attributes
@@ -177,7 +176,7 @@ function Invoke-DotnetPublish {
     }
 }
 
-# Removes the Windows-only bundled tools from the Linux payload and returns the number removed.
+# Removes the Windows-only bundled helpers from the Linux payload and returns the number removed.
 function Remove-WindowsOnlyFiles {
     param(
         [Parameter(Mandatory = $true)][string]$PublishDir,
@@ -195,7 +194,7 @@ function Remove-WindowsOnlyFiles {
             if ($file.Extension -in @('.exe', '.dll')) {
                 $remove = $true
             }
-            elseif ($relative -match '^tools/(?:XISOStudio|CHDStudio|RVZStudio|CHDMounter|FindRomCover|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
+            elseif ($relative -match '^tools/(?:CHDMounter|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
                 if ($Matches[1] -ne $Rid) { $remove = $true }
             }
             elseif ($Rid -eq 'linux-x64' -and $relative -eq 'tools/SevenZip/7zz_arm64') {
@@ -237,30 +236,16 @@ function Test-ExecutableEntry {
 
     if ($Rid -eq 'linux-arm64') {
         return $RelativePath -eq 'tools/SevenZip/7zz_arm64' -or
-            $RelativePath -eq 'tools/FindRomCover/linux-arm64/FindRomCover' -or
-            $RelativePath -eq 'tools/RetroAchievementsSharp/linux-arm64/RetroAchievementsSharp.Cli' -or
-            $RelativePath -eq 'tools/XISOStudio/linux-arm64/XISOStudio' -or
-            $RelativePath -eq 'tools/XISOStudio/linux-arm64/7zz_linux_arm64' -or
-            $RelativePath -eq 'tools/CHDStudio/linux-arm64/CHDStudio' -or
-            $RelativePath -eq 'tools/CHDStudio/linux-arm64/7zz' -or
-            $RelativePath -eq 'tools/RVZStudio/linux-arm64/RVZStudio' -or
-            $RelativePath -eq 'tools/RVZStudio/linux-arm64/7za_arm64' -or
             $RelativePath -eq 'tools/CHDMounter/linux-arm64/CHDMounter' -or
+            $RelativePath -eq 'tools/RetroAchievementsSharp/linux-arm64/RetroAchievementsSharp.Cli' -or
             $RelativePath -eq 'tools/SimpleXisoDrive/linux-arm64/SimpleXisoDrive' -or
             $RelativePath -eq 'tools/SimpleZipDrive/linux-arm64/SimpleZipDrive' -or
             $RelativePath -eq 'tools/SimpleZipDrive/linux-arm64/7zzs'
     }
 
     return $RelativePath -eq 'tools/SevenZip/7zz' -or
-        $RelativePath -eq 'tools/FindRomCover/linux-x64/FindRomCover' -or
-        $RelativePath -eq 'tools/RetroAchievementsSharp/linux-x64/RetroAchievementsSharp.Cli' -or
-        $RelativePath -eq 'tools/XISOStudio/linux-x64/XISOStudio' -or
-        $RelativePath -eq 'tools/XISOStudio/linux-x64/7zz_linux_x64' -or
-        $RelativePath -eq 'tools/CHDStudio/linux-x64/CHDStudio' -or
-        $RelativePath -eq 'tools/CHDStudio/linux-x64/7zz' -or
-        $RelativePath -eq 'tools/RVZStudio/linux-x64/RVZStudio' -or
-        $RelativePath -eq 'tools/RVZStudio/linux-x64/7za' -or
         $RelativePath -eq 'tools/CHDMounter/linux-x64/CHDMounter' -or
+        $RelativePath -eq 'tools/RetroAchievementsSharp/linux-x64/RetroAchievementsSharp.Cli' -or
         $RelativePath -eq 'tools/SimpleXisoDrive/linux-x64/SimpleXisoDrive' -or
         $RelativePath -eq 'tools/SimpleZipDrive/linux-x64/SimpleZipDrive' -or
         $RelativePath -eq 'tools/SimpleZipDrive/linux-x64/7zzs'
