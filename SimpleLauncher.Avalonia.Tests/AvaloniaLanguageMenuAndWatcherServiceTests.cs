@@ -65,45 +65,53 @@ public class AvaloniaLanguageMenuAndWatcherServiceTests
     [Fact]
     public void UpdateCheckedByTag_ChecksExactlyTheMatchingItem()
     {
-        HeadlessAvalonia.EnsureInitialized();
-        var items = new[]
+        // Avalonia controls must be created on the dispatcher thread: constructing a
+        // MenuItem concurrently with another UI test races the property registry.
+        HeadlessAvalonia.RunOnUiThread(() =>
         {
-            new MenuItem { Tag = "100" },
-            new MenuItem { Tag = "200" },
-            new MenuItem { Tag = "300" }
-        };
-        AvaloniaMenuCheckMarkService.UpdateCheckedByTag(items, 200);
+            var items = new[]
+            {
+                new MenuItem { Tag = "100" },
+                new MenuItem { Tag = "200" },
+                new MenuItem { Tag = "300" }
+            };
+            AvaloniaMenuCheckMarkService.UpdateCheckedByTag(items, 200);
 
-        Assert.False(items[0].IsChecked);
-        Assert.True(items[1].IsChecked);
-        Assert.False(items[2].IsChecked);
+            Assert.False(items[0].IsChecked);
+            Assert.True(items[1].IsChecked);
+            Assert.False(items[2].IsChecked);
+        });
     }
 
     [Fact]
     public void UpdateCheckedByTag_NonNumericTagsAreNeverChecked()
     {
-        HeadlessAvalonia.EnsureInitialized();
-        var items = new[] { new MenuItem { Tag = "abc" }, new MenuItem { Tag = null } };
-        AvaloniaMenuCheckMarkService.UpdateCheckedByTag(items, 100);
+        HeadlessAvalonia.RunOnUiThread(() =>
+        {
+            var items = new[] { new MenuItem { Tag = "abc" }, new MenuItem { Tag = null } };
+            AvaloniaMenuCheckMarkService.UpdateCheckedByTag(items, 100);
 
-        Assert.All(items, i => Assert.False(i.IsChecked));
+            Assert.All(items, i => Assert.False(i.IsChecked));
+        });
     }
 
     [Fact]
     public void UpdateCheckedByName_ChecksExactlyTheMatchingItem()
     {
-        HeadlessAvalonia.EnsureInitialized();
-        var items = new[]
+        HeadlessAvalonia.RunOnUiThread(() =>
         {
-            new MenuItem { Name = "Square" },
-            new MenuItem { Name = "Wider" },
-            new MenuItem { Name = "Taller" }
-        };
-        AvaloniaMenuCheckMarkService.UpdateCheckedByName(items, "Taller");
+            var items = new[]
+            {
+                new MenuItem { Name = "Square" },
+                new MenuItem { Name = "Wider" },
+                new MenuItem { Name = "Taller" }
+            };
+            AvaloniaMenuCheckMarkService.UpdateCheckedByName(items, "Taller");
 
-        Assert.False(items[0].IsChecked);
-        Assert.False(items[1].IsChecked);
-        Assert.True(items[2].IsChecked);
+            Assert.False(items[0].IsChecked);
+            Assert.False(items[1].IsChecked);
+            Assert.True(items[2].IsChecked);
+        });
     }
 
     // ── AvaloniaGameFileWatcherService ──

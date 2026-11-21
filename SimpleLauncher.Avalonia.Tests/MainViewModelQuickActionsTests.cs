@@ -346,6 +346,17 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
+    public async Task NavigateToAllGames_ClearsStoredSystemInformation()
+    {
+        _viewModel.SetSystemInformation([new SystemInfoLine { Text = "System Folder: C:\\roms" }]);
+
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+
+        Assert.Empty(_viewModel.SystemInfoLines);
+        Assert.False(_viewModel.IsSystemInfoVisible);
+    }
+
+    [Fact]
     public void ShowSystemInformation_VisibleUntilLetterFilterLoadsGames()
     {
         var lines = new List<SystemInfoLine>

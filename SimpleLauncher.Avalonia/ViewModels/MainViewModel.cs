@@ -1917,6 +1917,9 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
             IsMixedView = true;
             SelectedSystem = "";
             LetterFilter = "";
+            // No system is selected in the mixed view, so the status-bar info button
+            // must not open a previous system's configuration summary.
+            SystemInfoLines = [];
             _allSystems = _systemManager.LoadSystems();
 
             var games = await RunViewLoadAsync(
