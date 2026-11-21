@@ -330,6 +330,22 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
+    public void SetSystemInformation_StoresLinesWithoutCoveringGames()
+    {
+        var lines = new List<SystemInfoLine> { new() { Text = "System Folder: C:\\roms" } };
+
+        _viewModel.SetSystemInformation(lines);
+
+        Assert.Same(lines, _viewModel.SystemInfoLines);
+        Assert.False(_viewModel.IsSystemInfoVisible);
+
+        // The status-bar info button opens the stored summary explicitly.
+        _viewModel.ShowSystemInformation(_viewModel.SystemInfoLines);
+
+        Assert.True(_viewModel.IsSystemInfoVisible);
+    }
+
+    [Fact]
     public void ShowSystemInformation_VisibleUntilLetterFilterLoadsGames()
     {
         var lines = new List<SystemInfoLine>
@@ -477,8 +493,8 @@ public class MainViewModelQuickActionsTests : IDisposable
     public async Task PickRandomGame_ReplacesViewWithSingleGameFromSelectedSystem()
     {
         await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
-        // A selected system shows the info panel; the random pick must replace it with
-        // the picked game's card (the panel is opaque and covers the browser).
+        // The explicit info panel covers the browser; the random pick must replace it
+        // with the picked game's card.
         _viewModel.ShowSystemInformation([new SystemInfoLine { Text = "System Folder: C:\\roms" }]);
         Assert.True(_viewModel.IsSystemInfoVisible);
 

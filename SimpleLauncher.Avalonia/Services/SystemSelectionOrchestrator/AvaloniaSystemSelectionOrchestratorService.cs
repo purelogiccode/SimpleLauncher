@@ -91,6 +91,8 @@ internal class AvaloniaSystemSelectionOrchestratorService
             {
                 _host.IsPlayTimeVisible = false;
                 _host.PlayTime = "00:00:00";
+                // The info button must not keep showing the previous system's summary.
+                _host.SetSystemInformation([]);
                 _logger.Debug("[AvaloniaSystemSelectionOrchestrator] No system selected; play time display was reset");
                 return;
             }
@@ -105,6 +107,7 @@ internal class AvaloniaSystemSelectionOrchestratorService
 
                 _host.IsPlayTimeVisible = false;
                 _host.PlayTime = "00:00:00";
+                _host.SetSystemInformation([]);
                 return;
             }
 
@@ -147,27 +150,28 @@ internal class AvaloniaSystemSelectionOrchestratorService
                 "[AvaloniaSystemSelectionOrchestrator] System '{System}' selected; navigating the game browser",
                 systemName);
 
-            // Awaited: the navigation shows the loading overlay and scans the system's
-            // folders; the info panel below must only appear once the scan is done.
+            // Awaited: the navigation shows the loading overlay, scans the system's
+            // folders and displays the complete game list immediately - no letter
+            // button ("All") is required after selecting a system.
             await _host.NavigateToSystemAsync(systemName);
 
             // A newer selection can land while this navigation is still scanning (the
-            // ComboBox already shows it): do not overwrite the newer system's info panel
-            // and emulator list with this superseded selection's data.
+            // ComboBox already shows it): do not overwrite the newer system's summary
+            // data and emulator list with this superseded selection's data.
             var currentSelection = _host.GetSelectedSystem();
             if (!string.Equals(currentSelection, systemName, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.Debug(
-                    "[AvaloniaSystemSelectionOrchestrator] System '{System}' navigation was superseded by '{Current}'; skipping the info panel update",
+                    "[AvaloniaSystemSelectionOrchestrator] System '{System}' navigation was superseded by '{Current}'; skipping the summary update",
                     systemName, currentSelection);
                 return;
             }
 
-            // WPF parity: display the selected system's configuration summary. It stays
-            // visible until the user loads games with the letter buttons (ShowGames
-            // hides it again — in WPF the info panel is replaced by the game buttons).
+            // Keep the configuration summary available without covering the games:
+            // the status-bar info button displays these lines on demand. Every game
+            // load (letter filter, search, favorites) hides the overlay again.
             if (_displaySystemInformation is { } systemInfoDisplay)
-                _host.ShowSystemInformation(systemInfoDisplay.BuildSystemInfoLines(selectedManager));
+                _host.SetSystemInformation(systemInfoDisplay.BuildSystemInfoLines(selectedManager));
 
             // WPF parity: restart the file watcher for the selected system
             // so only the current system's folders are monitored.

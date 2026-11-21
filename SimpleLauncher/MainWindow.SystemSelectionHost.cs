@@ -68,6 +68,13 @@ public partial class MainWindow : ISystemSelectionHost
         ResetPaginationButtons();
     }
 
+    Task ISystemSelectionHost.LoadAllGamesAsync(CancellationToken cancellationToken)
+    {
+        // The "All" letter-button path: reuses the cache warmed by the selection
+        // pipeline and replaces the summary with the rendered game buttons.
+        return LoadGameFilesAsync(null, null, cancellationToken);
+    }
+
     void ISystemSelectionHost.UpdateSortOrderButtonUi()
     {
         UpdateSortOrderButtonUi();

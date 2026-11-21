@@ -30,17 +30,16 @@ internal interface ISystemSelectionHost
     void SetEmulatorComboBoxItems(IReadOnlyList<string> emulatorNames);
 
     /// <summary>
-    ///     Navigates the game browser to the given system (empty string = All Games).
-    ///     Awaited so the selection pipeline can show the loading overlay and display the
-    ///     configuration summary only after the scan finished.
+    ///     Navigates the game browser to the given system (empty string = All Games) and
+    ///     displays its complete game list immediately; no letter button is required.
     /// </summary>
     Task NavigateToSystemAsync(string systemName);
 
     /// <summary>
-    ///     Displays the selected system's configuration summary in the game browser
-    ///     (WPF DisplaySystemInformation parity). Hidden again as soon as games load.
+    ///     Stores the selected system's configuration summary for the status-bar info
+    ///     button without covering the games that were just loaded.
     /// </summary>
-    void ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines);
+    void SetSystemInformation(IReadOnlyList<SystemInfoLine> lines);
 
     /// <summary>Rebuilds the sidebar from system.xml and refreshes its count badges.</summary>
     void RefreshSidebar();

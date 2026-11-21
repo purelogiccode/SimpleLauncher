@@ -150,6 +150,8 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 
         _host.Verify(h => h.NavigateToSystemAsync(It.IsAny<string>()), Times.Never);
         _host.Verify(h => h.SetEmulatorComboBoxItems(It.IsAny<IReadOnlyList<string>>()), Times.Never);
+        _host.Verify(h => h.SetSystemInformation(
+            It.Is<IReadOnlyList<SystemInfoLine>>(lines => lines.Count == 0)), Times.Once);
     }
 
     [Fact]
@@ -164,10 +166,8 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
     }
 
     [Fact]
-    public void HandleSystemSelectionChanged_ShowsSystemInformation()
+    public void HandleSystemSelectionChanged_LoadsGamesWithoutCoveringThemWithSummary()
     {
-        // WPF DisplaySystemInformation parity: the selected system's configuration
-        // summary is shown until the user loads games with the letter buttons.
         var service = new AvaloniaSystemSelectionOrchestratorService(
             _systemManager, _loadingOrchestrator, _logger.Object, new AvaloniaDisplaySystemInformation());
         service.Initialize(_host.Object);
@@ -175,7 +175,11 @@ public class AvaloniaSystemSelectionOrchestratorServiceTests : IDisposable
 
         service.HandleSystemSelectionChanged();
 
-        _host.Verify(h => h.ShowSystemInformation(
+        // Selecting a system must load its complete game list (the navigation call
+        // renders the games) and only store the configuration summary for the
+        // status-bar info button, never covering the games automatically.
+        _host.Verify(h => h.NavigateToSystemAsync("NES"), Times.Once);
+        _host.Verify(h => h.SetSystemInformation(
             It.Is<IReadOnlyList<SystemInfoLine>>(lines =>
                 lines.Any(l => l.Text.Contains("System Folder", StringComparison.Ordinal)))), Times.Once);
     }

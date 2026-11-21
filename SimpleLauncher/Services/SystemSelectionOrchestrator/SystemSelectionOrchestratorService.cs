@@ -364,6 +364,12 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
                         selectedManager.FileFormatsToSearch);
 
                     _host.ResetPaginationButtons();
+
+                    // Show the complete game list immediately: selecting a system must
+                    // not leave the configuration summary on screen until the user
+                    // clicks the "All" letter button. The cache was populated above,
+                    // so this renders without a second disk scan.
+                    await _host.LoadAllGamesAsync(cancellationToken);
                 }
                 catch (OperationCanceledException ex)
                 {

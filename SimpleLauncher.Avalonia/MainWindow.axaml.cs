@@ -1291,6 +1291,24 @@ internal partial class MainWindow : Window, IPaginationHost
         }
     }
 
+    /// <summary>
+    ///     Toggles the selected system's configuration summary over the game browser.
+    ///     Games load automatically on selection, so the summary is opt-in here; a game
+    ///     load (letter filter, search, favorites) hides it again.
+    /// </summary>
+    private void SystemInfoButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsSystemInfoVisible)
+        {
+            _viewModel.IsSystemInfoVisible = false;
+            return;
+        }
+
+        if (_viewModel.SystemInfoLines.Count == 0) return;
+
+        _viewModel.ShowSystemInformation(_viewModel.SystemInfoLines);
+    }
+
     private void UpdateLetterBarSelection(string letter)
     {
         foreach (var child in LetterFilterBar.Children)

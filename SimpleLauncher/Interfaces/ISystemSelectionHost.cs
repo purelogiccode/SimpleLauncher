@@ -125,6 +125,14 @@ public interface ISystemSelectionHost
     void ResetPaginationButtons();
 
     /// <summary>
+    ///     Loads and renders every game of the currently selected system (the "All"
+    ///     letter-button path), so a system selection never stops at the summary screen.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task LoadAllGamesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
     ///     Updates the sort order toggle button UI to reflect the current sort order.
     /// </summary>
     void UpdateSortOrderButtonUi();

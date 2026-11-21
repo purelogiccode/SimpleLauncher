@@ -1500,6 +1500,20 @@
                             <TextBlock Text="{Binding SelectedSystem, FallbackValue=''}"
                                        Foreground="{DynamicResource TextMutedBrush}"
                                        FontSize="11" VerticalAlignment="Center" />
+                            <!-- Configuration summary toggle: games load automatically on
+                                 selection, so the summary is opened explicitly here. -->
+                            <Button x:Name="SystemInfoButton"
+                                    Classes="toolbar-icon"
+                                    Padding="2" Margin="2,0,0,0"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="{ext:Translate Info}"
+                                    AutomationProperties.AutomationId="SystemInfoButton"
+                                    ToolTip.Tip="{ext:Translate Info}"
+                                    Click="SystemInfoButton_Click">
+                                <Image Source="avares://SimpleLauncher.Avalonia/images/info.png"
+                                       Width="13" Height="13"
+                                       RenderOptions.BitmapInterpolationMode="HighQuality" />
+                            </Button>
                         </StackPanel>
                         <!-- Right: Play-time display (WPF IsPlayTimeVisible / PlayTime parity) -->
                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4"

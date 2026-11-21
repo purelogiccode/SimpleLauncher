@@ -27,6 +27,9 @@
   the install folder after uninstalling to remove everything.
 - **Portable ZIP still available** - the ZIP remains the no-installer option, and both the ZIP and
   installer builds use the built-in updater.
+- **Games load on selection** - choosing a system now shows its complete game list immediately
+  instead of stopping on the configuration summary until **All** is clicked. The summary is still
+  one click away from the status-bar info button.
 - **Tooltips everywhere** - every interactive control now shows its accessible name/help text as
   a tooltip, so the UI explains itself without extra documentation.
 - **Better bug reports** - all logging goes through Serilog, and Warning/Error events reach the

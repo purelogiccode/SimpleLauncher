@@ -45,8 +45,8 @@ public class AvaloniaDisplaySystemInformationTests
                     .ConvertAll(static l => l.Text)
                 ;
 
-            Assert.StartsWith("Click on the letter buttons above", lines[0], StringComparison.Ordinal);
-            Assert.Contains(lines, l => l.StartsWith("System Folder:", StringComparison.Ordinal));
+            Assert.StartsWith("System Folder:", lines[0], StringComparison.Ordinal);
+            Assert.DoesNotContain(lines, l => l.Contains("letter buttons", StringComparison.OrdinalIgnoreCase));
             Assert.Contains(lines, l => l.StartsWith("System Image Folder:", StringComparison.Ordinal));
             Assert.Contains(lines,
                 l => l.StartsWith("Extension to Search in the System Folder:", StringComparison.Ordinal));

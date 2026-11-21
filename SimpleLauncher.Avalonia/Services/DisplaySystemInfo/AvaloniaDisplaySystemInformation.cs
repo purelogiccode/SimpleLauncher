@@ -75,9 +75,9 @@ internal class AvaloniaDisplaySystemInformation
     }
 
     /// <summary>
-    ///     Builds the flat list of display lines shown when a system is selected,
-    ///     mirroring the WPF <c>DisplaySystemInformation.DisplaySystemInfoAsync</c>
-    ///     text block (hint line, configuration lines, one block per emulator).
+    ///     Builds the flat list of display lines for the status-bar info panel
+    ///     (configuration lines plus one block per emulator, WPF
+    ///     <c>DisplaySystemInformation.DisplaySystemInfoAsync</c> parity).
     ///     Invalid folder/emulator paths are flagged so the UI renders them in red.
     /// </summary>
     public List<SystemInfoLine> BuildSystemInfoLines(SystemManagerConfig config)
@@ -86,12 +86,6 @@ internal class AvaloniaDisplaySystemInformation
 
         var lines = new List<SystemInfoLine>
         {
-            new()
-            {
-                Text = Localized("Clickontheletterbuttonsabove",
-                    "Click on the letter buttons above to see the games")
-            },
-            Blank(),
             new()
             {
                 Text = $"{Localized("SystemFolder", "System Folder")}: {string.Join("; ", info.SystemFolders)}",

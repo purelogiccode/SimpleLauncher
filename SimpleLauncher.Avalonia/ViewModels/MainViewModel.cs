@@ -121,16 +121,16 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
     [ObservableProperty] public partial bool IsShowingFavorites { get; set; }
 
     /// <summary>
-    ///     True while the selected system's configuration summary is shown in the game
-    ///     browser (WPF DisplaySystemInformation parity). Games are hidden until the user
-    ///     picks a letter filter or another view loads games.
+    ///     True while the selected system's configuration summary is shown over the game
+    ///     browser. Selecting a system loads its games immediately and only stores the
+    ///     summary; the user opens it explicitly with the status-bar info button.
     /// </summary>
     [ObservableProperty]
     public partial bool IsSystemInfoVisible { get; set; }
 
     /// <summary>
     ///     Display lines of the selected system's configuration summary (empty when none
-    ///     is shown). Populated by <see cref="ShowSystemInformation" />.
+    ///     is shown). Populated by <see cref="SetSystemInformation" />.
     /// </summary>
     [ObservableProperty]
     public partial IReadOnlyList<SystemInfoLine> SystemInfoLines { get; set; } = [];
@@ -634,9 +634,18 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
     }
 
     /// <summary>
-    ///     Displays the selected system's configuration summary in the game browser
-    ///     (WPF DisplaySystemInformation parity). Replaced as soon as games are loaded
-    ///     (letter filter, search, favorites, …).
+    ///     Stores the selected system's configuration summary without displaying it:
+    ///     selecting a system loads its games immediately, and the summary stays one
+    ///     click away through the status-bar info button.
+    /// </summary>
+    public void SetSystemInformation(IReadOnlyList<SystemInfoLine> lines)
+    {
+        SystemInfoLines = lines;
+    }
+
+    /// <summary>
+    ///     Displays the stored configuration summary over the game browser (invoked
+    ///     explicitly by the status-bar info button). Any game load hides it again.
     /// </summary>
     public void ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines)
     {

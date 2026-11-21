@@ -38,11 +38,11 @@ internal partial class MainWindow : ISystemSelectionHost
         await _viewModel.NavigateToSystemCommand.ExecuteAsync(systemName);
     }
 
-    void ISystemSelectionHost.ShowSystemInformation(IReadOnlyList<SystemInfoLine> lines)
+    void ISystemSelectionHost.SetSystemInformation(IReadOnlyList<SystemInfoLine> lines)
     {
-        // WPF parity: the configuration summary replaces the game grid until the
-        // user loads games with the letter buttons (ShowGames hides it again).
-        _viewModel.ShowSystemInformation(lines);
+        // Selecting a system now shows its games immediately, so the configuration
+        // summary is only stored here; the status-bar info button displays it.
+        _viewModel.SetSystemInformation(lines);
     }
 
     void ISystemSelectionHost.RefreshSidebar()
