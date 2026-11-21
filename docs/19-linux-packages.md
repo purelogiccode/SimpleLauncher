@@ -104,6 +104,12 @@ Linux ARM64 is verified on the Azure `linuxarm-test` host (Ubuntu 24.04.5, Neove
   `org.freedesktop.Sdk//25.08`; CI still builds it and structurally verifies the aarch64
   commit. The release pipeline itself builds on x86_64.
 
+**Bundle gate 2026-11-21 (commit `95a5882c`):** the CI-built x64 and ARM64 ZIP/tar.gz/AppImage/
+Flatpak artifacts were checked on both hosts. The ZIP/tar payloads had the expected ELF
+architecture and executable bits, the AppImages extracted with `AppRun` +
+`usr/bin/SimpleLauncher.Avalonia`, and both Flatpaks installed/imported with the correct
+`com.purelogiccode.SimpleLauncher` ref. Both rented hosts were deallocated afterwards.
+
 ## Building the bundles
 
 The portable ZIP/tarball are produced by `scripts/package-release-linux.ps1`; the

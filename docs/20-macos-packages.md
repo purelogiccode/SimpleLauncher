@@ -138,5 +138,8 @@ the Cloudflare R2 fallback next to the Windows and Linux assets.
 * macOS UI sounds use the system `/usr/bin/afplay` (CoreAudio) backend on the existing
   audio thread; a harness confirmed it starts and plays `shutter.mp3`. An audible check on
   physical speakers remains.
+* **Bundle gate 2026-11-21 (commit `95a5882c`):** the CI-built DMG mounted cleanly, `hdiutil
+  verify` passed, the executable was Mach-O arm64, the ad-hoc signature verified, the bundle
+  version was 5.8.4, and the payload contained no `tools/` or `Updater`.
 * Still to exercise on a future run: Xemu/Vita3K installs end-to-end, gamepad navigation
   and RetroAchievements hashing (the tool has no macOS payload).

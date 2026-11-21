@@ -20,6 +20,25 @@ RetroAchievements → a download → a store-game scan covers most of this check
 
 ---
 
+## Release bundle gate - 2026-11-21
+
+Validated the artifacts produced by `.github/workflows/package-dry-run.yml` for commit
+`95a5882c` (version 5.8.4). This gate checks packaging, not the application UI.
+
+| Platform | Assets checked | Result |
+|---|---|---|
+| Windows x64 (this PC) | portable ZIP + Inno Setup installer (silent install, payload, PE x64, uninstall, user-data retention) | PASS |
+| Windows ARM64 (`winarm-test`) | portable ZIP + installer (payload, PE ARM64, uninstall, user-data retention) | PASS |
+| Linux x64 (`linuxgpu`) | ZIP, tar.gz, AppImage, Flatpak (ELF x86-64, exec bits, AppImage extract layout, Flatpak import/ref) | PASS |
+| Linux ARM64 (`linuxarm-test`) | ZIP, tar.gz, AppImage, Flatpak (ELF aarch64, exec bits, AppImage extract layout, Flatpak import/ref) | PASS |
+| macOS ARM64 (NoMac M5 Pro) | DMG (hdiutil mount/verify, Mach-O arm64, ad-hoc signature, version, no tools/Updater) | PASS |
+
+The Windows installer now bootstraps the .NET 11 **base** runtime (not the Desktop Runtime), removes
+the legacy `SimpleLauncher.Avalonia.exe` and shortcut on upgrade, and keeps user data on uninstall.
+The rented Azure hosts were deallocated and the NoMac session stopped after the checks.
+
+---
+
 ## 1. Startup & app lifecycle
 
 - [X] **First-run flow** (`StartupInitializationService`) — with an empty config, the app auto-scans the machine for installed games (Steam, Epic, GOG, Microsoft Store, etc.) and creates the "Microsoft Windows" system **only when the scan finds games** (2026-11-19 fix); the first-run wizard (Welcome → Add System → Finish) appears when the scan finds none. Add System embeds the Easy Mode view; Back/Next/Skip, step progress, download progress/Stop and the error banner all work; Skip finishes without a system; with an existing config it loads straight into the main window. Verified 2026-11-19: Windows x64 user pass with an empty profile (no store games) and Linux x64 with `fixture.py empty` (no store scan); see the wizard section below.
