@@ -29,9 +29,9 @@ public class ImageUrlConverter : IValueConverter
             {
                 return new BitmapImage(new Uri(url, UriKind.Absolute));
             }
-            catch
+            catch (Exception ex)
             {
-                // If URL is invalid, return placeholder
+                Log.Debug(ex, "Invalid image URL '{Url}'; using the placeholder image", url);
                 return PlaceholderImage;
             }
         }
@@ -62,9 +62,9 @@ public class ImageUrlConverter : IValueConverter
             return new BitmapImage(new Uri("pack://application:,,,/SimpleLauncher;component/images/noimage.png",
                 UriKind.Absolute));
         }
-        catch
+        catch (Exception ex)
         {
-            // If the image doesn't exist, create a simple gray placeholder
+            Log.Debug(ex, "Bundled placeholder image is unavailable; drawing a gray placeholder");
             var drawingVisual = new DrawingVisual();
             using (var drawingContext = drawingVisual.RenderOpen())
             {

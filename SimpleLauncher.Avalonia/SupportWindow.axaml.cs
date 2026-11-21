@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for submitting support requests and bug reports.
 /// </summary>
-public partial class SupportWindow : Window
+internal partial class SupportWindow : Window
 {
     private readonly SupportViewModel _viewModel;
     private readonly PropertyChangedEventHandler _viewModelPropertyChangedHandler;

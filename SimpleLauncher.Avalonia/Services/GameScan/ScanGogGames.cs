@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed GOG games via the Windows uninstall registry and creates shortcuts for them.
 /// </summary>
-public class ScanGogGames : IGamePlatformScanner
+internal class ScanGogGames : IGamePlatformScanner
 {
     /// <summary>
     ///     Scans the registry for GOG.com installations and creates launch shortcuts and cover images.

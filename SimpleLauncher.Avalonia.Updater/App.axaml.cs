@@ -68,7 +68,6 @@ public class App : Application
             desktop.Exit += (_, _) =>
             {
                 MainWindow.DisposeHttpClient();
-                BugReportService.Dispose();
                 Log.CloseAndFlush();
             };
 
@@ -81,10 +80,7 @@ public class App : Application
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         if (e.ExceptionObject is Exception ex)
-        {
-            Log.Fatal(ex, "Unhandled exception");
-            _ = BugReportService.ReportBugAsync(ex, "Unhandled exception in Updater");
-        }
+            Log.Fatal(ex, "Unhandled exception in the updater");
     }
 
     /// <summary>
@@ -93,8 +89,7 @@ public class App : Application
     /// </summary>
     private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        Log.Error(e.Exception, "Unhandled UI thread exception");
-        _ = BugReportService.ReportBugAsync(e.Exception, "Unhandled UI thread exception");
+        Log.Error(e.Exception, "Unhandled UI thread exception in the updater");
 
         // Mark it observed so the process survives long enough to show the dialog and shut down.
         e.Handled = true;
@@ -135,8 +130,7 @@ public class App : Application
 
     private static void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        Log.Error(e.Exception, "Unobserved task exception");
-        _ = BugReportService.ReportBugAsync(e.Exception, "Unobserved task exception in Updater");
+        Log.Error(e.Exception, "Unobserved task exception in the updater");
         e.SetObserved();
     }
 }

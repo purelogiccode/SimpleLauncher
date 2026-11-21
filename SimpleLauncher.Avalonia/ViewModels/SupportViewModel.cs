@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the support request submission window.
 /// </summary>
-public partial class SupportViewModel : ObservableObject
+internal partial class SupportViewModel : ObservableObject
 {
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;

@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Flycast emulator configuration injection window.
 /// </summary>
-public partial class InjectFlycastConfigViewModel : ObservableObject
+internal partial class InjectFlycastConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

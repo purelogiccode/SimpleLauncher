@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed Amazon Games and creates shortcuts for them.
 /// </summary>
-public class ScanAmazonGames : IGamePlatformScanner
+internal class ScanAmazonGames : IGamePlatformScanner
 {
     private readonly ILogger _logger;
 

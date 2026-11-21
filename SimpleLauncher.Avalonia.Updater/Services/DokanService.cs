@@ -208,7 +208,6 @@ internal class DokanService
         catch (Exception ex)
         {
             Log.Error(ex, "Error downloading or installing Dokan");
-            await BugReportService.ReportBugAsync(ex, "Error downloading or installing Dokan");
             LogMessage?.Invoke(this, new EventArgs<string>($"Error during Dokan installation: {ex.Message}"));
             throw;
         }

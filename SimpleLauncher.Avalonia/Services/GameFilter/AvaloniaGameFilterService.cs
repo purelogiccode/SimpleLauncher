@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameFilter;
 ///     search query, show-games visibility). Extracted from MainViewModel for testability
 ///     and reuse, mirroring the WPF GameFilterService.
 /// </summary>
-public partial class AvaloniaGameFilterService
+internal partial class AvaloniaGameFilterService
 {
     private readonly IMameDataService _mameData;
     private readonly SettingsManagerService _settings;

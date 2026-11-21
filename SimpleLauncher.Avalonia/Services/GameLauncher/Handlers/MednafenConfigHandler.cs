@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Mednafen (multi-system) emulator before launching a game.
 /// </summary>
-public class MednafenConfigHandler : IEmulatorConfigHandler
+internal class MednafenConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

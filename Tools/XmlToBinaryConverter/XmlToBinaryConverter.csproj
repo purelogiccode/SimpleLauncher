@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -6,6 +6,11 @@
         <UseWPF>true</UseWPF>
         <LangVersion>15</LangVersion>
         <Nullable>enable</Nullable>
+
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+
+        <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <ApplicationIcon>icon\file.ico</ApplicationIcon>
         <Company>PureLogicCode.com</Company>
         <IsPackable>false</IsPackable>

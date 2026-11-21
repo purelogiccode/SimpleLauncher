@@ -336,9 +336,7 @@ internal class ProcessService
         }
         catch (Exception ex)
         {
-            // Fire-and-forget async bug report with exception logging
-            _ = ReportBugFireAndForgetAsync(ex, $"Failed to restart application: {executableName}");
-
+            Log.Error(ex, "Failed to restart application: {ExecutableName}", executableName);
             LogMessage?.Invoke(this, new EventArgs<string>($"Failed to restart the main application: {ex.Message}"));
             return false;
         }
@@ -399,21 +397,4 @@ internal class ProcessService
         }
     }
 
-    /// <summary>
-    ///     Fire-and-forget helper for reporting bugs from synchronous contexts.
-    ///     Logs exceptions to Debug output if the bug report itself fails.
-    /// </summary>
-    private static async Task ReportBugFireAndForgetAsync(Exception exception, string context)
-    {
-        try
-        {
-            await BugReportService.ReportBugAsync(exception, context);
-        }
-        catch (Exception ex)
-        {
-            // If bug reporting fails, log via Serilog - don't throw
-            Log.Warning(ex, "Failed to report bug for context: {Context}", context);
-            Log.Warning(exception, "Original exception");
-        }
-    }
 }

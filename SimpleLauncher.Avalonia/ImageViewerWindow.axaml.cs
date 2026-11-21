@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for displaying images from local paths or URIs.
 /// </summary>
-public partial class ImageViewerWindow : Window, IDisposable
+internal partial class ImageViewerWindow : Window, IDisposable
 {
     private readonly ImageViewerViewModel _viewModel;
 
@@ -60,6 +60,6 @@ public partial class ImageViewerWindow : Window, IDisposable
     /// <param name="imageUri">The URI of the image.</param>
     public void LoadImageUrl(Uri imageUri)
     {
-        _ = _viewModel.LoadImageFromUri(imageUri);
+        _ = _viewModel.LoadImageFromUriAsync(imageUri);
     }
 }

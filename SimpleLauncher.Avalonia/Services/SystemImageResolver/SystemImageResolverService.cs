@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.SystemImageResolver;
 ///     optional annotation-stripped and fuzzy matching fallbacks (port of the WPF
 ///     SystemImageResolverService).
 /// </summary>
-public class SystemImageResolverService : ISystemImageResolverService
+internal class SystemImageResolverService : ISystemImageResolverService
 {
     private static readonly string[] DefaultImageExtensions = [".png", ".jpg", ".jpeg"];
 

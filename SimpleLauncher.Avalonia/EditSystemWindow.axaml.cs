@@ -28,7 +28,7 @@ namespace SimpleLauncher.Avalonia;
 ///     but saves/deletes through Core's SystemConfigurationWriterService and reads through
 ///     the new SystemManagerService. No MahApps; OpenEmu-themed.
 /// </summary>
-public partial class EditSystemWindow : Window
+internal partial class EditSystemWindow : Window
 {
     private static readonly char[] SplitSeparators = [',', '|', ';'];
     private readonly IConfiguration _configuration;
@@ -199,7 +199,7 @@ public partial class EditSystemWindow : Window
             }
             else
             {
-                await LoadSystemDetails(currentSelectedSystemName);
+                await LoadSystemDetailsAsync(currentSelectedSystemName);
             }
         }
         catch (Exception ex)
@@ -208,7 +208,7 @@ public partial class EditSystemWindow : Window
         }
     }
 
-    private async Task LoadSystemDetails(string systemNameToLoad)
+    private async Task LoadSystemDetailsAsync(string systemNameToLoad)
     {
         try
         {
@@ -301,7 +301,7 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in the method LoadSystemDetails");
+            _logger.Error(ex, "Error in the method LoadSystemDetailsAsync");
         }
     }
 
@@ -611,7 +611,7 @@ public partial class EditSystemWindow : Window
 
     // ── Folder / file pickers ─────────────────────────────────────────
 
-    private async void ChooseSystemFolder(object? sender, RoutedEventArgs e)
+    private async void ChooseSystemFolderAsync(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -624,11 +624,11 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error in method ChooseSystemFolder");
+            Log.Error(ex, "Error in method ChooseSystemFolderAsync");
         }
     }
 
-    private async void ChooseSystemImageFolder(object? sender, RoutedEventArgs e)
+    private async void ChooseSystemImageFolderAsync(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -641,36 +641,36 @@ public partial class EditSystemWindow : Window
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error in method ChooseSystemImageFolder");
+            Log.Error(ex, "Error in method ChooseSystemImageFolderAsync");
         }
     }
 
     private void ChooseEmulator1Path(object sender, RoutedEventArgs e)
     {
-        ChooseEmulatorPath(Emulator1PathTextBox);
+        ChooseEmulatorPathAsync(Emulator1PathTextBox);
     }
 
     private void ChooseEmulator2Path(object sender, RoutedEventArgs e)
     {
-        ChooseEmulatorPath(Emulator2PathTextBox);
+        ChooseEmulatorPathAsync(Emulator2PathTextBox);
     }
 
     private void ChooseEmulator3Path(object sender, RoutedEventArgs e)
     {
-        ChooseEmulatorPath(Emulator3PathTextBox);
+        ChooseEmulatorPathAsync(Emulator3PathTextBox);
     }
 
     private void ChooseEmulator4Path(object sender, RoutedEventArgs e)
     {
-        ChooseEmulatorPath(Emulator4PathTextBox);
+        ChooseEmulatorPathAsync(Emulator4PathTextBox);
     }
 
     private void ChooseEmulator5Path(object sender, RoutedEventArgs e)
     {
-        ChooseEmulatorPath(Emulator5PathTextBox);
+        ChooseEmulatorPathAsync(Emulator5PathTextBox);
     }
 
-    private async void ChooseEmulatorPath(TextBox pathTextBox)
+    private async void ChooseEmulatorPathAsync(TextBox pathTextBox)
     {
         try
         {
@@ -683,12 +683,12 @@ public partial class EditSystemWindow : Window
                 SetFieldValidationState(pathTextBox, true);
             }
 
-            // Update the System Help panel (WPF ChooseEmulatorPath parity)
+            // Update the System Help panel (WPF ChooseEmulatorPathAsync parity)
             UpdateSystemHelp();
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error in method ChooseEmulatorPath");
+            Log.Error(ex, "Error in method ChooseEmulatorPathAsync");
         }
     }
 
@@ -1391,7 +1391,7 @@ public partial class EditSystemWindow : Window
 
                 await LoadSystemsAsync();
                 SystemNameDropdown.SelectedItem = systemNameText;
-                await LoadSystemDetails(systemNameText);
+                await LoadSystemDetailsAsync(systemNameText);
 
                 StatusTextBlock.Text = $"{_localization.GetString("Systemsaved", "System saved: ")}{systemNameText}";
                 await _messageBox.SystemSavedSuccessfullyMessageBoxAsync();

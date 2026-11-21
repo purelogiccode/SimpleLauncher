@@ -17,7 +17,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     ViewModel for the Global Search section of the main window, providing
 ///     cross-system ROM search with logical operators and scoring (WPF GlobalSearchPage equivalent).
 /// </summary>
-public partial class GlobalSearchSectionViewModel : ObservableObject
+internal partial class GlobalSearchSectionViewModel : ObservableObject
 {
     private readonly IConfiguration _configuration;
     private readonly IFindCoverImageService _findCoverImage;
@@ -171,7 +171,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
 
             try
             {
-                var results = await PerformSearch(
+                var results = await PerformSearchAsync(
                     searchTerm, selectedSystem,
                     SearchFilename, SearchMameDescription, SearchFolderName, SearchRecursively, token);
 
@@ -231,7 +231,7 @@ public partial class GlobalSearchSectionViewModel : ObservableObject
         }
     }
 
-    private async Task<List<SearchResult>> PerformSearch(
+    private async Task<List<SearchResult>> PerformSearchAsync(
         string searchTerm, string? selectedSystem,
         bool searchFilename, bool searchMameDescription, bool searchFolderName, bool searchRecursively,
         CancellationToken token)

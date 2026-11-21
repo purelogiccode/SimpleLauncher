@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Models;
 ///     Contextual information passed to right-click menu handlers for game items.
 ///     Aggregates game data and services needed by the context menu (WPF RightClickContext port).
 /// </summary>
-public class AvaloniaRightClickContext(
+internal class AvaloniaRightClickContext(
     string filePath,
     string fileNameWithExtension,
     string fileNameWithoutExtension,

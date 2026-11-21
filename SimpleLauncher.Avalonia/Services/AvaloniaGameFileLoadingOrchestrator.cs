@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     not re-enumerate the disk. Also owns cache invalidation for the file watcher.
 ///     Avalonia port of the WPF <c>GameFileLoadingOrchestratorService</c> + cache logic.
 /// </summary>
-public class AvaloniaGameFileLoadingOrchestrator
+internal class AvaloniaGameFileLoadingOrchestrator
 {
     private readonly AvaloniaGameCacheService _cache;
     private readonly ILogger _logger;

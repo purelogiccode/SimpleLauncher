@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.LoadingOverlay;
 ///     Extracted from the inline ILoadingState implementation on MainViewModel.
 ///     Mirrors the WPF LoadingOverlayService.
 /// </summary>
-public class AvaloniaLoadingOverlayService
+internal class AvaloniaLoadingOverlayService
 {
     private readonly Lock _loadingStateLock = new();
     private readonly PlaySoundEffects _playSoundEffects;

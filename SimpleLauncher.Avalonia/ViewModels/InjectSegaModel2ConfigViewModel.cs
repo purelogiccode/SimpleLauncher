@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Sega Model 2 emulator configuration injection window.
 /// </summary>
-public partial class InjectSegaModel2ConfigViewModel : ObservableObject
+internal partial class InjectSegaModel2ConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

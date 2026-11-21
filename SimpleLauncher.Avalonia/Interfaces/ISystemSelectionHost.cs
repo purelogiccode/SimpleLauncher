@@ -6,7 +6,7 @@ using Models;
 ///     UI surface the system selection orchestrator drives: the top System/Emulator
 ///     combo boxes, the sidebar, and the ROM folder watcher.
 /// </summary>
-public interface ISystemSelectionHost
+internal interface ISystemSelectionHost
 {
     /// <summary>Gets or sets the play-time string shown for the selected system.</summary>
     string PlayTime { get; set; }

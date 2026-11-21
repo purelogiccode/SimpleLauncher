@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia;
 ///     Partial MainWindow implementing <see cref="ISystemSelectionHost" /> for system
 ///     selection coordination (WPF MainWindow.SystemSelectionHost.cs parity).
 /// </summary>
-public partial class MainWindow : ISystemSelectionHost
+internal partial class MainWindow : ISystemSelectionHost
 {
     void ISystemSelectionHost.SetSystemComboBoxItems(IReadOnlyList<string> systemNames)
     {

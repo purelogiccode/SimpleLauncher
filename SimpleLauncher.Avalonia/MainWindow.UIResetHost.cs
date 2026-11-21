@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 ///     Partial MainWindow implementing <see cref="IUiResetHost" /> for UI state reset and
 ///     filter management (WPF MainWindow.UIResetHost.cs parity).
 /// </summary>
-public partial class MainWindow : IUiResetHost
+internal partial class MainWindow : IUiResetHost
 {
     private CancellationTokenSource _uiResetCancellationSource = new();
 

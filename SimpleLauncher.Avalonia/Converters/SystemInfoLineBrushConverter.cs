@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     NotificationErrorBrush for invalid folders/emulator paths, TextPrimaryBrush
 ///     otherwise (WPF DisplaySystemInformation red Run parity).
 /// </summary>
-public class SystemInfoLineBrushConverter : IValueConverter
+internal class SystemInfoLineBrushConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

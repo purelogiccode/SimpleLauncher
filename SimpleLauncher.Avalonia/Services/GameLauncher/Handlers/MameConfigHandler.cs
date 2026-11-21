@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the MAME emulator before launching a game.
 /// </summary>
-public class MameConfigHandler : IEmulatorConfigHandler
+internal class MameConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBoxLibrary;

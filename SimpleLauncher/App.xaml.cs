@@ -158,6 +158,10 @@ public partial class App : IDisposable
         DispatcherUnhandledException += App_DispatcherUnhandledException;
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 
+        // Every interactive control already carries an accessible name; surface the same
+        // text as its tooltip so the UI is self-describing for sighted users too.
+        AccessibilityToolTipService.Initialize();
+
         var builder = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
             .AddJsonFile("appsettings.json", false, true);
@@ -418,7 +422,6 @@ public partial class App : IDisposable
         serviceCollection.AddSingleton<IGameFileLoadingOrchestrator, GameFileLoadingOrchestratorService>();
 
         // Core service implementations
-        serviceCollection.AddSingleton<IWindowsVersionService, WindowsVersionService>();
         serviceCollection.AddSingleton<IDirectoryValidationService, DirectoryValidationService>();
         serviceCollection.AddSingleton<IFileLockService, FileLockService>();
         serviceCollection.AddSingleton<IInputSanitizerService, InputSanitizerService>();
@@ -672,14 +675,14 @@ public partial class App : IDisposable
                 {
                     ServiceProvider.GetRequiredService<ILogger>()
                         .Error(ex, "Failed to create or acquire single instance mutex");
-                    ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
+                    ShowStartupFailureAndShutdownAsync(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
                     return;
                 }
                 catch (IOException ex)
                 {
                     ServiceProvider.GetRequiredService<ILogger>()
                         .Error(ex, "Failed to create or acquire single instance mutex");
-                    ShowStartupFailureAndShutdown(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
+                    ShowStartupFailureAndShutdownAsync(ServiceProvider.GetRequiredService<IMessageBoxLibraryService>());
                     return;
                 }
             }
@@ -832,7 +835,7 @@ public partial class App : IDisposable
     ///     Displays the failed-to-start message box and waits it to be dismissed before shutting the application down.
     /// </summary>
     /// <param name="messageBox">The message box library service.</param>
-    private async void ShowStartupFailureAndShutdown(IMessageBoxLibraryService messageBox)
+    private async void ShowStartupFailureAndShutdownAsync(IMessageBoxLibraryService messageBox)
     {
         try
         {

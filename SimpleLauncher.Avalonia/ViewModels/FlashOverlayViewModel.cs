@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the FlashOverlayWindow.
 /// </summary>
-public class FlashOverlayViewModel : ObservableObject
+internal class FlashOverlayViewModel : ObservableObject
 {
     /// <summary>
     ///     Gets or sets the opacity of the flash rectangle.

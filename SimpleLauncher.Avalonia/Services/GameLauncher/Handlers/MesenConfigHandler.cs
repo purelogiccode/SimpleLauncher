@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Mesen (NES/SNES) emulator before launching a game.
 /// </summary>
-public class MesenConfigHandler : IEmulatorConfigHandler
+internal class MesenConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

@@ -152,20 +152,15 @@ public partial class MainWindow
             {
                 StatusMessageTextBlock.Text = "Error occurred during conversion";
 
-                // Log the error
-                await LogError.LogAsync(ex);
+                Log.Error(ex, "XML/binary conversion failed");
 
-                // Ask user if they want to see the error details
+                // Ask user if they want to see the exception details.
                 var result = MessageBox.Show(
-                    $"An error occurred during conversion:\n{ex.Message}\n\nWould you like to view the detailed error log?",
+                    $"An error occurred during conversion:\n{ex.Message}\n\nWould you like to view the detailed error?",
                     "Error", MessageBoxButton.YesNo, MessageBoxImage.Error);
 
                 if (result == MessageBoxResult.Yes)
-                {
-                    var errorLog = await LogError.ReadLogAsync();
-                    // Show error log in a simple dialog
-                    MessageBox.Show(errorLog, "Error Log", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                    MessageBox.Show(ex.ToString(), "Error Details", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             finally
             {
@@ -177,7 +172,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            _ = LogError.LogAsync(ex);
+            Log.Error(ex, "Unhandled error in the conversion window");
         }
     }
 }

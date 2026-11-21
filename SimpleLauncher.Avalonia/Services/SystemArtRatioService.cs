@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     Provides per-system box-art aspect ratios for correct card sizing in the game grid.
 ///     Keyed by system.xml SystemName. Default ratio is 1.0 for unknown systems.
 /// </summary>
-public class SystemArtRatioService
+internal class SystemArtRatioService
 {
     private static readonly Dictionary<string, double> BoxRatios = new(StringComparer.OrdinalIgnoreCase)
     {

@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for configuring fuzzy matching settings for game file searches.
 /// </summary>
-public partial class SetFuzzyMatchingWindow : Window
+internal partial class SetFuzzyMatchingWindow : Window
 {
     private readonly EventHandler _cancelRequestedHandler;
     private readonly EventHandler _saveCompletedHandler;

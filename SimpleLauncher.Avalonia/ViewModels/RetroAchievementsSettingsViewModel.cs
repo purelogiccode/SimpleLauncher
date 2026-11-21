@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the RetroAchievements settings window.
 /// </summary>
-public partial class RetroAchievementsSettingsViewModel : ObservableObject
+internal partial class RetroAchievementsSettingsViewModel : ObservableObject
 {
     private readonly IRetroAchievementsEmulatorConfiguratorService _configurator;
     private readonly ILogger _logger;

@@ -11,7 +11,7 @@ using SimpleLauncher.Core.Services.MameData;
 
 namespace SimpleLauncher.Avalonia;
 
-public partial class GameDetailWindow : Window
+internal partial class GameDetailWindow : Window
 {
     private readonly GameCardViewModel _game;
     private readonly LocalizationService _localization;

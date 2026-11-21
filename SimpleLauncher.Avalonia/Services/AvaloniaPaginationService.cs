@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     <see cref="IPaginationService" /> contract; the label text comes from
 ///     <see cref="IResourceProvider" /> instead of WPF resource dictionaries).
 /// </summary>
-public class AvaloniaPaginationService : IPaginationService
+internal class AvaloniaPaginationService : IPaginationService
 {
     private readonly IResourceProvider _resourceProvider;
     private IPaginationHost _host = null!;

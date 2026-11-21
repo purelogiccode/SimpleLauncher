@@ -18,7 +18,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     Mirrors the WPF FavoritesPage / FavoritesViewModel flow: favorites are stored
 ///     as a file NAME and resolved against the system folders at use time.
 /// </summary>
-public partial class FavoritesSectionViewModel : ObservableObject
+internal partial class FavoritesSectionViewModel : ObservableObject
 {
     private readonly IConfiguration _configuration;
     private readonly FavoritesManager _favoritesManager;

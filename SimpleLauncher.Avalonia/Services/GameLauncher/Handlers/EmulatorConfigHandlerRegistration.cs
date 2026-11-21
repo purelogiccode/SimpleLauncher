@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 ///     menu is hidden elsewhere and non-Windows launches must never write Windows-style config
 ///     files next to Linux binaries (LB-08).
 /// </summary>
-public static class EmulatorConfigHandlerRegistration
+internal static class EmulatorConfigHandlerRegistration
 {
     /// <summary>
     ///     Registers every <see cref="IEmulatorConfigHandler" /> on Windows; a no-op elsewhere.

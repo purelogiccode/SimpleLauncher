@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed Ubisoft Connect (Uplay) games via the registry and creates shortcuts for them.
 /// </summary>
-public class ScanUplayGames : IGamePlatformScanner
+internal class ScanUplayGames : IGamePlatformScanner
 {
     /// <summary>
     ///     Scans the Ubisoft Launcher registry keys for installed games and creates shortcuts and cover images.

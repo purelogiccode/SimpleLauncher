@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Ares emulator configuration injection window.
 /// </summary>
-public partial class InjectAresConfigViewModel : ObservableObject
+internal partial class InjectAresConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the RetroArch emulator configuration injection window.
 /// </summary>
-public partial class InjectRetroArchConfigViewModel : ObservableObject
+internal partial class InjectRetroArchConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     not a real value, so it must not be reported as visible) instead of silently
 ///     collapsing the UI without diagnostics.
 /// </summary>
-public class NullToVisibilityConverter : IValueConverter
+internal class NullToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

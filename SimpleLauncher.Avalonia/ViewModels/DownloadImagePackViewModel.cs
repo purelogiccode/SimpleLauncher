@@ -16,7 +16,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the image pack download window.
 /// </summary>
-public partial class DownloadImagePackViewModel : ObservableObject, IDisposable
+internal partial class DownloadImagePackViewModel : ObservableObject, IDisposable
 {
     private readonly DownloadManager _downloadManager;
     private readonly EasyModeManager _easyModeManager;

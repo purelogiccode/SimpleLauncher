@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 /// <summary>
 ///     Window for injecting Daphne emulator configuration settings.
 /// </summary>
-public partial class InjectDaphneConfigWindow : Window
+internal partial class InjectDaphneConfigWindow : Window
 {
     private readonly InjectDaphneConfigViewModel _viewModel;
 

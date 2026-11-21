@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     of the WPF pack resources), or from a directory on disk when a test seam is supplied.
 ///     Falls back to English for missing keys.
 /// </summary>
-public class LocalizationService
+internal class LocalizationService
 {
     /// <summary>
     ///     Manifest-resource prefix for the embedded language packs. Matches the

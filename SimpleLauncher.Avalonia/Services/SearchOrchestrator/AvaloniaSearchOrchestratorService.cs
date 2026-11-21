@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.SearchOrchestrator;
 ///     empty/null OR the query is blank, and (via the caller) clears prior search
 ///     results so stale results never persist.
 /// </summary>
-public static class AvaloniaSearchOrchestratorService
+internal static class AvaloniaSearchOrchestratorService
 {
     /// <summary>
     ///     Validates a search query before execution.

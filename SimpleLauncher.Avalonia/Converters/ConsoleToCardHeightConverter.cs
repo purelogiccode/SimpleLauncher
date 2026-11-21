@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     The optional 4th input carries the aspect-ratio key so ratio changes re-evaluate
 ///     heights in place (without it, only width/system/view changes would refresh).
 /// </summary>
-public class ConsoleToCardHeightConverter : IMultiValueConverter
+internal class ConsoleToCardHeightConverter : IMultiValueConverter
 {
     private const double DefaultCardWidth = 168.0;
     private const double CaptionHeight = 48.0; // 48px for caption area (title + rating)

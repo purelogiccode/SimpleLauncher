@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the gamepad dead zone configuration window.
 /// </summary>
-public partial class SetGamepadDeadZoneViewModel : ObservableObject
+internal partial class SetGamepadDeadZoneViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

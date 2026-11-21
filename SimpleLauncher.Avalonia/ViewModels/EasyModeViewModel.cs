@@ -22,7 +22,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     the download button), downloads go through DownloadManager, and Add System
 ///     persists the config to system.xml.
 /// </summary>
-public partial class EasyModeViewModel : ObservableObject, IDisposable
+internal partial class EasyModeViewModel : ObservableObject, IDisposable
 {
     private readonly IConfiguration _configuration;
     private readonly DownloadManager _downloadManager;

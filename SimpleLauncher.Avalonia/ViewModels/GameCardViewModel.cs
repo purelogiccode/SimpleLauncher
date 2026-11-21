@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     Represents a single game card in the grid.
 ///     Mapped from scan results + cache + favorites + play history.
 /// </summary>
-public partial class GameCardViewModel : ObservableObject
+internal partial class GameCardViewModel : ObservableObject
 {
     /// <summary>
     ///     Known RetroAchievements-supported systems (by system.xml name).

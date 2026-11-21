@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.UIReset;
 ///     Handles resetting the UI to its initial state, clearing filters, selections, and
 ///     pagination (port of the WPF UiResetService onto the Avalonia shell host).
 /// </summary>
-public class UiResetService : IUiResetService
+internal class UiResetService : IUiResetService
 {
     private readonly ILogger _logger;
     private IUiResetHost _host = null!;

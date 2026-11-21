@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.Services.AvaloniaServices;
 /// <summary>
 ///     Avalonia implementation of IDispatcherService — dispatches work to the UI thread.
 /// </summary>
-public class AvaloniaDispatcherService : IDispatcherService
+internal class AvaloniaDispatcherService : IDispatcherService
 {
     private readonly Dispatcher _dispatcher = Dispatcher.UIThread;
 

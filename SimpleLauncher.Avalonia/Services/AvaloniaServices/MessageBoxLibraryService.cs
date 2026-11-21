@@ -17,7 +17,7 @@ using SimpleLauncher.Core.Services.CheckPaths;
 
 namespace SimpleLauncher.Avalonia.Services.AvaloniaServices;
 
-public class MessageBoxLibraryService : IMessageBoxLibraryService
+internal class MessageBoxLibraryService : IMessageBoxLibraryService
 {
     private readonly IConfiguration _configuration;
     private readonly LocalizationService _localization;

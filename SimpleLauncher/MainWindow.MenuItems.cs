@@ -712,8 +712,9 @@ public partial class MainWindow
             await _menuOrchestrator.HandleZoomInAsync();
             SyncCardSizeSlider();
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Log.Debug(ex, "Operation was cancelled; no action needed");
         }
         catch (Exception ex)
         {
@@ -728,8 +729,9 @@ public partial class MainWindow
             await _menuOrchestrator.HandleZoomOutAsync();
             SyncCardSizeSlider();
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Log.Debug(ex, "Operation was cancelled; no action needed");
         }
         catch (Exception ex)
         {

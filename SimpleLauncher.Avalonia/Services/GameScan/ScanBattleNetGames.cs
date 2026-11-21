@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed Battle.net games and creates shortcuts for them.
 /// </summary>
-public partial class ScanBattleNetGames : IGamePlatformScanner
+internal partial class ScanBattleNetGames : IGamePlatformScanner
 {
     // Mapping from InternalId (found in registry) to Readable Name and Executable (for icons)
     private static readonly List<BNetAppDef> AppDefinitions =

@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.Models;
 /// <summary>
 ///     Represents a search result from the global game search, including file details, system info, and relevance score.
 /// </summary>
-public class SearchResult
+internal class SearchResult
 {
     /// <summary>
     ///     Gets the file name of the game without its extension.

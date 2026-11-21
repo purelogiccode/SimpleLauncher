@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.Services.Theme;
 ///     <c>Color</c> resources consumed by <c>Themes/DarkTheme.axaml</c>.
 ///     Parity with the WPF <c>ThemeMenuService</c> (5 base themes + 27 accents).
 /// </summary>
-public static class AvaloniaThemeService
+internal static class AvaloniaThemeService
 {
     public static readonly IReadOnlyList<string> BaseThemeNames =
         ["Light", "Dark", "Adaptive", "HighContrast", "Midnight"];
@@ -231,8 +231,9 @@ public static class AvaloniaThemeService
                 {
                     process.Kill(true);
                 }
-                catch (InvalidOperationException)
+                catch (InvalidOperationException ex)
                 {
+                    Log.Debug(ex, "Theme resource was unavailable; keeping the current theme");
                 }
 
                 return null;
@@ -244,8 +245,9 @@ public static class AvaloniaThemeService
             {
                 _ = errorTask.GetAwaiter().GetResult();
             }
-            catch (IOException)
+            catch (IOException ex)
             {
+                Log.Debug(ex, "Theme file could not be read or written; keeping the current theme");
             }
 
             if (process.ExitCode != 0) return null;

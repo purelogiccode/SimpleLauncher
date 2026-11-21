@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 /// <summary>
 ///     Window for injecting Raine emulator configuration settings.
 /// </summary>
-public partial class InjectRaineConfigWindow : Window
+internal partial class InjectRaineConfigWindow : Window
 {
     private readonly IFilePickerService _filePicker;
     private readonly Func<Window> _getOwnerWindowHandler;
@@ -28,9 +28,9 @@ public partial class InjectRaineConfigWindow : Window
 
         _viewModel = viewModel;
         _filePicker = filePicker;
-        _requestEmulatorPathHandler = OnRequestEmulatorPath;
-        _requestFilePathHandler = OnRequestFilePath;
-        _requestFolderPathHandler = OnRequestFolderPath;
+        _requestEmulatorPathHandler = OnRequestEmulatorPathAsync;
+        _requestFilePathHandler = OnRequestFilePathAsync;
+        _requestFolderPathHandler = OnRequestFolderPathAsync;
         _getOwnerWindowHandler = () => this;
 
         _viewModel.CloseRequested += OnCloseRequested;
@@ -76,21 +76,21 @@ public partial class InjectRaineConfigWindow : Window
         if (!isLauncherMode) BtnSave.IsDefault = true;
     }
 
-    private async Task<string?> OnRequestEmulatorPath()
+    private async Task<string?> OnRequestEmulatorPathAsync()
     {
         return await _filePicker.OpenFileAsync(
             "Select Raine Emulator Executable",
             ExecutableFileFilter.ForNamedExecutable("Raine Executable", "raine*.exe"));
     }
 
-    private async Task<string?> OnRequestFilePath()
+    private async Task<string?> OnRequestFilePathAsync()
     {
         return await _filePicker.OpenFileAsync(
             "Select NeoGeo CD BIOS File",
             "NeoGeo CD BIOS (neocd.bin)|neocd.bin|All Files (*.*)|*.*");
     }
 
-    private async Task<string?> OnRequestFolderPath()
+    private async Task<string?> OnRequestFolderPathAsync()
     {
         return await _filePicker.OpenFolderAsync("Select Raine ROM Directory");
     }

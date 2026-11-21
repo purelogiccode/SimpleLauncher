@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.Services.SystemSelectionOrchestrator;
 ///     system's configuration, and refreshing the whole shell after system.xml changes
 ///     (port of the WPF SystemSelectionOrchestratorService onto the Avalonia sidebar shell).
 /// </summary>
-public class AvaloniaSystemSelectionOrchestratorService
+internal class AvaloniaSystemSelectionOrchestratorService
 {
     private readonly AvaloniaDisplaySystemInformation? _displaySystemInformation;
     private readonly AvaloniaGameFileLoadingOrchestrator _loadingOrchestrator;

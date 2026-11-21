@@ -100,9 +100,6 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
 
     private bool _playHistoryMigrated;
 
-    private string _selectedImageFolder = "";
-    private List<string> _selectedRomFolders = [];
-
     private List<SystemManager> _systemManagers = null!;
     private bool _wasControllerRunningBeforeDeactivation;
 
@@ -406,8 +403,9 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
             await _gameBrowser.DisplaySystemSelectionScreenAsync(((IMenuActionHost)this).CurrentCancellationToken);
             _logger.Debug("DisplaySystemSelectionScreenAsync called");
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Log.Debug(ex, "Operation was cancelled; no action needed");
         }
         catch (Exception ex)
         {
@@ -664,16 +662,18 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
                     // Mark the event as handled to prevent scrolling the ScrollViewer
                     e.Handled = true;
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException ex)
                 {
+                    Log.Debug(ex, "Operation was cancelled; no action needed");
                 }
                 catch (Exception ex)
                 {
                     _logger.Error(ex, "Error in the method MainWindow_MouseWheelAsync");
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
+                Log.Debug(ex, "Operation was cancelled; no action needed");
             }
             catch (Exception ex)
             {
@@ -883,7 +883,7 @@ public partial class MainWindow : INotifyPropertyChanged, IDisposable, ILoadingS
         TrayIconManager = manager;
     }
 
-    private Task SaveApplicationSettings()
+    private Task SaveApplicationSettingsAsync()
     {
         // Save application's current state
         _settings.ThumbnailSize = _gameBrowser.ImageHeight;

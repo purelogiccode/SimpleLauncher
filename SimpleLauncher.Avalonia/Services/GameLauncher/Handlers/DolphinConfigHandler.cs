@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Dolphin (GameCube/Wii) emulator before launching a game.
 /// </summary>
-public class DolphinConfigHandler : IEmulatorConfigHandler
+internal class DolphinConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

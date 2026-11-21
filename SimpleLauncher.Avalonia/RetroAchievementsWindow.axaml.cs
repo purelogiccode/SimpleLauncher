@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for browsing RetroAchievements user profile, unlocks, and completion progress.
 /// </summary>
-public partial class RetroAchievementsWindow : Window
+internal partial class RetroAchievementsWindow : Window
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

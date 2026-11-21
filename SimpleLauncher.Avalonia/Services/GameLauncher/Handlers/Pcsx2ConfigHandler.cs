@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the PCSX2 (PS2) emulator before launching a game.
 /// </summary>
-public class Pcsx2ConfigHandler : IEmulatorConfigHandler
+internal class Pcsx2ConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

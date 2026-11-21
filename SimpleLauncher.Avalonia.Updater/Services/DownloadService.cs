@@ -169,7 +169,6 @@ internal class DownloadService
                 else
                 {
                     Log.Error(ex, "Error downloading update file");
-                    await BugReportService.ReportBugAsync(ex, "Error downloading update file (outer catch)");
                 }
 
                 throw;

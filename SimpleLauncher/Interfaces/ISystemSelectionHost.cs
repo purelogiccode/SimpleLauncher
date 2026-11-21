@@ -147,15 +147,4 @@ public interface ISystemSelectionHost
     /// <param name="managers">The list of system managers to set.</param>
     void SetSystemManagers(IList<SystemManagerService> managers);
 
-    /// <summary>
-    ///     Sets the image folder of the currently selected system.
-    /// </summary>
-    /// <param name="folder">The image folder path to set.</param>
-    void SetSelectedImageFolder(string folder);
-
-    /// <summary>
-    ///     Sets the ROM folders of the currently selected system.
-    /// </summary>
-    /// <param name="folders">The ROM folder paths to set.</param>
-    void SetSelectedRomFolders(IList<string> folders);
 }

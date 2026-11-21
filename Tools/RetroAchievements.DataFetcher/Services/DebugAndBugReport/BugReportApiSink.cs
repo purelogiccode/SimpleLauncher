@@ -164,22 +164,69 @@ public class BugReportApiSink : ILogEventSink, IDisposable
 
     private static string BuildReport(LogEvent logEvent)
     {
+        var assembly = Assembly.GetExecutingAssembly();
         var sb = new StringBuilder();
-        sb.AppendLine("=== Environment Details ===");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.Now}");
-        sb.AppendLine(CultureInfo.InvariantCulture,
-            $"Application: {Assembly.GetExecutingAssembly().GetName().Name ?? "RetroAchievements.DataFetcher"}");
-        sb.AppendLine(CultureInfo.InvariantCulture,
-            $"Version: {Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown"}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"OS: {RuntimeInformation.OSDescription}");
-        sb.AppendLine();
-        sb.AppendLine("=== Error Details ===");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"Level: {logEvent.Level}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"Message: {logEvent.RenderMessage()}");
-        if (logEvent.Exception != null) sb.AppendLine(CultureInfo.InvariantCulture, $"Exception: {logEvent.Exception}");
 
+        sb.AppendLine("=== Environment Details ===");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.Now:yyyy-MM-dd HH:mm:ss zzz}");
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $"Application Name: {assembly.GetName().Name ?? "SimpleLauncher"}");
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $"Application Version: {assembly.GetName().Version?.ToString() ?? "Unknown"}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"OS Version: {RuntimeInformation.OSDescription}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Architecture: {RuntimeInformation.OSArchitecture}");
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $"Bitness: {(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")}");
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $"Windows, Linux or MacOsX Version: {GetOperatingSystemVersion()}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Processor Count: {Environment.ProcessorCount}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Base Directory: {AppContext.BaseDirectory}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Temp Path: {Path.GetTempPath()}");
         sb.AppendLine();
+
+        sb.AppendLine("=== Error Details ===");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Log Level: {logEvent.Level}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Error message: {logEvent.RenderMessage()}");
+        sb.AppendLine();
+
+        sb.AppendLine("=== Exception Details ===");
+        if (logEvent.Exception == null)
+        {
+            sb.AppendLine("Type: None");
+            sb.AppendLine("Message: None");
+            sb.AppendLine("Source: None");
+            sb.AppendLine("StackTrace: None");
+        }
+        else
+        {
+            AppendException(sb, logEvent.Exception);
+            var inner = logEvent.Exception.InnerException;
+            while (inner != null)
+            {
+                sb.AppendLine();
+                sb.AppendLine("--- Inner Exception ---");
+                AppendException(sb, inner);
+                inner = inner.InnerException;
+            }
+        }
+
         return sb.ToString();
+    }
+
+    private static void AppendException(StringBuilder sb, Exception exception)
+    {
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Type: {exception.GetType().FullName}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Message: {exception.Message}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Source: {exception.Source}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"StackTrace: {exception.StackTrace}");
+    }
+
+    private static string GetOperatingSystemVersion()
+    {
+        if (OperatingSystem.IsWindows()) return $"Windows {Environment.OSVersion.Version}";
+        if (OperatingSystem.IsLinux()) return $"Linux {Environment.OSVersion.Version}";
+        if (OperatingSystem.IsMacOS()) return $"macOS {Environment.OSVersion.Version}";
+        return RuntimeInformation.OSDescription;
     }
 
     private static string? GetUserInfo()

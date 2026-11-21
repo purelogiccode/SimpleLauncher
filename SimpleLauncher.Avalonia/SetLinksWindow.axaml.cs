@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for configuring external application links and paths.
 /// </summary>
-public partial class SetLinksWindow : Window
+internal partial class SetLinksWindow : Window
 {
     private readonly EventHandler _saveCompletedHandler;
 

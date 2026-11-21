@@ -3,7 +3,7 @@ namespace SimpleLauncher.Avalonia.Models;
 /// <summary>
 ///     Specifies the icon shown on the message dialog.
 /// </summary>
-public enum MessageIcon
+internal enum MessageIcon
 {
     None,
     Information,

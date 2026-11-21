@@ -127,7 +127,7 @@
                                         Height="40" Padding="12,6" Margin="6,0,0,0"
                                         Classes="secondary"
                                         ToolTip.Tip="{ext:Translate TooltipChooseSystemFolder}"
-                                        Click="ChooseSystemFolder"
+                                        Click="ChooseSystemFolderAsync"
                                         AutomationProperties.Name="{ext:Translate TooltipChooseSystemFolder}" />
                             </Grid>
 
@@ -173,7 +173,7 @@
                                         Height="40" Padding="12,6" Margin="6,0,0,0"
                                         Classes="secondary"
                                         ToolTip.Tip="{ext:Translate TooltipChooseSystemImageFolder2}"
-                                        Click="ChooseSystemImageFolder"
+                                        Click="ChooseSystemImageFolderAsync"
                                         AutomationProperties.Name="{ext:Translate TooltipChooseSystemImageFolder2}" />
                             </Grid>
 

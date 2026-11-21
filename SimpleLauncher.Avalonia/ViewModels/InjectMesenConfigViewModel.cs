@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Mesen emulator configuration injection window.
 /// </summary>
-public partial class InjectMesenConfigViewModel : ObservableObject
+internal partial class InjectMesenConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

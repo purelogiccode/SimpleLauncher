@@ -224,8 +224,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
         }
         catch (Exception ex)
         {
-            _logger.Debug($"[CommanderGeniusLaunchStrategy] Unexpected error: {ex}");
-            LogErrorAsync($"Unexpected error: {ex.Message}\nFile: {context?.FilePath}");
+            _logger.Warning(ex, "[CommanderGeniusLaunchStrategy] Unexpected error. File: {FilePath}", context?.FilePath);
         }
         finally
         {
@@ -277,8 +276,9 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
         {
             Directory.CreateDirectory(cgDataDir);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.Debug($"[CommanderGenius] Could not create the data directory '{cgDataDir}': {ex.Message}");
             return null;
         }
 
@@ -481,9 +481,9 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
                 {
                     if (!Directory.EnumerateFileSystemEntries(subdir).Any()) Directory.Delete(subdir, false);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    _logger.Debug($"[CommanderGenius] Could not remove empty subdirectory '{subdir}': {ex.Message}");
                 }
             }
         }
@@ -500,8 +500,9 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
             return
                 $"Exit code: {(process.HasExited ? process.ExitCode.ToString(CultureInfo.InvariantCulture) : "N/A")}";
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.Debug($"[CommanderGenius] Could not read the process exit code: {ex.Message}");
             return "Exit code: N/A";
         }
     }
@@ -510,12 +511,6 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
     {
         var fullMessage = $"[CommanderGeniusLaunchStrategy] {message}";
         _logger.Information(fullMessage);
-    }
-
-    private static void LogErrorAsync(string message)
-    {
-        var fullMessage = $"[CommanderGeniusLaunchStrategy] {message}";
-        _logger.Warning(fullMessage);
     }
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",

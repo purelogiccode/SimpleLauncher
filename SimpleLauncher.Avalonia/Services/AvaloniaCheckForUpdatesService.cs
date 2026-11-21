@@ -26,7 +26,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     (Updater.exe) is re-downloaded from the release assets (falling back to the local
 ///     copy when offline) and launched; the application then shuts down.
 /// </summary>
-public partial class AvaloniaCheckForUpdatesService
+internal partial class AvaloniaCheckForUpdatesService
 {
     private const string RepoName = "SimpleLauncher";
 

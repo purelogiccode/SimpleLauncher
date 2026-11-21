@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Cemu (Wii U) emulator before launching a game.
 /// </summary>
-public class CemuConfigHandler : IEmulatorConfigHandler
+internal class CemuConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

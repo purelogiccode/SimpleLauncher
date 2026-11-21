@@ -23,6 +23,18 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     /// </summary>
     public const string DisableBugReportsEnvironmentVariable = "SIMPLELAUNCHER_BUGREPORT_DISABLE";
 
+    /// <summary>
+    ///     Maximum length accepted by the bug-report API for the <c>message</c> field.
+    /// </summary>
+    internal const int MaxMessageLength = 4000;
+
+    /// <summary>
+    ///     Maximum length accepted by the bug-report API for the <c>stackTrace</c> field.
+    /// </summary>
+    internal const int MaxStackTraceLength = 8000;
+
+    private const string TruncationSuffix = "\n... [report truncated by the client]";
+
     private static readonly Lock InitLock = new();
 
     private static readonly bool BugReportsDisabled =
@@ -45,14 +57,22 @@ public class BugReportApiSink : ILogEventSink, IDisposable
     private Task _processTask = null!;
 
     /// <summary>
-    ///     The application (entry assembly) name — e.g. "SimpleLauncher.New" for the new app,
-    ///     "SimpleLauncher" for the original. Falls back to the executing assembly (Core)
-    ///     and finally a hardcoded default.
+    ///     The application name — e.g. "SimpleLauncher" for the Windows release and
+    ///     "SimpleLauncher.Avalonia" for the Linux/macOS builds. Prefers the running
+    ///     executable so a renamed single-file publish reports the name users see.
     /// </summary>
-    private static string ApplicationName =>
-        Assembly.GetEntryAssembly()?.GetName().Name
-        ?? Assembly.GetExecutingAssembly().GetName().Name
-        ?? "SimpleLauncher";
+    internal static string ApplicationName
+    {
+        get
+        {
+            var processName = Path.GetFileNameWithoutExtension(Environment.ProcessPath);
+            if (!string.IsNullOrWhiteSpace(processName)) return processName;
+
+            return Assembly.GetEntryAssembly()?.GetName().Name
+                   ?? Assembly.GetExecutingAssembly().GetName().Name
+                   ?? "SimpleLauncher";
+        }
+    }
 
     /// <summary>
     ///     The application (entry assembly) version.
@@ -91,10 +111,12 @@ public class BugReportApiSink : ILogEventSink, IDisposable
             // Cancellation during shutdown is expected.
         }
 #pragma warning disable RCS1075
-        catch (Exception)
+        catch (Exception ex)
 #pragma warning restore RCS1075
         {
-            // Shutdown must never throw.
+            // Shutdown must never throw. Log at Debug so the sink cannot recursively
+            // enqueue another warning while it is being disposed.
+            Log.Debug(ex, "Bug report sink shutdown did not complete cleanly");
         }
 
         _cts.Cancel();
@@ -208,20 +230,20 @@ public class BugReportApiSink : ILogEventSink, IDisposable
 
             var payload = new
             {
-                message = report,
+                message = TruncateForApi(report, MaxMessageLength),
                 applicationName = ApplicationName,
                 version = ApplicationVersion,
                 userInfo = GetUserInfo(),
                 environment = GetEnvironmentName(),
-                stackTrace = BuildStackTrace(logEvent)
+                stackTrace = TruncateForApi(BuildStackTrace(logEvent), MaxStackTraceLength)
             };
 
             using var jsonContent =
                 new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var apiUrl = _configuration.GetValue<string>("BugReportApiUrl") ??
-                         "https://www.purelogiccode.com/bugreport/api/send-bug-report";
+            var apiUrl = (_configuration.GetValue<string>("BugReportApiUrl") ??
+                          "https://www.purelogiccode.com/bugreport/api/send-bug-report").TrimEnd('/');
 
             using var response = await httpClient.PostAsync(apiUrl, jsonContent, cts.Token);
 
@@ -231,14 +253,15 @@ public class BugReportApiSink : ILogEventSink, IDisposable
                 {
                     await _deleteFilesService.TryDeleteFileAsync(errorLogPath);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore deletion failures
+                    Log.Debug(ex, "Could not delete the submitted error log {ErrorLogPath}", errorLogPath);
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug(ex, "Bug report submission failed; writing to the critical log");
             WriteCriticalError(logEvent);
         }
     }
@@ -268,28 +291,25 @@ public class BugReportApiSink : ILogEventSink, IDisposable
 
             if (criticalLogPath != null) File.AppendAllText(criticalLogPath, report);
         }
-        catch
+        catch (Exception ex)
         {
-            // Can't do anything more
+            // The bug-report sink must never throw; there is nowhere left to persist the report.
+            Log.Debug(ex, "Could not write the critical bug report fallback log");
         }
     }
 
-    private static string BuildReport(LogEvent logEvent)
+    /// <summary>
+    ///     Builds the human-readable bug-report body. Exposed to the test assemblies through
+    ///     <c>InternalsVisibleTo</c> so the required environment/error/exception sections are
+    ///     covered without contacting the live API.
+    /// </summary>
+    /// <param name="logEvent">The warning-or-higher event being reported.</param>
+    /// <returns>The complete report text.</returns>
+    internal static string BuildReport(LogEvent logEvent)
     {
         var message = new StringBuilder();
 
-        message.AppendLine("=== Environment Details ===");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.Now}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Application Name: {ApplicationName}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Application Version: {ApplicationVersion}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"OS Version: {RuntimeInformation.OSDescription}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Architecture: {RuntimeInformation.OSArchitecture}");
-        message.AppendLine(CultureInfo.InvariantCulture,
-            $"Bitness: {(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Windows Version: {GetMicrosoftWindowsVersion.GetVersion()}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Processor Count: {Environment.ProcessorCount}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Base Directory: {AppContext.BaseDirectory}");
-        message.AppendLine(CultureInfo.InvariantCulture, $"Temp Path: {Path.GetTempPath()}");
+        message.Append(BuildEnvironmentDetails());
         message.AppendLine();
 
         message.AppendLine("=== Error Details ===");
@@ -307,16 +327,59 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         }
         else
         {
-            AppendException(message, logEvent.Exception);
-            if (logEvent.Exception.InnerException != null)
-            {
-                message.AppendLine();
-                message.AppendLine("--- Inner Exception ---");
-                AppendException(message, logEvent.Exception.InnerException);
-            }
+            AppendExceptionChain(message, logEvent.Exception);
         }
 
         return message.ToString();
+    }
+
+    /// <summary>
+    ///     Builds the environment block that every report must contain.
+    /// </summary>
+    /// <returns>The environment details, including the cross-platform OS version.</returns>
+    internal static string BuildEnvironmentDetails()
+    {
+        var message = new StringBuilder();
+        message.AppendLine("=== Environment Details ===");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.Now:yyyy-MM-dd HH:mm:ss zzz}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Application Name: {ApplicationName}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Application Version: {ApplicationVersion}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"OS Version: {RuntimeInformation.OSDescription}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Architecture: {RuntimeInformation.OSArchitecture}");
+        message.AppendLine(CultureInfo.InvariantCulture,
+            $"Bitness: {(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")}");
+        message.AppendLine(CultureInfo.InvariantCulture,
+            $"Windows, Linux or MacOsX Version: {OperatingSystemDetails.GetDescription()}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Processor Count: {Environment.ProcessorCount}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Base Directory: {AppContext.BaseDirectory}");
+        message.AppendLine(CultureInfo.InvariantCulture, $"Temp Path: {Path.GetTempPath()}");
+        return message.ToString();
+    }
+
+    private static void AppendExceptionChain(StringBuilder message, Exception exception)
+    {
+        var current = exception;
+        var depth = 0;
+        const int maxDepth = 10;
+
+        while (current is not null && depth < maxDepth)
+        {
+            if (depth > 0)
+            {
+                message.AppendLine();
+                message.AppendLine("--- Inner Exception ---");
+            }
+
+            AppendException(message, current);
+            current = current.InnerException;
+            depth++;
+        }
+
+        if (current is not null)
+        {
+            message.AppendLine();
+            message.AppendLine("--- Additional inner exceptions truncated ---");
+        }
     }
 
     private static void AppendException(StringBuilder message, Exception exception)
@@ -325,6 +388,21 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         message.AppendLine(CultureInfo.InvariantCulture, $"Message: {exception.Message}");
         message.AppendLine(CultureInfo.InvariantCulture, $"Source: {exception.Source}");
         message.AppendLine(CultureInfo.InvariantCulture, $"StackTrace: {exception.StackTrace}");
+    }
+
+    /// <summary>
+    ///     Truncates a value to the API field limit while keeping a visible marker so the
+    ///     receiver knows the payload was shortened. Null values stay null.
+    /// </summary>
+    /// <param name="value">Value to truncate.</param>
+    /// <param name="maxLength">Maximum accepted length.</param>
+    /// <returns>The original value or a truncated copy.</returns>
+    internal static string? TruncateForApi(string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= maxLength) return value;
+
+        var keep = Math.Max(0, maxLength - TruncationSuffix.Length);
+        return value[..keep] + TruncationSuffix;
     }
 
     private static string? BuildStackTrace(LogEvent logEvent)
@@ -368,8 +446,9 @@ public class BugReportApiSink : ILogEventSink, IDisposable
         {
             return Environment.MachineName;
         }
-        catch
+        catch (InvalidOperationException ex)
         {
+            Log.Debug(ex, "Could not read the machine name for the bug report");
             return null;
         }
     }

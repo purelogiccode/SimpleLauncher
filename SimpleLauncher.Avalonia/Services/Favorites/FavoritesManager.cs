@@ -19,7 +19,7 @@ namespace SimpleLauncher.Avalonia.Services.Favorites;
 ///     LocalAppData folder when a portable-mode write fails.
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
-public class FavoritesManager
+internal class FavoritesManager
 {
     [IgnoreMember] private static readonly Lock ListLock = new();
     [IgnoreMember] private static readonly DataFileLocation FileLocation = new("favorites.dat");

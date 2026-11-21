@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Stella emulator configuration injection window.
 /// </summary>
-public partial class InjectStellaConfigViewModel : ObservableObject
+internal partial class InjectStellaConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

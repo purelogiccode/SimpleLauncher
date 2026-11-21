@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Windows;
 using SimpleLauncher.Core.Services.FirstRun;
 using SimpleLauncher.ViewModels;
 

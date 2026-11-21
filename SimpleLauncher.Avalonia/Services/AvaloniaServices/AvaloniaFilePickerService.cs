@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.AvaloniaServices;
 ///     Avalonia implementation of IFilePickerService — provides async file/folder dialogs
 ///     via the platform StorageProvider.
 /// </summary>
-public class AvaloniaFilePickerService : IFilePickerService
+internal class AvaloniaFilePickerService : IFilePickerService
 {
     public async Task<string?> OpenFileAsync(string title, string filter = "All files|*.*")
     {

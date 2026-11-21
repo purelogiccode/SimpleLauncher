@@ -16,7 +16,7 @@ namespace SimpleLauncher.Avalonia.Services.TakeScreenshot;
 ///     to the .\screenshot folder relative to the application directory.
 ///     Windows-only port of the WPF ActiveWindowScreenshotService (net11.0-windows TFM).
 /// </summary>
-public sealed partial class AvaloniaActiveWindowScreenshotService
+internal sealed partial class AvaloniaActiveWindowScreenshotService
 {
     private readonly ILogger _logger;
     private readonly IPlaySoundEffects _playSoundEffects;

@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for configuring sound and notification settings.
 /// </summary>
-public partial class SoundConfigurationWindow : Window
+internal partial class SoundConfigurationWindow : Window
 {
     private readonly EventHandler _saveCompletedHandler;
 
@@ -24,13 +24,13 @@ public partial class SoundConfigurationWindow : Window
 
         viewModel.SaveCompleted += _saveCompletedHandler;
         viewModel.CloseRequested += OnCloseRequested;
-        viewModel.RequestSoundFilePath += OnRequestSoundFilePath;
+        viewModel.RequestSoundFilePath += OnRequestSoundFilePathAsync;
 
         Closing += (_, _) =>
         {
             viewModel.SaveCompleted -= _saveCompletedHandler;
             viewModel.CloseRequested -= OnCloseRequested;
-            viewModel.RequestSoundFilePath -= OnRequestSoundFilePath;
+            viewModel.RequestSoundFilePath -= OnRequestSoundFilePathAsync;
         };
 
         DataContext = viewModel;
@@ -41,7 +41,7 @@ public partial class SoundConfigurationWindow : Window
         Close();
     }
 
-    private static async Task<string?> OnRequestSoundFilePath()
+    private static async Task<string?> OnRequestSoundFilePathAsync()
     {
         var filePicker = App.ServiceProvider.GetRequiredService<IFilePickerService>();
         return await filePicker.OpenFileAsync("Select Notification Sound File",

@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     Entries are validated against the system's folder/format configuration so a list
 ///     cached before an edit (same system name, different folder) is never served.
 /// </summary>
-public sealed class AvaloniaGameCacheService
+internal sealed class AvaloniaGameCacheService
 {
     private readonly Dictionary<string, CacheEntry> _cache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _lock = new();

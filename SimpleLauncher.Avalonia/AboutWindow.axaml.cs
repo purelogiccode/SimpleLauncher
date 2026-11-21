@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window displaying application information, version, and credits.
 /// </summary>
-public partial class AboutWindow : Window
+internal partial class AboutWindow : Window
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="AboutWindow" /> class.

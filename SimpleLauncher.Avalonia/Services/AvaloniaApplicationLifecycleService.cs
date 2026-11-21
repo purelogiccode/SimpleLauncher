@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     check, usage reporting, play-history migration, and game file watching.
 ///     Avalonia port of the WPF <c>ApplicationLifecycleService</c> (no WPF dependencies).
 /// </summary>
-public class AvaloniaApplicationLifecycleService
+internal class AvaloniaApplicationLifecycleService
 {
     private readonly AvaloniaGameFileWatcherService _gameFileWatcherService;
     private readonly ILogger _logger;

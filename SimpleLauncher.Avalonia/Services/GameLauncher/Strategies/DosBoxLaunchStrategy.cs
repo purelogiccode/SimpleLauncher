@@ -18,7 +18,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 ///     COPY of the WPF DosBoxLaunchStrategy — the file-selection dialog is shown with the Avalonia
 ///     async ShowDialog API (owner window from IWindowContext); the .conf generation is identical.
 /// </summary>
-public class DosBoxLaunchStrategy : ILaunchStrategy
+internal class DosBoxLaunchStrategy : ILaunchStrategy
 {
     private static ILogger _logger = null!;
 

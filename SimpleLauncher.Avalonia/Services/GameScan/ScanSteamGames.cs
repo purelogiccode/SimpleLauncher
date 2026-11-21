@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 ///     Scans for installed Steam games by reading the Steam installation registry entry,
 ///     library folders VDF, and app manifests, and creates shortcuts for them.
 /// </summary>
-public class ScanSteamGames : IGamePlatformScanner
+internal class ScanSteamGames : IGamePlatformScanner
 {
     private readonly ILogger _logger;
     private readonly ISteamVdfParser _vdfParser;

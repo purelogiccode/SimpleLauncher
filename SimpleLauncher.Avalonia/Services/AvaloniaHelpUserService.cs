@@ -19,7 +19,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     with links as underlined inline spans (WPF <c>Hyperlink</c> parity) instead of
 ///     embedded controls, so text flows and wraps exactly like the WPF RichTextBox.
 /// </summary>
-public class AvaloniaHelpUserService
+internal class AvaloniaHelpUserService
 {
     /// <summary>
     ///     Maps system-name aliases (user-typed names) to the canonical names used by parameters.md.

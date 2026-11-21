@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed Epic Games Store games and creates shortcuts for them.
 /// </summary>
-public class ScanEpicGames : IGamePlatformScanner
+internal class ScanEpicGames : IGamePlatformScanner
 {
     /// <summary>
     ///     Scans the Epic Games launcher installation data (LauncherInstalled.dat or manifests)

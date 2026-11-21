@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     A single system entry in the sidebar (icon + name + live count badge).
 /// </summary>
-public partial class SidebarSystemItem : ObservableObject
+internal partial class SidebarSystemItem : ObservableObject
 {
     [ObservableProperty] public partial int Count { get; set; }
 

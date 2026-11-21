@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.Interfaces;
 /// <summary>
 ///     Provides methods to scan for games available on a specific platform.
 /// </summary>
-public interface IGamePlatformScanner
+internal interface IGamePlatformScanner
 {
     /// <summary>
     ///     Asynchronously scans for games on the platform, logging errors and respecting ignored game names.

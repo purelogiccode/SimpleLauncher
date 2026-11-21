@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     All configured systems are listed flat (no manufacturer headers), so a system
 ///     added through Easy/Expert Mode appears as soon as Populate is called again.
 /// </summary>
-public class SidebarViewModel
+internal class SidebarViewModel
 {
     /// <summary>
     ///     The flat list of all systems for the sidebar (system.xml order).

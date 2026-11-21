@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Azahar (3DS) emulator before launching a game.
 /// </summary>
-public class AzaharConfigHandler : IEmulatorConfigHandler
+internal class AzaharConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

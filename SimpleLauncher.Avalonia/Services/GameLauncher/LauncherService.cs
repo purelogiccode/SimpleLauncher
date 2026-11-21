@@ -27,7 +27,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher;
 ///     Mirrors the original SimpleLauncher launch pipeline: argument fallback (ROM path append),
 ///     emulator pre-flight flags, real play-time measurement and emulator config injection.
 /// </summary>
-public class LauncherService : ILauncherService
+internal class LauncherService : ILauncherService
 {
     private readonly AskAiToFixParameters _askAiToFixParameters;
     private readonly IEnumerable<IEmulatorConfigHandler> _configHandlers;

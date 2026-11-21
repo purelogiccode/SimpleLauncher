@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the SystemSelectionWindow.
 /// </summary>
-public partial class SystemSelectionViewModel : ObservableObject
+internal partial class SystemSelectionViewModel : ObservableObject
 {
     private readonly IRetroAchievementsSystemMatcher _systemMatcher;
 

@@ -11,6 +11,8 @@ namespace XmlToBinaryConverter;
 /// </summary>
 public partial class App
 {
+    /// <summary>Configures Serilog and the bug-report sink before the window opens.</summary>
+    /// <param name="e">The startup event arguments.</param>
     protected override void OnStartup(StartupEventArgs e)
     {
         var appDataLogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
@@ -34,6 +36,8 @@ public partial class App
         base.OnStartup(e);
     }
 
+    /// <summary>Flushes Serilog before the process exits.</summary>
+    /// <param name="e">The exit event arguments.</param>
     protected override void OnExit(ExitEventArgs e)
     {
         Log.CloseAndFlush();

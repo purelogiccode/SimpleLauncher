@@ -3,7 +3,7 @@ namespace SimpleLauncher.Avalonia.Models;
 /// <summary>
 ///     Emulator information for display.
 /// </summary>
-public class EmulatorInfoModel
+internal class EmulatorInfoModel
 {
     public string Name { get; init; } = "";
     public string Location { get; init; } = "";

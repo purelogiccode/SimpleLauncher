@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Xenia emulator configuration injection window.
 /// </summary>
-public partial class InjectXeniaConfigViewModel : ObservableObject
+internal partial class InjectXeniaConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

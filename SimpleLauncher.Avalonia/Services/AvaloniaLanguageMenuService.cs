@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     <see cref="LocalizationService.AvailableLanguages" /> set (canonical codes use
 ///     'pt-BR' / 'zh-Hans', matching the resource file names).
 /// </summary>
-public static class AvaloniaLanguageMenuService
+internal static class AvaloniaLanguageMenuService
 {
     /// <summary>
     ///     Maps menu item x:Name to the canonical language code.

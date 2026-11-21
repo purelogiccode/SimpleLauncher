@@ -20,6 +20,10 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
     private const string ApiKeyEncoded =
         "YUdwb04zbDFOblExTm5SNWNqVTBNRzg1ZFRnM05qYzJOelp5TlRZM05EVXpORFExTXpJek5USTJOR00zTldJMmREZG5aMmRvWjJjM05uUnlaalUyTkdVPQ==";
 
+    private const int MaxMessageLength = 4000;
+    private const int MaxStackTraceLength = 8000;
+    private const string TruncationSuffix = "\n... [report truncated by the client]";
+
     /// <summary>
     ///     Environment variable that disables bug report submission when set to "1". Automated tests set it so test
     ///     runs — including application processes they launch — never contact the live bug report API.
@@ -40,6 +44,7 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly string _logFolder;
     private bool _disposed;
+    private Task? _processTask;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="BugReportApiSink" /> class and starts the background queue processor.
@@ -48,7 +53,7 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
     public BugReportApiSink(string logFolder)
     {
         _logFolder = logFolder;
-        _ = ProcessQueueAsync(_cts.Token);
+        _processTask = Task.Run(() => ProcessQueueAsync(_cts.Token));
     }
 
     /// <summary>
@@ -59,6 +64,23 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
         if (_disposed) return;
 
         _disposed = true;
+        _channel.Writer.TryComplete();
+
+        try
+        {
+            // Let the consumer drain the queue (each upload is bounded by its own 30 s
+            // timeout) without letting shutdown hang forever.
+            _processTask?.Wait(TimeSpan.FromSeconds(35));
+        }
+        catch (AggregateException ex) when (ex.InnerExceptions.All(static e => e is OperationCanceledException))
+        {
+            // Cancellation during shutdown is expected.
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Bug report sink shutdown did not complete cleanly");
+        }
+
         _cts.Cancel();
         _cts.Dispose();
     }
@@ -82,19 +104,27 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
 
     private async Task ProcessQueueAsync(CancellationToken cancellationToken)
     {
-        while (await _channel.Reader.WaitToReadAsync(cancellationToken))
+        try
         {
-            while (_channel.Reader.TryRead(out var logEvent))
+            while (await _channel.Reader.WaitToReadAsync(cancellationToken))
             {
-                try
+                while (_channel.Reader.TryRead(out var logEvent))
                 {
-                    await SendReportAsync(logEvent);
-                }
-                catch
-                {
-                    WriteCriticalError(logEvent);
+                    try
+                    {
+                        await SendReportAsync(logEvent);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Debug(ex, "Updater bug report submission failed");
+                        WriteCriticalError(logEvent);
+                    }
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutdown via Dispose; the completed channel is the normal exit.
         }
     }
 
@@ -107,22 +137,24 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
         var errorLogPath = Path.Combine(_logFolder, "error.log");
         var userLogPath = Path.Combine(_logFolder, "error_user.log");
 
-        await File.AppendAllTextAsync(errorLogPath, report);
-        await File.AppendAllTextAsync(userLogPath,
-            report +
-            "--------------------------------------------------------------------------------------------------------------\n\n\n");
-
         try
         {
+            // Persist first; if the folder is unavailable the catch below records the
+            // failure instead of letting the processing loop die.
+            await File.AppendAllTextAsync(errorLogPath, report);
+            await File.AppendAllTextAsync(userLogPath,
+                report +
+                "--------------------------------------------------------------------------------------------------------------\n\n\n");
+
             var assembly = Assembly.GetExecutingAssembly();
             var payload = new
             {
-                message = report,
+                message = TruncateForApi(report, MaxMessageLength),
                 applicationName = assembly.GetName().Name ?? "Updater",
                 version = assembly.GetName().Version?.ToString() ?? "Unknown",
                 userInfo = GetUserInfo(),
                 environment = GetEnvironmentName(),
-                stackTrace = BuildStackTrace(logEvent)
+                stackTrace = TruncateForApi(BuildStackTrace(logEvent), MaxStackTraceLength)
             };
 
             var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
@@ -140,16 +172,25 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
                 {
                     File.Delete(errorLogPath);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore deletion failures
+                    Log.Debug(ex, "Could not delete the submitted updater error log");
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug(ex, "Updater bug report submission failed; writing to the critical log");
             WriteCriticalError(logEvent);
         }
+    }
+
+    private static string? TruncateForApi(string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= maxLength) return value;
+
+        var keep = Math.Max(0, maxLength - TruncationSuffix.Length);
+        return value[..keep] + TruncationSuffix;
     }
 
     private void WriteCriticalError(LogEvent logEvent)
@@ -161,10 +202,18 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
                          "\n--------------------------------------------------------------------------------------------------------------\n\n\n";
             File.AppendAllText(criticalLogPath, report);
         }
-        catch
+        catch (Exception ex)
         {
-            // Can't do anything more
+            Log.Debug(ex, "Could not write the updater critical bug report fallback log");
         }
+    }
+
+    private static string GetOperatingSystemVersion()
+    {
+        if (OperatingSystem.IsWindows()) return $"Windows {Environment.OSVersion.Version}";
+        if (OperatingSystem.IsLinux()) return $"Linux {Environment.OSVersion.Version}";
+        if (OperatingSystem.IsMacOS()) return $"macOS {Environment.OSVersion.Version}";
+        return RuntimeInformation.OSDescription;
     }
 
     private static string BuildReport(LogEvent logEvent)
@@ -181,6 +230,8 @@ internal class BugReportApiSink : ILogEventSink, IDisposable
         message.AppendLine(CultureInfo.InvariantCulture, $"Architecture: {RuntimeInformation.OSArchitecture}");
         message.AppendLine(CultureInfo.InvariantCulture,
             $"Bitness: {(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")}");
+        message.AppendLine(CultureInfo.InvariantCulture,
+            $"Windows, Linux or MacOsX Version: {GetOperatingSystemVersion()}");
         message.AppendLine(CultureInfo.InvariantCulture, $"Processor Count: {Environment.ProcessorCount}");
         message.AppendLine(CultureInfo.InvariantCulture, $"Base Directory: {AppContext.BaseDirectory}");
         message.AppendLine(CultureInfo.InvariantCulture, $"Temp Path: {Path.GetTempPath()}");

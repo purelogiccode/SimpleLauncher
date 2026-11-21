@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     Two-tier image cache converter: weak ConcurrentDictionary + LRU strong tier (1500 entries).
 ///     Ported from Emutastic pattern. Loads cover art images asynchronously.
 /// </summary>
-public class PathToImageConverter : IValueConverter
+internal class PathToImageConverter : IValueConverter
 {
     // Prune the weak cache when it grows past this size (dead weak references accumulate
     // until GC runs; this bounds the weak-reference table without blocking the UI thread).

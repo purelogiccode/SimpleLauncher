@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the BlastEm emulator configuration injection window.
 /// </summary>
-public partial class InjectBlastemConfigViewModel : ObservableObject
+internal partial class InjectBlastemConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

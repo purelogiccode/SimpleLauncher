@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.QuitOrReinstall;
 ///     Port of the WPF QuitSimpleLauncher — Exit_Click routes here for a clean
 ///     shutdown instead of merely closing the window.
 /// </summary>
-public class AvaloniaQuitSimpleLauncher
+internal class AvaloniaQuitSimpleLauncher
 {
     private readonly IApplicationLifetime _applicationLifetime;
     private readonly ILogger _logger;

@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     <see cref="GameFilesChanged" /> event (with the affected system name) so the
 ///     main window can refresh the library live — no WPF dependencies.
 /// </summary>
-public class AvaloniaGameFileWatcherService : IDisposable
+internal class AvaloniaGameFileWatcherService : IDisposable
 {
     private readonly ILogger _logger;
     private readonly GameFileWatcherService _watcher;

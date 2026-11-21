@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.Services.ContextMenus;
 /// <summary>
 ///     Avalonia-only extra actions appended after the WPF-parity menu entries.
 /// </summary>
-public class GameContextMenuCallbacks
+internal class GameContextMenuCallbacks
 {
     public required Action<GameCardViewModel> OnShowDetails
     {

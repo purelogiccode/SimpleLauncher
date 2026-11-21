@@ -10,6 +10,9 @@
         <Product>Simple Launcher</Product>
         <LangVersion>15</LangVersion>
         <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <NeutralLanguage>en</NeutralLanguage>
         <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
         <ApplicationManifest>app.manifest</ApplicationManifest>

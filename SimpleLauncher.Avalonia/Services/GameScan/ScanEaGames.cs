@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 ///     Scans for installed EA (Electronic Arts) games via the registry, classifies them via the
 ///     game-classification API (same as Microsoft Store), and creates shortcuts for confirmed games.
 /// </summary>
-public class ScanEaGames : IGamePlatformScanner
+internal class ScanEaGames : IGamePlatformScanner
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly IHttpClientFactory _httpClientFactory;

@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.Services.AvaloniaServices;
 /// <summary>
 ///     Implementation of IResourceProvider — delegates to LocalizationService.
 /// </summary>
-public class AvaloniaResourceProvider : IResourceProvider
+internal class AvaloniaResourceProvider : IResourceProvider
 {
     private readonly LocalizationService _localization;
 

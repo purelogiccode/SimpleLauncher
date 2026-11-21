@@ -23,7 +23,7 @@ namespace SimpleLauncher.Avalonia.Services.ContextMenus;
 ///     Implements context menu actions for game items such as favorites, media viewing,
 ///     screenshots, and deletion (port of the WPF ContextMenuFunctions).
 /// </summary>
-public class AvaloniaContextMenuFunctions(
+internal class AvaloniaContextMenuFunctions(
     ILogger logErrors,
     IMessageBoxLibraryService messageBox,
     PlaySoundEffects playSoundEffects,

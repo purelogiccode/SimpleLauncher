@@ -1,6 +1,6 @@
 namespace SimpleLauncher.Avalonia.Models;
 
-public enum ToastType
+internal enum ToastType
 {
     Info,
     Success,

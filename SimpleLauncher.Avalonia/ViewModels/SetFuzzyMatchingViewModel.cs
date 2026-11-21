@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the SetFuzzyMatchingWindow.
 /// </summary>
-public partial class SetFuzzyMatchingViewModel : ObservableObject
+internal partial class SetFuzzyMatchingViewModel : ObservableObject
 {
     // Slider constraints
     /// <summary>The minimum fuzzy matching threshold allowed by the slider.</summary>

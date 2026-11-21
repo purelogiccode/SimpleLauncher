@@ -20,7 +20,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 ///     status-bar feedback are emitted through the launch context's ILaunchFeedback
 ///     surface when the host UI provides one.
 /// </summary>
-public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
+internal partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
 {
     private static ILogger _logger = null!;
 
@@ -219,8 +219,7 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
         }
         catch (Exception ex)
         {
-            _logger.Debug($"[CommanderGeniusLaunchStrategy] Unexpected error: {ex}");
-            LogErrorAsync($"Unexpected error: {ex.Message}\nFile: {context?.FilePath}");
+            _logger.Warning(ex, "[CommanderGeniusLaunchStrategy] Unexpected error. File: {FilePath}", context?.FilePath);
         }
         finally
         {
@@ -545,12 +544,6 @@ public partial class CommanderGeniusLaunchStrategy : ILaunchStrategy
     {
         var fullMessage = $"[CommanderGeniusLaunchStrategy] {message}";
         _logger.Information(fullMessage);
-    }
-
-    private static void LogErrorAsync(string message)
-    {
-        var fullMessage = $"[CommanderGeniusLaunchStrategy] {message}";
-        _logger.Warning(fullMessage);
     }
 
     [SuppressMessage("Meziantou.Analyzer", "MA0023:UseRegexOptionsExplicitCapture",

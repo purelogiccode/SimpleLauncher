@@ -37,7 +37,7 @@ namespace SimpleLauncher.Avalonia.Services.SettingsDatabase;
 ///     the next launch retries. An existing valid database is never deleted.
 ///     Mirrors <c>WpfLegacyMigrator</c>; the shipped app and the WPF reference share the same database format.
 /// </remarks>
-public static class AvaloniaLegacyMigrator
+internal static class AvaloniaLegacyMigrator
 {
     private static readonly Lock MigrationLock = new();
     private static bool _migrationAttempted;

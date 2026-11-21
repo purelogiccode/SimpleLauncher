@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     so the service can drive any menu generically — the same 8-category contract the
 ///     WPF <c>MenuCheckMarkService</c> provides through its named host properties.
 /// </summary>
-public static class AvaloniaMenuCheckMarkService
+internal static class AvaloniaMenuCheckMarkService
 {
     /// <summary>
     ///     Checks exactly the menu item whose <c>Tag</c> parses to <paramref name="selectedValue" />

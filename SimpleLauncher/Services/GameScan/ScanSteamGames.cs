@@ -130,13 +130,15 @@ internal class ScanSteamGames : IGamePlatformScanner
                 {
                     manifestFiles = Directory.GetFiles(libraryPath, "appmanifest_*.acf");
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException ex)
                 {
-                    // Skip inaccessible library paths
+                    // Skip inaccessible library paths.
+                    logErrors.Debug(ex, "Skipping inaccessible Steam library path '{LibraryPath}'", libraryPath);
                     continue;
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
+                    logErrors.Debug(ex, "Skipping unreadable Steam library path '{LibraryPath}'", libraryPath);
                     continue;
                 }
 
@@ -157,13 +159,15 @@ internal class ScanSteamGames : IGamePlatformScanner
                 {
                     modDirectories = Directory.GetDirectories(sourceModsPath);
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException ex)
                 {
-                    // Skip inaccessible sourcemods path
+                    // Skip inaccessible sourcemods path.
+                    logErrors.Debug(ex, "Skipping inaccessible Steam sourcemods path '{Path}'", sourceModsPath);
                     modDirectories = [];
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
+                    logErrors.Debug(ex, "Skipping unreadable Steam sourcemods path '{Path}'", sourceModsPath);
                     modDirectories = [];
                 }
 

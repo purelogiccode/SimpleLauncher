@@ -27,6 +27,11 @@
   the install folder after uninstalling to remove everything.
 - **Portable ZIP still available** - the ZIP remains the no-installer option, and both the ZIP and
   installer builds use the built-in updater.
+- **Tooltips everywhere** - every interactive control now shows its accessible name/help text as
+  a tooltip, so the UI explains itself without extra documentation.
+- **Better bug reports** - all logging goes through Serilog, and Warning/Error events reach the
+  bug-report API with the complete environment block (including the Windows/Linux/macOS version),
+  the full inner-exception chain and safe truncation for the API limits.
 
 ## Bundled Tools
 - **Much smaller download** - Simple Launcher now bundles only the helpers it calls while

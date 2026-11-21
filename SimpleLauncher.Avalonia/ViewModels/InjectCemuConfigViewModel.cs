@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Cemu emulator configuration injection window.
 /// </summary>
-public partial class InjectCemuConfigViewModel : ObservableObject
+internal partial class InjectCemuConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

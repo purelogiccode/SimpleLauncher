@@ -47,8 +47,9 @@ public partial class FlashOverlayWindow : IDisposable
             {
                 cts.Cancel();
             }
-            catch (ObjectDisposedException)
+            catch (ObjectDisposedException ex)
             {
+                Log.Debug(ex, "Object was already disposed; continuing shutdown");
             }
 
             cts.Dispose();
@@ -73,8 +74,9 @@ public partial class FlashOverlayWindow : IDisposable
             {
                 previousCts.Cancel();
             }
-            catch (ObjectDisposedException)
+            catch (ObjectDisposedException ex)
             {
+                Log.Debug(ex, "Object was already disposed; continuing shutdown");
             }
 
             previousCts.Dispose();

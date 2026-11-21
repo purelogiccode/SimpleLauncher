@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the RetroAchievements window, managing user profile, unlocks, and completion progress display.
 /// </summary>
-public partial class RetroAchievementsViewModel : ObservableObject
+internal partial class RetroAchievementsViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

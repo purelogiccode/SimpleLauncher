@@ -97,13 +97,4 @@ public partial class MainWindow : ISystemSelectionHost
         }
     }
 
-    void ISystemSelectionHost.SetSelectedImageFolder(string folder)
-    {
-        _selectedImageFolder = folder;
-    }
-
-    void ISystemSelectionHost.SetSelectedRomFolders(IList<string> folders)
-    {
-        _selectedRomFolders = folders.ToList();
-    }
 }

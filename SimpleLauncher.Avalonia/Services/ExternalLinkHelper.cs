@@ -16,7 +16,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     shell-execute only when no launcher is available.
 ///     </para>
 /// </summary>
-public static class ExternalLinkHelper
+internal static class ExternalLinkHelper
 {
     /// <summary>
     ///     Returns true when <paramref name="url" /> is an absolute HTTP or HTTPS URL.

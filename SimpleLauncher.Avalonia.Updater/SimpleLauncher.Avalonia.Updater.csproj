@@ -10,6 +10,9 @@
         <!-- The single updater ships as Updater.exe; it also migrates legacy WPF installs. -->
         <AssemblyName>Updater</AssemblyName>
         <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyVersion>5.8.4</AssemblyVersion>
         <FileVersion>5.8.4</FileVersion>

@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     Converts a boolean value to a localized string indicating favorite status for accessibility.
 ///     Avalonia port of the WPF BooleanToFavoriteStatusConverter.
 /// </summary>
-public class BooleanToFavoriteStatusConverter : IValueConverter
+internal class BooleanToFavoriteStatusConverter : IValueConverter
 {
     private static LocalizationService? _localization;
 

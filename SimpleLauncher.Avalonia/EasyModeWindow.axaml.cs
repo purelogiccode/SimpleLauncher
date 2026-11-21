@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia;
 ///     reusable <see cref="Views.EasyModeView" /> (also embedded by the first-run wizard);
 ///     this shell owns the ViewModel lifetime and the window chrome.
 /// </summary>
-public partial class EasyModeWindow : Window, IDisposable
+internal partial class EasyModeWindow : Window, IDisposable
 {
     private readonly EasyModeViewModel _viewModel;
     private bool _disposed;

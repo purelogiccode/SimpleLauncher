@@ -24,6 +24,7 @@ public class AzaharPermissionException : Exception
     {
     }
 
+    /// <summary>Initializes a new instance with a default message.</summary>
     public AzaharPermissionException()
     {
     }

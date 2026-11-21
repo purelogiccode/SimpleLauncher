@@ -232,9 +232,10 @@ public class GameCacheService : IGameCacheService, IDisposable
                 _logger?.Debug("GameCacheService.ClearSync timed out waiting for lock after 5 seconds");
             }
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException ex)
         {
-            // Semaphore was disposed, ignore
+            // Semaphore was disposed during shutdown.
+            _logger?.Debug(ex, "GameCacheService.ClearSync skipped because the lock was disposed");
         }
     }
 }

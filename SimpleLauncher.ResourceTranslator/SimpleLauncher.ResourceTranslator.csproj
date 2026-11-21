@@ -4,6 +4,11 @@
         <TargetFramework>net11.0-windows</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+
+        <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <LangVersion>15</LangVersion>
         <Company>PureLogicCode.com</Company>
         <AssemblyVersion>5.8.4</AssemblyVersion>

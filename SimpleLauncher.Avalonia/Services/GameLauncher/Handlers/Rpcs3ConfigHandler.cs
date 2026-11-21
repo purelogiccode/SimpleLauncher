@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the RPCS3 (PS3) emulator before launching a game.
 /// </summary>
-public class Rpcs3ConfigHandler : IEmulatorConfigHandler
+internal class Rpcs3ConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

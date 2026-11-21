@@ -7,6 +7,9 @@
         <Product>Simple Launcher Core</Product>
         <LangVersion>15</LangVersion>
         <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <!-- SDL2's generated bindings (Hexa.NET.SDL2) expose native pointers. -->
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NeutralLanguage>en</NeutralLanguage>

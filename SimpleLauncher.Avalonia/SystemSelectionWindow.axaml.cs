@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for selecting an emulator system from a list of available systems.
 /// </summary>
-public partial class SystemSelectionWindow : Window
+internal partial class SystemSelectionWindow : Window
 {
     private readonly SystemSelectionViewModel _viewModel;
     private bool _confirmed;

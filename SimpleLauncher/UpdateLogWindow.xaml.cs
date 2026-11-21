@@ -28,6 +28,8 @@ public partial class UpdateLogWindow
     /// <param name="message">The message to append.</param>
     public void Log(string message)
     {
+        Serilog.Log.Information("Update: {Message}", message);
+
         // BeginInvoke (not Invoke): Log is called from background update threads and
         // must never block on the UI thread or throw during shutdown (WPF-17).
         try

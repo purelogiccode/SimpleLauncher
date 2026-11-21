@@ -102,7 +102,7 @@ public static class Program
             if (localizationResourcesPath != null)
             {
                 Log.Information("--- Shared Localization Packs (SimpleLauncher.Core\\Localization) ---");
-                var (translated, duplicates) = await ProcessProject(
+                var (translated, duplicates) = await ProcessProjectAsync(
                     localizationResourcesPath,
                     "strings.en.json",
                     JsonResourceAnalyzer.ReadEnglishKeys,
@@ -139,7 +139,7 @@ public static class Program
         }
     }
 
-    private static async Task<(int translated, int duplicatesRemoved)> ProcessProject(
+    private static async Task<(int translated, int duplicatesRemoved)> ProcessProjectAsync(
         string resourcesPath,
         string englishFileName,
         Func<string, IDictionary<string, string>> readEnglishKeys,

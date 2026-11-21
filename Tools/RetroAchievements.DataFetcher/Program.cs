@@ -102,7 +102,7 @@ file static class Program
 
     private static async Task RunFetchModeAsync()
     {
-        var settings = await LoadOrPromptSettings();
+        var settings = await LoadOrPromptSettingsAsync();
         using HttpClient client = new();
 
         Log.Information("Starting RetroAchievements game data fetcher...");
@@ -115,7 +115,7 @@ file static class Program
         {
             // Fetch consoles
             Log.Information("Fetching console list...");
-            var consoles = await FetchConsoles(client, settings);
+            var consoles = await FetchConsolesAsync(client, settings);
 
             if (consoles.Count == 0)
             {
@@ -171,7 +171,7 @@ file static class Program
         Console.ReadKey();
     }
 
-    private static async Task<List<ConsoleInfo>> FetchConsoles(HttpClient client, RaSettings settings)
+    private static async Task<List<ConsoleInfo>> FetchConsolesAsync(HttpClient client, RaSettings settings)
     {
         try
         {
@@ -271,7 +271,7 @@ file static class Program
         }
     }
 
-    private static async Task<RaSettings> LoadOrPromptSettings()
+    private static async Task<RaSettings> LoadOrPromptSettingsAsync()
     {
         var settings = new RaSettings();
 

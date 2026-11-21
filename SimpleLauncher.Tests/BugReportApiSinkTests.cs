@@ -104,6 +104,113 @@ public class BugReportApiSinkTests
         }
     }
 
+    /// <summary>
+    ///     The bug-report API contract requires a fixed environment block. This test pins
+    ///     every required label so a future refactor cannot silently drop one.
+    /// </summary>
+    [Fact]
+    public void BuildReportContainsEveryRequiredEnvironmentField()
+    {
+        var logEvent = new LogEvent(DateTimeOffset.Now, LogEventLevel.Error,
+            new InvalidOperationException("Test exception"),
+            new Serilog.Parsing.MessageTemplateParser().Parse("Test message"), []);
+
+        var report = BugReportApiSink.BuildReport(logEvent);
+
+        Assert.Contains("=== Environment Details ===", report, StringComparison.Ordinal);
+        Assert.Contains("Date: ", report, StringComparison.Ordinal);
+        Assert.Contains("Application Name: ", report, StringComparison.Ordinal);
+        Assert.Contains("Application Version: ", report, StringComparison.Ordinal);
+        Assert.Contains("OS Version: ", report, StringComparison.Ordinal);
+        Assert.Contains("Architecture: ", report, StringComparison.Ordinal);
+        Assert.Contains("Bitness: ", report, StringComparison.Ordinal);
+        Assert.Contains("Windows, Linux or MacOsX Version: ", report, StringComparison.Ordinal);
+        Assert.Contains("Processor Count: ", report, StringComparison.Ordinal);
+        Assert.Contains("Base Directory: ", report, StringComparison.Ordinal);
+        Assert.Contains("Temp Path: ", report, StringComparison.Ordinal);
+        Assert.Contains("=== Error Details ===", report, StringComparison.Ordinal);
+        Assert.Contains("Error message: Test message", report, StringComparison.Ordinal);
+        Assert.Contains("=== Exception Details ===", report, StringComparison.Ordinal);
+        Assert.Contains("Type: System.InvalidOperationException", report, StringComparison.Ordinal);
+        Assert.Contains("Message: Test exception", report, StringComparison.Ordinal);
+        Assert.Contains("Source: ", report, StringComparison.Ordinal);
+        Assert.Contains("StackTrace: ", report, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Inner exceptions are part of the exception details and must be reported, not
+    ///     silently dropped after the first level.
+    /// </summary>
+    [Fact]
+    public void BuildReportIncludesInnerExceptionChain()
+    {
+        var exception = new InvalidOperationException("Outer",
+            new InvalidOperationException("Middle", new FormatException("Inner")));
+        var logEvent = new LogEvent(DateTimeOffset.Now, LogEventLevel.Error, exception,
+            new MessageTemplate("Nested failure", []), []);
+
+        var report = BugReportApiSink.BuildReport(logEvent);
+
+        Assert.Contains("Message: Outer", report, StringComparison.Ordinal);
+        Assert.Contains("Message: Middle", report, StringComparison.Ordinal);
+        Assert.Contains("Message: Inner", report, StringComparison.Ordinal);
+        Assert.Equal(2, CountOccurrences(report, "--- Inner Exception ---"));
+    }
+
+    /// <summary>
+    ///     The API silently truncates long fields; the client must truncate first and leave a
+    ///     marker so reports remain diagnosable.
+    /// </summary>
+    [Fact]
+    public void TruncateForApiKeepsPayloadsWithinTheApiLimits()
+    {
+        var value = new string('x', BugReportApiSink.MaxMessageLength + 500);
+
+        var truncated = BugReportApiSink.TruncateForApi(value, BugReportApiSink.MaxMessageLength);
+
+        Assert.NotNull(truncated);
+        Assert.True(truncated.Length <= BugReportApiSink.MaxMessageLength);
+        Assert.Contains("report truncated", truncated, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Short values and null values must pass through unchanged.
+    /// </summary>
+    [Fact]
+    public void TruncateForApiLeavesShortAndNullValuesUntouched()
+    {
+        Assert.Equal("short", BugReportApiSink.TruncateForApi("short", 10));
+        Assert.Null(BugReportApiSink.TruncateForApi(null, 10));
+        Assert.Equal(string.Empty, BugReportApiSink.TruncateForApi(string.Empty, 10));
+    }
+
+    /// <summary>
+    ///     The OS description must be populated on every supported platform; it is the field
+    ///     that distinguishes Windows, Linux and macOS reports.
+    /// </summary>
+    [Fact]
+    public void OperatingSystemDetailsAreNeverBlank()
+    {
+        var description = OperatingSystemDetails.GetDescription();
+
+        Assert.False(string.IsNullOrWhiteSpace(description));
+        Assert.DoesNotContain('\n', description);
+        Assert.DoesNotContain('\r', description);
+    }
+
+    private static int CountOccurrences(string value, string needle)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = value.IndexOf(needle, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += needle.Length;
+        }
+
+        return count;
+    }
+
     private static string EncodeApiKey(string apiKey)
     {
         var encodedOnce = Convert.ToBase64String(Encoding.UTF8.GetBytes(apiKey));

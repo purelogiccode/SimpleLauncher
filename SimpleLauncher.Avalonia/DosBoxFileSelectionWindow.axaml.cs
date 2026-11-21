@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for selecting a DOSBox file from a list of available files.
 /// </summary>
-public partial class DosBoxFileSelectionWindow : Window
+internal partial class DosBoxFileSelectionWindow : Window
 {
     private readonly DosBoxFileSelectionViewModel _viewModel;
 

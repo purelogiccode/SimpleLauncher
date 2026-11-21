@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the ImageViewerWindow.
 /// </summary>
-public class ImageViewerViewModel : ObservableObject
+internal class ImageViewerViewModel : ObservableObject
 {
     private static readonly HttpClient HttpClient = new()
     {
@@ -85,7 +85,7 @@ public class ImageViewerViewModel : ObservableObject
     ///     Loads an image from a URI (local or web).
     /// </summary>
     /// <param name="imageUri">The URI of the image.</param>
-    public async Task LoadImageFromUri(Uri? imageUri)
+    public async Task LoadImageFromUriAsync(Uri? imageUri)
     {
         if (imageUri is null || !UrlHelper.IsHttpUrl(imageUri.AbsoluteUri))
         {

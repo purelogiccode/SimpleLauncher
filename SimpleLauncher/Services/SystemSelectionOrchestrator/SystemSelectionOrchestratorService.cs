@@ -351,17 +351,8 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
                         await _messageBox.ListOfErrorsMessageBoxAsync(errorMessages);
                     }
 
-                    var resolvedSystemImageFolderPath =
-                        PathHelper.ResolveRelativeToAppDirectory(selectedManager.SystemImageFolder);
-
                     var selectedRomFolders = selectedManager.SystemFolders
                         .Select(static path => PathHelper.ResolveRelativeToAppDirectory(path) ?? path).ToList();
-                    var selectedImageFolder = string.IsNullOrWhiteSpace(resolvedSystemImageFolderPath)
-                        ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", selectedManager.SystemName)
-                        : resolvedSystemImageFolderPath;
-
-                    _host.SetSelectedRomFolders(selectedRomFolders);
-                    _host.SetSelectedImageFolder(selectedImageFolder);
 
                     await PopulateAllGamesForCurrentSystemAsync(selectedManager, selectedSystem, selectedRomFolders,
                         cancellationToken);
@@ -373,8 +364,9 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
 
                     _host.ResetPaginationButtons();
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException ex)
                 {
+                    Log.Debug(ex, "Operation was cancelled; no action needed");
                 }
                 catch (Exception ex)
                 {

@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.TakeScreenshot;
 ///     Uses Win32 RegisterHotKey/UnregisterHotKey with a hidden message-only window,
 ///     so it does not depend on the host UI framework's message pump.
 /// </summary>
-public sealed partial class AvaloniaGlobalHotkeyService : IDisposable
+internal sealed partial class AvaloniaGlobalHotkeyService : IDisposable
 {
     private const int WmHotkey = 0x0312;
     private const int HotkeyId = 9001;

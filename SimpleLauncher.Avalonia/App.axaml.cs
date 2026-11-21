@@ -756,7 +756,6 @@ public class App : Application, IDisposable
         // ── Core services (from SimpleLauncher.Core) ──
         services.AddSingleton<DataFileLocation>();
         services.AddSingleton<InputSanitizerService>();
-        services.AddSingleton<WindowsVersionService>();
         // Register the SAME instance wired to Serilog (see OnFrameworkInitializationCompleted)
         // so DI consumers share one sink instead of an uninitialized dead instance.
         if (bugReportSink is not null) services.AddSingleton(bugReportSink);

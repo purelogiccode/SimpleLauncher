@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the DuckStation (PS1) emulator before launching a game.
 /// </summary>
-public class DuckStationConfigHandler : IEmulatorConfigHandler
+internal class DuckStationConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

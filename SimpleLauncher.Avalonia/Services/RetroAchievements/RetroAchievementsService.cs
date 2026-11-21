@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.RetroAchievements;
 ///     Provides methods to interact with the RetroAchievements REST API for user authentication, game progress, and
 ///     leaderboard data.
 /// </summary>
-public class RetroAchievementsService
+internal class RetroAchievementsService
 {
     private readonly string _apiBaseUrl;
 

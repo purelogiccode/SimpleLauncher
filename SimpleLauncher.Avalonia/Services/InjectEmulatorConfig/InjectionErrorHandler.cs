@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.Services.InjectEmulatorConfig;
 /// <summary>
 ///     Centralizes error handling for emulator configuration injection windows.
 /// </summary>
-public static class InjectionErrorHandler
+internal static class InjectionErrorHandler
 {
     /// <summary>
     ///     Handles a failure from the Run button by notifying the user and developer, then closing the window.

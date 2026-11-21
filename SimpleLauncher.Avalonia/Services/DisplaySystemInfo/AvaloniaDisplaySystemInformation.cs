@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.DisplaySystemInfo;
 ///     Extracted from the WPF DisplaySystemInformation service — adapted for Avalonia
 ///     by returning data models instead of manipulating WPF UI elements directly.
 /// </summary>
-public class AvaloniaDisplaySystemInformation
+internal class AvaloniaDisplaySystemInformation
 {
     private readonly LocalizationService? _localization;
 

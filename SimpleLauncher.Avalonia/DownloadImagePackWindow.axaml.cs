@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window that downloads and installs image packs for game systems.
 /// </summary>
-public partial class DownloadImagePackWindow : Window, IDisposable
+internal partial class DownloadImagePackWindow : Window, IDisposable
 {
     private readonly ILogger _logger;
     private readonly DownloadImagePackViewModel _viewModel;

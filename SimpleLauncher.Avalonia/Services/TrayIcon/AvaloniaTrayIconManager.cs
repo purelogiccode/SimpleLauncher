@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.TrayIcon;
 ///     Manages the system tray icon, its native context menu, and related actions for the application.
 ///     Cross-platform Avalonia port of the WPF TrayIconManager (Avalonia TrayIcon supports Windows and Linux).
 /// </summary>
-public class AvaloniaTrayIconManager : IDisposable
+internal class AvaloniaTrayIconManager : IDisposable
 {
     private readonly IApplicationLifetime _applicationLifetime;
     private readonly ILogger _logger;

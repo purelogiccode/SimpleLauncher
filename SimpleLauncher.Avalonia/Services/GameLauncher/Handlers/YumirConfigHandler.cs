@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Yumir/Ymir (Saturn) emulator before launching a game.
 /// </summary>
-public class YumirConfigHandler : IEmulatorConfigHandler
+internal class YumirConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

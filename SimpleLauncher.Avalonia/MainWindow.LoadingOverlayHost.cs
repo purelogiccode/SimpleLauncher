@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 ///     Partial MainWindow implementing <see cref="IAvaloniaLoadingOverlayHost" /> for loading
 ///     overlay coordination (WPF MainWindow.LoadingOverlayHost.cs parity).
 /// </summary>
-public partial class MainWindow : IAvaloniaLoadingOverlayHost
+internal partial class MainWindow : IAvaloniaLoadingOverlayHost
 {
     void IAvaloniaLoadingOverlayHost.SetIsLoading(bool isLoading)
     {

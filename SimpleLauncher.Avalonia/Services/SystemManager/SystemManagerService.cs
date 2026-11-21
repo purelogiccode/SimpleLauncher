@@ -20,7 +20,7 @@ namespace SimpleLauncher.Avalonia.Services.SystemManager;
 ///     and simplified (semicolon/comma-delimited) formats for reading, and writes in the
 ///     legacy format for compatibility with the original SimpleLauncher.
 /// </summary>
-public class SystemManagerService
+internal class SystemManagerService
 {
     private static readonly Lock XmlLock = new();
 

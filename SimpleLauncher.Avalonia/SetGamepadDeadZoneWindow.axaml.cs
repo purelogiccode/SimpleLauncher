@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for configuring gamepad dead zone sensitivity settings.
 /// </summary>
-public partial class SetGamepadDeadZoneWindow : Window
+internal partial class SetGamepadDeadZoneWindow : Window
 {
     private readonly EventHandler _saveCompletedHandler;
 

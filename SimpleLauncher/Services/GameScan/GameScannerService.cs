@@ -484,8 +484,9 @@ public class GameScannerService
                     var longPath = PathHelper.GetLongPath(f);
                     return longPath != null ? new FileInfo(longPath).Length : 0L;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Log.Debug(ex, "Could not read the size of an executable while ranking launch candidates");
                     return 0L;
                 }
             })
@@ -508,6 +509,7 @@ public class GameScannerService
         {
             // DirectoryNotFound/FileNotFound derive from IOException; UnauthorizedAccessException
             // covers ACL-protected folders such as C:\Program Files\WindowsApps.
+            Log.Debug(ex, "Could not enumerate executables in '{GameInstallPath}'", gameInstallPath);
             return null;
         }
     }

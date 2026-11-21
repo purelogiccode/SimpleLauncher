@@ -353,6 +353,10 @@ public class GamePadController : IDisposable
     }
 #endif
 
+    /// <summary>
+    ///     Releases the controller and stops its update loop.
+    /// </summary>
+    /// <param name="disposing">True when called from <see cref="IDisposable.Dispose" />.</param>
     protected virtual void Dispose(bool disposing)
     {
         if (_isDisposed) return;

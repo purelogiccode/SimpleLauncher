@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Controls;
 ///     Binds a string URL (e.g. "https://retroachievements.org/...") to <see cref="Url" />.
 ///     Used in data templates (DataGrid cells, list items) where a converter cannot refresh.
 /// </summary>
-public class RemoteImage : Image
+internal class RemoteImage : Image
 {
     /// <summary>
     ///     Defines the <see cref="Url" /> property.
@@ -100,8 +100,9 @@ public class RemoteImage : Image
         {
             cts.Cancel();
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException ex)
         {
+            Log.Debug(ex, "Object was already disposed; continuing shutdown");
         }
 
         cts.Dispose();

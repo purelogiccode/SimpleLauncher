@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 /// <summary>
 ///     Normalizes game titles: all-uppercase → Title Case, all-lowercase → Title Case, mixed case → as-is.
 /// </summary>
-public class SmartTitleCaseConverter : IValueConverter
+internal class SmartTitleCaseConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

@@ -5,7 +5,7 @@ namespace SimpleLauncher.Avalonia.Models;
 /// <summary>
 ///     Structured system information for display in Avalonia UI.
 /// </summary>
-public class SystemInfoModel
+internal class SystemInfoModel
 {
     public string SystemName { get; init; } = "";
     public List<string> SystemFolders { get; init; } = [];

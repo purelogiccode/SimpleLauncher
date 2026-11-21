@@ -18,15 +18,17 @@ Serilog 4.4.0 (+ `Serilog.Sinks.Async` 2.1.0, `Serilog.Sinks.Debug` 3.0.0, `Seri
 
 - `DebugWindow` (app): singleton live log viewer; **closing hides the window** instead of destroying it; logging continues; reopening flushes the buffered history.
 - Launched via the tray menu / Help menu, or automatically with the **`-debug` command-line flag** (opens alongside the main window).
-- `IDebugLogger` (legacy abstraction) and `NoOpDebugLogger` (fallback) still exist for compatibility; new code uses Serilog `ILogger` directly.
+- The legacy `IDebugLogger`/`NoOpDebugLogger` abstraction was removed. All logging now goes through Serilog `ILogger`/`Log.Logger`.
 
 ## Bug report pipeline
 
 `BugReportApiSink` (`SimpleLauncher.Core\Services\DebugAndBugReport\BugReportApiSink.cs`):
 
-1. Log events are queued (bounded — warnings do not grow unbounded, ~100-cap) and submitted to the bug-report API.
+1. **Every Warning-or-higher Serilog event** is queued (bounded, ~100-cap) and submitted to the bug-report API.
 2. On **success**: queued logs are deleted.
-3. On **failure**: `critical_error.log` (or `error.log` / `error_user.log`) is written locally with environment details; `WindowsVersionService`/`GetMicrosoftWindowsVersion` supply OS info for reports.
+3. On **failure**: `critical_error.log` (or `error.log` / `error_user.log`) is written locally with environment details.
+4. Reports always include `Date`, `Application Name`, `Application Version`, `OS Version`, `Architecture`, `Bitness`, `Windows, Linux or MacOsX Version` (resolved by `OperatingSystemDetails` on all three platforms), `Processor Count`, `Base Directory`, `Temp Path`, then the error and the full inner-exception chain. Payloads are truncated client-side to the API limits (4,000 chars for `message`, 8,000 for `stackTrace`) with a visible marker.
+5. The updater uses the same Serilog-only pipeline; its former `BugReportService` (a second, independent reporter) was removed.
 
 The **Support Window** (`SupportWindow` + `SupportViewModel`) is the user-facing entry point: name/email/message validation, "Sending support request…" overlay, POST to the support API, and an emergency return button on the overlay.
 

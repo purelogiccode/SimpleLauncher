@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the PCSX2 emulator configuration injection window.
 /// </summary>
-public partial class InjectPcsx2ConfigViewModel : ObservableObject
+internal partial class InjectPcsx2ConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     Loads remote (HTTP) images as <see cref="Bitmap" /> with a bounded weak cache.
 ///     Shared by the RetroAchievements UI, the image viewer, and the RemoteImage control.
 /// </summary>
-public static class RemoteImageLoader
+internal static class RemoteImageLoader
 {
     // Static HttpClient is intentional (socket reuse for the app lifetime); bounded by Timeout (AV-04).
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };

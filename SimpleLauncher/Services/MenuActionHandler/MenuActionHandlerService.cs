@@ -410,8 +410,9 @@ public class MenuActionHandlerService
                 await _host.LoadOrReloadSystemManagerAsync();
                 await _host.ResetUiAsync();
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
+                Log.Debug(ex, "Operation was cancelled; no action needed");
             }
             catch (Exception ex)
             {
@@ -1293,8 +1294,9 @@ public class MenuActionHandlerService
                 await _host.LoadGameFilesAsync(sl, sq, _host.CurrentCancellationToken);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Log.Debug(ex, "Operation was cancelled; no action needed");
         }
         catch (Exception ex)
         {
@@ -1346,8 +1348,9 @@ public class MenuActionHandlerService
                 await _host.LoadGameFilesAsync(sl, sq, _host.CurrentCancellationToken);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Log.Debug(ex, "Operation was cancelled; no action needed");
         }
         catch (Exception ex)
         {

@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services.UpdateStatusBar;
 ///     Extracted from the inline status-bar logic in MainViewModel and MainWindow.
 ///     Mirrors the WPF UpdateStatusBarService.
 /// </summary>
-public class AvaloniaUpdateStatusBarService
+internal class AvaloniaUpdateStatusBarService
 {
     private readonly int _timeoutSeconds;
     private DispatcherTimer? _clearTimer;

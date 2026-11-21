@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the MAME emulator configuration injection window.
 /// </summary>
-public partial class InjectMameConfigViewModel : ObservableObject
+internal partial class InjectMameConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window for configuring RetroAchievements credentials and settings.
 /// </summary>
-public partial class RetroAchievementsSettingsWindow : Window
+internal partial class RetroAchievementsSettingsWindow : Window
 {
     private readonly EventHandler _closeRequestedHandler;
     private readonly EventHandler _saveCompletedHandler;
@@ -33,14 +33,14 @@ public partial class RetroAchievementsSettingsWindow : Window
 
         _viewModel.SaveCompleted += _saveCompletedHandler;
         _viewModel.CloseRequested += _closeRequestedHandler;
-        _viewModel.RequestExePath += OnRequestExePath;
+        _viewModel.RequestExePath += OnRequestExePathAsync;
         _viewModel.OpenInBrowser = OpenControlPanel;
 
         Closing += (_, _) =>
         {
             _viewModel.SaveCompleted -= _saveCompletedHandler;
             _viewModel.CloseRequested -= _closeRequestedHandler;
-            _viewModel.RequestExePath -= OnRequestExePath;
+            _viewModel.RequestExePath -= OnRequestExePathAsync;
         };
 
         ApiKeyPasswordBox.TextChanged += (_, _) => _viewModel.ApiKey = ApiKeyPasswordBox.Text ?? "";
@@ -55,7 +55,7 @@ public partial class RetroAchievementsSettingsWindow : Window
         DataContext = _viewModel;
     }
 
-    private static async Task<string?> OnRequestExePath()
+    private static async Task<string?> OnRequestExePathAsync()
     {
         var filePicker = App.ServiceProvider.GetRequiredService<IFilePickerService>();
         return await filePicker.OpenFileAsync("Select Emulator Executable", ExecutableFileFilter.ForEmulator());

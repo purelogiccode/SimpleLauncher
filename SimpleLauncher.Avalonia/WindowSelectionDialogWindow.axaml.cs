@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Dialog window for selecting a running application window by handle.
 /// </summary>
-public partial class WindowSelectionDialogWindow : Window
+internal partial class WindowSelectionDialogWindow : Window
 {
     private readonly WindowSelectionDialogViewModel _viewModel;
 

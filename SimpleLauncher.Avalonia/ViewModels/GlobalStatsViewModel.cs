@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the GlobalStatsWindow.
 /// </summary>
-public class GlobalStatsViewModel : ObservableObject, IDisposable
+internal class GlobalStatsViewModel : ObservableObject, IDisposable
 {
     private readonly IConfiguration _configuration;
     private readonly IFilePickerService _filePicker;
@@ -82,8 +82,9 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         {
             cts?.Cancel();
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException ex)
         {
+            Log.Debug(ex, "Object was already disposed; continuing shutdown");
         }
 
         cts?.Dispose();

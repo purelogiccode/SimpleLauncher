@@ -78,15 +78,17 @@ public partial class SteamVdfParser : ISteamVdfParser
 
             return result;
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            // File is locked or inaccessible (e.g. another process has it open)
-            // Return empty result without logging — this is expected in some environments
+            // File is locked or inaccessible (e.g. another process has it open). Expected in
+            // some environments, so Debug-level only.
+            (logErrors ?? logger)?.Debug(ex, "VDF file '{FilePath}' is inaccessible", filePath);
             return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         }
-        catch (IOException)
+        catch (IOException ex)
         {
-            // File is locked or unreadable
+            // File is locked or unreadable.
+            (logErrors ?? logger)?.Debug(ex, "VDF file '{FilePath}' could not be read", filePath);
             return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
         }
         catch (Exception ex)

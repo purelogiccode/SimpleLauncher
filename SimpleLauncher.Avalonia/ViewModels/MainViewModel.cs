@@ -26,7 +26,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     Main ViewModel for the game browser.
 ///     Phase 6: Wired to real SystemManagerService, ILauncherService, and game scanning.
 /// </summary>
-public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFeedback
+internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFeedback
 {
     private const int MinThumbnailSize = 50;
     private const int MaxThumbnailSize = 800;
@@ -71,7 +71,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     (from the Machine Name Font Size setting, WPF parity).
     /// </summary>
     [ObservableProperty]
-    public partial double MachineNameFontSize { get; set; } = 15;
+    public partial double MachineNameFontSize { get; set; }
 
     [ObservableProperty] public partial double CardWidth { get; set; } = 168;
 
@@ -908,7 +908,7 @@ public partial class MainViewModel : ObservableObject, ILoadingState, ILaunchFee
     ///     selected, every system is filtered using its stored hash scan.
     /// </summary>
     [RelayCommand]
-    private async Task ShowGamesWithRetroAchievements()
+    private async Task ShowGamesWithRetroAchievementsAsync()
     {
         try
         {

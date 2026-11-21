@@ -15,7 +15,7 @@ namespace SimpleLauncher.Avalonia.Services.ContextMenus;
 ///     The item set, order, separators, conditional achievements entry, and icons mirror
 ///     the original WPF implementation; the Avalonia-only extras are appended at the end.
 /// </summary>
-public class AvaloniaContextMenuService
+internal class AvaloniaContextMenuService
 {
     private readonly AvaloniaContextMenuFunctions _functions;
     private readonly LocalizationService _localization;

@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed Humble App games by reading its configuration file and creates shortcuts for them.
 /// </summary>
-public class ScanHumbleGames : IGamePlatformScanner
+internal class ScanHumbleGames : IGamePlatformScanner
 {
     /// <summary>
     ///     Reads the Humble App configuration and creates shortcuts for installed or downloaded games.

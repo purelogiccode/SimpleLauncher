@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window displaying the application's update history in markdown format.
 /// </summary>
-public partial class UpdateHistoryWindow : Window
+internal partial class UpdateHistoryWindow : Window
 {
     private readonly ILogger _logger;
     private readonly UpdateHistoryViewModel _viewModel;

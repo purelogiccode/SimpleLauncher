@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Mednafen emulator configuration injection window.
 /// </summary>
-public partial class InjectMednafenConfigViewModel : ObservableObject
+internal partial class InjectMednafenConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

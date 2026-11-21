@@ -16,7 +16,7 @@ namespace SimpleLauncher.Avalonia.Services.GamePad;
 ///     scroll viewer. The Windows apps keep the WPF-compatible OS-level mouse simulation and
 ///     never raise the controller's input event, so this service stays inert there.
 /// </summary>
-public sealed class GamepadNavigationService : IDisposable
+internal sealed class GamepadNavigationService : IDisposable
 {
     private const float DirectionThreshold = 0.35f;
     private const long RepeatDelayMilliseconds = 350;

@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window displaying ROM history information.
 /// </summary>
-public partial class RomHistoryWindow : Window
+internal partial class RomHistoryWindow : Window
 {
     private readonly ILogger _logger;
     private readonly RomHistoryViewModel _viewModel;

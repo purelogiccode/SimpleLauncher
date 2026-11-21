@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the update history window that displays release notes.
 /// </summary>
-public class UpdateHistoryViewModel : ObservableObject
+internal class UpdateHistoryViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IResourceProvider _resourceProvider;

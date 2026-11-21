@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 ///     Scans for installed Microsoft Store games using PowerShell, classifies them via an API,
 ///     and creates launch shortcuts and cover images for confirmed games.
 /// </summary>
-public partial class ScanMicrosoftStoreGames : IGamePlatformScanner
+internal partial class ScanMicrosoftStoreGames : IGamePlatformScanner
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly IHttpClientFactory _httpClientFactory;

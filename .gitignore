@@ -425,6 +425,10 @@ BUGSTOBEFIXED.md
 AGENTS.local.md
 LinuxBugs.md
 
+# Local connection/credential dumps — the real file lives outside the repo
+# (%USERPROFILE%\.secrets\CONNECTIONS.md); this guards against accidental copies.
+/secrets/
+
 # Local AI-generated source images (not shipped with the repo)
 /ChatGPT Image Sep 18, 2026, 02_04_18 PM.png
 /ChatGPT Image Sep 18, 2026, 02_07_01 PM2.png

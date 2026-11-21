@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the video and info link configuration window.
 /// </summary>
-public partial class SetLinksViewModel : ObservableObject
+internal partial class SetLinksViewModel : ObservableObject
 {
     private readonly IConfiguration _configuration;
     private readonly IMessageBoxLibraryService _messageBox;

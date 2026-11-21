@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window displaying real-time update installation log messages.
 /// </summary>
-public partial class UpdateLogWindow : Window
+internal partial class UpdateLogWindow : Window
 {
     private readonly UpdateLogViewModel _viewModel;
 
@@ -31,6 +31,8 @@ public partial class UpdateLogWindow : Window
     /// <param name="message">The message to append.</param>
     public async Task LogAsync(string message)
     {
+        Log.Information("Update: {Message}", message);
+
         try
         {
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -45,10 +47,10 @@ public partial class UpdateLogWindow : Window
                 }
             }).GetTask();
         }
-        catch
+        catch (Exception ex)
         {
             // Dispatcher shut down - drop the message.
-            await Task.CompletedTask;
+            Log.Debug(ex, "Could not post an update log message to the UI");
         }
     }
 }

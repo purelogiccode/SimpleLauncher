@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window that displays real-time debug log output.
 /// </summary>
-public partial class DebugWindow : Window
+internal partial class DebugWindow : Window
 {
     private static readonly Lock InstanceLock = new();
     private bool _isReallyClosing;

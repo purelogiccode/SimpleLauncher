@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window that displays global statistics across all systems.
 /// </summary>
-public partial class GlobalStatsWindow : Window, IDisposable
+internal partial class GlobalStatsWindow : Window, IDisposable
 {
     private readonly ILogger _logger;
     private readonly GlobalStatsViewModel _viewModel;

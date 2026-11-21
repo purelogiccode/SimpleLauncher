@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     <see cref="AvaloniaProperty.UnsetValue" /> so broken bindings surface
 ///     diagnostics instead of silently flipping the UI state.
 /// </summary>
-public class InverseBoolConverter : IValueConverter
+internal class InverseBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

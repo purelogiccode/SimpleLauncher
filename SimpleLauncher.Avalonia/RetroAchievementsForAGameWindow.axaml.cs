@@ -18,7 +18,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Window displaying RetroAchievements data for a specific game, including achievements, rankings, and progress.
 /// </summary>
-public partial class RetroAchievementsForAGameWindow : Window, ILoadingState
+internal partial class RetroAchievementsForAGameWindow : Window, ILoadingState
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

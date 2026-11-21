@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 /// <summary>
 ///     Window for injecting Dolphin emulator configuration settings.
 /// </summary>
-public partial class InjectDolphinConfigWindow : Window
+internal partial class InjectDolphinConfigWindow : Window
 {
     private readonly IFilePickerService _filePicker;
     private readonly Func<Window> _getOwnerWindowHandler;
@@ -26,7 +26,7 @@ public partial class InjectDolphinConfigWindow : Window
 
         _viewModel = viewModel;
         _filePicker = filePicker;
-        _requestEmulatorPathHandler = OnRequestEmulatorPath;
+        _requestEmulatorPathHandler = OnRequestEmulatorPathAsync;
         _getOwnerWindowHandler = () => this;
 
         _viewModel.CloseRequested += OnCloseRequested;
@@ -63,7 +63,7 @@ public partial class InjectDolphinConfigWindow : Window
         _viewModel.Initialize(emulatorPath, isLauncherMode);
     }
 
-    private async Task<string?> OnRequestEmulatorPath()
+    private async Task<string?> OnRequestEmulatorPathAsync()
     {
         return await _filePicker.OpenFileAsync(
             "Select Dolphin Emulator",

@@ -6,7 +6,7 @@ namespace SimpleLauncher.Avalonia.Models;
 ///     marks lines whose folder/emulator path failed validation so the UI can
 ///     render them in the error brush.
 /// </summary>
-public sealed class SystemInfoLine
+internal sealed class SystemInfoLine
 {
     public string Text { get; init; } = "";
     public bool IsError { get; init; }

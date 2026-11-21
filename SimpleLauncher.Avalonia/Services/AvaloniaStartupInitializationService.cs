@@ -15,7 +15,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     gamepad controller initialization.
 ///     Avalonia port of the WPF <c>StartupInitializationService</c>.
 /// </summary>
-public class AvaloniaStartupInitializationService
+internal class AvaloniaStartupInitializationService
 {
     private readonly IConfiguration _configuration;
     private readonly GamePadController _gamePadController;

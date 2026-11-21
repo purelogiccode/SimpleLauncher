@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Dolphin emulator configuration injection window.
 /// </summary>
-public partial class InjectDolphinConfigViewModel : ObservableObject
+internal partial class InjectDolphinConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

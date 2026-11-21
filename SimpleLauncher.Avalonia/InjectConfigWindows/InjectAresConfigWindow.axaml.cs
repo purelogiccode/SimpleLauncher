@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.InjectConfigWindows;
 /// <summary>
 ///     Window for injecting Ares emulator configuration settings.
 /// </summary>
-public partial class InjectAresConfigWindow : Window
+internal partial class InjectAresConfigWindow : Window
 {
     private readonly IFilePickerService _filePicker;
     private readonly Func<Window> _getOwnerWindowHandler;
@@ -26,7 +26,7 @@ public partial class InjectAresConfigWindow : Window
 
         _viewModel = viewModel;
         _filePicker = filePicker;
-        _requestEmulatorPathHandler = OnRequestEmulatorPath;
+        _requestEmulatorPathHandler = OnRequestEmulatorPathAsync;
         _getOwnerWindowHandler = () => this;
 
         _viewModel.CloseRequested += OnCloseRequested;
@@ -65,7 +65,7 @@ public partial class InjectAresConfigWindow : Window
         if (!isLauncherMode) BtnSave.IsDefault = true;
     }
 
-    private async Task<string?> OnRequestEmulatorPath()
+    private async Task<string?> OnRequestEmulatorPathAsync()
     {
         return await _filePicker.OpenFileAsync(
             "Select Ares Emulator",

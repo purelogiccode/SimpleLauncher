@@ -131,6 +131,11 @@ public partial class DebugWindow
         }
     }
 
+    /// <summary>
+    ///     Hides the debug window instead of destroying it, so the Serilog sink can reconnect
+    ///     when the window is opened again.
+    /// </summary>
+    /// <param name="e">The closing event arguments.</param>
     protected override void OnClosing(CancelEventArgs e)
     {
         if (_isReallyClosing)

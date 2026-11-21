@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     A utility class to extract icons from executable files.
 /// </summary>
-public class IconExtractor : IIconExtractor
+internal class IconExtractor : IIconExtractor
 {
     /// <summary>
     ///     Extracts the first icon from an executable and saves it as a PNG file.

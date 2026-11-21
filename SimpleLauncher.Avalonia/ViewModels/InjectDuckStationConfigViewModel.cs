@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the DuckStation emulator configuration injection window.
 /// </summary>
-public partial class InjectDuckStationConfigViewModel : ObservableObject
+internal partial class InjectDuckStationConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

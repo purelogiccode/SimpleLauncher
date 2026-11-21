@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 ///     COPY of the WPF ChdToCueStrategy — resource lookups replaced with English fallback strings,
 ///     IConfiguration moved to the constructor (no App.ServiceProvider dependency).
 /// </summary>
-public class ChdToCueStrategy : ILaunchStrategy
+internal class ChdToCueStrategy : ILaunchStrategy
 {
     private readonly IConfiguration _configuration;
     private readonly IDiscConverter _discConverter;

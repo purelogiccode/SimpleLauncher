@@ -109,7 +109,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
             }
 
             var allFiles =
-                await BuildListOfAllFilesToLoad(selectedManager, startLetter, searchQuery, cancellationToken);
+                await BuildListOfAllFilesToLoadAsync(selectedManager, startLetter, searchQuery, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             if (selectedManager.GroupByFolder)
@@ -288,9 +288,10 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
             {
                 ((CancellationTokenSource)state!).Dispose();
             }
-            catch
+            catch (Exception ex)
             {
-                // Best effort; the GC reclaims the rest
+                // Best effort; the GC reclaims the rest.
+                Log.Debug(ex, "Could not dispose the game-list reload timeout token");
             }
         }, cts, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
@@ -302,7 +303,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
     /// <param name="startLetter">The start letter.</param>
     /// <param name="searchQuery">The search query.</param>
     /// <param name="token">The token.</param>
-    private async Task<IList<string>> BuildListOfAllFilesToLoad(SystemManagerService selectedManager,
+    private async Task<IList<string>> BuildListOfAllFilesToLoadAsync(SystemManagerService selectedManager,
         string? startLetter, string? searchQuery, CancellationToken token)
     {
         if (_host.IsResortOperation)
@@ -313,7 +314,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
 
             if (sourceList.Count > 0)
             {
-                _logger.Debug($"[BuildListOfAllFilesToLoad] Re-sorting existing list. Count: {sourceList.Count}");
+                _logger.Debug($"[BuildListOfAllFilesToLoadAsync] Re-sorting existing list. Count: {sourceList.Count}");
                 return sourceList;
             }
         }
@@ -373,9 +374,9 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
                 catch (Exception ex)
                 {
                     allFiles = [];
-                    _logger.Debug($"[BuildListOfAllFilesToLoad] Error matching RA hashes against local files: {ex}");
+                    _logger.Debug($"[BuildListOfAllFilesToLoadAsync] Error matching RA hashes against local files: {ex}");
                     _logger.Error(ex,
-                        $"[BuildListOfAllFilesToLoad] Error matching RA hashes against local files: {ex}");
+                        $"[BuildListOfAllFilesToLoadAsync] Error matching RA hashes against local files: {ex}");
                 }
 
                 break;
@@ -408,7 +409,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
                     {
                         allFiles = await _gameCacheService.GetAllGamesAsync(token);
                         _logger.Debug(
-                            $"[BuildListOfAllFilesToLoad] Reusing cached list for '{selectedManager.SystemName}'. Count: {allFiles.Count}");
+                            $"[BuildListOfAllFilesToLoadAsync] Reusing cached list for '{selectedManager.SystemName}'. Count: {allFiles.Count}");
                     }
                     else
                     {
@@ -435,7 +436,7 @@ public class GameFileLoadingOrchestratorService : IGameFileLoadingOrchestrator
                         allFiles = uniqueFiles.Values.ToList();
                         await _gameCacheService.SetAllGamesAsync(allFiles, selectedManager.SystemName, token);
                         _logger.Debug(
-                            $"[BuildListOfAllFilesToLoad] Populated cache for '{selectedManager.SystemName}'. Count: {allFiles.Count}");
+                            $"[BuildListOfAllFilesToLoadAsync] Populated cache for '{selectedManager.SystemName}'. Count: {allFiles.Count}");
                     }
                 }
                 else

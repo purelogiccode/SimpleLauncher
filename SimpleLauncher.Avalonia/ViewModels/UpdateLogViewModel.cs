@@ -7,7 +7,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the UpdateLogWindow.
 /// </summary>
-public class UpdateLogViewModel : ObservableObject
+internal class UpdateLogViewModel : ObservableObject
 {
     private readonly StringBuilder _logBuilder = new();
 

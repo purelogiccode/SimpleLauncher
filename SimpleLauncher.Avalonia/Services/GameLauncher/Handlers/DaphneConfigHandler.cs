@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Daphne (laserdisc arcade) emulator before launching a game.
 /// </summary>
-public class DaphneConfigHandler : IEmulatorConfigHandler
+internal class DaphneConfigHandler : IEmulatorConfigHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;
 

@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the RPCS3 emulator configuration injection window.
 /// </summary>
-public partial class InjectRpcs3ConfigViewModel : ObservableObject
+internal partial class InjectRpcs3ConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

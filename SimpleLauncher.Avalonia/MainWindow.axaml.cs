@@ -34,7 +34,6 @@ using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
-using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.GamePad;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
@@ -45,7 +44,7 @@ namespace SimpleLauncher.Avalonia;
 ///     Main application window — OpenEmu-inspired shell with sidebar, toolbar, and game content area.
 ///     Avalonia port of the WPF-UI MainWindow.
 /// </summary>
-public partial class MainWindow : Window, IPaginationHost
+internal partial class MainWindow : Window, IPaginationHost
 {
     // Bounds persistence (separate file from the WPF app)
     private static readonly string BoundsFilePath = Path.Combine(
@@ -107,7 +106,7 @@ public partial class MainWindow : Window, IPaginationHost
         AvaloniaQuitSimpleLauncher quitSimpleLauncher,
         AvaloniaStartupInitializationService startupInitializationService)
     {
-        var ctorSw = System.Diagnostics.Stopwatch.StartNew();
+        var ctorSw = Stopwatch.StartNew();
         _viewModel = viewModel;
         _systemManagerService = systemManagerService;
         _settings = settings;
@@ -1477,11 +1476,11 @@ public partial class MainWindow : Window, IPaginationHost
     /// <summary>Enter in the main search box executes the search immediately (WPF parity).</summary>
     private async void SearchBox_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter) return;
-
-        e.Handled = true;
         try
         {
+            if (e.Key != Key.Enter) return;
+
+            e.Handled = true;
             await _viewModel.SearchAsync(SearchBox.Text);
         }
         catch (Exception ex)
@@ -1495,12 +1494,13 @@ public partial class MainWindow : Window, IPaginationHost
     /// <summary>Search button (WPF SearchButton parity): executes the current search.</summary>
     private async void SearchButton_Click(object? sender, RoutedEventArgs e)
     {
-        var query = SearchBox.Text;
-        Log.Debug("Search button clicked for query '{Query}'", query);
-
         try
         {
+            var query = SearchBox.Text;
+            Log.Debug("Search button clicked for query '{Query}'", query);
+
             await _viewModel.SearchAsync(query);
+            SearchBox.Focus();
         }
         catch (Exception ex)
         {
@@ -1508,8 +1508,6 @@ public partial class MainWindow : Window, IPaginationHost
             var messageBox = App.ServiceProvider.GetRequiredService<IMessageBoxLibraryService>();
             await messageBox.MainWindowSearchEngineErrorMessageBoxAsync();
         }
-
-        SearchBox.Focus();
     }
 
     #endregion
@@ -3098,9 +3096,9 @@ public partial class MainWindow : Window, IPaginationHost
             var selectItem = new MenuItem { Header = _localization.GetString("SelectSystem", "Select System") };
             selectItem.Click += (_, _) => SystemComboBox.SelectedItem = systemName;
             var editItem = new MenuItem { Header = _localization.GetString("EditSystem", "Edit System") };
-            editItem.Click += (_, _) => EditSystemFromGrid(systemName);
+            editItem.Click += (_, _) => EditSystemFromGridAsync(systemName);
             var deleteItem = new MenuItem { Header = _localization.GetString("DeleteSystem", "Delete System") };
-            deleteItem.Click += (_, _) => _ = DeleteSystemFromGrid(systemName);
+            deleteItem.Click += (_, _) => _ = DeleteSystemFromGridAsync(systemName);
             contextMenu.Items.Add(selectItem);
             contextMenu.Items.Add(editItem);
             contextMenu.Items.Add(deleteItem);
@@ -3267,7 +3265,7 @@ public partial class MainWindow : Window, IPaginationHost
     /// <summary>
     ///     Opens Edit System for the specified system, then refreshes the grid.
     /// </summary>
-    private async void EditSystemFromGrid(string systemName)
+    private async void EditSystemFromGridAsync(string systemName)
     {
         try
         {
@@ -3287,7 +3285,7 @@ public partial class MainWindow : Window, IPaginationHost
     /// <summary>
     ///     Deletes a system after confirmation, then refreshes the grid.
     /// </summary>
-    private async Task DeleteSystemFromGrid(string systemName)
+    private async Task DeleteSystemFromGridAsync(string systemName)
     {
         try
         {

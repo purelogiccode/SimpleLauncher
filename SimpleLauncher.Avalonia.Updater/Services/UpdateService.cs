@@ -149,7 +149,6 @@ internal class UpdateService
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Log.Error(ex, "Error waiting for main application to exit");
-                await BugReportService.ReportBugAsync(ex, "Error waiting for main application to exit");
                 throw;
             }
 
@@ -174,7 +173,6 @@ internal class UpdateService
                 else
                 {
                     Log.Error(ex, "Error fetching latest release from GitHub");
-                    await BugReportService.ReportBugAsync(ex, "Error fetching latest release from GitHub");
                 }
 
                 throw;
@@ -198,7 +196,6 @@ internal class UpdateService
                 else
                 {
                     Log.Error(ex, "Error downloading update file from: {AssetUrl}", assetUrl);
-                    await BugReportService.ReportBugAsync(ex, $"Error downloading update file from: {assetUrl}");
                 }
 
                 throw;
@@ -239,7 +236,6 @@ internal class UpdateService
                 else
                 {
                     Log.Error(ex, "Error extracting ZIP archive");
-                    await BugReportService.ReportBugAsync(ex, "Error extracting ZIP archive");
                 }
 
                 throw;

@@ -231,8 +231,9 @@ public class DownloadManager : IDisposable
         {
             oldCts?.Cancel();
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException ex)
         {
+            Log.Debug(ex, "Object was already disposed; continuing shutdown");
         }
 
         oldCts?.Dispose();

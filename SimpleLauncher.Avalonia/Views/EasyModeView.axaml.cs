@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.Views;
 ///     standalone dialog and by <see cref="FirstRunWizardWindow" /> as the wizard's Add System
 ///     step (P1-33), so both flows share one view and one <see cref="EasyModeViewModel" />.
 /// </summary>
-public partial class EasyModeView : UserControl
+internal partial class EasyModeView : UserControl
 {
     private readonly PropertyChangedEventHandler _onViewModelPropertyChanged;
     private EasyModeViewModel? _viewModel;

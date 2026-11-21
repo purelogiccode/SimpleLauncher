@@ -26,7 +26,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     costs one text update instead of N.
 ///     </para>
 /// </summary>
-public partial class DebugViewModel : ObservableObject
+internal partial class DebugViewModel : ObservableObject
 {
     private const int MaxMessageCount = 5000;
     private readonly StringBuilder _logBuilder = new();

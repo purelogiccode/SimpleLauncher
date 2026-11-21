@@ -1,7 +1,6 @@
 using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Services.FirstRun;
-using Xunit;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

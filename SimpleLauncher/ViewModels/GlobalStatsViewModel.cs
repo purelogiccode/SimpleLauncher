@@ -86,8 +86,9 @@ public class GlobalStatsViewModel : ObservableObject, IDisposable
         {
             cts?.Cancel();
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException ex)
         {
+            Log.Debug(ex, "Object was already disposed; continuing shutdown");
         }
 
         cts?.Dispose();

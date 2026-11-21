@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     Scans for installed itch.io games by inspecting the itch app library folder and creates shortcuts for them.
 /// </summary>
-public class ScanItchioGames : IGamePlatformScanner
+internal class ScanItchioGames : IGamePlatformScanner
 {
     private static readonly char[] Separator = ['='];
 

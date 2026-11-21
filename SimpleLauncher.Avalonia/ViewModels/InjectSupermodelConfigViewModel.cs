@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Supermodel emulator configuration injection window.
 /// </summary>
-public partial class InjectSupermodelConfigViewModel : ObservableObject
+internal partial class InjectSupermodelConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

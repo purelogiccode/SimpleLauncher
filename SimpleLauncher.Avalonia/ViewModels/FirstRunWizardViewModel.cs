@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     <see cref="FirstRunWizardState" />; the Easy Mode step reuses <see cref="EasyModeViewModel" />
 ///     so downloads, cancel and error handling stay identical to the standalone Easy Mode window.
 /// </summary>
-public partial class FirstRunWizardViewModel : ObservableObject, IDisposable
+internal partial class FirstRunWizardViewModel : ObservableObject, IDisposable
 {
     private readonly LocalizationService _localization;
     private bool _disposed;

@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Xenia (Xbox 360) emulator before launching a game.
 /// </summary>
-public class XeniaConfigHandler : IEmulatorConfigHandler
+internal class XeniaConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

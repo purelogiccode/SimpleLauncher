@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.Services.TakeScreenshot;
 ///     Captures a region of the screen into a PNG file (Windows-only).
 ///     Mirrors the capture pattern used by <see cref="AvaloniaActiveWindowScreenshotService" />.
 /// </summary>
-public static class AvaloniaWindowCapture
+internal static class AvaloniaWindowCapture
 {
     /// <summary>
     ///     Captures the given screen rectangle and saves it as a PNG file.

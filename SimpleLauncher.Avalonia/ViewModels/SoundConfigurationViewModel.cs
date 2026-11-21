@@ -9,7 +9,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the sound configuration window.
 /// </summary>
-public partial class SoundConfigurationViewModel : ObservableObject
+internal partial class SoundConfigurationViewModel : ObservableObject
 {
     private const string DefaultNotificationSound = "click.mp3";
     private static readonly string AudioFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "audio");

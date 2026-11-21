@@ -252,7 +252,7 @@ public partial class MainWindow : Window
             }
             else if (result.RequiresManualUpdate)
             {
-                await RedirectToDownloadPage(result.ErrorMessage ??
+                await RedirectToDownloadPageAsync(result.ErrorMessage ??
                                              "Automatic update failed.\n\nWould you like to update manually?");
             }
         }
@@ -271,7 +271,7 @@ public partial class MainWindow : Window
             {
                 Serilog.Log.Information("Update timed out waiting for a network response");
                 Log("Update timed out waiting for a network response.");
-                await RedirectToDownloadPage(
+                await RedirectToDownloadPageAsync(
                     "The update timed out while contacting the update server.\n\nWould you like to update manually?");
             }
         }
@@ -279,7 +279,6 @@ public partial class MainWindow : Window
         {
             // Report bug to the bug report API
             Serilog.Log.Error(ex, "Error during main update execution");
-            await BugReportService.ReportBugAsync(ex, "Error during main update execution");
 
             Log($"An error occurred during update process: {ex.Message}");
             Log("Please update manually.");
@@ -294,7 +293,7 @@ public partial class MainWindow : Window
         Log("Cancelling update...");
     }
 
-    private async Task RedirectToDownloadPage(string message)
+    private async Task RedirectToDownloadPageAsync(string message)
     {
         var result = await DialogHelper.ShowYesNoAsync(this, message, "Error");
         if (result) _updateService.OpenManualDownloadPage();
@@ -310,6 +309,10 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Route the user-visible updater progress through Serilog as well, so the log file
+        // and the bug-report context contain the same sequence the window shows.
+        Serilog.Log.Information("Updater: {Message}", message);
+
         if (IsLoaded)
         {
             try
@@ -319,25 +322,10 @@ public partial class MainWindow : Window
             }
             catch (InvalidOperationException ex)
             {
-                // Window may have been closed, ignore logging but report bug (fire-and-forget)
-                _ = ReportBugFireAndForgetAsync(ex, "Error logging message to UI");
+                // The window can close while an update is still writing progress; this is a
+                // normal lifecycle race, not a bug.
+                Serilog.Log.Debug(ex, "Could not append an update message to the closed log window");
             }
-        }
-    }
-
-    /// <summary>
-    ///     Fire-and-forget helper for reporting bugs from synchronous contexts.
-    /// </summary>
-    private static async Task ReportBugFireAndForgetAsync(Exception exception, string context)
-    {
-        try
-        {
-            await BugReportService.ReportBugAsync(exception, context);
-        }
-        catch (Exception ex)
-        {
-            Serilog.Log.Warning(ex, "Failed to report bug for context: {Context}", context);
-            Serilog.Log.Warning(exception, "Original exception");
         }
     }
 }

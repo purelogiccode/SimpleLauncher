@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services.AvaloniaServices;
 /// <summary>
 ///     Avalonia implementation of IWindowContext — wraps the main window.
 /// </summary>
-public class AvaloniaWindowContext : IWindowContext
+internal class AvaloniaWindowContext : IWindowContext
 {
     public AvaloniaWindowContext(IDispatcherService dispatcher)
     {

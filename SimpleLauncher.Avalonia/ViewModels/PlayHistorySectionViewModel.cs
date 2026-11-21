@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 ///     ViewModel for the Play History section of the main window, showing the play
 ///     history table with sorting, removal, and launching (WPF PlayHistoryPage equivalent).
 /// </summary>
-public partial class PlayHistorySectionViewModel : ObservableObject
+internal partial class PlayHistorySectionViewModel : ObservableObject
 {
     private readonly IFindCoverImageService _findCoverImage;
     private readonly Services.LocalizationService _localization;

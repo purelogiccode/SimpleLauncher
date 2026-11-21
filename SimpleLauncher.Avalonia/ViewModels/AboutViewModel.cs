@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the AboutWindow.
 /// </summary>
-public partial class AboutViewModel : ObservableObject
+internal partial class AboutViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

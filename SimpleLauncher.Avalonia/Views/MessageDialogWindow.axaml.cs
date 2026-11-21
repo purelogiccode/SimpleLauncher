@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.Views;
 /// <summary>
 ///     A lightweight message-box-style dialog used by <see cref="Services.AvaloniaServices.MessageBoxLibraryService" />.
 /// </summary>
-public partial class MessageDialogWindow : Window
+internal partial class MessageDialogWindow : Window
 {
     public MessageDialogWindow()
     {

@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 /// <summary>
 ///     A simple parser for Valve's KeyValue (VDF) file format.
 /// </summary>
-public partial class SteamVdfParser : ISteamVdfParser
+internal partial class SteamVdfParser : ISteamVdfParser
 {
     // Improved regex to handle escaped quotes within strings: "some \"value\" here"
     private static readonly Regex TokenRegex = MyRegex();

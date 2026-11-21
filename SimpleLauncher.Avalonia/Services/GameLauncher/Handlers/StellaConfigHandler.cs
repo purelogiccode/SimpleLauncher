@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Stella (Atari 2600) emulator before launching a game.
 /// </summary>
-public class StellaConfigHandler : IEmulatorConfigHandler
+internal class StellaConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

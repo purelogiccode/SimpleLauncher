@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia;
 ///     Step 2 embeds <see cref="EasyModeView" /> with the shared <see cref="EasyModeViewModel" />,
 ///     lazily created the first time the Add System step is shown.
 /// </summary>
-public partial class FirstRunWizardWindow : Window, IDisposable
+internal partial class FirstRunWizardWindow : Window, IDisposable
 {
     private readonly FirstRunWizardViewModel _viewModel;
     private bool _disposed;
@@ -36,24 +36,25 @@ public partial class FirstRunWizardWindow : Window, IDisposable
     /// </summary>
     private async void OnStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (!string.Equals(e.PropertyName, nameof(FirstRunWizardState.CurrentStep), StringComparison.Ordinal))
-            return;
-
-        if (!_viewModel.IsAddSystemStep)
-        {
-            // Leaving Add System (Back/Skip/success): cancel a component download instead of
-            // letting it keep running behind the Welcome/Finish pages.
-            if (_viewModel.EasyMode.CanStopDownload)
-                _viewModel.EasyMode.StopDownloadCommand.Execute(null);
-            return;
-        }
-
         try
         {
+            if (!string.Equals(e.PropertyName, nameof(FirstRunWizardState.CurrentStep), StringComparison.Ordinal))
+                return;
+
+            if (!_viewModel.IsAddSystemStep)
+            {
+                // Leaving Add System (Back/Skip/success): cancel a component download instead of
+                // letting it keep running behind the Welcome/Finish pages.
+                if (_viewModel.EasyMode.CanStopDownload)
+                    _viewModel.EasyMode.StopDownloadCommand.Execute(null);
+                return;
+            }
+
             await ShowEasyModeAsync();
         }
         catch (Exception ex)
         {
+            // async void event handlers must never let an exception escape to the dispatcher.
             Log.Error(ex, "First-run wizard failed to show the Easy Mode step");
             _viewModel.State.ReportError(ex.Message);
         }

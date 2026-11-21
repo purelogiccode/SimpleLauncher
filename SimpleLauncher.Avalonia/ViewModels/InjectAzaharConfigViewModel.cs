@@ -13,7 +13,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Azahar emulator configuration injection window.
 /// </summary>
-public partial class InjectAzaharConfigViewModel : ObservableObject
+internal partial class InjectAzaharConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

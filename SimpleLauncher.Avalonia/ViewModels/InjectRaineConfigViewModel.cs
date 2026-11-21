@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Raine emulator configuration injection window.
 /// </summary>
-public partial class InjectRaineConfigViewModel : ObservableObject
+internal partial class InjectRaineConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;
@@ -224,7 +224,7 @@ public partial class InjectRaineConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SelectNeoCdBios()
+    private async Task SelectNeoCdBiosAsync()
     {
         if (RequestFilePath is not { } request) return;
 
@@ -233,7 +233,7 @@ public partial class InjectRaineConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SelectRaineRomDirectory()
+    private async Task SelectRaineRomDirectoryAsync()
     {
         if (RequestFolderPath is not { } request) return;
 

@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Redream emulator configuration injection window.
 /// </summary>
-public partial class InjectRedreamConfigViewModel : ObservableObject
+internal partial class InjectRedreamConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

@@ -23,7 +23,7 @@ namespace SimpleLauncher;
 ///     overlay. Hosted by <see cref="EasyModeWindow" /> for the standalone dialog and by
 ///     <see cref="FirstRunWizardWindow" /> as the wizard's Add System step (P1-33).
 /// </summary>
-internal partial class EasyModeView : UserControl, IDisposable, INotifyPropertyChanged, ILoadingState
+internal partial class EasyModeView : IDisposable, INotifyPropertyChanged, ILoadingState
 {
     private readonly IConfiguration _configuration;
 

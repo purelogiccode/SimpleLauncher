@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Supermodel (Sega Model 3) emulator before launching a game.
 /// </summary>
-public class SupermodelConfigHandler : IEmulatorConfigHandler
+internal class SupermodelConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

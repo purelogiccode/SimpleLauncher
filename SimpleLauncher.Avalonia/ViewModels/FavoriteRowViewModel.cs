@@ -3,7 +3,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     Display row for a favorite game in the Favorites section table.
 /// </summary>
-public class FavoriteRowViewModel
+internal class FavoriteRowViewModel
 {
     /// <summary>
     ///     Gets the stored favorite file name exactly as persisted in favorites.dat

@@ -106,7 +106,7 @@ public partial class MainWindow
                 try
                 {
                     // Bound the save so a hung write cannot strand the window forever (WPF-13).
-                    await SaveApplicationSettings().WaitAsync(TimeSpan.FromSeconds(10));
+                    await SaveApplicationSettingsAsync().WaitAsync(TimeSpan.FromSeconds(10));
                 }
                 catch (TimeoutException ex)
                 {

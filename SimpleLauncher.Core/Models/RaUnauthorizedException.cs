@@ -33,6 +33,9 @@ public class RaUnauthorizedException : Exception
     {
     }
 
+    /// <summary>Initializes a new instance from serialized data.</summary>
+    /// <param name="info">The serialized object data.</param>
+    /// <param name="context">The serialization context.</param>
     [Obsolete("This API supports obsolete formatter-based serialization.")]
     protected RaUnauthorizedException(SerializationInfo info, StreamingContext context) : base(info, context)
     {

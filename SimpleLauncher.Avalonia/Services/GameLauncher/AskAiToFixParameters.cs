@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher;
 ///     new project's services: ISystemConfigurationWriterService for saving and the new
 ///     SystemManagerService cache for reload.
 /// </summary>
-public class AskAiToFixParameters
+internal class AskAiToFixParameters
 {
     private readonly ILogger _logger;
     private readonly LocalizationService _localization;

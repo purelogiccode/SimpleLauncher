@@ -7,8 +7,13 @@ namespace SimpleLauncher.Core.Services.FirstRun;
 /// </summary>
 public enum FirstRunWizardStep
 {
+    /// <summary>Welcome page introducing the wizard.</summary>
     Welcome = 0,
+
+    /// <summary>Add System page hosting the Easy Mode system picker.</summary>
     AddSystem = 1,
+
+    /// <summary>Summary page that finishes the wizard.</summary>
     Finish = 2
 }
 
@@ -47,10 +52,13 @@ public partial class FirstRunWizardState : ObservableObject
     /// <summary>Progress from 0 (first step) to 100 (last step).</summary>
     public double ProgressPercent => (int)CurrentStep * 100.0 / (StepCount - 1);
 
+    /// <summary>Whether the wizard currently shows the welcome page.</summary>
     public bool IsWelcomeStep => CurrentStep == FirstRunWizardStep.Welcome;
 
+    /// <summary>Whether the wizard currently shows the Add System page.</summary>
     public bool IsAddSystemStep => CurrentStep == FirstRunWizardStep.AddSystem;
 
+    /// <summary>Whether the wizard currently shows the summary page.</summary>
     public bool IsFinishStep => CurrentStep == FirstRunWizardStep.Finish;
 
     /// <summary>Back is offered after the welcome page.</summary>
@@ -70,10 +78,14 @@ public partial class FirstRunWizardState : ObservableObject
     /// <summary>Skip is offered until the summary page, where Finish replaces it.</summary>
     public bool CanSkip => CurrentStep != FirstRunWizardStep.Finish;
 
+    /// <summary>Whether an error message is currently shown in the wizard banner.</summary>
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
     partial void OnErrorMessageChanged(string value)
     {
+        // The generated setter passes the new value; HasError only depends on whether it
+        // is blank, which OnPropertyChanged recomputes.
+        _ = value;
         OnPropertyChanged(nameof(HasError));
     }
 
@@ -134,6 +146,7 @@ public partial class FirstRunWizardState : ObservableObject
         ErrorMessage = message ?? "";
     }
 
+    /// <summary>Dismisses the current error message.</summary>
     public void ClearError()
     {
         ErrorMessage = "";

@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Converters;
 ///     <see cref="AvaloniaProperty.UnsetValue" /> so broken bindings surface
 ///     diagnostics instead of silently collapsing the UI.
 /// </summary>
-public class BoolToVisibilityConverter : IValueConverter
+internal class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

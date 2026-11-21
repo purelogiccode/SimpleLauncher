@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Handlers;
 /// <summary>
 ///     Handles configuration injection for the Sega Model 2 emulator before launching a game.
 /// </summary>
-public class SegaModel2ConfigHandler : IEmulatorConfigHandler
+internal class SegaModel2ConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _scopeFactory;

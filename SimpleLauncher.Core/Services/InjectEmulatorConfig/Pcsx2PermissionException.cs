@@ -24,6 +24,7 @@ public class Pcsx2PermissionException : Exception
     {
     }
 
+    /// <summary>Initializes a new instance with a default message.</summary>
     public Pcsx2PermissionException()
     {
     }

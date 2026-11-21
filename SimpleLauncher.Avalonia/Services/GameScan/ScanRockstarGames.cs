@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 ///     Scans for installed Rockstar Games by matching uninstall strings against known title IDs
 ///     and creates shortcuts for them.
 /// </summary>
-public partial class ScanRockstarGames : IGamePlatformScanner
+internal partial class ScanRockstarGames : IGamePlatformScanner
 {
     // Mapping from TitleId to Name and Executable
     private static readonly List<RockstarGameDef> Games =

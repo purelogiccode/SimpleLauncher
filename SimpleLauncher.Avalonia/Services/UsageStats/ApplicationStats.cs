@@ -14,7 +14,7 @@ namespace SimpleLauncher.Avalonia.Services.UsageStats;
 ///     Sends anonymous application usage statistics to the remote stats API.
 ///     Avalonia port of the WPF ApplicationStats static class.
 /// </summary>
-public static class ApplicationStats
+internal static class ApplicationStats
 {
     /// <summary>Asynchronously sends application version statistics to the remote API.</summary>
     public static async Task CallApplicationStatsAsync(IConfiguration configuration, ILogger logErrors)

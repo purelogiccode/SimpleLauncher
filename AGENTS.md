@@ -102,6 +102,20 @@ disk.
   `AutomationProperties.LiveSetting="Polite"` when they report changing status. Do not name
   decorative TextBlocks/images. Guardrails: `AvaloniaAccessibilityTests` (Avalonia) and
   `WpfAccessibilityTests` (WPF) fail on missing names — never weaken, filter or skip them.
+- **Tooltips reuse accessible names**: the Avalonia theme binds `ToolTip.Tip` to
+  `AutomationProperties.Name` for every control, and WPF's `AccessibilityToolTipService` does the
+  same on `Loaded` (falling back to help text/literal content). Do not duplicate the text in each
+  view; add the accessible name and the tooltip follows.
+- **Serilog is the only logging pipeline**: never add a custom file/console logger or a second
+  bug-report client. Warning+ events flow through `BugReportApiSink` to the bug-report API, and
+  every report must contain the full environment block (`Date`, `Application Name`,
+  `Application Version`, `OS Version`, `Architecture`, `Bitness`,
+  `Windows, Linux or MacOsX Version`, `Processor Count`, `Base Directory`, `Temp Path`), the error
+  message and the full inner-exception chain. Expected user conditions stay at Information.
+- **Async naming and docs**: Task/ValueTask-returning methods end with `Async`; async-void event
+  handlers keep their framework names but must catch and log. Document every public type/member —
+  `GenerateDocumentationFile` is enabled in Core, WPF, Avalonia and the updater, so a missing
+  XML comment fails the warning-free build.
 
 ## 🔧 Build & test
 
@@ -144,6 +158,37 @@ Builds use the normal temp path; only test execution uses drive D.
   Windows bundle ships only the Avalonia copy — the WPF project remains the reference
   implementation (`AppSettingsFilesAreIdentical` enforces this).
 
+## 🖥️ Test environments
+
+Six environments are available for validating the app. **No access detail (address, user,
+password, key, token) is stored in this repository**: the single source is the out-of-repo file
+`%USERPROFILE%\.secrets\CONNECTIONS.md` (when present — otherwise ask the admin for access). Read
+it before touching any host and never copy values from it into a commit, issue, log or chat. This
+machine's resume state stays in `AGENTS.local.md`.
+
+| Environment | OS / arch | What it is for |
+|---|---|---|
+| This PC (`PETERSONPC`) | Windows 11 x64 | build, WPF reference app, fast suites, packaging, control plane |
+| `linuxgpu` | Linux Mint x64 (LAN, bare metal) | real X11 + AT-SPI automation, FUSE mounts, real ROM library |
+| `LinuxMint` Hyper-V VM | Linux Mint x64 | full GUI harness suite (`scripts\gui-test-harness\`), fixtures, emulator matrix |
+| `linuxarm-test` | Ubuntu 24.04 aarch64 (Azure) | Linux arm64 bundles, AppImage/Flatpak runtime checks |
+| `winarm-test` | Windows 11 ARM64 (Azure) | Windows arm64 launch checks |
+| NoMac cloud Mac | macOS arm64 (Apple Silicon) | DMG build, `.app` launch, Avalonia tests on macOS |
+
+Rules:
+
+- The Azure hosts are **deallocated by default** and have no public IP. Start/stop them with
+  `C:\Sincronizar\ArmHosts\ArmHost.ps1 <linux|windows> start|stop|status`; always `stop` when the
+  session ends (compute and public-IP billing stop at deallocation; the OS disk keeps billing).
+- The NoMac Mac bills per minute: `npx -y @nomac/cli@0.27.3 stop` when done. Only `~/drive`
+  persists between sessions.
+- Framework-dependent Linux/macOS publishes need the .NET 11 runtime on the target; the Hyper-V VM
+  has no SDK/runtime, so deploy a **self-contained** `linux-x64` publish there.
+- SSH to `winarm-test` lands in session 0: launch GUI checks with `schtasks /IT /RU azureuser`
+  (autologon keeps the console session alive) and wrap helpers in a hidden `.vbs`.
+- Exact deploy commands, publish flags and per-host caveats are in
+  `%USERPROFILE%\.secrets\CONNECTIONS.md` §2–§6.
+
 ## ☁️ Release download fallback (Cloudflare R2)
 
 The in-app update fallback (`https://assets.purelogiccode.com/Simple%20Launcher/Simple%20Launcher/`)
@@ -159,8 +204,10 @@ is served from the Cloudflare R2 bucket `simplelauncher-thumbnails` under the pr
   tar.gz/AppImage/Flatpak bundles, the Apple Silicon `SimpleLauncher-{version}-osx-arm64.dmg`,
   `easymode_macos_arm64.xml` and (when present) `SHA256SUMS.txt`, verifies their public URLs,
   and updates `version.txt` **last** — never update `version.txt` before all bundles exist.
-- R2 credentials live in the gitignored `AGENTS.local.md` `R2_*` block (or environment
-  variables); never commit them. `-DryRun` prints the upload plan without touching R2.
+- R2 credentials live in the `R2_*` **user environment variables** (moved out of
+  `AGENTS.local.md` on 2026-11-20; `-CredentialFile` still accepts a gitignored ini-style file).
+  Never commit them; the host/key map is in `%USERPROFILE%\.secrets\CONNECTIONS.md` §7.
+  `-DryRun` prints the upload plan without touching R2.
 - The manual `release.yml` workflow runs the publisher automatically after creating/updating the
   GitHub release, using the `R2_*` repository secrets. Local/manual releases still require the
   script to be run explicitly.
@@ -174,4 +221,5 @@ Hyper-V Linux VM by the harness tracked in `scripts\gui-test-harness\`. The port
 
 Machine-specific details (VM IP/credentials, host share paths) and the current resume checklist
 are kept **local only** in `AGENTS.local.md`, which is gitignored — when present, read it before
-starting a GUI-test session.
+starting a GUI-test session. Host access and the per-host deploy/test workflow are in the
+out-of-repo `%USERPROFILE%\.secrets\CONNECTIONS.md` (§3 for the VM).

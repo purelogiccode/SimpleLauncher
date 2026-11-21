@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Extensions;
 ///     resolution matches the runtime behavior of every other localized string).
 ///     Falls back to the key itself when the service or the key is unavailable.
 /// </summary>
-public class TranslateExtension : MarkupExtension
+internal class TranslateExtension : MarkupExtension
 {
     // Single constructor: the designer's runtime XAML compiler resolves the
     // positional {ext:Translate Key} argument against the ctor list and fails

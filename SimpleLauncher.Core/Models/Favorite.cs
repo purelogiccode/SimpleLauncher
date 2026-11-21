@@ -66,6 +66,8 @@ public class Favorite : INotifyPropertyChanged
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    /// <summary>Raises <see cref="PropertyChanged" /> for the changed property.</summary>
+    /// <param name="propertyName">Name of the changed property; filled by the compiler when omitted.</param>
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services;
 ///     A Serilog sink that forwards log events to the debug window view model,
 ///     buffering messages until it is connected. Avalonia port of the WPF DebugWindowSink.
 /// </summary>
-public class DebugWindowSink : ILogEventSink
+internal class DebugWindowSink : ILogEventSink
 {
     internal const int MaxBufferedMessages = 5000;
     private static readonly Lock SinkLock = new();

@@ -15,7 +15,7 @@ namespace SimpleLauncher.Avalonia.Services.GameScan;
 ///     Scans for installed games from various digital storefronts (Steam, Epic, GOG, etc.)
 ///     and creates shortcuts in the Microsoft Windows system folder.
 /// </summary>
-public class GameScannerService
+internal class GameScannerService
 {
     /// <summary>Name of the system entry created for storefront-discovered PC games.</summary>
     public const string WindowsSystemName = "Microsoft Windows";
@@ -223,7 +223,7 @@ public class GameScannerService
         return files;
     }
 
-    private async Task<(string? RomsPath, string? ImagesPath, bool WasNewSystemCreated)> InitializeWindowsPathsAsync()
+    private Task<(string? RomsPath, string? ImagesPath, bool WasNewSystemCreated)> InitializeWindowsPathsAsync()
     {
         try
         {
@@ -245,7 +245,7 @@ public class GameScannerService
                 _logger.Debug(
                     $"[GameScannerService] Using existing '{WindowsSystemName}' system paths: ROMs='{resolvedRomsPath}', Images='{resolvedImagesPath}'");
 
-                return (resolvedRomsPath, resolvedImagesPath, false);
+                return Task.FromResult<(string?, string?, bool)>((resolvedRomsPath, resolvedImagesPath, false));
             }
 
             // System doesn't exist yet: compute the default paths and report that the entry
@@ -259,7 +259,7 @@ public class GameScannerService
             Directory.CreateDirectory(defaultRomsPath);
             Directory.CreateDirectory(defaultImagesPath);
 
-            return (defaultRomsPath, defaultImagesPath, true);
+            return Task.FromResult<(string?, string?, bool)>((defaultRomsPath, defaultImagesPath, true));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -272,7 +272,7 @@ public class GameScannerService
             var fallbackRomsPath = Path.Combine(PathHelper.BaseFolder, "roms", WindowsSystemName);
             var fallbackImagesPath = Path.Combine(PathHelper.BaseFolder, "images", WindowsSystemName);
 
-            return (fallbackRomsPath, fallbackImagesPath, false);
+            return Task.FromResult<(string?, string?, bool)>((fallbackRomsPath, fallbackImagesPath, false));
         }
         catch (Exception ex)
         {
@@ -282,7 +282,7 @@ public class GameScannerService
             var fallbackRomsPath = Path.Combine(PathHelper.BaseFolder, "roms", WindowsSystemName);
             var fallbackImagesPath = Path.Combine(PathHelper.BaseFolder, "images", WindowsSystemName);
 
-            return (fallbackRomsPath, fallbackImagesPath, false);
+            return Task.FromResult<(string?, string?, bool)>((fallbackRomsPath, fallbackImagesPath, false));
         }
     }
 

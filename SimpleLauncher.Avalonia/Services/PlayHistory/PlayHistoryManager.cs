@@ -18,7 +18,7 @@ namespace SimpleLauncher.Avalonia.Services.PlayHistory;
 ///     database exists yet).
 /// </summary>
 [MessagePackObject(AllowPrivate = true)]
-public class PlayHistoryManager
+internal class PlayHistoryManager
 {
     private const string IsoDateFormat = "yyyy-MM-dd";
     private const string IsoTimeFormat = "HH:mm:ss";

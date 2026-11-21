@@ -97,18 +97,17 @@ All Core services follow the same conventions: Serilog `ILogger` injected (globa
 | `AudioInputService` | Audio input abstraction |
 | `WpfServices\WpfImageLoader` | Image loading with `default.png` fallback |
 | `TakeScreenshot\WindowManager` | Enumerate top-level windows for screenshots |
-| `DebugAndBugReport\GetMicrosoftWindowsVersion` / `WindowsVersionService` | Windows version detection for bug reports |
+| `DebugAndBugReport\OperatingSystemDetails` | Cross-platform OS version detection for bug reports |
 
 ## Debug & bug reports
 
 | Class | Purpose |
 |---|---|
-| `DebugAndBugReport\BugReportApiSink` | Serilog sink: queues events, POSTs to bug-report API, writes `error.log`/`error_user.log`/`critical_error.log` on failure |
-| `Interfaces\NoOpDebugLogger` | No-op `IDebugLogger` fallback |
+| `DebugAndBugReport\BugReportApiSink` | Serilog sink: queues Warning+ events, POSTs to the bug-report API with the complete environment/error/exception block, writes `error.log`/`error_user.log`/`critical_error.log` on failure |
 
 ## Interfaces (`SimpleLauncher.Core\Interfaces\`)
 
-Contracts for all of the above plus app-side contracts shared with the WPF layer: `IApplicationLifetime`, `IAudioInputService`, `ICleanTempFolderService`, `ICredentialProtector`, `IDebugLogger`, `IDeleteFilesService`, `IDirectoryValidationService`, `IDiscConverter`, `IDispatcherService`, `IEmulator`, `IEmulatorConfigHandler`, `IEmulatorSettings`, `IExtractionService`, `IFileFinderService`, `IFileLockService`, `IFilePickerService`, `IFindCoverImageService`, `IFormatFileSizeService`, `IGetListOfFilesService`, `IIconExtractor`, `IImageLoader`, `IInputSanitizerService`, `ILaunchStrategy`, `ILauncherService`, `ILoadingState`, `IMameDataService`, `IMessageBoxLibraryService`, `IMessageDialogService`, `IMountChdFiles`, `IMountIsoFiles`, `IMountXisoFiles`, `IMountZipFiles`, `IPaginationHost`, `IPaginationService`, `IParameterResolverService`, `IPlaySoundEffects`, `IResourceProvider`, `IRetroAchievementsEmulatorConfiguratorService`, `IRetroAchievementsFileHasher`, `IRetroAchievementsHasherTool`, `IRetroAchievementsSystemMatcher`, `ISearchOrchestratorService`, `ISteamVdfParser`, `ISystemConfigurationWriterService`, `ISystemManager`, `IUiResetHost`, `IUiResetService`, `IWindowContext`, `IWindowsVersionService`.
+Contracts for all of the above plus app-side contracts shared with the WPF layer: `IApplicationLifetime`, `IAudioInputService`, `ICleanTempFolderService`, `ICredentialProtector`, `IDeleteFilesService`, `IDirectoryValidationService`, `IDiscConverter`, `IDispatcherService`, `IEmulator`, `IEmulatorConfigHandler`, `IEmulatorSettings`, `IExtractionService`, `IFileFinderService`, `IFileLockService`, `IFilePickerService`, `IFindCoverImageService`, `IFormatFileSizeService`, `IGetListOfFilesService`, `IIconExtractor`, `IImageLoader`, `IInputSanitizerService`, `ILaunchStrategy`, `ILauncherService`, `ILoadingState`, `IMameDataService`, `IMessageBoxLibraryService`, `IMessageDialogService`, `IMountChdFiles`, `IMountIsoFiles`, `IMountXisoFiles`, `IMountZipFiles`, `IPaginationHost`, `IPaginationService`, `IParameterResolverService`, `IPlaySoundEffects`, `IResourceProvider`, `IRetroAchievementsEmulatorConfiguratorService`, `IRetroAchievementsFileHasher`, `IRetroAchievementsHasherTool`, `IRetroAchievementsSystemMatcher`, `ISearchOrchestratorService`, `ISteamVdfParser`, `ISystemConfigurationWriterService`, `ISystemManager`, `IUiResetHost`, `IUiResetService`, `IWindowContext`.
 
 ## Models (`SimpleLauncher.Core\Models\`)
 

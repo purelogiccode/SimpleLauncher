@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.Services.InjectEmulatorConfig;
 ///     Resolves the file path of an emulator executable by searching the configured systems.
 ///     Registered in DI and reuses the shared SystemManagerService (cached system.xml read).
 /// </summary>
-public class EmulatorPathResolver
+internal class EmulatorPathResolver
 {
     private readonly SystemManagerService _systemManager;
 

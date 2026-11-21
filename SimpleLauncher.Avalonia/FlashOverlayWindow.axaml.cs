@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia;
 /// <summary>
 ///     Full-screen overlay window that displays a brief flash animation effect.
 /// </summary>
-public partial class FlashOverlayWindow : Window, IDisposable
+internal partial class FlashOverlayWindow : Window, IDisposable
 {
     private readonly EventHandler _closeRequestedHandler;
     private readonly FlashOverlayViewModel _viewModel;

@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 ///     COPY of the WPF PbpToCueStrategy — resource lookups replaced with English fallback strings,
 ///     IConfiguration moved to the constructor (no App.ServiceProvider dependency).
 /// </summary>
-public class PbpToCueStrategy : ILaunchStrategy
+internal class PbpToCueStrategy : ILaunchStrategy
 {
     private readonly IConfiguration _configuration;
     private readonly IDiscConverter _discConverter;

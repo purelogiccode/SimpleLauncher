@@ -20,6 +20,7 @@
         <converters:ConsoleToCardHeightConverter x:Key="CardHeightConverter" />
         <converters:BooleanToFavoriteStatusConverter x:Key="FavoriteStatusConverter" />
         <converters:SystemInfoLineBrushConverter x:Key="SystemInfoLineBrush" />
+        <converters:AccessibilityToolTipConverter x:Key="AccessibilityToolTip" />
 
         <!-- ═══ SURFACE COLORS ═══ -->
         <Color x:Key="BgPrimaryColor">#1E1E1E</Color>
@@ -645,6 +646,15 @@
     <Style Selector="ListBoxItem:selected">
         <Setter Property="Background" Value="{DynamicResource BgQuaternaryBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- ── ACCESSIBILITY TOOLTIPS ── -->
+    <!-- Every interactive control exposes AutomationProperties.Name for screen readers.
+         Reuse that text as its tooltip, so all windows/pages get consistent help text
+         without duplicating strings in each view. Controls without an accessible name
+         (decorative elements) keep the default of no tooltip. -->
+    <Style Selector=":is(Control)">
+        <Setter Property="ToolTip.Tip" Value="{Binding $self, Converter={StaticResource AccessibilityToolTip}}" />
     </Style>
 
     <!-- ── TOOLTIP (dark flat) ── -->

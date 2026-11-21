@@ -12,7 +12,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Yumir emulator configuration injection window.
 /// </summary>
-public partial class InjectYumirConfigViewModel : ObservableObject
+internal partial class InjectYumirConfigViewModel : ObservableObject
 {
     private readonly EmulatorPathResolver _emulatorPathResolver;
     private readonly ILogger _logger;

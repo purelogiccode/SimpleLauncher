@@ -3,7 +3,7 @@ namespace SimpleLauncher.Avalonia.Models;
 /// <summary>
 ///     Represents a RetroAchievements achievement with unlock status, metadata, and display helpers.
 /// </summary>
-public class RaAchievement
+internal class RaAchievement
 {
     /// <summary>
     ///     Gets or sets the unique identifier of the achievement.

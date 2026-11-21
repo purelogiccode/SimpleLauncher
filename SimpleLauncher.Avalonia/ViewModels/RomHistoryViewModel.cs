@@ -11,7 +11,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the ROM history information window.
 /// </summary>
-public partial class RomHistoryViewModel : ObservableObject
+internal partial class RomHistoryViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

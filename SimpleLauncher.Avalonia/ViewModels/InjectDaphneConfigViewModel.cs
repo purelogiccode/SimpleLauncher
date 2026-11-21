@@ -8,7 +8,7 @@ namespace SimpleLauncher.Avalonia.ViewModels;
 /// <summary>
 ///     ViewModel for the Daphne emulator configuration injection window.
 /// </summary>
-public partial class InjectDaphneConfigViewModel : ObservableObject
+internal partial class InjectDaphneConfigViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly IMessageBoxLibraryService _messageBox;

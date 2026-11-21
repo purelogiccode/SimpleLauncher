@@ -10,7 +10,7 @@ namespace SimpleLauncher.Avalonia.Services.GameLauncher.Strategies;
 ///     Strategy for mounting CHD files and launching them with compatible emulators.
 ///     Direct COPY of the WPF ChdMountStrategy (namespace only).
 /// </summary>
-public class ChdMountStrategy : ILaunchStrategy
+internal class ChdMountStrategy : ILaunchStrategy
 {
     private readonly IConfiguration _configuration;
     private readonly IDiscConverter _discConverter;
