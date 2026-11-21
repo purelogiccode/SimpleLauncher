@@ -49,6 +49,9 @@
   automatically; there is no separate app launcher menu.
 
 ## Fixes
+- **No stale covers while loading** - switching systems, loading All Games, searching or
+  opening Favorites/History now empties the previous grid before the scan starts, so old game
+  cards no longer show through the loading overlay.
 - **Packaging and packaged-install fixes** - the Windows installer now checks/downloads the
   .NET 11 base runtime (the app does not need the Desktop Runtime); AppImage/Flatpak always keep
   settings in the per-user data folder, even with `--appimage-extract-and-run`; macOS launched

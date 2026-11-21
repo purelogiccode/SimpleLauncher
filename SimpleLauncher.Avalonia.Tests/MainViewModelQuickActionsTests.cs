@@ -32,12 +32,14 @@ namespace SimpleLauncher.Avalonia.Tests;
 public class MainViewModelQuickActionsTests : IDisposable
 {
     private readonly IConfiguration _config;
+    private readonly Mock<IFindCoverImageService> _findCover = new();
     private readonly Mock<ILogger> _logger = new();
     private readonly Mock<IMameDataService> _mameData = new();
     private readonly Mock<IMessageBoxLibraryService> _messageBox = new();
     private readonly Mock<IRetroAchievementsHashScanner> _raHashScanner = new();
     private readonly Mock<IRetroAchievementsHashStore> _raHashStore = new();
     private readonly FakeLoadingOverlayHost _loadingHost = new();
+    private ManualResetEventSlim? _scanGate;
     private readonly AvaloniaGameCacheService _gameCache = new();
     private readonly AvaloniaPaginationService _pagination;
     private readonly string _romsFolder;
@@ -101,12 +103,19 @@ public class MainViewModelQuickActionsTests : IDisposable
             { "cantina", "Cantina" }
         });
 
+        // The gate lets a test hold the background scan open and verify that the old
+        // grid was cleared before the new cards are produced.
+        _findCover
+            .Setup(s => s.FindCoverImagePath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns((string)null!)
+            .Callback(() => _scanGate?.Wait());
+
         _viewModel = new MainViewModel(
             new FavoritesManager(),
             new PlayHistoryManager(),
             _systemManager,
             CreateLauncher(_systemManager, settings),
-            new Mock<IFindCoverImageService>().Object,
+            _findCover.Object,
             settings,
             _pagination,
             loadingOrchestrator,
@@ -402,6 +411,43 @@ public class MainViewModelQuickActionsTests : IDisposable
         Assert.False(_loadingHost.IsLoading);
         Assert.Contains(_loadingHost.Messages,
             static m => m.Contains("Loading system", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task ViewLoad_ClearsThePreviousGridBeforeTheScanCompletes()
+    {
+        // Start with a populated All Games view.
+        await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+        Assert.NotEmpty(_viewModel.Games);
+
+        using var gate = new ManualResetEventSlim(false);
+        _scanGate = gate;
+        try
+        {
+            // Switching to a system must empty the old grid immediately: the loading
+            // overlay is translucent, so previous covers must not show through it.
+            var systemNavigation = _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+            Assert.Empty(_viewModel.Games);
+            Assert.True(_viewModel.IsEmpty);
+
+            gate.Set();
+            await systemNavigation;
+            Assert.NotEmpty(_viewModel.Games);
+
+            // Switching back to All Games clears the system's cards the same way.
+            gate.Reset();
+            var allGamesNavigation = _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+            Assert.Empty(_viewModel.Games);
+
+            gate.Set();
+            await allGamesNavigation;
+            Assert.NotEmpty(_viewModel.Games);
+        }
+        finally
+        {
+            gate.Set();
+            _scanGate = null;
+        }
     }
 
     [Fact]

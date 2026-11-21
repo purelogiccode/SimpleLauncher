@@ -483,16 +483,38 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
     }
 
     /// <summary>
+    ///     Empties the displayed grid before a new view starts scanning the disk. The
+    ///     loading overlay is translucent, so without this the previous system's covers
+    ///     stayed visible while the new list was being prepared (WPF
+    ///     SetUiBeforeLoadGameFilesAsync clears the panel at the start too).
+    /// </summary>
+    private void ClearGameViewBeforeLoad()
+    {
+        IsSystemInfoVisible = false;
+        _currentBaseGames = [];
+        _currentAllGames = [];
+        _pagination.Reset();
+        Games = []; // OnGamesChanged updates the count and IsEmpty
+    }
+
+    /// <summary>
     ///     Scans and filters the library on the thread pool while the reference-counted
     ///     loading overlay is visible (WPF LoadGameFilesAsync parity: the overlay covers
     ///     the disk scan, not just the UI update). Returns null when a newer view load
-    ///     superseded this one while it was scanning — callers must not apply the result.
+    ///     superseded this one while it was scanning - callers must not apply the result.
     /// </summary>
     /// <param name="loadingMessage">The message shown on the loading overlay.</param>
     /// <param name="load">The background work producing the view data.</param>
-    private async Task<T?> RunViewLoadAsync<T>(string loadingMessage, Func<T> load) where T : class
+    /// <param name="clearBeforeLoad">
+    ///     True for user-initiated view changes: the old grid is emptied immediately so
+    ///     it cannot show through the translucent overlay. False for the file-watcher
+    ///     refresh, which updates the current view in place.
+    /// </param>
+    private async Task<T?> RunViewLoadAsync<T>(string loadingMessage, Func<T> load,
+        bool clearBeforeLoad = true) where T : class
     {
         var generation = ++_viewGeneration;
+        if (clearBeforeLoad) ClearGameViewBeforeLoad();
         SetLoadingState(true, loadingMessage);
         try
         {
@@ -702,10 +724,11 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
         }
 
         var generation = ++_viewGeneration;
+        ClearGameViewBeforeLoad();
         SetLoadingState(true, _localization.GetString("LoadingGames", "Loading Games..."));
         try
         {
-            // Full library scan for the selected system — ignores letter/search/
+            // Full library scan for the selected system - ignores letter/search/
             // cover-image filters exactly like the WPF RANDOM_SELECTION mode
             var pool = await Task.Run(() => ScanGames(systems));
 
@@ -1020,6 +1043,7 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
         bool preservePagination = false)
     {
         var generation = ++_viewGeneration;
+        if (!preservePagination) ClearGameViewBeforeLoad();
         var (matched, total) = await Task.Run(() =>
         {
             var allGames = ScanGames(systems);
@@ -1337,7 +1361,8 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
                 var filtered = AvaloniaGameFilterService.FilterBySearchQuery(allGames, validation.ValidatedQuery);
                 ApplyFavoritesAndHistory(filtered);
                 return filtered;
-            });
+            },
+            clearBeforeLoad: !preservePagination);
 
         if (results is null) return; // superseded by a newer view load
 
@@ -1411,7 +1436,8 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
                     var scanned = ScanGames(systems);
                     ApplyFavoritesAndHistory(scanned);
                     return scanned;
-                });
+                },
+                clearBeforeLoad: !preservePagination);
 
             if (games is null) return; // superseded by a newer view load
 
@@ -1473,7 +1499,8 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
                     var allGames = ScanGames(_allSystems);
                     ApplyFavoritesAndHistory(allGames);
                     return allGames.Where(g => g.IsFavorite).ToList();
-                });
+                },
+                clearBeforeLoad: !preservePagination);
 
             if (favorites is null) return; // superseded by a newer view load
 
@@ -1931,7 +1958,8 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
                     var scanned = ScanGames(_allSystems);
                     ApplyFavoritesAndHistory(scanned);
                     return scanned;
-                });
+                },
+                clearBeforeLoad: !preservePagination);
 
             if (games is null) return; // superseded by a newer view load
 
