@@ -132,8 +132,9 @@ the Cloudflare R2 fallback next to the Windows and Linux assets.
   `stella_libretro.dylib` into `~/Library/Application Support/SimpleLauncher/emulators`,
   added the Atari 2600 system, scanned a ZIP ROM and launched
   `RetroArch -L …/stella_libretro.dylib -f …/test.zip` successfully.
-* `SimpleLauncher.Avalonia.Tests`: **725/725 passed on macOS**, including the new
-  `ExtractFileAsync_MacDiskImage_InstallsAppBundleAndRestoresExecuteBit` test.
+* `SimpleLauncher.Avalonia.Tests`: **725/725 passed on macOS** on 2026-11-19, including the
+  `ExtractFileAsync_MacDiskImage_InstallsAppBundleAndRestoresExecuteBit` test. The cross-platform
+  suite has since grown to 765 tests; the next macOS release gate should rerun it.
 * macOS UI sounds use the system `/usr/bin/afplay` (CoreAudio) backend on the existing
   audio thread; a harness confirmed it starts and plays `shutter.mp3`. An audible check on
   physical speakers remains.

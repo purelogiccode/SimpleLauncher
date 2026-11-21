@@ -139,7 +139,7 @@ Want the longer story, including where the other frontends are stronger? Read th
   - RPCS3, Xemu, Xenia, Cxbx-Reloaded, Mednafen, PCSX Redux, 4DO, Gens, Blastem, Yabause, Mesen, FinalBurn Neo, FinalBurn Alpha, Raine, CD-i Emulator, Tsugaru
 * **On-the-Fly Mounting:** Launch games directly from compressed (`.zip`) or disk image (`.iso`, `.xiso`) files using **Dokan** integration (Windows); Xbox games in every SimpleXisoDrive container (`.iso`/`.xiso`/`.cso`/`.zar`, plus Xbox-ISO `.chd`) mount through **SimpleXisoDrive** for Xemu (virtual `image.iso`) and Cxbx-Reloaded (mounted `default.xbe`). On Linux the Avalonia app mounts ZIP/7z/RAR launches through **SimpleZipDrive** (FUSE 3) and Xbox images through **SimpleXisoDrive** (FUSE 3), mounts CHD images through **CHDMounter**/FUSE, and keeps temp-extraction and managed conversion as automatic fallbacks - no Dokan needed
 * **Expert Mode:** Granular control over launch parameters, multiple ROM paths per system, and custom environment variables
-* **Format Conversion:** Built-in converters for CHD, RVZ, XISO, 7z/Zip with integrity verification
+* **Format Conversion:** Managed CHD/PBP conversion and archive extraction (7z/ZIP/RAR) with integrity checks; XISO/CSO/ZAR images are mounted directly instead of converted
 * **File Mounting Strategies:** Advanced strategies for Xbox images (`.iso`/`.xiso`/`.cso`/`.zar`/`.chd`), CHD (mount or convert), ZIP/7z/RAR (mount or extract), DOSBox `imgmount`, PBP-to-CUE, and CHD-to-CUE conversions
 
 ### 🏆 RetroAchievements (RA) Integration
