@@ -145,7 +145,8 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
         {
             lock (_stateLock)
             {
-                _logger.Error(
+                // Empty/missing sound configuration is a user-configuration condition.
+                _logger.Information(
                     new ArgumentNullException(nameof(soundFileName),
                         "PlayConfiguredSound called with null or empty soundFileName."),
                     "Attempted to play sound with an empty filename");
@@ -161,7 +162,8 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
     {
         if (string.IsNullOrWhiteSpace(soundFileName))
         {
-            _logger.Error(
+            // Empty sound configuration is a user-configuration condition, not a bug.
+            _logger.Information(
                 new ArgumentNullException(nameof(soundFileName), "Attempted to play sound with an empty filename."),
                 "Attempted to play sound with an empty filename.");
             return;
@@ -170,8 +172,10 @@ public class PlaySoundEffects : IPlaySoundEffects, IDisposable
         var soundPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "audio", soundFileName);
         if (!File.Exists(soundPath))
         {
+            // A missing optional sound asset must not spam the bug-report API. The required-
+            // files check already reports a genuinely incomplete release to the user.
             var contextMessageMissing = $"Sound file not found: {soundPath}";
-            _logger.Error(
+            _logger.Information(
                 new FileNotFoundException(contextMessageMissing, soundPath),
                 contextMessageMissing);
             return;

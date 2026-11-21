@@ -242,6 +242,53 @@ public class PlaySoundEffectsTests
         }
     }
 
+    /// <summary>
+    ///     A missing optional sound asset is an expected packaging/user condition (bug #69961)
+    ///     and must be logged at Information so it never reaches the bug-report API.
+    /// </summary>
+    [Fact]
+    public void PlayConfiguredSound_WithMissingFile_LogsInformationInsteadOfError()
+    {
+        var settings = new SettingsManagerService(
+            new ConfigurationBuilder().Build(),
+            new Mock<ILogger>().Object,
+            new Mock<ICredentialProtector>().Object);
+
+        var logger = new Mock<ILogger>();
+        using var player = new PlaySoundEffects(settings, logger.Object)
+        {
+            UseMacSystemPlayer = false
+        };
+
+        player.PlayConfiguredSound($"missing-{Guid.NewGuid():N}.mp3");
+
+        logger.Verify(l => l.Information(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Error(It.IsAny<string>()), Times.Never);
+    }
+
+    /// <summary>An empty configured filename is a user-configuration condition, not a bug.</summary>
+    [Fact]
+    public void PlayConfiguredSound_WithEmptyName_LogsInformationInsteadOfError()
+    {
+        var settings = new SettingsManagerService(
+            new ConfigurationBuilder().Build(),
+            new Mock<ILogger>().Object,
+            new Mock<ICredentialProtector>().Object);
+
+        var logger = new Mock<ILogger>();
+        using var player = new PlaySoundEffects(settings, logger.Object)
+        {
+            UseMacSystemPlayer = false
+        };
+
+        player.PlayConfiguredSound("");
+
+        logger.Verify(l => l.Information(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        logger.Verify(l => l.Error(It.IsAny<Exception>(), It.IsAny<string>()), Times.Never);
+        logger.Verify(l => l.Error(It.IsAny<string>()), Times.Never);
+    }
+
     [Fact]
     public async Task PlayConfiguredSound_WithCorruptMp3_LogsInformationInsteadOfError()
     {

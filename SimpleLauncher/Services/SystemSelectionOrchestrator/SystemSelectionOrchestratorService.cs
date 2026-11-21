@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.GameFileWatcher;
+using SimpleLauncher.Core.Services.Localization;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Interfaces;
@@ -461,9 +462,11 @@ public class SystemSelectionOrchestratorService : ISystemSelectionOrchestrator
             };
 
             AutomationProperties.SetName(systemButton, config.SystemName);
-            AutomationProperties.SetHelpText(systemButton,
+            var selectHelpTemplate =
                 (string)Application.Current.TryFindResource("SelectSystemButtonHelpText") ??
-                $"Select {config.SystemName} system");
+                "Select {config.SystemName} system";
+            AutomationProperties.SetHelpText(systemButton,
+                LocalizationTemplate.ReplaceSystemName(selectHelpTemplate, config.SystemName));
 
             systemButton.SetResourceReference(FrameworkElement.StyleProperty, "SystemButtonStyle");
 

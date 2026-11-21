@@ -3,6 +3,9 @@ using System.Formats.Tar;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
+using Moq;
+using Serilog.Core;
+using Serilog.Events;
 using SimpleLauncher.Core.Services.ExtractFiles;
 using Xunit.Sdk;
 
@@ -45,6 +48,54 @@ public class ExtractionServiceTests
         // the extraction methods. The Linux Easy Mode manifest ships some emulators as
         // .tar.gz (Redream) and .tar.xz (DOSBox Staging, Ymir), so both must be accepted.
         Assert.Equal(expected, ExtractionService.IsSupportedArchivePath(fileName));
+    }
+
+    /// <summary>
+    ///     A destination that cannot be created (a file is in the way / an invalid path) is an
+    ///     expected environment condition: it must be logged at Information, never Error, so
+    ///     the bug-report API does not receive it.
+    /// </summary>
+    [Fact]
+    public async Task ExtractToFolderAsync_UncreatableDestination_LogsInformationNotError()
+    {
+        var folder = Directory.CreateTempSubdirectory("sl-extract-blocked-");
+        try
+        {
+            var archivePath = Path.Combine(folder.FullName, "emulator.zip");
+            await using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+            await using (var stream = archive.CreateEntry("emulator.exe").Open())
+            await using (var writer = new StreamWriter(stream))
+            {
+                writer.Write("binary");
+            }
+
+            // A file where a directory is expected makes Directory.CreateDirectory throw
+            // IOException on every platform.
+            var blockingFile = Path.Combine(folder.FullName, "blocked");
+            await File.WriteAllTextAsync(blockingFile, "not a directory");
+            var destination = Path.Combine(blockingFile, "emulators", "ares");
+
+            var sink = new CollectingSink();
+            using var logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Sink(sink)
+                .CreateLogger();
+            var messageBox = TestDependencies.MessageBox();
+            messageBox.Setup(m => m.ExtractionFailedMessageBoxAsync()).Returns(Task.CompletedTask);
+
+            var service = new ExtractionService(messageBox.Object, logger);
+            var success = await service.ExtractToFolderAsync(archivePath, destination);
+
+            Assert.False(success);
+            Assert.DoesNotContain(sink.Events, e => e.Level >= LogEventLevel.Error);
+            Assert.Contains(sink.Events, e =>
+                e.Level == LogEventLevel.Information && e.Exception is IOException);
+            messageBox.Verify(m => m.ExtractionFailedMessageBoxAsync(), Times.Once);
+        }
+        finally
+        {
+            Directory.Delete(folder.FullName, true);
+        }
     }
 
     [Fact]
@@ -334,6 +385,16 @@ public class ExtractionServiceTests
         finally
         {
             Directory.Delete(folder.FullName, true);
+        }
+    }
+
+    private sealed class CollectingSink : ILogEventSink
+    {
+        public List<LogEvent> Events { get; } = [];
+
+        public void Emit(LogEvent logEvent)
+        {
+            Events.Add(logEvent);
         }
     }
 

@@ -35,6 +35,7 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.GamePad;
+using SimpleLauncher.Core.Services.Localization;
 using SimpleLauncher.Core.Services.PlaySound;
 using SimpleLauncher.Core.Services.SettingsManager;
 
@@ -3089,7 +3090,7 @@ internal partial class MainWindow : Window, IPaginationHost
             if (string.Equals(selectHelpTemplate, "SelectSystemButtonHelpText", StringComparison.Ordinal))
                 selectHelpTemplate = "Select {config.SystemName} system";
             AutomationProperties.SetHelpText(systemButton,
-                selectHelpTemplate.Replace("{config.SystemName}", systemName, StringComparison.Ordinal));
+                LocalizationTemplate.ReplaceSystemName(selectHelpTemplate, systemName));
 
             // Right-click context menu (WPF parity: Select / Edit / Delete)
             var contextMenu = new ContextMenu();

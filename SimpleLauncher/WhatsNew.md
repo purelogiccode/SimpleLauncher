@@ -46,6 +46,11 @@
   automatically; there is no separate app launcher menu.
 
 ## Fixes
+- **Protected-folder installs and missing assets** - extracting an emulator into a non-writable
+  folder (for example `Program Files`) now shows the "move to a writable folder" guidance and is
+  logged at Information instead of filing a bug report. Missing audio files and empty sound
+  settings are handled the same way, and the localized system-card help text no longer throws a
+  `FormatException` when it contains `{config.SystemName}`.
 - **Avalonia library search** - searching after loading a system now matches the raw file name and
   the MAME machine description instead of only the visible title, so MAME names and cover-only
   (NoFilename) libraries are found. It also supports the WPF `AND` / `OR` / quoted-phrase rules,

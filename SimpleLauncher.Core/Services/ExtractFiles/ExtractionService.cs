@@ -163,10 +163,38 @@ public class ExtractionService : IExtractionService
                 // Use the resolved destination folder for creation
                 Directory.CreateDirectory(resolvedDestinationFolder);
             }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or SecurityException)
+            {
+                // The app is running from a protected folder (Program Files, a read-only
+                // volume, an ACL-restricted portable folder). This is an environment/user
+                // condition, never a bug: Information keeps it out of the bug-report API.
+                _logger.Information(ex,
+                    "Cannot create extraction directory '{DestinationFolder}': the folder is not writable. " +
+                    "The application appears to be installed in a protected location.",
+                    resolvedDestinationFolder);
+
+                // Actionable guidance: move the app to a writable folder (or elevate).
+                await _messageBoxLibrary.MoveToWritableFolderMessageBoxAsync();
+
+                return false;
+            }
+            catch (IOException ex)
+            {
+                // Invalid/blocked path, a file in the way, or a transient I/O condition.
+                // Expected enough to stay out of the bug-report API.
+                _logger.Information(ex,
+                    "Cannot create extraction directory '{DestinationFolder}' because of an I/O error",
+                    resolvedDestinationFolder);
+
+                // Do not continue when the destination cannot be created (CORE-01).
+                await _messageBoxLibrary.ExtractionFailedMessageBoxAsync();
+
+                return false;
+            }
             catch (Exception ex)
             {
-                // Notify developer
-                _logger.Error(ex, $"Failed to create directory: {resolvedDestinationFolder}");
+                // Unexpected failure (for example a malformed path that is not an I/O error).
+                _logger.Error(ex, "Failed to create directory: {DestinationFolder}", resolvedDestinationFolder);
 
                 // Do not continue when the destination cannot be created (CORE-01).
                 await _messageBoxLibrary.ExtractionFailedMessageBoxAsync();
