@@ -27,7 +27,7 @@ the same `settings.dat` and user data.
 
 ## What do I need installed?
 
-- **Windows:** the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download). The
+- **Windows:** the [.NET 11 runtime](https://dotnet.microsoft.com/download). The
   **installer** downloads and installs it when missing (administrator approval is needed for
   that step only). The **portable ZIP** needs it already installed; the app itself needs no
   admin rights.

@@ -9,10 +9,10 @@ The winget package installs the **per-user Inno Setup installer**
 | Installer type | `inno` |
 | Scope | `user` (`%LocalAppData%\SimpleLauncher`) |
 | Silent switches | `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-` |
-| Dependency | `Microsoft.DotNet.DesktopRuntime.11` (the payload is framework-dependent) |
+| Dependency | `Microsoft.DotNet.Runtime.11` (the payload is framework-dependent) |
 | ARP product code | `{2016DA44-0694-42F7-92A3-4015CF9069A5}_is1` (Inno `AppId_is1`) |
 
-The dependency installs the .NET 11 Desktop Runtime silently before Setup runs. The installer
+The dependency installs the .NET 11 runtime silently before Setup runs. The installer
 can also download the runtime itself, but that path needs a UAC prompt, which would hang an
 unattended `winget install`; the dependency avoids it. If the Windows payload ever becomes
 self-contained, remove the dependency from the generated installer manifest.

@@ -67,8 +67,11 @@ public class App : Application
             // resources and flush Serilog on exit (previously leaked every run).
             desktop.Exit += (_, _) =>
             {
-                MainWindow.DisposeHttpClient();
+                // CloseAndFlush disposes the bug-report sink, which drains queued reports
+                // through MainWindow.HttpClient. Keep that client alive until the drain
+                // finishes; disposing it first loses every report still in the queue.
                 Log.CloseAndFlush();
+                MainWindow.DisposeHttpClient();
             };
 
             mainWindow.Show();

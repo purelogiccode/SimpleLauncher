@@ -22,9 +22,17 @@ internal sealed class AccessibilityToolTipConverter : IValueConverter
     /// <returns>The tooltip text, or null when the control has no descriptive text.</returns>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        var control = value as Control;
-        if (control is null) return null;
+        return value is Control control ? GetText(control) : null;
+    }
 
+    /// <summary>
+    ///     Resolves the tooltip text from accessible name, help text, literal content or a
+    ///     menu header. Shared with the runtime behavior that keeps the tooltip updated.
+    /// </summary>
+    /// <param name="control">The control to inspect.</param>
+    /// <returns>The tooltip text, or null when the control has no descriptive text.</returns>
+    internal static string? GetText(Control control)
+    {
         var name = control.GetValue(AutomationProperties.NameProperty);
         if (!string.IsNullOrWhiteSpace(name)) return name.Trim();
 

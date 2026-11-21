@@ -497,6 +497,7 @@ internal partial class AvaloniaCheckForUpdatesService
     private async Task UpdateAppImageAsync(string? appImageUrl, string? latestVersion, Window? owner)
     {
         UpdateLogWindow? logWindow = null;
+        var shuttingDown = false;
         var appImagePath = PackagingEnvironment.AppImagePath;
 
         if (string.IsNullOrWhiteSpace(appImageUrl) || string.IsNullOrWhiteSpace(appImagePath))
@@ -540,6 +541,7 @@ internal partial class AvaloniaCheckForUpdatesService
 
             if (owner is not null) await RunOnUiThreadAsync(owner.Hide);
             _logger.Information("Updated AppImage launched from {Path}; shutting down for the update", appImagePath);
+            shuttingDown = true;
             _applicationLifetime.Shutdown();
         }
         catch (Exception ex)
@@ -552,7 +554,7 @@ internal partial class AvaloniaCheckForUpdatesService
         finally
         {
             if (logWindow is not null) await RunOnUiThreadAsync(logWindow.Close);
-            if (owner is not null) await RunOnUiThreadAsync(owner.Show);
+            if (owner is not null && !shuttingDown) await RunOnUiThreadAsync(owner.Show);
         }
     }
 

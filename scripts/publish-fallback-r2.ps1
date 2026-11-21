@@ -31,8 +31,8 @@ R2_PUBLIC_BASE_URL) or, when absent, from the R2_* block in AGENTS.local.md
 Release version in Major.Minor.Patch form, e.g. 5.8.4.
 
 .PARAMETER ReleaseDir
-Folder containing every release asset. Defaults to artifacts/release-{version}, then
-SimpleLauncher/bin/Release.
+Folder containing every release asset. Defaults to artifacts/release, then the legacy
+artifacts/release-{version} folder.
 
 .PARAMETER CredentialFile
 File with the R2_* key=value block. Defaults to AGENTS.local.md in the repo root.
@@ -53,7 +53,7 @@ Skip the uploads and verify the currently published assets and version.txt.
 pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
 
 .EXAMPLE
-pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4 -ReleaseDir artifacts/release-5.8.4 -DryRun
+pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4 -ReleaseDir artifacts/release -DryRun
 #>
 [CmdletBinding()]
 param(
@@ -88,8 +88,10 @@ $repoDir = Split-Path -Parent $PSScriptRoot
 # ---------------------------------------------------------------------------
 if (-not $ReleaseDir) {
     $candidates = @(
-        (Join-Path $repoDir "artifacts/release-$Version"),
-        (Join-Path $repoDir 'SimpleLauncher/bin/Release')
+        # package-release.ps1 and package-release-linux.ps1 write here.
+        (Join-Path $repoDir 'artifacts/release'),
+        # Legacy per-version output folder kept for older local workflows.
+        (Join-Path $repoDir "artifacts/release-$Version")
     )
 
     $ReleaseDir = $candidates | Where-Object {

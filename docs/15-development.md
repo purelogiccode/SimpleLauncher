@@ -70,7 +70,7 @@ pwsh scripts/package-release.ps1 -Version 5.8.4 -BuildInstaller
 
 - Publishes only `SimpleLauncher.Avalonia` for Windows and renames the published executable to `SimpleLauncher.exe`; the WPF project is **not** published or bundled and remains the in-repo reference implementation.
 - Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`).
-- The app is published **framework-dependent** (the **.NET 11 Desktop Runtime** is required on the target machine), so the payload carries no runtime: it is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (Skia/HarfBuzz/GLES/SQLite) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
+- The app is published **framework-dependent** (the **.NET 11 runtime** is required on the target machine), so the payload carries no runtime: it is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (Skia/HarfBuzz/GLES/SQLite) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
 - Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing. The WPF project/manifest stay in the validation set because they remain the reference implementation.
 - `AppSettingsFilesAreIdentical` keeps the WPF reference and Avalonia appsettings in sync even though only the Avalonia copy ships.
 - Prunes the other architecture's helper payloads (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` with `LICENSE.txt`, `README.md` and `WhatsNew.md` into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID helpers (`CHDMounter`, `RetroAchievementsSharp`, `SimpleXisoDrive` and `SimpleZipDrive`) keep only the target `win-{x64,arm64}` subfolder.
@@ -84,11 +84,11 @@ requires Inno Setup 6.5+ (`ISCC.exe` on `PATH`, in the default install folder, o
 
 - **Per-user install**, default `%LocalAppData%\SimpleLauncher`, no elevation for the app files.
   The user can pick another writable folder on the Select Destination page.
-- **.NET 11 bootstrap**: Setup looks for a `Microsoft.WindowsDesktop.App\11.*` folder under
+- **.NET 11 bootstrap**: Setup looks for a `Microsoft.NETCore.App\11.*` folder under
   `DOTNET_ROOT`, `%ProgramFiles%\dotnet` (native and the matching `x64`/`arm64` subfolder) or
   `%LocalAppData%\Microsoft\dotnet`. If it is missing, it offers to download
-  `windowsdesktop-runtime-11.0-win-{x64,arm64}.exe` from Microsoft (or use an offline copy named
-  `windowsdesktop-runtime-11.0*-win-{x64,arm64}.exe` placed next to Setup), then elevates only
+  `dotnet-runtime-11.0-win-{x64,arm64}.exe` from Microsoft (or use an offline copy named
+  `dotnet-runtime-11.0*-win-{x64,arm64}.exe` placed next to Setup), then elevates only
   that runtime installer. `No` opens the Microsoft download
   page and keeps Setup on the Ready page so the user can retry.
 - **Uninstall keeps user data**: Inno removes only the files it installed. `settings.dat`,

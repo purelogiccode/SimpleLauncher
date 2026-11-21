@@ -19,7 +19,7 @@ The installer URLs point at the GitHub release tag release<version>, so the asse
 published before the manifests are submitted to winget-pkgs. Pass -VerifyUrls to check that
 the two setup executables are reachable first.
 
-The .NET 11 Desktop Runtime dependency is included because the payload stays
+The .NET 11 runtime dependency is included because the payload stays
 framework-dependent. The installer can also download the runtime itself, but the winget
 dependency installs it silently before Setup runs and avoids a UAC prompt during a winget
 install.
@@ -194,7 +194,7 @@ InstallerSwitches:
 UpgradeBehavior: install
 Dependencies:
   PackageDependencies:
-  - PackageIdentifier: Microsoft.DotNet.DesktopRuntime.11
+  - PackageIdentifier: Microsoft.DotNet.Runtime.11
     MinimumVersion: 11.0.0
 Installers:
 $($installerEntries -join '')
@@ -237,7 +237,7 @@ Tags:
 - rom
 - game-launcher
 ReleaseNotesUrl: https://github.com/$Repository/releases/tag/$tag
-InstallationNotes: Installs per user under %LocalAppData%\SimpleLauncher and adds Start Menu shortcuts. The .NET 11 Desktop Runtime is installed as a winget dependency when missing. Uninstalling keeps settings, game lists and game media; delete the install folder to remove everything.
+InstallationNotes: Installs per user under %LocalAppData%\SimpleLauncher and adds Start Menu shortcuts. The .NET 11 runtime is installed as a winget dependency when missing. Uninstalling keeps settings, game lists and game media; delete the install folder to remove everything.
 ManifestType: defaultLocale
 ManifestVersion: $schemaVersion
 

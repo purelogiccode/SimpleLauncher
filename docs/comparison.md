@@ -57,9 +57,9 @@ whether you want a cross-platform desktop launcher, a TV/arcade interface, or a 
   community content, tutorials and testing.
 - **macOS build is unsigned and not notarized.** Gatekeeper requires a right-click -> Open on
   first launch.
-- **No winget or Store package yet.** The Windows installer is per user and bootstraps the
-  .NET 11 Desktop Runtime; winget and MSIX are still planned. The portable ZIP still needs the
-  runtime installed manually.
+- **No Store package yet.** The Windows installer is per user and bootstraps the .NET 11
+  runtime. winget manifests are prepared in `installer/winget/` but the package is not submitted
+  yet; MSIX is still planned. The portable ZIP still needs the runtime installed manually.
 - **Flatpak is sandboxed.** FUSE-based ZIP/CHD/Xbox-image mounts are unavailable inside Flatpak,
   so the app falls back to extraction/conversion.
 

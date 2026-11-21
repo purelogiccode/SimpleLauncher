@@ -15,7 +15,7 @@ For every runtime identifier this produces, in the output folder:
                                 same payload. It is produced with -BuildInstaller and needs
                                 Inno Setup 6.5+ (ISCC.exe); see installer/SimpleLauncher.iss.
 
-The Avalonia app is published framework-dependent (the .NET 11 Desktop Runtime is required
+The Avalonia app is published framework-dependent (the .NET 11 runtime is required
 on the target machine), so the payload does not carry a runtime. It ships as a single
 executable containing its managed assemblies; the small set of native libraries it needs
 (Skia/HarfBuzz/GLES/SQLite) stays next to the exe. The published
@@ -161,8 +161,8 @@ function Invoke-InnoSetup {
     $architecturesAllowed = if ($Rid -eq 'win-arm64') { 'arm64' } else { 'x64compatible and not arm64' }
     $architectures64 = if ($Rid -eq 'win-arm64') { 'arm64' } else { 'x64compatible' }
     $runtimeArch = if ($Rid -eq 'win-arm64') { 'arm64' } else { 'x64' }
-    $runtimeFileName = "windowsdesktop-runtime-11.0-win-$runtimeArch.exe"
-    $runtimeUrl = "https://aka.ms/dotnet/11.0/windowsdesktop-runtime-win-$runtimeArch.exe"
+    $runtimeFileName = "dotnet-runtime-11.0-win-$runtimeArch.exe"
+    $runtimeUrl = "https://aka.ms/dotnet/11.0/dotnet-runtime-win-$runtimeArch.exe"
     $runtimePageUrl = 'https://dotnet.microsoft.com/download/dotnet/11.0'
     $script = Join-Path $RepoDir 'installer\SimpleLauncher.iss'
 

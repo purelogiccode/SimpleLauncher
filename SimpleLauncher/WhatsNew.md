@@ -21,7 +21,7 @@
   next launch.
 - **Per-user installer** - `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` installs under
   `%LocalAppData%\SimpleLauncher`, adds Start Menu shortcuts and can download/install the
-  .NET 11 Desktop Runtime when it is missing. Only that runtime step asks for administrator
+  .NET 11 runtime when it is missing. Only that runtime step asks for administrator
   approval; the app install does not.
 - **Uninstall keeps your data** - settings, game lists, logs and game media stay in place. Delete
   the install folder after uninstalling to remove everything.
@@ -46,6 +46,11 @@
   automatically; there is no separate app launcher menu.
 
 ## Fixes
+- **Packaging and packaged-install fixes** - the Windows installer now checks/downloads the
+  .NET 11 base runtime (the app does not need the Desktop Runtime); AppImage/Flatpak always keep
+  settings in the per-user data folder, even with `--appimage-extract-and-run`; macOS launched
+  from the DMG no longer shows the writable-folder warning; and AppImage self-updates no longer
+  reopen the old window during shutdown.
 - **Protected-folder installs and missing assets** - extracting an emulator into a non-writable
   folder (for example `Program Files`) now shows the "move to a writable folder" guidance and is
   logged at Information instead of filing a bug report. Missing audio files and empty sound

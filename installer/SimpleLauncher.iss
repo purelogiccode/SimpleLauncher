@@ -12,7 +12,7 @@
 ;   RuntimeArch, RuntimeUrl, RuntimeFileName, RuntimePageUrl
 ;
 ; The installer is deliberately per user. It never requests elevation for the
-; app install; the .NET 11 Desktop Runtime bootstrapper asks for elevation only
+; app install; the .NET 11 runtime bootstrapper asks for elevation only
 ; when the runtime is missing and the user chooses the automatic install.
 
 #ifndef AppVersion
@@ -107,6 +107,13 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; intentionally excluded so a dirty publish folder can never ship user data.
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Excludes: "settings.dat,settings.xml,system.xml,favorites.dat,playhistory.dat,*.log,single-instance.lock,*.tmp"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[InstallDelete]
+; Upgrades from the former side-by-side bundle: remove the old Avalonia binary and
+; its shortcut so users cannot launch the stale build after installing the rename.
+Type: files; Name: "{app}\SimpleLauncher.Avalonia.exe"
+Type: files; Name: "{group}\Simple Launcher (Avalonia UI).lnk"
+Type: files; Name: "{autodesktop}\Simple Launcher (Avalonia UI).lnk"
+
 [Icons]
 Name: "{group}\Simple Launcher"; Filename: "{app}\SimpleLauncher.exe"; WorkingDir: "{app}"; Comment: "Simple Launcher"
 Name: "{group}\{cm:UninstallProgram,Simple Launcher}"; Filename: "{uninstallexe}"
@@ -123,13 +130,13 @@ var
 procedure InitializeWizard;
 begin
   DownloadPage := CreateDownloadPage(
-    'Downloading the .NET 11 Desktop Runtime',
-    'Simple Launcher needs Microsoft''s .NET 11 Desktop Runtime. Setup will download it now.',
+    'Downloading the .NET 11 runtime',
+    'Simple Launcher needs Microsoft''s .NET 11 runtime. Setup will download it now.',
     nil);
   DownloadPage.ShowBaseNameInsteadOfUrl := True;
 end;
 
-function HasDotNetDesktop11In(const Directory: String): Boolean;
+function HasDotNetRuntime11In(const Directory: String): Boolean;
 var
   FindRec: TFindRec;
 begin
@@ -154,45 +161,45 @@ begin
   end;
 end;
 
-function DotNetDesktop11Location(): String;
+function DotNetRuntime11Location(): String;
 var
   Root: String;
 begin
   Result := '';
 
   Root := GetEnv('DOTNET_ROOT');
-  if (Root <> '') and HasDotNetDesktop11In(AddBackslash(Root) + 'shared\Microsoft.WindowsDesktop.App') then
+  if (Root <> '') and HasDotNetRuntime11In(AddBackslash(Root) + 'shared\Microsoft.NETCore.App') then
   begin
-    Result := AddBackslash(Root) + 'shared\Microsoft.WindowsDesktop.App';
+    Result := AddBackslash(Root) + 'shared\Microsoft.NETCore.App';
     Exit;
   end;
 
-  if HasDotNetDesktop11In(ExpandConstant('{commonpf}\dotnet\shared\Microsoft.WindowsDesktop.App')) then
+  if HasDotNetRuntime11In(ExpandConstant('{commonpf}\dotnet\shared\Microsoft.NETCore.App')) then
   begin
-    Result := ExpandConstant('{commonpf}\dotnet\shared\Microsoft.WindowsDesktop.App');
+    Result := ExpandConstant('{commonpf}\dotnet\shared\Microsoft.NETCore.App');
     Exit;
   end;
 
-  if HasDotNetDesktop11In(ExpandConstant('{commonpf}\dotnet\{#RuntimeArch}\shared\Microsoft.WindowsDesktop.App')) then
+  if HasDotNetRuntime11In(ExpandConstant('{commonpf}\dotnet\{#RuntimeArch}\shared\Microsoft.NETCore.App')) then
   begin
-    Result := ExpandConstant('{commonpf}\dotnet\{#RuntimeArch}\shared\Microsoft.WindowsDesktop.App');
+    Result := ExpandConstant('{commonpf}\dotnet\{#RuntimeArch}\shared\Microsoft.NETCore.App');
     Exit;
   end;
 
-  if HasDotNetDesktop11In(ExpandConstant('{localappdata}\Microsoft\dotnet\shared\Microsoft.WindowsDesktop.App')) then
+  if HasDotNetRuntime11In(ExpandConstant('{localappdata}\Microsoft\dotnet\shared\Microsoft.NETCore.App')) then
   begin
-    Result := ExpandConstant('{localappdata}\Microsoft\dotnet\shared\Microsoft.WindowsDesktop.App');
+    Result := ExpandConstant('{localappdata}\Microsoft\dotnet\shared\Microsoft.NETCore.App');
     Exit;
   end;
 end;
 
-function DotNetDesktop11Installed(): Boolean;
+function DotNetRuntime11Installed(): Boolean;
 begin
-  Result := DotNetDesktop11Location() <> '';
+  Result := DotNetRuntime11Location() <> '';
 end;
 
 { An offline copy placed next to Setup wins over a download. The official
-  Microsoft installer is named windowsdesktop-runtime-11.0.<patch>-win-<arch>.exe,
+  Microsoft installer is named dotnet-runtime-11.0.<patch>-win-<arch>.exe,
   so accept both the short and the patch-versioned name. }
 function FindOfflineRuntimeInstaller(): String;
 var
@@ -203,7 +210,7 @@ begin
     Exit;
 
   Result := '';
-  if FindFirst(ExpandConstant('{src}\windowsdesktop-runtime-11.0*-win-{#RuntimeArch}.exe'), FindRec) then
+  if FindFirst(ExpandConstant('{src}\dotnet-runtime-11.0*-win-{#RuntimeArch}.exe'), FindRec) then
   try
     if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) = 0 then
       Result := ExpandConstant('{src}\') + FindRec.Name;
@@ -241,9 +248,9 @@ begin
             DownloadPage.Download;
           except
             if DownloadPage.AbortedByUser then
-              DownloadError := 'The .NET 11 Desktop Runtime download was cancelled.'
+              DownloadError := 'The .NET 11 runtime download was cancelled.'
             else
-              DownloadError := 'Could not download the .NET 11 Desktop Runtime: ' + GetExceptionMessage;
+              DownloadError := 'Could not download the .NET 11 runtime: ' + GetExceptionMessage;
           end;
         finally
           DownloadPage.Hide;
@@ -257,7 +264,7 @@ begin
         end;
       end;
     except
-      Result := 'Could not download the .NET 11 Desktop Runtime: ' + GetExceptionMessage + #13#10#13#10 +
+      Result := 'Could not download the .NET 11 runtime: ' + GetExceptionMessage + #13#10#13#10 +
         'Install the runtime manually from {#RuntimePageUrl} and run Setup again.';
       Exit;
     end;
@@ -265,14 +272,14 @@ begin
 
   if not ShellExec('runas', RuntimePath, '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
   begin
-    Result := 'The .NET 11 Desktop Runtime installer could not be started. ' +
+    Result := 'The .NET 11 runtime installer could not be started. ' +
       'Approve the administrator prompt, or install the runtime manually from {#RuntimePageUrl}.';
     Exit;
   end;
 
   if (ResultCode <> 0) and (ResultCode <> 3010) then
   begin
-    Result := Format('The .NET 11 Desktop Runtime installer failed (exit code %d). ' +
+    Result := Format('The .NET 11 runtime installer failed (exit code %d). ' +
       'Install the runtime manually from {#RuntimePageUrl} and run Setup again.', [ResultCode]);
     Exit;
   end;
@@ -280,9 +287,9 @@ begin
   if ResultCode = 3010 then
     RuntimeNeedsRestart := True;
 
-  if not DotNetDesktop11Installed() then
+  if not DotNetRuntime11Installed() then
   begin
-    Result := 'The .NET 11 Desktop Runtime is still not available after installation. ' +
+    Result := 'The .NET 11 runtime is still not available after installation. ' +
       'Install it manually from {#RuntimePageUrl} and run Setup again.';
     Exit;
   end;
@@ -297,33 +304,33 @@ begin
   Result := '';
   NeedsRestart := False;
 
-  Location := DotNetDesktop11Location();
+  Location := DotNetRuntime11Location();
   if Location <> '' then
   begin
-    Log('Simple Launcher: .NET 11 Desktop Runtime found at ' + Location);
+    Log('Simple Launcher: .NET 11 runtime found at ' + Location);
     Exit;
   end;
 
-  Log('Simple Launcher: .NET 11 Desktop Runtime was not found.');
+  Log('Simple Launcher: .NET 11 runtime was not found.');
 
   if not WizardSilent then
   begin
     Answer := MsgBox(
-      'Simple Launcher needs the .NET 11 Desktop Runtime.' + #13#10#13#10 +
+      'Simple Launcher needs the .NET 11 runtime.' + #13#10#13#10 +
       'Setup can download and install it now. Windows will ask for administrator approval for this step only.' + #13#10#13#10 +
       'Choose No to open the Microsoft download page and install it yourself.',
       mbConfirmation, MB_YESNOCANCEL);
 
     if Answer = IDCANCEL then
     begin
-      Result := 'Setup was cancelled. The .NET 11 Desktop Runtime is required to run Simple Launcher.';
+      Result := 'Setup was cancelled. The .NET 11 runtime is required to run Simple Launcher.';
       Exit;
     end;
 
     if Answer = IDNO then
     begin
       ShellExec('open', '{#RuntimePageUrl}', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-      Result := 'Install the .NET 11 Desktop Runtime from the page that just opened, then run Setup again.';
+      Result := 'Install the .NET 11 runtime from the page that just opened, then run Setup again.';
       Exit;
     end;
   end;
@@ -331,7 +338,7 @@ begin
   Result := InstallDotNetRuntime();
   if Result = '' then
   begin
-    Log('Simple Launcher: .NET 11 Desktop Runtime installed successfully.');
+    Log('Simple Launcher: .NET 11 runtime installed successfully.');
     NeedsRestart := RuntimeNeedsRestart;
   end;
 end;

@@ -113,7 +113,7 @@
         if (/\.dmg$/i.test(name)) return 'DMG · unsigned, not notarized';
         if (/win-.*-setup\.exe$/i.test(name)) return 'Installer · per-user, .NET 11 bootstrapped';
         if (/linux-.*\.zip$/i.test(name)) return 'Portable ZIP · .NET 11 runtime';
-        if (/win-.*\.zip$/i.test(name)) return 'Portable ZIP · .NET 11 Desktop Runtime';
+        if (/win-.*\.zip$/i.test(name)) return 'Portable ZIP · .NET 11 runtime';
         return '';
     }
 

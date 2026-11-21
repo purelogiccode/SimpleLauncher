@@ -32,8 +32,8 @@ chmod +x SimpleLauncher-{version}-linux-x64.AppImage
   atomically replaces it and restarts. Keep the AppImage in a writable folder.
 - If FUSE is unavailable (some containers), run it with
   `--appimage-extract-and-run` or set `APPIMAGE_EXTRACT_AND_RUN=1`. This extracts to a
-  temporary folder for that launch; in-app updates still work because the outer AppImage file
-  is replaced.
+  temporary folder for that launch; settings still live in `~/.local/share/SimpleLauncher`, and
+  in-app updates still work because the outer AppImage file is replaced.
 - To integrate it with the desktop menu, use AppImageLauncher or create a `.desktop` entry.
 
 ## Flatpak

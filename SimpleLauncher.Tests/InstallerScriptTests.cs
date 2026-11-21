@@ -5,7 +5,7 @@ namespace SimpleLauncher.Tests;
 
 /// <summary>
 ///     Guards the installer contract that ships next to the portable ZIP:
-///     per-user install, .NET 11 bootstrap, and an uninstaller that keeps user data.
+///     per-user install, .NET 11 runtime bootstrap, and an uninstaller that keeps user data.
 ///     These are static checks of the Inno Setup script and packaging defines; the
 ///     installer itself is compiled and smoke-tested by the packaging workflow.
 /// </summary>
@@ -33,9 +33,9 @@ public class InstallerScriptTests
         Assert.Contains("ArchitecturesAllowed={#ArchitecturesAllowed}", script, StringComparison.Ordinal);
         Assert.Contains("RuntimePageUrl", script, StringComparison.Ordinal);
         Assert.Contains("'11.*'", script, StringComparison.Ordinal);
-        Assert.Contains("windowsdesktop-runtime-11.0*-win-", script, StringComparison.Ordinal);
-        Assert.Contains("windowsdesktop-runtime-11.0-win-$runtimeArch.exe", packageScript, StringComparison.Ordinal);
-        Assert.Contains("https://aka.ms/dotnet/11.0/windowsdesktop-runtime-win-$runtimeArch.exe",
+        Assert.Contains("dotnet-runtime-11.0*-win-", script, StringComparison.Ordinal);
+        Assert.Contains("dotnet-runtime-11.0-win-$runtimeArch.exe", packageScript, StringComparison.Ordinal);
+        Assert.Contains("https://aka.ms/dotnet/11.0/dotnet-runtime-win-$runtimeArch.exe",
             packageScript, StringComparison.Ordinal);
     }
 
@@ -51,6 +51,12 @@ public class InstallerScriptTests
         Assert.Contains("settings.dat", script, StringComparison.Ordinal);
         Assert.Contains("system.xml", script, StringComparison.Ordinal);
         Assert.Contains("AppMutex=SimpleLauncher_SingleInstanceMutex_", script, StringComparison.Ordinal);
+
+        // Upgrading from the former side-by-side bundle must not leave a stale
+        // Avalonia executable or its shortcut launchable.
+        Assert.Contains("[InstallDelete]", script, StringComparison.Ordinal);
+        Assert.Contains("SimpleLauncher.Avalonia.exe", script, StringComparison.Ordinal);
+        Assert.Contains("Simple Launcher (Avalonia UI).lnk", script, StringComparison.Ordinal);
     }
 
     [Fact]

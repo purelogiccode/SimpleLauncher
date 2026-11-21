@@ -81,6 +81,76 @@ jobs:
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish'
 
+      - name: Verify Windows installer and portable artifacts
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          foreach ($rid in @('win-x64', 'win-arm64')) {
+            $path = Join-Path 'artifacts/release' "SimpleLauncher-$($env:VERSION)-$rid-setup.exe"
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Missing installer: $path"
+            }
+            $sizeMb = [math]::Round((Get-Item -LiteralPath $path).Length / 1MB, 1)
+            if ($sizeMb -lt 20) {
+              throw "Installer looks too small ($sizeMb MB): $path"
+            }
+            Write-Host "$path ($sizeMb MB)"
+
+            $zip = Join-Path 'artifacts/release' "release_$($env:VERSION)_$rid.zip"
+            $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+            try {
+              $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+            }
+            finally {
+              $archive.Dispose()
+            }
+            if ($entries -notcontains 'SimpleLauncher.exe') {
+              throw "The Windows bundle is missing SimpleLauncher.exe: $zip"
+            }
+            if ($entries -contains 'SimpleLauncher.Avalonia.exe') {
+              throw "The Windows bundle still ships the old SimpleLauncher.Avalonia.exe name: $zip"
+            }
+            if ($entries | Where-Object { $_ -like '*.pdb' }) {
+              throw "The Windows bundle ships debug symbols: $zip"
+            }
+            $expectedTools = @('CHDMounter', 'RetroAchievementsSharp', 'SimpleXisoDrive', 'SimpleZipDrive')
+            foreach ($tool in $expectedTools) {
+              if (-not ($entries | Where-Object { $_ -like "tools/$tool/$rid/*" })) {
+                throw "The Windows bundle is missing tools/$tool/$rid: $zip"
+              }
+            }
+            $sevenZip = if ($rid -eq 'win-arm64') { '7za_arm64.exe' } else { '7za.exe' }
+            if ($entries -notcontains "tools/SevenZip/$sevenZip") {
+              throw "The Windows bundle is missing tools/SevenZip/$sevenZip: $zip"
+            }
+
+            $extractedExe = Join-Path $env:RUNNER_TEMP "sl-$rid.exe"
+            $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+            try {
+              $archive.GetEntry('SimpleLauncher.exe').ExtractToFile($extractedExe, $true)
+            }
+            finally {
+              $archive.Dispose()
+            }
+            $stream = [System.IO.File]::OpenRead($extractedExe)
+            try {
+              $reader = [System.IO.BinaryReader]::new($stream)
+              $stream.Position = 0x3C
+              $peOffset = $reader.ReadInt32()
+              $stream.Position = $peOffset + 4
+              $machine = $reader.ReadUInt16()
+            }
+            finally {
+              $stream.Dispose()
+            }
+            $expectedMachine = if ($rid -eq 'win-arm64') { 0xAA64 } else { 0x8664 }
+            if ($machine -ne $expectedMachine) {
+              throw ("SimpleLauncher.exe has PE machine 0x{0:X4}, expected 0x{1:X4}: {2}" -f $machine, $expectedMachine, $zip)
+            }
+          }
+
       - name: Upload Windows packages
         uses: actions/upload-artifact@v7
         with:
@@ -173,6 +243,23 @@ jobs:
           -OutputDir '${{ github.workspace }}/artifacts/release'
           -WorkDir '${{ runner.temp }}/sl-publish-macos'
 
+      - name: Verify the DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg=$(ls artifacts/release/SimpleLauncher-*-osx-arm64.dmg)
+          test -f "$dmg"
+          hdiutil verify "$dmg"
+
+          mount=$(mktemp -d)
+          hdiutil attach -quiet -nobrowse -readonly -mountpoint "$mount" "$dmg"
+          trap 'hdiutil detach -quiet "$mount" || true' EXIT
+          test -d "$mount/Simple Launcher.app"
+          test -x "$mount/Simple Launcher.app/Contents/MacOS/SimpleLauncher.Avalonia"
+          test -f "$mount/Simple Launcher.app/Contents/Info.plist"
+          test -L "$mount/Applications"
+          echo "macOS DMG is valid."
+
       - name: Upload macOS packages
         uses: actions/upload-artifact@v7
         with:
@@ -180,11 +267,69 @@ jobs:
           path: artifacts/release/*
           retention-days: 7
 
+  verify-linux:
+    name: Verify Linux packages
+    needs: package-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download Linux packages
+        uses: actions/download-artifact@v8
+        with:
+          name: simplelauncher-linux-${{ inputs.version }}
+          path: artifacts
+
+      - name: Install Flatpak tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak ostree
+          sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Check the archives, executable bits and bundle architectures
+        shell: bash
+        run: |
+          set -euo pipefail
+          for rid in linux-x64 linux-arm64; do
+            unzip -q artifacts/release_*_${rid}.zip -d "app-${rid}"
+            test -x "app-${rid}/SimpleLauncher.Avalonia"
+            test -f "app-${rid}/appsettings.json"
+            test -f "app-${rid}/LICENSE.txt"
+
+            mkdir -p "tar-${rid}"
+            tar -xzf artifacts/release_*_${rid}.tar.gz -C "tar-${rid}"
+            test -x "tar-${rid}/SimpleLauncher.Avalonia"
+            if [[ "$rid" == linux-x64 ]]; then sevenzip=7zz; else sevenzip=7zz_arm64; fi
+            test -x "tar-${rid}/tools/SevenZip/${sevenzip}"
+
+            unzip -q "artifacts/updater_${rid}.zip" -d "updater-${rid}"
+            test -x "updater-${rid}/Updater"
+          done
+
+          file artifacts/SimpleLauncher-*-linux-x64.AppImage | grep -q 'ELF 64-bit'
+          file artifacts/SimpleLauncher-*-linux-arm64.AppImage | grep -q 'ARM aarch64'
+          for image in artifacts/SimpleLauncher-*-linux-*.AppImage; do
+            test "$(stat -c%s "$image")" -gt 50000000
+          done
+
+          for rid in linux-x64 linux-arm64; do
+            if [[ "$rid" == linux-x64 ]]; then arch=x86_64; else arch=aarch64; fi
+            repo="$RUNNER_TEMP/flatpak-repo-${rid}"
+            ostree init --repo="$repo" --mode=archive
+            flatpak build-import-bundle "$repo" artifacts/SimpleLauncher-*-${rid}.flatpak
+            ostree --repo="$repo" refs | grep -q "app/com.purelogiccode.SimpleLauncher/${arch}/master"
+          done
+
+          echo "Linux archives, executable bits, AppImages and Flatpak bundles are valid."
+
   publish:
     name: Create release and publish fallback
     needs:
       - package-windows
       - package-linux
+      - verify-linux
       - package-macos
     runs-on: ubuntu-latest
     timeout-minutes: 30

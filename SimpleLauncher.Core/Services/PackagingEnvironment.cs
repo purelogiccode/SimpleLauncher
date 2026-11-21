@@ -53,9 +53,10 @@ public static class PackagingEnvironment
 
     /// <summary>
     ///     Gets a value indicating whether the install directory is a read-only package
-    ///     mount (AppImage or Flatpak), where the regular portable update flow cannot write.
+    ///     (AppImage, Flatpak or a macOS <c>.app</c> bundle), where the regular portable
+    ///     update flow cannot write.
     /// </summary>
-    public static bool HasReadOnlyInstall => IsAppImage || IsFlatpak;
+    public static bool HasReadOnlyInstall => IsAppImage || IsFlatpak || IsMacOsAppBundle;
 
     /// <summary>
     ///     Gets a value indicating whether application updates are managed outside the app

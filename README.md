@@ -27,7 +27,7 @@ Windows.
 **Recommended - the installer.** Download `SimpleLauncher-{version}-win-x64-setup.exe` (or
 `-win-arm64`) from the [latest release](https://github.com/purelogiccode/SimpleLauncher/releases/latest)
 and run it. It installs for your Windows account under `%LocalAppData%\SimpleLauncher`, adds Start
-Menu shortcuts, and downloads the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download)
+Menu shortcuts, and downloads the [.NET 11 runtime](https://dotnet.microsoft.com/download)
 only when it is missing (that runtime step asks for administrator approval; the app install does not).
 Older releases only include the portable ZIP; use the ZIP steps in that case.
 

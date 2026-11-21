@@ -173,8 +173,14 @@ public class ExtractionService : IExtractionService
                     "The application appears to be installed in a protected location.",
                     resolvedDestinationFolder);
 
-                // Actionable guidance: move the app to a writable folder (or elevate).
-                await _messageBoxLibrary.MoveToWritableFolderMessageBoxAsync();
+                // Only blame the application folder when the destination is inside it.
+                // A protected ROM/download destination needs its own permission fix.
+                var appOwnedDestination = PathHelper.IsPathContainedInBaseFolder(
+                    resolvedDestinationFolder, AppDomain.CurrentDomain.BaseDirectory);
+                if (appOwnedDestination)
+                    await _messageBoxLibrary.MoveToWritableFolderMessageBoxAsync();
+                else
+                    await _messageBoxLibrary.ExtractionFailedMessageBoxAsync();
 
                 return false;
             }

@@ -1501,13 +1501,16 @@ internal partial class MainWindow : Window, IPaginationHost
             Log.Debug("Search button clicked for query '{Query}'", query);
 
             await _viewModel.SearchAsync(query);
-            SearchBox.Focus();
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error in the method SearchButton_Click");
             var messageBox = App.ServiceProvider.GetRequiredService<IMessageBoxLibraryService>();
             await messageBox.MainWindowSearchEngineErrorMessageBoxAsync();
+        }
+        finally
+        {
+            SearchBox.Focus();
         }
     }
 

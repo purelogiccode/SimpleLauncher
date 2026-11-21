@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using SimpleLauncher.Avalonia.Converters;
+using SimpleLauncher.Avalonia.Services;
 using SimpleLauncher.Avalonia.Tests.TestHelpers;
 
 namespace SimpleLauncher.Avalonia.Tests;
@@ -78,8 +79,8 @@ public class AccessibilityToolTipConverterTests
     }
 
     /// <summary>
-    ///     The theme must keep applying the converter globally; removing the style would
-    ///     silently drop tooltips from every window.
+    ///     The theme must keep enabling the accessibility tooltip behavior globally;
+    ///     removing the style would silently drop tooltips from every window.
     /// </summary>
     [Fact]
     public void ThemeAppliesTheGlobalToolTipStyle()
@@ -87,9 +88,29 @@ public class AccessibilityToolTipConverterTests
         var theme = File.ReadAllText(Path.Combine(
             AvaloniaProjectPathHelper.GetAvaloniaProjectPath(), "Themes", "DarkTheme.axaml"));
 
-        Assert.Contains("AccessibilityToolTip", theme, StringComparison.Ordinal);
-        Assert.Contains("ToolTip.Tip", theme, StringComparison.Ordinal);
+        Assert.Contains("AccessibilityToolTip.IsEnabled", theme, StringComparison.Ordinal);
         Assert.Contains("Selector=\":is(Control)\"", theme, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     The tooltip follows a bound accessible name when it changes after load (for
+    ///     example the favorite heart), rather than staying at the initial value.
+    /// </summary>
+    [Fact]
+    public void TooltipUpdatesWhenAccessibleNameChanges()
+    {
+        HeadlessAvalonia.RunOnUiThread(() =>
+        {
+            var button = new Button();
+            AutomationProperties.SetName(button, "First name");
+            AccessibilityToolTip.SetIsEnabled(button, true);
+
+            Assert.Equal("First name", ToolTip.GetTip(button));
+
+            AutomationProperties.SetName(button, "Second name");
+
+            Assert.Equal("Second name", ToolTip.GetTip(button));
+        });
     }
 
     private string? Convert(Control control)

@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:converters="using:SimpleLauncher.Avalonia.Converters">
+        xmlns:converters="using:SimpleLauncher.Avalonia.Converters"
+        xmlns:services="using:SimpleLauncher.Avalonia.Services">
 
     <!-- ═══════════════════════════════════════════════════════════
          DarkTheme.axaml — OpenEmu-inspired dark palette + app class styles.
@@ -20,7 +21,6 @@
         <converters:ConsoleToCardHeightConverter x:Key="CardHeightConverter" />
         <converters:BooleanToFavoriteStatusConverter x:Key="FavoriteStatusConverter" />
         <converters:SystemInfoLineBrushConverter x:Key="SystemInfoLineBrush" />
-        <converters:AccessibilityToolTipConverter x:Key="AccessibilityToolTip" />
 
         <!-- ═══ SURFACE COLORS ═══ -->
         <Color x:Key="BgPrimaryColor">#1E1E1E</Color>
@@ -654,7 +654,7 @@
          without duplicating strings in each view. Controls without an accessible name
          (decorative elements) keep the default of no tooltip. -->
     <Style Selector=":is(Control)">
-        <Setter Property="ToolTip.Tip" Value="{Binding $self, Converter={StaticResource AccessibilityToolTip}}" />
+        <Setter Property="services:AccessibilityToolTip.IsEnabled" Value="True" />
     </Style>
 
     <!-- ── TOOLTIP (dark flat) ── -->

@@ -16,12 +16,13 @@ public static partial class PathHelper
     /// </summary>
     /// <remarks>
     ///     Portable Windows/Linux builds keep the whole library in the application folder, so the
-    ///     base folder is the executable's directory. A macOS <c>.app</c> is a read-only bundle that
-    ///     is replaced on update, so user content (ROMs, images, emulators, image packs) must live in
-    ///     the per-user data folder instead. Resource files that ship inside the bundle are still
-    ///     resolved against the application directory (see <see cref="ResolveRelativeToAppDirectory" />).
+    ///     base folder is the executable's directory. A macOS <c>.app</c>, AppImage and Flatpak are
+    ///     read-only bundles that are replaced on update, so user content (ROMs, images, emulators,
+    ///     image packs) must live in the per-user data folder instead. Resource files that ship
+    ///     inside the bundle are still resolved against the application directory (see
+    ///     <see cref="ResolveRelativeToAppDirectory" />).
     /// </remarks>
-    public static string BaseFolder => OperatingSystem.IsMacOS()
+    public static string BaseFolder => OperatingSystem.IsMacOS() || PackagingEnvironment.HasReadOnlyInstall
         ? AppDataPaths.SimpleLauncherDataFolder
         : AppDomain.CurrentDomain.BaseDirectory;
 

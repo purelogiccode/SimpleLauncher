@@ -225,7 +225,10 @@ public class App : Application, IDisposable
 
         // Detect if the application is running from a temporary extraction folder
         // (e.g., user double-clicked the .exe inside a ZIP/RAR archive). Shared with WPF.
-        if (TemporaryExtractionGuard.IsRunningFromTemporaryExtraction() && ShowTemporaryExtractionWarning())
+        // AppImage type-2 mounts its payload under /tmp/.mount_* by design; that is a
+        // packaged read-only install, not an archive viewer's temporary folder.
+        if (!PackagingEnvironment.HasReadOnlyInstall &&
+            TemporaryExtractionGuard.IsRunningFromTemporaryExtraction() && ShowTemporaryExtractionWarning())
         {
             base.OnFrameworkInitializationCompleted();
             return;

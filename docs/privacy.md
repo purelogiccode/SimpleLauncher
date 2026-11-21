@@ -80,7 +80,7 @@ Local logs are not uploaded unless a warning/error triggers a report.
 
 ### 3. Windows installer
 
-The Windows installer checks for the .NET 11 Desktop Runtime locally. If it is missing, it
+The Windows installer checks for the .NET 11 runtime locally. If it is missing, it
 downloads Microsoft's runtime installer from `aka.ms` / `builds.dotnet.microsoft.com` and runs it
 with administrator approval. Microsoft sees your IP address and normal HTTP headers for that
 download. Setup itself sends no telemetry to PureLogicCode. You can install the runtime yourself
@@ -193,7 +193,7 @@ Questions or requests: [contact@purelogiccode.com](mailto:contact@purelogiccode.
 | Service | Used for | Data involved |
 |---|---|---|
 | [GitHub](https://github.com/purelogiccode/SimpleLauncher) | Releases, update checks, issue tracker | IP address and normal HTTP headers |
-| [Microsoft](https://dotnet.microsoft.com/) | .NET 11 Desktop Runtime download when the Windows installer needs it | IP address and normal HTTP headers |
+| [Microsoft](https://dotnet.microsoft.com/) | .NET 11 runtime download when the Windows installer needs it | IP address and normal HTTP headers |
 | [PureLogicCode](https://www.purelogiccode.com) (stats, bug reports, Easy Mode, support email) | First-party APIs described above | See the sections above |
 | [Cloudflare](https://www.cloudflare.com/privacypolicy/) (R2 assets, cover API host) | Emulator/image downloads, cover lookups | IP address; game name for cover lookups |
 | [jsDelivr](https://www.jsdelivr.com/) (docs page) | Loads the docsify renderer and theme | IP address and normal HTTP headers |

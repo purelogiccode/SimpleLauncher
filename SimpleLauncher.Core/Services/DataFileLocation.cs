@@ -66,6 +66,18 @@ public sealed class DataFileLocation
         var portableExists = File.Exists(portablePath);
         var localExists = File.Exists(localAppDataPath);
 
+        // AppImage/Flatpak never persist user data next to the executable. A normal
+        // AppImage is a read-only squashfs mount, but APPIMAGE_EXTRACT_AND_RUN/--appimage-
+        // extract-and-run unpacks to a writable temporary folder; without this guard the
+        // app would write settings there and lose them when the process exits.
+        if (PackagingEnvironment.IsAppImage || PackagingEnvironment.IsFlatpak)
+        {
+            EnsureDirectoryExists(appDataFolder);
+            FilePath = localAppDataPath;
+            IsPortableMode = false;
+            return;
+        }
+
         switch (portableExists)
         {
             case true when !localExists:

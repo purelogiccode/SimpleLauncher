@@ -27,8 +27,8 @@ RID:
   `SimpleLauncher.exe` plus the content files (`images/`, `tools/`, `samples/`,
   `appsettings.json`, …). The WPF project is no longer bundled. The app is a framework-dependent
   single executable (managed assemblies bundled; native libraries such as Skia/HarfBuzz ship
-  beside the exe), so the .NET 11 Desktop Runtime is required.
-- `updater_{rid}.zip` — the single standalone `Updater.exe` (framework-dependent single file)
+  beside the exe), so the .NET 11 runtime is required.
+- `updater_{rid}.zip` - the single standalone `Updater.exe` (Windows) / `Updater` (Linux) (framework-dependent single file)
   used by the shipped app and legacy WPF installs. It bundles the Avalonia native libraries it needs (`libSkiaSharp.dll`,
   `libHarfBuzzSharp.dll`, `av_libglesv2.dll`, `IncludeNativeLibrariesForSelfExtract`) and
   self-extracts them at launch, so the one file runs from either app folder **and** on legacy
