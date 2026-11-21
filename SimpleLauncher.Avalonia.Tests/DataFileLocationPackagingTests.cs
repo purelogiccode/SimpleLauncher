@@ -27,6 +27,7 @@ public class DataFileLocationPackagingTests
             try
             {
                 Environment.SetEnvironmentVariable("APPIMAGE", "/tmp/SimpleLauncher.AppImage");
+                Assert.True(PackagingEnvironment.HasReadOnlyInstall);
                 Assert.Equal(AppDataPaths.SimpleLauncherDataFolder, PathHelper.BaseFolder);
             }
             finally
