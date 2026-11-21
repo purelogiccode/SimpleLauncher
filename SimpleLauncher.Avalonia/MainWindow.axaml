@@ -1118,9 +1118,9 @@
                             </StackPanel>
 
                             <!-- System information panel (WPF DisplaySystemInformation parity):
-                                 shown when a system is selected; the letter buttons (or any
-                                 other game load) replace it with the game browser. Opaque and
-                                 last in the grid so it covers the game views while visible. -->
+                                 opened explicitly from the status-bar info button; the letter
+                                 buttons (or any other game load) hide it again. Opaque and last
+                                 in the grid so it covers the game views while visible. -->
                             <ScrollViewer x:Name="SystemInfoPanel"
                                           IsVisible="{Binding IsSystemInfoVisible}"
                                           Background="{DynamicResource BgPrimaryBrush}"
