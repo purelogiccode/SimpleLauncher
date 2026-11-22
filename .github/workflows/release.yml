@@ -118,12 +118,12 @@ jobs:
             $expectedTools = @('CHDMounter', 'RetroAchievementsSharp', 'SimpleXisoDrive', 'SimpleZipDrive')
             foreach ($tool in $expectedTools) {
               if (-not ($entries | Where-Object { $_ -like "tools/$tool/$rid/*" })) {
-                throw "The Windows bundle is missing tools/$tool/$rid: $zip"
+                throw "The Windows bundle is missing tools/$tool/${rid}: $zip"
               }
             }
             $sevenZip = if ($rid -eq 'win-arm64') { '7za_arm64.exe' } else { '7za.exe' }
             if ($entries -notcontains "tools/SevenZip/$sevenZip") {
-              throw "The Windows bundle is missing tools/SevenZip/$sevenZip: $zip"
+              throw "The Windows bundle is missing tools/SevenZip/${sevenZip}: $zip"
             }
 
             $extractedExe = Join-Path $env:RUNNER_TEMP "sl-$rid.exe"

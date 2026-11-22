@@ -114,6 +114,20 @@ jobs:
             if ($entries -contains 'SimpleLauncher.Avalonia.exe') {
               throw "The Windows bundle still ships the old SimpleLauncher.Avalonia.exe name: $zip"
             }
+            if ($entries | Where-Object { $_ -like '*.pdb' }) {
+              throw "The Windows bundle ships debug symbols: $zip"
+            }
+
+            $expectedTools = @('CHDMounter', 'RetroAchievementsSharp', 'SimpleXisoDrive', 'SimpleZipDrive')
+            foreach ($tool in $expectedTools) {
+              if (-not ($entries | Where-Object { $_ -like "tools/$tool/$rid/*" })) {
+                throw "The Windows bundle is missing tools/$tool/${rid}: $zip"
+              }
+            }
+            $sevenZip = if ($rid -eq 'win-arm64') { '7za_arm64.exe' } else { '7za.exe' }
+            if ($entries -notcontains "tools/SevenZip/$sevenZip") {
+              throw "The Windows bundle is missing tools/SevenZip/${sevenZip}: $zip"
+            }
           }
 
       - name: Upload Windows packages
