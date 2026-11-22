@@ -34,6 +34,19 @@ The old `Simple Launcher/<system>.zip` packs are not modified. The existing
 `Microsoft Windows/` root prefix (store-game covers) is also left untouched; the retro
 cover catalog excludes `Microsoft Windows` by default.
 
+## Published catalog
+
+The first full catalog was published on **2026-11-22**:
+
+- **80 systems**
+- **121,812 canonical covers**
+- **121,893 R2 objects** (covers + 80 indexes + catalog)
+- **7.108 GiB**
+- `rclone check --size-only --one-way` reports **0 differences**
+
+The public catalog is live at
+`https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/catalog.json`.
+
 ## Filtering rules
 
 The builder uses the same normalization as the app's local cover matcher:
