@@ -38,6 +38,21 @@ Print and validate the upload plan without writing to R2.
 .PARAMETER SkipVerify
 Skip the public HEAD checks after upload.
 
+.PARAMETER Transfers
+Parallel file transfers (default 32).
+
+.PARAMETER Checkers
+Parallel listing/checker workers (default 64).
+
+.PARAMETER IgnoreExisting
+Skip objects already present instead of comparing checksums. Useful for resuming an interrupted upload.
+
+.PARAMETER SkipImages
+Skip the image pass (for example after uploading images in batches).
+
+.PARAMETER FastList
+Use rclone's fast-list for the S3/R2 backend.
+
 .EXAMPLE
 pwsh scripts/publish-covers-r2.ps1 -StageDir artifacts/covers-stage -DryRun
 
@@ -59,7 +74,19 @@ param(
 
     [switch]$DryRun,
 
-    [switch]$SkipVerify
+    [switch]$SkipVerify,
+
+    [ValidateRange(1, 128)]
+    [int]$Transfers = 32,
+
+    [ValidateRange(1, 256)]
+    [int]$Checkers = 64,
+
+    [switch]$IgnoreExisting,
+
+    [switch]$SkipImages,
+
+    [switch]$FastList
 )
 
 $ErrorActionPreference = 'Stop'
@@ -109,6 +136,9 @@ Write-Host "  Covers:  $($imageFiles.Count) JPEG files"
 Write-Host "  Indexes: $($indexFiles.Count)"
 Write-Host "  Remote:  $remoteRoot"
 Write-Host "  Public:  $PublicBaseUrl/"
+Write-Host "  Workers: $Transfers transfers / $Checkers checkers"
+if ($IgnoreExisting) { Write-Host '  Mode:    skip existing images (resume)' }
+if ($SkipImages) { Write-Host '  Mode:    skip image pass' }
 Write-Host ''
 
 function Invoke-Rclone {
@@ -131,24 +161,29 @@ $imageArguments = @(
     '--exclude', '*/index.json',
     '--exclude', 'catalog.json',
     '--exclude', 'report.md',
-    '--transfers', '16',
-    '--checkers', '32',
-    '--checksum',
+    '--transfers', $Transfers,
+    '--checkers', $Checkers,
     '--s3-no-check-bucket',
     '--header-upload', 'Content-Type: image/jpeg',
     '--header-upload', 'Cache-Control: public, max-age=86400',
     '--stats', '30s',
     '--stats-one-line'
 )
-Invoke-Rclone -Arguments $imageArguments
+if ($IgnoreExisting) {
+    $imageArguments += '--ignore-existing'
+} else {
+    $imageArguments += '--checksum'
+}
+if ($FastList) { $imageArguments += '--fast-list' }
+if (-not $SkipImages) { Invoke-Rclone -Arguments $imageArguments }
 
 # 2. Per-system indexes. Short cache: an index can change when a cover is added or aliases
 #    are updated, and clients revalidate it.
 $indexArguments = @(
     'copy', $StageDir, $remoteRoot,
     '--include', '*/index.json',
-    '--transfers', '16',
-    '--checkers', '32',
+    '--transfers', $Transfers,
+    '--checkers', $Checkers,
     '--checksum',
     '--s3-no-check-bucket',
     '--header-upload', 'Content-Type: application/json',
@@ -156,6 +191,7 @@ $indexArguments = @(
     '--stats', '30s',
     '--stats-one-line'
 )
+if ($FastList) { $indexArguments += '--fast-list' }
 Invoke-Rclone -Arguments $indexArguments
 
 # 3. The catalog is the commit point.

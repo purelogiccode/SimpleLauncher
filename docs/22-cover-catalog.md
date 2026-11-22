@@ -107,6 +107,21 @@ The publisher uses `rclone copy`, never `sync --delete`, so existing R2 objects 
 removed. It verifies the public catalog, one index and one image with HEAD requests and
 checks their `Content-Type`.
 
+### Resuming an interrupted upload
+
+The full catalog is over 120k small objects, so a slow connection can outlive a shell or CI
+timeout. Resume with higher concurrency and skip objects that already exist:
+
+```powershell
+pwsh scripts/publish-covers-r2.ps1 `
+  -StageDir "D:\Temp\covers-stage" `
+  -IgnoreExisting -Transfers 48 -Checkers 96 -FastList
+```
+
+`-IgnoreExisting` is safe for a resume because a first full upload only adds objects; run a
+final `-Transfers 16` pass without it if any source file changed between runs. The image
+pass can be skipped entirely with `-SkipImages` after uploading images in batches.
+
 ## JSON contracts
 
 `catalog.json`:
