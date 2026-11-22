@@ -64,6 +64,7 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 | [19 — Linux Packages](19-linux-packages.md) | AppImage, Flatpak and portable Linux formats, install and update behavior |
 | [20 - macOS Package](20-macos-packages.md) | Unsigned Apple Silicon DMG, Gatekeeper, Easy Mode catalog, build and NoMac validation |
 | [21 - Release Artifacts (planned)](21-release-artifacts.md) | Next-cycle download matrix: Windows ZIP/setup, macOS DMG, DEB/RPM, AppImage, Flatpak, tar.gz |
+| [22 - Cover Catalog (R2)](22-cover-catalog.md) | Per-game cover catalog on R2: layout, annotation/alias filtering, 800px derivatives, build and upload scripts |
 | [FAQ](faq.md) | Runtime, Dokan/FUSE, first system, data locations, updates, SmartScreen, Steam Deck |
 | [Comparison](comparison.md) | Honest table vs LaunchBox, ES-DE, RetroBat and Playnite, with a last-verified date |
 | [Privacy](privacy.md) | What the app stores locally, what it sends, and how to disable automatic reports |

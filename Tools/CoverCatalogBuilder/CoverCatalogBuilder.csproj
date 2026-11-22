@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net11.0</TargetFramework>
+        <LangVersion>15</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+        <Company>PureLogicCode.com</Company>
+        <Product>Simple Launcher Cover Catalog Builder</Product>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <Version>1.0.0</Version>
+        <NeutralLanguage>en</NeutralLanguage>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="Serilog" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\SimpleLauncher.Core\SimpleLauncher.Core.csproj" />
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.341">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="SkiaSharp" Version="4.157.0" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="4.157.0" />
+    </ItemGroup>
+
+</Project>

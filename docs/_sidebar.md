@@ -19,9 +19,10 @@
 - [13 — Logging & Debug](13-logging-and-debug.md)
 
 - **Features**
-- [09 — RetroAchievements](09-retroachievements.md)
-- [10 — Game Scanning](10-game-scanning.md)
-- [11 — Bundled Tools](11-bundled-tools.md)
+- [09 - RetroAchievements](09-retroachievements.md)
+- [10 - Game Scanning](10-game-scanning.md)
+- [11 - Bundled Tools](11-bundled-tools.md)
+- [22 - Cover Catalog (R2)](22-cover-catalog.md)
 
 - **Help & trust**
 - [FAQ](faq.md)
