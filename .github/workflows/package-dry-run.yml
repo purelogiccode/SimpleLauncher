@@ -128,6 +128,31 @@ jobs:
             if ($entries -notcontains "tools/SevenZip/$sevenZip") {
               throw "The Windows bundle is missing tools/SevenZip/${sevenZip}: $zip"
             }
+
+            $extractedExe = Join-Path $env:RUNNER_TEMP "sl-dry-run-$rid.exe"
+            $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+            try {
+              $entry = $archive.GetEntry('SimpleLauncher.exe')
+              [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $extractedExe, $true)
+            }
+            finally {
+              $archive.Dispose()
+            }
+            $stream = [System.IO.File]::OpenRead($extractedExe)
+            try {
+              $reader = [System.IO.BinaryReader]::new($stream)
+              $stream.Position = 0x3C
+              $peOffset = $reader.ReadInt32()
+              $stream.Position = $peOffset + 4
+              $machine = $reader.ReadUInt16()
+            }
+            finally {
+              $stream.Dispose()
+            }
+            $expectedMachine = if ($rid -eq 'win-arm64') { 0xAA64 } else { 0x8664 }
+            if ($machine -ne $expectedMachine) {
+              throw ("SimpleLauncher.exe has PE machine 0x{0:X4}, expected 0x{1:X4}: {2}" -f $machine, $expectedMachine, $zip)
+            }
           }
 
       - name: Upload Windows packages

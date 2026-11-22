@@ -129,7 +129,8 @@ jobs:
             $extractedExe = Join-Path $env:RUNNER_TEMP "sl-$rid.exe"
             $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
             try {
-              $archive.GetEntry('SimpleLauncher.exe').ExtractToFile($extractedExe, $true)
+              $entry = $archive.GetEntry('SimpleLauncher.exe')
+              [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $extractedExe, $true)
             }
             finally {
               $archive.Dispose()
