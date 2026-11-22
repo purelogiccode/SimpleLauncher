@@ -144,6 +144,7 @@ public class MountXisoFiles : IMountXisoFiles
             RedirectStandardError = true,
             WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
         };
+        BundledToolPathResolver.ConfigureDotNetRollForward(psiMount);
 
         _logger.Debug($"[MountXisoFiles.MountAsync] Attempting to mount on drive {driveLetter.Value}:");
         _logger.Debug($"[MountXisoFiles.MountAsync] Arguments: {psiMount.Arguments}");

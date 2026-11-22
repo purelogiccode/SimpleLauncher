@@ -193,6 +193,7 @@ The Avalonia app exposes **Edit System → Download Missing Covers**. The flow i
 6. report `x / y`, current game, downloaded/already present/not found/failed and support
    cancellation through the loading overlay.
 
-The cache lives in `%LocalAppData%\SimpleLauncher\CoverCatalog\`. The action requires a
-selected system; otherwise it shows a status hint. No libretro or third-party thumbnail
-repository is contacted at runtime.
+The cache lives in the app's per-user data folder (`%LocalAppData%\SimpleLauncher\CoverCatalog`
+on Windows, the XDG data folder on Linux and the per-user support folder on macOS). The action
+requires a selected system; otherwise it shows a status hint. No libretro or third-party
+thumbnail repository is contacted at runtime.

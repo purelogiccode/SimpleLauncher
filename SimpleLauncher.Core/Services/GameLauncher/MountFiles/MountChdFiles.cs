@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Core.Services.BundledTools;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
@@ -81,6 +82,7 @@ public class MountChdFiles : IMountChdFiles
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
         };
+        BundledToolPathResolver.ConfigureDotNetRollForward(psiMount);
 
         _logger.Debug("[MountChdFiles.MountAsync] Using auto-select drive letter (/a)");
         _logger.Debug($"[MountChdFiles.MountAsync] Arguments: {psiMount.Arguments}");
@@ -218,6 +220,7 @@ public class MountChdFiles : IMountChdFiles
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
         };
+        BundledToolPathResolver.ConfigureDotNetRollForward(psiMount);
 
         _logger.Debug("[MountChdFiles] ProcessStartInfo:");
         _logger.Debug($"[MountChdFiles] FileName: {psiMount.FileName}");
@@ -442,6 +445,7 @@ public class MountChdFiles : IMountChdFiles
             RedirectStandardError = true,
             WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
         };
+        BundledToolPathResolver.ConfigureDotNetRollForward(psiMount);
 
         _logger.Debug("[MountChdFiles] ProcessStartInfo:");
         _logger.Debug($"[MountChdFiles] FileName: {psiMount.FileName}");
@@ -973,6 +977,7 @@ public class MountChdFiles : IMountChdFiles
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(resolvedToolPath) ?? AppDomain.CurrentDomain.BaseDirectory
         };
+        BundledToolPathResolver.ConfigureDotNetRollForward(psiMount);
 
         _logger.Debug($"[MountChdFiles.MountWithFuseAsync] Arguments: {psiMount.Arguments}");
 

@@ -190,7 +190,11 @@ function Remove-WindowsOnlyFiles {
         $relative = [System.IO.Path]::GetRelativePath($PublishDir, $file.FullName).Replace('\', '/')
         $remove = $false
 
-        if ($relative -like 'tools/*') {
+        # Never ship runtime logs written by a helper during a local test run.
+        if ($relative -match '(^|/)logs/' -or $relative -like '*.log') {
+            $remove = $true
+        }
+        elseif ($relative -like 'tools/*') {
             if ($file.Extension -in @('.exe', '.dll')) {
                 $remove = $true
             }
@@ -237,7 +241,7 @@ function Test-ExecutableEntry {
     if ($Rid -eq 'linux-arm64') {
         return $RelativePath -eq 'tools/SevenZip/7zz_arm64' -or
             $RelativePath -eq 'tools/CHDMounter/linux-arm64/CHDMounter' -or
-            $RelativePath -eq 'tools/RetroAchievementsSharp/linux-arm64/RetroAchievementsSharp.Cli' -or
+            $RelativePath -eq 'tools/RetroAchievementsSharp/linux-arm64/RetroAchievementsSharp' -or
             $RelativePath -eq 'tools/SimpleXisoDrive/linux-arm64/SimpleXisoDrive' -or
             $RelativePath -eq 'tools/SimpleZipDrive/linux-arm64/SimpleZipDrive' -or
             $RelativePath -eq 'tools/SimpleZipDrive/linux-arm64/7zzs'
@@ -245,7 +249,7 @@ function Test-ExecutableEntry {
 
     return $RelativePath -eq 'tools/SevenZip/7zz' -or
         $RelativePath -eq 'tools/CHDMounter/linux-x64/CHDMounter' -or
-        $RelativePath -eq 'tools/RetroAchievementsSharp/linux-x64/RetroAchievementsSharp.Cli' -or
+        $RelativePath -eq 'tools/RetroAchievementsSharp/linux-x64/RetroAchievementsSharp' -or
         $RelativePath -eq 'tools/SimpleXisoDrive/linux-x64/SimpleXisoDrive' -or
         $RelativePath -eq 'tools/SimpleZipDrive/linux-x64/SimpleZipDrive' -or
         $RelativePath -eq 'tools/SimpleZipDrive/linux-x64/7zzs'

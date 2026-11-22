@@ -59,7 +59,7 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 | [14 — Testing](14-testing.md) | Test projects (fast/slow split), helpers, coverage summary, running tests |
 | [15 — Development](15-development.md) | Build/publish, versioning, localization, analyzers, release workflow |
 | [16 — Updater](16-updater.md) | Update check, Updater.exe flow, restart/reinstall, install hardening |
-| [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.8.4 → 1.1 |
+| [17 — Release Notes](17-release-notes.md) | Condensed changelog 5.9.0 → 1.1 |
 | [18 — Emulator Parameters](18-emulator-parameters.md) | parameters.md conventions + full system → emulator index (84 systems / 352 entries) |
 | [19 — Linux Packages](19-linux-packages.md) | AppImage, Flatpak and portable Linux formats, install and update behavior |
 | [20 - macOS Package](20-macos-packages.md) | Unsigned Apple Silicon DMG, Gatekeeper, Easy Mode catalog, build and NoMac validation |
@@ -77,4 +77,4 @@ Both publications use a **side menu**: `docs/_sidebar.md` is the docsify navigat
 - Code facts are cited with `path:line` references into the repository.
 - `⚠` marks behavior that should be verified before relying on it.
 - Relative links (`xx-*.md`) work from within `docs\`; `../` links point to the repo root.
-- Version-specific numbers (package versions, test counts) reflect the repository at doc-write time (5.8.4).
+- Version-specific numbers (package versions, test counts) reflect the repository at doc-write time (5.9.0).

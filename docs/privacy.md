@@ -124,7 +124,8 @@ When you choose **Edit System → Download Missing Covers**, the app downloads t
 system's cover index from the project's asset server (`assets.purelogiccode.com`, Cloudflare
 R2) and requests only the images for games that have no local cover. The system and game
 names appear in those request paths; the rest of your library is not uploaded. The catalog
-and indexes are cached locally in `%LocalAppData%\SimpleLauncher\CoverCatalog`.
+and indexes are cached locally in the app's per-user data folder (for example
+`%LocalAppData%\SimpleLauncher\CoverCatalog` on Windows).
 
 ### RetroAchievements
 

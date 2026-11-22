@@ -20,6 +20,21 @@ RetroAchievements → a download → a store-game scan covers most of this check
 
 ---
 
+## Release gate - 2026-11-22 (5.9.0)
+
+Local pre-release gate for 5.9.0:
+
+| Check | Result |
+|---|---|
+| `SimpleLauncher.sln` Debug + Release builds | 0 warnings / 0 errors |
+| Fast suites | `SimpleLauncher.Tests` **2278/2278**, `SimpleLauncher.Avalonia.Tests` **771/771** |
+| Slow suites | `SimpleLauncher.SlowTests` **84/84**, `SimpleLauncher.Avalonia.SlowTests` **11/11** (Debug and Release) |
+| `jb inspectcode -e=WARNING` | 0 issues |
+| Windows x64 bundle | `release_5.9.0_win-x64.zip` inspected: `SimpleLauncher.exe` 5.9.0, RetroAchievementsSharp 1.1.1, no stale `.Cli` payload, no helper logs |
+
+The CI release workflow builds and verifies Windows x64/ARM64, Linux x64/ARM64 and macOS
+Apple Silicon (arm64) bundles before publishing the GitHub release and the R2 fallback.
+
 ## Release bundle gate - 2026-11-21
 
 Validated the artifacts produced by `.github/workflows/package-dry-run.yml` for commit

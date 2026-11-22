@@ -13,7 +13,7 @@
 [![Tests](https://img.shields.io/badge/tests-1490%20passing-brightgreen)](#-technical-architecture)
 [![C#](https://img.shields.io/badge/C%23-15-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![Avalonia](https://img.shields.io/badge/Avalonia-12.1.6-8A2BE2)](https://avaloniaui.net/)
-[![7-Zip](https://img.shields.io/badge/7--Zip-26.03-yellow)](https://github.com/ip7z/7zip)
+[![7-Zip](https://img.shields.io/badge/7--Zip-26.06-yellow)](https://github.com/ip7z/7zip)
 [![Downloads](https://img.shields.io/github/downloads/purelogiccode/SimpleZipDrive/total)](https://github.com/purelogiccode/SimpleZipDrive/releases)
 [![Stars](https://img.shields.io/github/stars/purelogiccode/SimpleZipDrive?style=flat)](https://github.com/purelogiccode/SimpleZipDrive/stargazers)
 [![Forks](https://img.shields.io/github/forks/purelogiccode/SimpleZipDrive?style=flat)](https://github.com/purelogiccode/SimpleZipDrive/network/members)

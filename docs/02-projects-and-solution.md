@@ -28,18 +28,20 @@ Key properties:
 <TargetFramework>net11.0-windows</TargetFramework>
 <OutputType>WinExe</OutputType>
 <UseWPF>true</UseWPF>
-<LangVersion>14</LangVersion>
+<LangVersion>15</LangVersion>
 <Nullable>enable</Nullable>
 <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
 <ApplicationManifest>app.manifest</ApplicationManifest>
 <StartupObject>SimpleLauncher.App</StartupObject>
-<AssemblyVersion>/<FileVersion>/<Version>5.8.4</Version>
+<AssemblyVersion>5.9.0</AssemblyVersion>
+<FileVersion>5.9.0</FileVersion>
+<Version>5.9.0</Version>
 <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 <RuntimeFrameworkVersion>11.0.0</RuntimeFrameworkVersion>
 <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 ```
 
-- **Versioning:** `5.8.4`; kept consistent with Core, tests and `app.manifest` (`VersionConsistencyTests` enforces it).
+- **Versioning:** `5.9.0`; kept consistent with Core, tests and `app.manifest` (`VersionConsistencyTests` enforces it).
 - **`InternalsVisibleTo("SimpleLauncher.Tests")`** — tests reach internal members.
 - **Copy-to-output payloads** (`<None Update=... CopyToOutputDirectory>`):
   - `appsettings.json` (Always), `WhatsNew.md` (PreserveNewest), `mame.dat` (Always), system images `images\systems\*.png` (Always), `audio\*.mp3`.
@@ -73,7 +75,7 @@ Key properties:
 
 ## `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (the library)
 
-Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 15`, `DebugType=embedded`, version `5.8.4`.
+Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 15`, `DebugType=embedded`, version `5.9.0`.
 
 - **`InternalsVisibleTo`:** `SimpleLauncher.Tests`, `SimpleLauncher`, `SimpleLauncher.New`, `SimpleLauncher.Avalonia`, `SimpleLauncher.New.Tests`.
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog` — so every Core service takes a Serilog `ILogger` by convention.
@@ -82,7 +84,7 @@ Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangV
 
 ## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the shipped app)
 
-Key properties: `net11.0` + `net11.0-windows` (dual target - the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.6`, `UseWindowsForms=False`, version synced to the WPF reference (5.8.4), `StartupObject = SimpleLauncher.Avalonia.Program`. The Windows release publishes this project as `SimpleLauncher.exe`.
+Key properties: `net11.0` + `net11.0-windows` (dual target - the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.6`, `UseWindowsForms=False`, version synced to the WPF reference (5.9.0), `StartupObject = SimpleLauncher.Avalonia.Program`. The Windows release publishes this project as `SimpleLauncher.exe`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
 - **Windows-only services** (`#if WINDOWS`, `net11.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).

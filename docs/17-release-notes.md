@@ -2,9 +2,10 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
-## Next release — Unreleased
+## 5.9.0 - 2026-11-22
 
-- **Smaller bundle**: only the runtime helpers are shipped now - CHDMounter 1.4.0, RetroAchievementsSharp 1.0.0, SimpleXisoDrive 1.6.0, SimpleZipDrive 3.1.3 and the 7-Zip 26.06 fallback, for Windows and Linux on x64/ARM64 (roughly half the previous download size). The optional GUI apps (CHDStudio, XISOStudio, RVZStudio, Batch Convert to Compressed File, Find Rom Cover, Retro Game Cover Downloader, ROM Validator and the Create Batch Files tools) and the Tools menu are gone; their old folders are removed on upgrade.
+- **Release bundles**: Windows x64/ARM64 portable ZIP + per-user installer; Linux x64/ARM64 portable ZIP/tar.gz + self-contained AppImage + Flatpak; macOS Apple Silicon (arm64) unsigned DMG.
+- **Smaller bundle**: only the runtime helpers are shipped now - CHDMounter 1.4.0, RetroAchievementsSharp 1.1.1, SimpleXisoDrive 1.6.0, SimpleZipDrive 3.1.3 (with 7-Zip 26.06) and the 7-Zip 26.06 fallback, for Windows and Linux on x64/ARM64 (roughly half the previous download size). CHDMounter and SimpleXisoDrive target .NET 10 but are started with `DOTNET_ROLL_FORWARD=LatestMajor`, so the .NET 11 runtime the app already requires is enough. The optional GUI apps (CHDStudio, XISOStudio, RVZStudio, Batch Convert to Compressed File, Find Rom Cover, Retro Game Cover Downloader, ROM Validator and the Create Batch Files tools) and the Tools menu are gone; their old folders are removed on upgrade.
 - **Games load on system selection**: choosing a system now displays its complete game list immediately instead of leaving the configuration summary on screen until **All** is clicked. The summary remains available from the status-bar info button. The previous grid is cleared before each new view load, so cards from another system no longer show through the loading overlay.
 - **Missing-cover download**: **Edit System → Download Missing Covers** checks the selected system locally and fetches only the missing art from the project's own R2 catalog (80 systems, 121,812 covers). Existing covers are never replaced; the batch reports progress and can be cancelled.
 - **Avalonia-only Windows release**: the Windows ZIP/installer now ship the Avalonia app as `SimpleLauncher.exe`. The WPF project remains in the source tree as the reference implementation but is no longer bundled. The updater migrates old WPF and `SimpleLauncher.Avalonia.exe` installs to the new executable in place.
@@ -20,7 +21,7 @@
 - **Read-only installs**: AppImage and Flatpak no longer trigger the "move to a writable folder" warning; user data stays in the XDG folder (Flatpak uses `~/.var/app/com.purelogiccode.SimpleLauncher/data/SimpleLauncher`).
 - **Planned for the next cycle (not in this release)**: native Debian/Ubuntu/Mint `.deb` and Fedora/RHEL/openSUSE `.rpm` packages for x64/ARM64, alongside the existing Windows ZIP/setup, macOS DMG, AppImage, Flatpak and tar.gz. Matrix and implementation checklist: [21 - Release Artifacts](21-release-artifacts.md).
 
-## 5.8.4 — 2026-10-20 (current)
+## 5.8.4 - 2026-10-20
 
 - **RetroAchievements stability**: HTML challenge, rate-limit and maintenance responses are treated as expected external conditions and logged at Information, so they no longer generate bug reports (bugs #68823–#68828).
 - **Updater**: the bootstrapper clears the read-only attribute before overwriting files such as `LICENSE.txt`; access-denied and file-in-use conditions are logged at Information with actionable guidance (bug #68830).

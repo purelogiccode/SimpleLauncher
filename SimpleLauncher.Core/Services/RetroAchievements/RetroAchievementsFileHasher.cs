@@ -9,8 +9,8 @@ namespace SimpleLauncher.Core.Services.RetroAchievements;
 /// <summary>
 ///     Calculates RetroAchievements hashes for game files. All hash computation is
 ///     delegated to the bundled RetroAchievementsSharp CLI tool
-///     (<c>tools\RetroAchievementsSharp\&lt;rid&gt;\RetroAchievementsSharp.Cli</c>, with the
-///     <c>.exe</c> suffix on Windows) — a 1:1 port of the rcheevos hashing engine that
+///     (<c>tools\RetroAchievementsSharp\&lt;rid&gt;\RetroAchievementsSharp</c>, with the
+///     <c>.exe</c> suffix on Windows) - a 1:1 port of the rcheevos hashing engine that
 ///     produces the exact same hashes as RAHasher. Hash requests use the tool's legacy
 ///     positional interface (<c>&lt;system-id&gt; &lt;file&gt;...</c>), which supports many
 ///     files per invocation and prints one result line per file to stdout. The tool
@@ -20,7 +20,7 @@ namespace SimpleLauncher.Core.Services.RetroAchievements;
 public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
 {
     private const string ToolFolderName = "RetroAchievementsSharp";
-    private const string ToolBaseName = "RetroAchievementsSharp.Cli";
+    private const string ToolBaseName = "RetroAchievementsSharp";
 
     /// <summary>Windows command lines are capped at ~32 K characters; stay safely below.</summary>
     private const int MaxBatchCommandLineLength = 30000;
@@ -418,8 +418,8 @@ public class RetroAchievementsFileHasher : IRetroAchievementsFileHasher
     ///     Resolves the OS/architecture-appropriate CLI executable under
     ///     <c>tools\RetroAchievementsSharp\&lt;rid&gt;</c>, or null when unavailable for this
     ///     platform. The payload ships one folder per RID (win-x64, win-arm64, linux-x64,
-    ///     linux-arm64); Windows uses <c>RetroAchievementsSharp.Cli.exe</c>, Linux the
-    ///     extension-less <c>RetroAchievementsSharp.Cli</c>.
+    ///     linux-arm64); Windows uses <c>RetroAchievementsSharp.exe</c>, Linux the
+    ///     extension-less <c>RetroAchievementsSharp</c>.
     /// </summary>
     private static string? GetToolExecutablePath()
     {

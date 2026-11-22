@@ -1,6 +1,18 @@
-# Next Release
-*Unreleased*
+# Release 5.9.0
+*2026-11-22*
 ---
+
+## Release Bundles
+- **Windows** - portable ZIP and per-user installer for x64 and ARM64.
+- **Linux** - portable ZIP/tar.gz, self-contained AppImage and Flatpak for x64 and ARM64.
+- **macOS** - unsigned Apple Silicon (arm64) DMG with the .NET runtime bundled.
+
+## Platform
+- **.NET 11** - every project now targets .NET 11 (C# 15); the portable Windows and Linux
+  bundles require the .NET 11 runtime, while AppImage, Flatpak and the macOS DMG bundle it.
+- **macOS Apple Silicon** - the Avalonia app ships as an unsigned, ad-hoc signed
+  `SimpleLauncher-{version}-osx-arm64.dmg` with a per-user data folder. macOS updates install the
+  next DMG manually, and the DMG ships no Dokan/FUSE helpers or Updater.
 
 ## First-Run Wizard
 - **Guided setup on first launch** - When no systems are configured, the app opens a
@@ -42,9 +54,10 @@
 
 ## Bundled Tools
 - **Much smaller download** - Simple Launcher now bundles only the helpers it calls while
-  launching games: CHDMounter 1.4.0, RetroAchievementsSharp 1.0.0, SimpleXisoDrive 1.6.0,
+  launching games: CHDMounter 1.4.0, RetroAchievementsSharp 1.1.1, SimpleXisoDrive 1.6.0,
   SimpleZipDrive 3.1.3 and the 7-Zip 26.06 fallback, for Windows and Linux on x64/ARM64. The
-  portable bundles are roughly half their previous size.
+  portable bundles are roughly half their previous size. CHDMounter and SimpleXisoDrive target
+  .NET 10 but are started with major roll-forward, so the app's .NET 11 runtime is enough.
 - **Optional GUI apps are no longer bundled** - CHDStudio, XISOStudio, RVZStudio, Batch Convert
   to Compressed File, Find Rom Cover, Retro Game Cover Downloader, ROM Validator and the Create
   Batch Files tools are distributed separately from their own repositories. Their old folders are

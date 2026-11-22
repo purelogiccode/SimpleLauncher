@@ -333,9 +333,14 @@ function Remove-OtherArchitectureFiles {
         $relative = $relativeByFullName[$file.FullName]
         $remove = $false
 
+        # Never ship runtime logs written by a helper during a local test run (for example
+        # tools/SimpleXisoDrive/<rid>/logs/*.log); they are user/environment state.
+        if ($relative -match '(^|/)logs/' -or $relative -like '*.log') {
+            $remove = $true
+        }
         # Tools that ship one payload per OS/architecture (tools\<Tool>\<rid>\) keep only the
         # subfolder matching the target RID; the suffix rules below do not apply inside them.
-        if ($relative -match '^tools/(?:CHDMounter|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
+        elseif ($relative -match '^tools/(?:CHDMounter|RetroAchievementsSharp|SimpleXisoDrive|SimpleZipDrive)/([^/]+)/') {
             if ($Matches[1] -ne $Rid) { $remove = $true }
         }
         elseif ($Rid -eq 'win-x64') {

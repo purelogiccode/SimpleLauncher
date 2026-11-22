@@ -18,6 +18,11 @@ and dispatcher-dependent WPF services are inherently untested and are the bulk o
 **Suggested workflow:** one full pass through Easy Mode → Edit System → Emulator Settings → launch a game per emulator →
 RetroAchievements → a download → a store-game scan covers most of this checklist.
 
+**5.9.0 release gate (2026-11-22):** Debug/Release builds 0 warnings; fast suites **2278 + 771**;
+slow suites **84 + 11**; `jb inspectcode -e=WARNING` 0 issues; Windows x64 bundle verified with
+RetroAchievementsSharp 1.1.1 and no stale tool payloads. The CI release workflow builds the
+Windows x64/ARM64, Linux x64/ARM64 and macOS arm64 bundles.
+
 **Recorded platform verification:** SimpleLauncher.Avalonia 5.8.0 (`linux-x64`, current HEAD `1142d050`, packaged with
 `scripts/package-release-linux.ps1`) was smoke-tested on **Debian 13 (trixie) x64** in a VMware Workstation VM — GNOME
 Wayland session, app rendered through Xwayland. `unzip` restored the executable bits from the ZIP; the first-run

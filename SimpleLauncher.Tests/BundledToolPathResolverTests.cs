@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using SimpleLauncher.Core.Services.BundledTools;
 using Xunit;
@@ -42,7 +43,7 @@ public class BundledToolPathResolverTests
     /// </summary>
     [Theory]
     [InlineData("CHDMounter")]
-    [InlineData("RetroAchievementsSharp.Cli")]
+    [InlineData("RetroAchievementsSharp")]
     [InlineData("SimpleXisoDrive")]
     [InlineData("SimpleZipDrive")]
     public void PlatformExecutableNameUsesTheWindowsExeSuffix(string baseName)
@@ -57,7 +58,7 @@ public class BundledToolPathResolverTests
     /// </summary>
     [Theory]
     [InlineData("CHDMounter", "CHDMounter")]
-    [InlineData("RetroAchievementsSharp", "RetroAchievementsSharp.Cli")]
+    [InlineData("RetroAchievementsSharp", "RetroAchievementsSharp")]
     [InlineData("SimpleXisoDrive", "SimpleXisoDrive")]
     [InlineData("SimpleZipDrive", "SimpleZipDrive")]
     public void PerRidToolPayloadExistsForTheRunningPlatform(string toolFolder, string baseName)
@@ -69,6 +70,20 @@ public class BundledToolPathResolverTests
         var path = Path.Combine(AppContext.BaseDirectory, "tools", toolFolder, runtimeIdentifier, executableName);
 
         Assert.True(File.Exists(path), $"The bundled payload is missing for the running platform: {path}");
+    }
+
+    /// <summary>
+    ///     Verifies that bundled .NET 10 helpers are configured to roll forward onto the
+    ///     app's .NET 11 runtime (CHDMounter 1.4.0 and SimpleXisoDrive 1.6.0).
+    /// </summary>
+    [Fact]
+    public void ConfigureDotNetRollForwardSetsLatestMajor()
+    {
+        var startInfo = new ProcessStartInfo();
+
+        BundledToolPathResolver.ConfigureDotNetRollForward(startInfo);
+
+        Assert.Equal("LatestMajor", startInfo.Environment["DOTNET_ROLL_FORWARD"]);
     }
 
     /// <summary>

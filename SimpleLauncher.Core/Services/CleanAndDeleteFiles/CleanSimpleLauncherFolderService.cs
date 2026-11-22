@@ -93,6 +93,14 @@ public class CleanSimpleLauncherFolderService : ICleanSimpleLauncherFolderServic
         Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "RetroAchievementsSharp_arm64.exe"),
         Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "THIRD-PARTY-NOTICES.md"),
 
+        // RetroAchievementsSharp 1.1.1 renamed the per-RID CLI binary from
+        // RetroAchievementsSharp.Cli to RetroAchievementsSharp. Remove the old payload
+        // left behind by an in-place upgrade.
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "win-x64", "RetroAchievementsSharp.Cli.exe"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "win-arm64", "RetroAchievementsSharp.Cli.exe"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "linux-x64", "RetroAchievementsSharp.Cli"),
+        Path.Combine(AppDirectory, "tools", "RetroAchievementsSharp", "linux-arm64", "RetroAchievementsSharp.Cli"),
+
         Path.Combine(AppDirectory, "tools", "SimpleXisoDrive", "SimpleXisoDrive.exe")
     ];
 

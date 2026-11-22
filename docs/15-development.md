@@ -58,14 +58,14 @@ The Windows release publishes only the Avalonia app and renames the output to `S
 `scripts/package-release.ps1` reproduces the Windows release artifacts (also used by CI):
 
 ```powershell
-pwsh scripts/package-release.ps1 -Version 5.8.4
-# -> artifacts\release\release_5.8.4_win-x64.zip, release_5.8.4_win-arm64.zip
+pwsh scripts/package-release.ps1 -Version 5.9.0
+# -> artifacts\release\release_5.9.0_win-x64.zip, release_5.9.0_win-arm64.zip
 # -> artifacts\release\updater_win-x64.zip, updater_win-arm64.zip
 
-pwsh scripts/package-release.ps1 -Version 5.8.4 -BuildInstaller
+pwsh scripts/package-release.ps1 -Version 5.9.0 -BuildInstaller
 # -> the same files plus
-#    artifacts\release\SimpleLauncher-5.8.4-win-x64-setup.exe
-#    artifacts\release\SimpleLauncher-5.8.4-win-arm64-setup.exe
+#    artifacts\release\SimpleLauncher-5.9.0-win-x64-setup.exe
+#    artifacts\release\SimpleLauncher-5.9.0-win-arm64-setup.exe
 ```
 
 - Publishes only `SimpleLauncher.Avalonia` for Windows and renames the published executable to `SimpleLauncher.exe`; the WPF project is **not** published or bundled and remains the in-repo reference implementation.
@@ -102,7 +102,7 @@ requires Inno Setup 6.5+ (`ISCC.exe` on `PATH`, in the default install folder, o
 Local smoke test (installs to a scratch folder, keeps a fake data file, then uninstalls):
 
 ```powershell
-$setup = 'artifacts\release\SimpleLauncher-5.8.4-win-x64-setup.exe'
+$setup = 'artifacts\release\SimpleLauncher-5.9.0-win-x64-setup.exe'
 $target = 'D:\Temp\sl-install-test'
 Start-Process $setup -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/NOICONS',"/DIR=$target" -Wait
 New-Item -ItemType File -Path (Join-Path $target 'settings.dat') -Force | Out-Null
@@ -116,9 +116,9 @@ Test-Path (Join-Path $target 'settings.dat')   # True: user data kept
 in-app updater looks up in the GitHub release):
 
 ```powershell
-pwsh scripts/package-release-linux.ps1 -Version 5.8.4 -BuildSelfContainedPayload
-# -> artifacts\release\release_5.8.4_linux-x64.zip, release_5.8.4_linux-arm64.zip
-# -> artifacts\release\release_5.8.4_linux-x64.tar.gz, release_5.8.4_linux-arm64.tar.gz
+pwsh scripts/package-release-linux.ps1 -Version 5.9.0 -BuildSelfContainedPayload
+# -> artifacts\release\release_5.9.0_linux-x64.zip, release_5.9.0_linux-arm64.zip
+# -> artifacts\release\release_5.9.0_linux-x64.tar.gz, release_5.9.0_linux-arm64.tar.gz
 # -> artifacts\release\updater_linux-x64.zip, updater_linux-arm64.zip
 # -> <WorkDir>\linux-x64\selfcontained, <WorkDir>\linux-arm64\selfcontained
 ```
@@ -161,11 +161,11 @@ turns the self-contained payload into the two store-style bundles:
 
 ```bash
 ./scripts/package-linux-native.sh \
-  --version 5.8.4 --rid linux-x64 \
+  --version 5.9.0 --rid linux-x64 \
   --payload artifacts/publish-linux/linux-x64/selfcontained \
   --output artifacts/release
-# -> SimpleLauncher-5.8.4-linux-x64.AppImage
-# -> SimpleLauncher-5.8.4-linux-x64.flatpak
+# -> SimpleLauncher-5.9.0-linux-x64.AppImage
+# -> SimpleLauncher-5.9.0-linux-x64.flatpak
 ```
 
 - **AppImage** — builds an AppDir (`AppRun`, `.desktop`, icon, payload under `usr/bin`), then
@@ -195,8 +195,8 @@ turns the self-contained payload into the two store-style bundles:
 produces the Apple Silicon DMG:
 
 ```powershell
-pwsh scripts/package-release-macos.ps1 -Version 5.8.4
-# -> artifacts/release/SimpleLauncher-5.8.4-osx-arm64.dmg
+pwsh scripts/package-release-macos.ps1 -Version 5.9.0
+# -> artifacts/release/SimpleLauncher-5.9.0-osx-arm64.dmg
 ```
 
 - Publishes `net11.0 -r osx-arm64 --self-contained true` (the .NET 11 runtime travels inside
@@ -221,7 +221,7 @@ After the packaging scripts have produced every asset (four Windows/Linux RIDs p
 Apple Silicon DMG), publish the fallback copy:
 
 ```powershell
-pwsh scripts/publish-fallback-r2.ps1 -Version 5.8.4
+pwsh scripts/publish-fallback-r2.ps1 -Version 5.9.0
 ```
 
 - Reads `R2_*` credentials from the environment or the gitignored `AGENTS.local.md` block
@@ -268,11 +268,11 @@ script renames it to `SimpleLauncher.exe`.
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net11.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (725 tests via `Avalonia.Headless`; the same suite also runs natively on macOS).
+- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (771 tests via `Avalonia.Headless`; the same suite also runs natively on macOS).
 
 ## Versioning
 
-Version `5.8.4` must stay in sync across:
+Version `5.9.0` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)

@@ -56,7 +56,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Amstrad GX4000
 
@@ -88,7 +88,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List Roms. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Arcade
 
@@ -120,7 +120,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find an updated set of MAME ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 .
 
@@ -214,7 +214,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Atari 5200
 
@@ -270,7 +270,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Atari 7800
 
@@ -327,7 +327,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Atari 8-Bits / Atari 800
 
@@ -369,7 +369,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 .
 
@@ -425,7 +425,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Atari Jaguar CD
 
@@ -523,7 +523,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Atari ST
 
@@ -593,7 +593,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Atomiswave / Sammy Atomiswave
 
@@ -702,7 +702,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Bandai WonderSwan Color
 
@@ -783,7 +783,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Casio PV-1000
 
@@ -815,7 +815,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Colecovision
 
@@ -884,7 +884,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Commander Genius
 
@@ -1014,7 +1014,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Commodore 128
 
@@ -1060,7 +1060,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 .
 
@@ -1176,7 +1176,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Commodore Amiga CD32
 
@@ -1236,7 +1236,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List CHDs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## FM Towns / FM-Towns
 
@@ -1380,7 +1380,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Mattel Intellivision
 
@@ -1426,7 +1426,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Microsoft DOS
 
@@ -1618,7 +1618,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Microsoft MSX2
 
@@ -1724,7 +1724,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Microsoft Windows
 
@@ -2037,7 +2037,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## NEC PC Engine CD / TurboGrafx CD
 
@@ -2143,7 +2143,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List CHDs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## NEC PC-FX / PC-FX / PCFX
 
@@ -2214,7 +2214,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List CHDs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## NEC SuperGrafx / SuperGrafx
 
@@ -2393,7 +2393,7 @@ You can download this emulator on the [Official Website](https://ares-emu.net/do
 **Fullscreen Parameter:** <br>
 
 This emulator is available for Windows-x64.<br>
-You can download this emulator on the [Official Website](https://github.com/simple64/simple64).<br>
+You can download this emulator on the [Official Website](https://github.com/simple64-vault/simple64).<br>
 
 .
 
@@ -2474,7 +2474,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo 64DD
 
@@ -2530,7 +2530,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo DS
 
@@ -2862,7 +2862,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo Game Boy Advance
 
@@ -2962,7 +2962,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo Game Boy Color
 
@@ -3125,7 +3125,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo GameCube
 
@@ -3301,7 +3301,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo Satellaview
 
@@ -3467,7 +3467,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Nintendo SNES MSU1
 
@@ -4122,7 +4122,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Sega Genesis / Mega Drive
 
@@ -4256,7 +4256,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Sega Genesis 32X / Mega Drive 32X
 
@@ -4330,7 +4330,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Sega Genesis CD / Mega Drive CD / Sega CD / Mega CD
 
@@ -4444,7 +4444,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List CHDs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Sega Master System / Mark3
 
@@ -4564,7 +4564,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Sega Naomi
 
@@ -4814,7 +4814,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List CHDs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).<br>
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).<br>
 
 ## Sega SC-3000
 
@@ -5550,7 +5550,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List CHDs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).
 
 ## Sony PlayStation 2 / PSX2 / PSX 2
 
@@ -5817,7 +5817,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 To use this emulator you need to use a MAME compatible set of ROMs, with the right filenames.<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Look for MAME Software List ROMs. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).
 
 ## Tiger Game.com
 
@@ -5848,7 +5848,7 @@ This emulator is available for Windows-x64 and Windows-arm64.<br>
 **Attention**<br>
 The game filenames must follow the MAME naming convention (MAME Software List ROMs).<br>
 You can find the right set of ROMs on the [PleasureDome](https://pleasuredome.github.io/pleasuredome/index.html) website. Download the 'Software List ROMs (split)' package and use the 'gamecom' folder. I am not affiliated with PleasureDome in any way.<br>
-You can download this emulator on the [Official Website](https://www.mamedev.org/release.html).
+You can download this emulator on the [Official Website](https://github.com/mamedev/mame/releases).
 
 ## Zeebo
 

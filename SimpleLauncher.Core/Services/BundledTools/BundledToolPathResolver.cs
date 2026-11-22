@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace SimpleLauncher.Core.Services.BundledTools;
@@ -47,5 +48,18 @@ public static class BundledToolPathResolver
 
         return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", toolFolder, runtimeIdentifier,
             GetPlatformExecutableName(baseName));
+    }
+
+    /// <summary>
+    ///     Allows a bundled framework-dependent helper built for an older .NET major version
+    ///     to run on the app's newer runtime. CHDMounter 1.4.0 and SimpleXisoDrive 1.6.0
+    ///     target .NET 10; the app ships .NET 11, so without major roll-forward those
+    ///     helpers would fail to start on a machine that has no .NET 10 runtime installed.
+    /// </summary>
+    /// <param name="startInfo">The child process configuration to update.</param>
+    public static void ConfigureDotNetRollForward(ProcessStartInfo startInfo)
+    {
+        ArgumentNullException.ThrowIfNull(startInfo);
+        startInfo.Environment["DOTNET_ROLL_FORWARD"] = "LatestMajor";
     }
 }

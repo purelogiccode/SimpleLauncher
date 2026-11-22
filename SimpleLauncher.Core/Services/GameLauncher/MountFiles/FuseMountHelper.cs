@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using SimpleLauncher.Core.Services.BundledTools;
 
 namespace SimpleLauncher.Core.Services.GameLauncher.MountFiles;
 
@@ -51,6 +52,7 @@ internal static class FuseMountHelper
                 CreateNoWindow = true,
                 WorkingDirectory = Path.GetDirectoryName(toolPath) ?? AppDomain.CurrentDomain.BaseDirectory
             };
+            BundledToolPathResolver.ConfigureDotNetRollForward(psi);
 
             var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
             if (!process.Start())

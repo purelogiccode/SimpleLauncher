@@ -51,15 +51,15 @@ On Windows the Avalonia app hides Windows-only features (Dokan mounting, emulato
 
 ## Version & license
 
-- Current version: **5.8.4** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The shipped Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.8.4).
-- The secondary server publishes a `version.txt` (e.g. `release5.8.4`) used by the update-check fallback.
+- Current version: **5.9.0** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The shipped Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.9.0).
+- The secondary server publishes a `version.txt` (e.g. `release5.9.0`) used by the update-check fallback.
 - Framework: **.NET 11** (`net11.0-windows`), **C# 15**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).
 - Repository: https://github.com/purelogiccode/SimpleLauncher
 
 ## Release history
 
-See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.8.4 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
+See [17 — Release Notes](17-release-notes.md) for a condensed changelog (5.9.0 → 1.1); the canonical file is `SimpleLauncher\WhatsNew.md`.
 
 ## Related docs
 
