@@ -56,7 +56,8 @@ The rented Azure hosts were deallocated and the NoMac session stopped after the 
 - [ ] **Language menu** (`LanguageMenuService`) — switch language → notification sound, status "Changing language...", app restarts into that language; checkmark shows current language.
 - [ ] **View/Display menu options** — change thumbnail size, games-per-page, show-games, aspect ratio, filename display, font sizes, view mode → the grid re-renders accordingly; restart → checkmarks restored from settings.
 - [ ] **Menu actions** (`MenuActionHandlerService`) — every menu item opens the right window / performs the right action with status-bar feedback: Easy/Expert mode, Download Image Pack, Scan for store games, Edit links, Gamepad toggle, Dead zone, fuzzy matching toggle/threshold, annotation stripping, Support, Donate. Rapid clicking → no double handling.
-- [ ] **Filter bar** (`FilterMenu`) — A–Z / # / All letters filter the game list with button highlight; "All" resets; keyboard arrows/Home/End navigate the letter buttons; notification sound on click.
+- [ ] **Filter bar** (`FilterMenu`) - A-Z / # / All letters filter the game list with button highlight; "All" resets; keyboard arrows/Home/End navigate the letter buttons; notification sound on click.
+- [ ] **Missing-cover download** (`CoverCatalogDownloadService`) - with a system selected, **Edit System → Download Missing Covers** shows `x / y` progress, downloads only missing covers from the R2 catalog, leaves existing covers untouched, and the grid shows the new art after reload; cancel/emergency return stops cleanly; without a selected system a status hint appears.
 - [ ] **Status bar** — actions (sorting, launching, saving) show status text that auto-clears after the timeout.
 - [ ] **Gamepad navigation** — see section 10.
 

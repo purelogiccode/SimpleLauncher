@@ -38,6 +38,7 @@ using SimpleLauncher.Avalonia.Services.SystemImageResolver;
 using SimpleLauncher.Avalonia.Services.SystemManager;
 using SimpleLauncher.Avalonia.Services.SystemSelectionOrchestrator;
 using SimpleLauncher.Avalonia.Services.Theme;
+using SimpleLauncher.Core.Services.CoverCatalog;
 using SimpleLauncher.Avalonia.Services.TrayIcon;
 using SimpleLauncher.Avalonia.Services.UIReset;
 using SimpleLauncher.Avalonia.Services.UpdateStatusBar;
@@ -695,6 +696,11 @@ public class App : Application, IDisposable
             client.Timeout = TimeSpan.FromSeconds(20);
             client.DefaultRequestHeaders.Add("User-Agent", "SimpleLauncher.Avalonia/1.0");
         }).ConfigurePrimaryHttpMessageHandler(CreateHttpHandler);
+        services.AddHttpClient("CoverCatalogClient", static client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+            client.DefaultRequestHeaders.Add("User-Agent", "SimpleLauncher.Avalonia/1.0");
+        }).ConfigurePrimaryHttpMessageHandler(CreateHttpHandler);
         services.AddHttpClient("SupportWindowClient").ConfigurePrimaryHttpMessageHandler(CreateHttpHandler);
         services.AddHttpClient("EasyModeClient", client =>
         {
@@ -793,6 +799,7 @@ public class App : Application, IDisposable
         services.AddSingleton<IGetListOfFilesService>(sp => sp.GetRequiredService<GetListOfFilesService>());
         services.AddSingleton<FindCoverImageService>();
         services.AddSingleton<IFindCoverImageService>(sp => sp.GetRequiredService<FindCoverImageService>());
+        services.AddSingleton<CoverCatalogDownloadService>();
         services.AddSingleton<ExtractionService>();
         services.AddSingleton<IExtractionService>(sp => sp.GetRequiredService<ExtractionService>());
         services.AddTransient<DownloadManager>();

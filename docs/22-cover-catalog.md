@@ -177,18 +177,22 @@ rename uploaded objects when aliases change, only update the index.
 
 Downloading a system index does not upload the library. Fetching an image reveals the
 selected system and game name in the request path to the project's asset server (Cloudflare
-R2), not to a third party. This should be added to `docs/privacy.md` when the client feature
-ships.
+R2), not to a third party. The rest of the library is not sent.
 
-## Client integration (next phase)
+## Client integration
 
-The app-side flow will be:
+The Avalonia app exposes **Edit System → Download Missing Covers**. The flow is:
 
-1. local image folder;
-2. cached per-system `index.json` (ETag/TTL);
-3. exact alias match, annotation-stripped match, then the existing fuzzy matcher;
-4. download only the matched canonical JPEG;
-5. save it as `<rom base name>.jpg`, atomically, and skip existing covers;
-6. progress `x / y`, current game, downloaded/skipped/failed, Stop.
+1. build one local name index from the selected system's image folder;
+2. use the cached per-system `index.json` (24 h catalog TTL, 7 day index TTL, stale cache
+   fallback when offline);
+3. match exact aliases, then annotation-stripped names, then a normalized token order, then
+   the existing Jaro-Winkler fuzzy matcher;
+4. download only the matched canonical JPEG with 3 attempts and bounded parallelism;
+5. save it as `<rom base name>.jpg` atomically and never replace an existing cover;
+6. report `x / y`, current game, downloaded/already present/not found/failed and support
+   cancellation through the loading overlay.
 
-No libretro or third-party thumbnail repository is contacted at runtime.
+The cache lives in `%LocalAppData%\SimpleLauncher\CoverCatalog\`. The action requires a
+selected system; otherwise it shows a status hint. No libretro or third-party thumbnail
+repository is contacted at runtime.

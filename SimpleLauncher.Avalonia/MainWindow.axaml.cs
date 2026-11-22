@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Automation;
@@ -34,6 +35,7 @@ using SimpleLauncher.Avalonia.ViewModels;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Core.Services.CoverCatalog;
 using SimpleLauncher.Core.Services.GamePad;
 using SimpleLauncher.Core.Services.Localization;
 using SimpleLauncher.Core.Services.PlaySound;
@@ -2697,6 +2699,114 @@ internal partial class MainWindow : Window, IPaginationHost
         catch (Exception ex)
         {
             Log.Error(ex, "Error in method DownloadImagePack_Click");
+        }
+    }
+
+    /// <summary>
+    ///     Downloads the covers that are still missing for the selected system from the
+    ///     project's R2 catalog. Existing local covers are never replaced; only missing
+    ///     games are fetched and saved under their own ROM name.
+    /// </summary>
+    private async void DownloadMissingCovers_ClickAsync(object? sender, RoutedEventArgs e)
+    {
+        var showProgress = new StrongBox<bool>(true);
+        try
+        {
+            _playSound.PlayNotificationSound();
+
+            var systemName = _viewModel.SelectedSystem;
+            if (string.IsNullOrWhiteSpace(systemName))
+            {
+                _viewModel.SetStatusText(_localization.GetString("CoverDownloadNoSystem",
+                    "Select a system before downloading covers."));
+                return;
+            }
+
+            var system = _systemManagerService.GetSystem(systemName);
+            if (system is null)
+            {
+                _viewModel.SetStatusText(_localization.GetString("CoverCatalogUnavailable",
+                    "The cover catalog is not available for this system."));
+                return;
+            }
+
+            var loadingOrchestrator =
+                App.ServiceProvider.GetRequiredService<AvaloniaGameFileLoadingOrchestrator>();
+            var gameFiles = await Task.Run(() => loadingOrchestrator.GetGameFiles(system));
+            if (gameFiles.Count == 0)
+            {
+                _viewModel.SetStatusText(_localization.GetString("CoverDownloadNoMissingCovers",
+                    "No missing covers to download."));
+                return;
+            }
+
+            var service = App.ServiceProvider.GetRequiredService<CoverCatalogDownloadService>();
+            var progress = new Progress<CoverDownloadProgress>(progressUpdate =>
+            {
+                if (!showProgress.Value) return;
+                var text = _localization.GetString("DownloadingMissingCovers",
+                    "Downloading missing covers...");
+                var current = string.IsNullOrWhiteSpace(progressUpdate.CurrentGame)
+                    ? ""
+                    : $" - {progressUpdate.CurrentGame}";
+                _viewModel.SetStatusText(
+                    string.Create(CultureInfo.InvariantCulture,
+                        $"{text} {progressUpdate.Completed}/{progressUpdate.TotalGames}{current}"));
+            });
+
+            CoverDownloadResult? result = null;
+            var token = ((IUiResetHost)this).CurrentCancellationToken;
+            await RunWithLoadingOverlayAsync(
+                _localization.GetString("DownloadingMissingCovers", "Downloading missing covers..."),
+                async () =>
+                {
+                    result = await service.DownloadMissingCoversAsync(new CoverDownloadRequest
+                    {
+                        SystemName = system.SystemName,
+                        SystemImageFolder = system.SystemImageFolder ?? "",
+                        GameFilePaths = gameFiles
+                    }, progress, token);
+                });
+            showProgress.Value = false;
+
+            if (result is null) return;
+
+            switch (result.Status)
+            {
+                case CoverDownloadStatus.CatalogUnavailable:
+                case CoverDownloadStatus.SystemNotAvailable:
+                    _viewModel.SetStatusText(_localization.GetString("CoverCatalogUnavailable",
+                        "The cover catalog is not available for this system."));
+                    return;
+                case CoverDownloadStatus.NoGames:
+                case CoverDownloadStatus.NoMissingCovers:
+                    _viewModel.SetStatusText(_localization.GetString("CoverDownloadNoMissingCovers",
+                        "No missing covers to download."));
+                    return;
+            }
+
+            var summary = string.Format(CultureInfo.InvariantCulture,
+                _localization.GetString("CoverDownloadStatus",
+                    "Covers: {0} downloaded, {1} already present, {2} not found, {3} failed"),
+                result.Downloaded, result.AlreadyPresent, result.NotFound, result.Failed);
+
+            _viewModel.SetStatusText(summary);
+            ShowToast(_localization.GetString("CoverDownloadComplete", "Cover download complete."), summary);
+
+            if (result.Downloaded > 0) await _viewModel.ReloadGamesAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            showProgress.Value = false;
+            _viewModel.SetStatusText(_localization.GetString("CoverDownloadCancelled",
+                "Cover download cancelled."));
+        }
+        catch (Exception ex)
+        {
+            showProgress.Value = false;
+            Log.Error(ex, "Error downloading missing covers");
+            _viewModel.SetStatusText(_localization.GetString("CoverDownloadFailed",
+                "Cover download failed."));
         }
     }
 

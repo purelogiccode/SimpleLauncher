@@ -30,6 +30,10 @@
 - **Games load on selection** - choosing a system now shows its complete game list immediately
   instead of stopping on the configuration summary until **All** is clicked. The summary is still
   one click away from the status-bar info button.
+- **Missing-cover download** - **Edit System → Download Missing Covers** checks the selected system
+  locally and fetches only the missing art from the project's own R2 catalog (80 systems,
+  121,812 covers). Existing covers are never replaced, and the batch shows progress and can be
+  cancelled.
 - **Tooltips everywhere** - every interactive control now shows its accessible name/help text as
   a tooltip, so the UI explains itself without extra documentation.
 - **Better bug reports** - all logging goes through Serilog, and Warning/Error events reach the

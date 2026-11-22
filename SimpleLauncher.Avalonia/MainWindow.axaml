@@ -531,6 +531,13 @@
                         <Image Source="avares://SimpleLauncher.Avalonia/images/image.png" Width="16" Height="16" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="{ext:Translate DownloadMissingCovers}"
+                          Click="DownloadMissingCovers_ClickAsync"
+                          ToolTip.Tip="{ext:Translate TooltipDownloadMissingCovers}">
+                    <MenuItem.Icon>
+                        <Image Source="avares://SimpleLauncher.Avalonia/images/search3.png" Width="16" Height="16" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <MenuItem x:Name="ScanForMicrosoftWindowsGamesMenuItem"
                           Header="{ext:Translate ScanForMicrosoftWindowsGames}"
                           Click="ScanForMicrosoftWindowsGames_ClickAsync"

@@ -409,9 +409,9 @@ internal sealed class CatalogBuilder
         using (var canvas = new SKCanvas(resized))
         {
             canvas.Clear(SKColors.White);
-            using var paint = new SKPaint();
-            paint.IsAntialias = true;
-            canvas.DrawBitmap(source, new SKRect(0, 0, width, height), paint);
+            using var sourceImage = SKImage.FromBitmap(source);
+            var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+            canvas.DrawImage(sourceImage, new SKRect(0, 0, width, height), sampling);
         }
 
         using var image = SKImage.FromBitmap(resized);

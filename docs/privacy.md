@@ -118,6 +118,14 @@ classification API. To fetch cover art for a store game, the game's name is sent
 API; the returned image is downloaded from its URL. On Linux and macOS store scanning returns
 no results, so nothing is sent.
 
+### Cover catalog
+
+When you choose **Edit System → Download Missing Covers**, the app downloads the selected
+system's cover index from the project's asset server (`assets.purelogiccode.com`, Cloudflare
+R2) and requests only the images for games that have no local cover. The system and game
+names appear in those request paths; the rest of your library is not uploaded. The catalog
+and indexes are cached locally in `%LocalAppData%\SimpleLauncher\CoverCatalog`.
+
 ### RetroAchievements
 
 When you connect a RetroAchievements account, the app talks directly to
