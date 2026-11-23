@@ -1,6 +1,6 @@
 # Simple Launcher — Manual Test Plan (areas not covered by unit tests)
 
-**Scope:** This document lists only functionality **not covered** by the automated tests in `SimpleLauncher.Tests`
+**Scope:** This document lists only functionality **not covered** by the automated tests in the main `SimpleLauncher.Avalonia.Tests` suite and the WPF reference `SimpleLauncher.Tests` suite
 (150 test files). The unit suite covers the core logic layer (settings, system manager, favorites, play history,
 game scanner, file finder, search orchestrator, launch strategies, mount-strategy matching, config-injection services,
 models, path/URL/pagination helpers, RetroAchievements manager/matcher/hasher, Steam VDF parser, update-check logic,
@@ -12,7 +12,7 @@ Everything below must be verified by hand in the running application. Items mark
 external components (emulators, store clients, API endpoints, network) and cannot be fully verified otherwise.
 
 **Method note:** coverage was determined by scanning all production types in `SimpleLauncher` + `SimpleLauncher.Core`
-(462 types) against references in `SimpleLauncher.Tests`; 259 types have no test reference. Windows, Views, ViewModels,
+(462 types) against references in the main and WPF reference test suites; 259 types have no test reference. Windows, Views, ViewModels,
 and dispatcher-dependent WPF services are inherently untested and are the bulk of this list.
 
 **Suggested workflow:** one full pass through Easy Mode → Edit System → Emulator Settings → launch a game per emulator →
@@ -26,9 +26,9 @@ Local pre-release gate for 5.9.0:
 
 | Check | Result |
 |---|---|
-| `SimpleLauncher.sln` Debug + Release builds | 0 warnings / 0 errors |
-| Fast suites | `SimpleLauncher.Tests` **2278/2278**, `SimpleLauncher.Avalonia.Tests` **771/771** |
-| Slow suites | `SimpleLauncher.SlowTests` **84/84**, `SimpleLauncher.Avalonia.SlowTests` **11/11** (Debug and Release) |
+| `SimpleLauncher.sln` + `SimpleLauncher.Wpf.Reference.sln` Debug + Release builds | 0 warnings / 0 errors |
+| Fast suites | main `SimpleLauncher.Avalonia.Tests` **797/797**; WPF reference `SimpleLauncher.Tests` **2278/2278** |
+| Slow suites | main `SimpleLauncher.Avalonia.SlowTests` **11/11**; WPF reference `SimpleLauncher.SlowTests` **84/84** (Debug and Release) |
 | `jb inspectcode -e=WARNING` | 0 issues |
 | Windows x64 bundle | `release_5.9.0_win-x64.zip` inspected: `SimpleLauncher.exe` 5.9.0, RetroAchievementsSharp 1.1.1, no stale `.Cli` payload, no helper logs |
 

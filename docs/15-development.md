@@ -11,23 +11,24 @@
 ## Build & test
 
 ```bash
-# build everything (Windows, both TFMs)
+# build the Avalonia-first main solution (Windows, both TFMs)
 dotnet build SimpleLauncher.sln -c Debug
 dotnet build SimpleLauncher.sln -c Release
 
+# build the WPF reference solution (not in CI)
+dotnet build SimpleLauncher.Wpf.Reference.sln -c Debug
+dotnet build SimpleLauncher.Wpf.Reference.sln -c Release
+
 # build one project
-dotnet build SimpleLauncher/SimpleLauncher.csproj -c Debug
 dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug
 
-# run unit tests — WPF (net11.0-windows) and Avalonia (net11.0, headless)
-dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj -c Debug
+# main fast suite - Avalonia (net11.0, headless)
 dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 
-# fast local WPF run (skip live mount + network tests that need G:\/X:\/J:\ or internet)
-dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj -c Debug \
-  --filter "FullyQualifiedName!~IntegrationTests&FullyQualifiedName!~ApiConnectivity&FullyQualifiedName!~UrlValidation&FullyQualifiedName!~MountChd&FullyQualifiedName!~MountZip"
+# WPF reference fast suite
+dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj -c Debug
 
-# WSL2 / Linux — Avalonia only (net11.0 TFM, no Windows desktop pack)
+# WSL2 / Linux - Avalonia only (net11.0 TFM, no Windows desktop pack)
 dotnet build SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Debug -f net11.0
 dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
 wsl dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj -c Debug
@@ -46,8 +47,8 @@ dotnet publish SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj -c Release
 ```
 
 The Windows release publishes only the Avalonia app and renames the output to `SimpleLauncher.exe`
-(`scripts/package-release.ps1` does this automatically). The WPF project can still be built with
-`dotnet build SimpleLauncher/SimpleLauncher.csproj` as the reference implementation.
+(`scripts/package-release.ps1` does this automatically). The WPF project remains buildable through
+`SimpleLauncher.Wpf.Reference.sln`; it is not built by CI, published or bundled.
 
 - `RuntimeIdentifiers` are `win-x64;win-arm64`; the runtime helpers ship one payload per OS/architecture (`tools\<tool>\<rid>\`) and are resolved at runtime (see [11 - Bundled Tools](11-bundled-tools.md)).
 - Release zip naming for updates: `release_{version}_{rid}.zip` (the Avalonia payload as `SimpleLauncher.exe`) + `updater_{rid}.zip` (the single `Updater.exe`, also compatible with legacy WPF installs) (see [16 - Updater](16-updater.md)).
@@ -68,11 +69,11 @@ pwsh scripts/package-release.ps1 -Version 5.9.0 -BuildInstaller
 #    artifacts\release\SimpleLauncher-5.9.0-win-arm64-setup.exe
 ```
 
-- Publishes only `SimpleLauncher.Avalonia` for Windows and renames the published executable to `SimpleLauncher.exe`; the WPF project is **not** published or bundled and remains the in-repo reference implementation.
+- Publishes only `SimpleLauncher.Avalonia` for Windows and renames the published executable to `SimpleLauncher.exe`; the WPF project is **not** published or bundled and remains the in-repo reference implementation in `SimpleLauncher.Wpf.Reference.sln`.
 - Copies `LICENSE.txt`, `README.md` and `WhatsNew.md` to the payload root (`Copy-BundleDocuments`).
 - The app is published **framework-dependent** (the **.NET 11 runtime** is required on the target machine), so the payload carries no runtime: it is a single executable with its managed assemblies bundled (`PublishSingleFile=true`, `SelfContained=false`), and the small set of native libraries it needs (Skia/HarfBuzz/GLES/SQLite) stays next to the exe. The updater is published the same way but additionally bundles its Avalonia natives for self-extraction, so `updater_{rid}.zip` is one self-sufficient `Updater.exe` that also works on legacy WPF-only installs.
-- Validates the version against `SimpleLauncher.csproj` (canonical), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing. The WPF project/manifest stay in the validation set because they remain the reference implementation.
-- `AppSettingsFilesAreIdentical` keeps the WPF reference and Avalonia appsettings in sync even though only the Avalonia copy ships.
+- Validates the version against `SimpleLauncher.csproj` (canonical while the WPF reference is kept), `SimpleLauncher.Core.csproj`, both app csproj files/manifests and `SimpleLauncher.Avalonia.Updater.csproj` before publishing. The WPF project/manifest stay in the validation set because they remain the reference implementation.
+- `AppSettingsFilesAreIdentical` (Avalonia fast suite) keeps the WPF reference and Avalonia appsettings in sync even though only the Avalonia copy ships.
 - Prunes the other architecture's helper payloads (plus the Linux-only extension-less `7zz` binary) and packages `Updater.exe` with `LICENSE.txt`, `README.md` and `WhatsNew.md` into `updater_{rid}.zip` (the updater's staging tree is cleaned before each publish so stale sidecars cannot accumulate). The per-RID helpers (`CHDMounter`, `RetroAchievementsSharp`, `SimpleXisoDrive` and `SimpleZipDrive`) keep only the target `win-{x64,arm64}` subfolder.
 - Prunes debug symbol files (`*.pdb`) — never needed at runtime; the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
 
@@ -268,7 +269,7 @@ script renames it to `SimpleLauncher.exe`.
 - Windows-only features (F8 global hotkey, active-window screenshot) are compiled with
   `#if WINDOWS` (defined only on the `net11.0-windows` TFM) and pull `System.Drawing.Common`
   as a package reference conditional on that TFM; the tray icon is cross-platform.
-- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (771 tests via `Avalonia.Headless`; the same suite also runs natively on macOS).
+- **WSL2 smoke test (Linux):** after `publish -f net11.0 -r linux-x64`, run the binary under WSLg: `wsl ./SimpleLauncher.Avalonia/bin/Release/net11.0/linux-x64/publish/SimpleLauncher.Avalonia` —   window 1280×800 should map, single-instance mutex enforces one instance, tray icon is NoOp on WSL2. The full headless fast suite also runs on WSL2 without a display: `wsl dotnet test SimpleLauncher.Avalonia.Tests/... -c Debug` (797 tests via `Avalonia.Headless`; the same suite also runs natively on macOS).
 
 ## Versioning
 
@@ -276,7 +277,10 @@ Version `5.9.0` must stay in sync across:
 
 - `SimpleLauncher\SimpleLauncher.csproj` (`AssemblyVersion`, `FileVersion`, `Version`)
 - `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (same three)
-- `SimpleLauncher.Tests\SimpleLauncher.Tests.csproj`
+- `SimpleLauncher.Tests\SimpleLauncher.Tests.csproj` (WPF reference)
+- `SimpleLauncher.SlowTests\SimpleLauncher.SlowTests.csproj` (WPF reference)
+- `SimpleLauncher.Avalonia.Tests\SimpleLauncher.Avalonia.Tests.csproj`
+- `SimpleLauncher.Avalonia.SlowTests\SimpleLauncher.Avalonia.SlowTests.csproj`
 - `SimpleLauncher\app.manifest` (`assemblyIdentity version`)
 - `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (same three, matching the WPF reference)
 - `SimpleLauncher.Avalonia\app.manifest` (`assemblyIdentity version`)
@@ -286,9 +290,11 @@ The test projects (`SimpleLauncher.Tests`, `SimpleLauncher.Avalonia.Tests`, `Sim
 `SimpleLauncher.Avalonia.SlowTests`) and `SimpleLauncher.ResourceTranslator` carry the same version
 metadata for diagnostics; keep them aligned when bumping.
 
-`VersionConsistencyTests` enforces the manifests, the Avalonia csproj/manifest and the shared
-`appsettings.json` in local runs; `scripts/package-release.ps1` validates all of the above when
-packaging. Bump all of them together.
+`SimpleLauncher.Avalonia.Tests\VersionConsistencyTests` enforces the manifests, the Avalonia
+csproj/manifest and the shared `appsettings.json` in the main fast suite; the WPF reference keeps
+its copy for reference runs. `scripts/package-release.ps1` validates all of the above when
+packaging. Bump all of them together. Moving the canonical version source from the WPF reference
+csproj to the Avalonia csproj is a separate change.
 
 ## Localization
 
@@ -297,13 +303,13 @@ packaging. Bump all of them together.
 - `SimpleLauncher.ResourceTranslator` (OpenRouter API, default `z-ai/glm-5.3-flash`) translates missing keys into the shared packs; see its [README](../SimpleLauncher.ResourceTranslator/README.md).
 - Unit tests guard against common translation issues: keys used in source but missing from English (auto-added with fallbacks), duplicate keys, mismatched fallbacks, empty values, key parity and key counts.
   - WPF: `DetectMissingResourceProviderKeysTests` and `DetectMissingResourceStringsTests` scan the WPF sources (`_resourceProvider.GetString(...)`, `TryFindResource(...)`) and auto-add missing keys to `strings.en.json`; `DetectDuplicateResourceKeysTests`, `DetectAlphabeticalOrderingTests`, `ResourceFileLoadingTests` and `LocalizationResourcePackagingTests` cover the packs and the embedded payload.
-  - Avalonia: `DetectMissingResourceStringsTests` scans the Avalonia source (`.cs` `GetString(...)` calls and `.axaml` `{ext:Translate Key}` usages) and auto-adds missing keys; `LocalizationTests.EveryLanguageFileSharesTheEnglishKeySet` fails with a per-language missing-key list when files are out of sync.
+  - Avalonia: `DetectMissingResourceStringsTests` scans the Avalonia source (`.cs` `GetString(...)` calls and `.axaml` `{ext:Translate Key}` usages) and auto-adds missing keys; `LocalizationTests.EveryLanguageFileSharesTheEnglishKeySet` fails with a per-language missing-key list when files are out of sync. The main suite also carries copies of `DetectDuplicateResourceKeysTests`, `DetectAlphabeticalOrderingTests`, `LocalizationTemplateTests` and `VersionConsistencyTests` so those shared guards survive the WPF solution split.
   - The WPF and Avalonia auto-add tests mutate the same `strings.en.json`; they serialize writes with a cross-process named mutex, so the suites are safe to run in parallel.
 - Add a new language: create `strings.{code}.json` (UTF-8 without BOM + sorted), add the code to `LanguageMenuService` (WPF) and `LocalizationService.AvailableLanguages`/`AvaloniaLanguageMenuService` (Avalonia), run the translator, and update the resource-key tests if needed.
 
 ## Static analysis & code style
 
-- **Meziantou.Analyzer 3.0.315**, **Microsoft.CodeAnalysis.NetAnalyzers 10.0.402** and **Roslynator.Analyzers 5.0.1** (all `PrivateAssets`).
+- **Meziantou.Analyzer 3.0.342**, **Microsoft.CodeAnalysis.NetAnalyzers 11.0.100** and **Roslynator.Analyzers 5.0.1** (all `PrivateAssets`).
 - `Nullable` enabled everywhere; `LangVersion 15`; implicit usings + global `using System.IO; using System.Net.Http; using Serilog;`.
 - `NoWarn` in app: `NU1903;CS0436`.
 - Tests must satisfy the analyzers (e.g. `StringComparison` overloads on string assertions).
@@ -317,7 +323,7 @@ the test suites (they include live endpoints and real app launches; run them loc
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: full `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net11.0` Debug/Release and updater `net11.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. Never runs tests. |
+| `.github/workflows/ci.yml` | push to `master` (non-docs paths) and pull requests | Build-only: Avalonia-first `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest`, plus the Avalonia `net11.0` Debug/Release and updater `net11.0` builds on `ubuntu-latest`. All builds use `-warnaserror`. The WPF reference solution is not built by CI. Never runs tests. |
 | `.github/workflows/package-dry-run.yml` | push/PR touching the app projects or packaging scripts (or manual) | Packages every release asset with the same scripts as the release workflow (Windows, Linux and the macOS DMG on `macos-15`), uploads the archives as workflow artifacts and verifies the Linux payload layout/executable bits and the DMG bundle layout — without creating a GitHub release. The version is read from `SimpleLauncher/SimpleLauncher.csproj`. |
 | `.github/workflows/release.yml` | manual (`workflow_dispatch`) with a version | Packages the Avalonia-only Windows bundle (`SimpleLauncher.exe`) for `win-x64` + `win-arm64` via `scripts/package-release.ps1`, the Linux bundles for `linux-x64` + `linux-arm64`, and the Apple Silicon `osx-arm64` DMG via `scripts/package-release-macos.ps1`; uploads the artifacts and creates/updates the `release{version}` GitHub release with every Windows/Linux/macOS asset. Options: skip release creation, provide custom release notes. |
 | `.github/workflows/docs.yml` | push to `master` touching `docs/**` (or manual) | Deploys GitHub Pages from `docs/` and syncs the wiki via `scripts/sync-wiki.py`. |

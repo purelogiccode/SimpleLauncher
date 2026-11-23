@@ -1,11 +1,12 @@
 name: CI
 
-# Continuous integration: compiles the whole solution in Debug and Release on
-# Windows and compiles the cross-platform projects for Linux. Warnings are
-# treated as errors so the "0 warnings / 0 errors" policy is enforced.
-# The test suites are intentionally NOT run in CI — they include live endpoints,
-# real app launches and real mounts; run them locally (see AGENTS.md and
-# docs/14-testing.md for the fast/slow split).
+# Continuous integration: compiles the Avalonia-first main solution in Debug and
+# Release on Windows and compiles the cross-platform projects for Linux. Warnings
+# are treated as errors so the "0 warnings / 0 errors" policy is enforced. The
+# WPF reference (SimpleLauncher.Wpf.Reference.sln) is built locally on demand,
+# not here. The test suites are intentionally NOT run in CI - they include live
+# endpoints, real app launches and real mounts; run them locally (see AGENTS.md
+# and docs/14-testing.md for the fast/slow split).
 
 on:
   push:

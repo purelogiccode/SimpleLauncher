@@ -19,7 +19,7 @@ Developer and user documentation for the main projects:
 
 - [`SimpleLauncher.Avalonia`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj) - the shipped app for Windows x64/ARM64 (as `SimpleLauncher.exe`), Linux x64/ARM64 (AppImage, Flatpak, tar.gz, ZIP) and macOS Apple Silicon (unsigned DMG); remaining work is tracked in [`References/TODO.md`](https://github.com/purelogiccode/SimpleLauncher/blob/master/References/TODO.md)
 - [`SimpleLauncher.Core`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher.Core/SimpleLauncher.Core.csproj) - class library (services, models, persistence)
-- [`SimpleLauncher`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher/SimpleLauncher.csproj) - WPF reference implementation, kept in the solution/tests but not shipped
+- [`SimpleLauncher`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher/SimpleLauncher.csproj) - WPF reference implementation, kept in the separate `SimpleLauncher.Wpf.Reference.sln` and reference tests but not shipped or built by CI
 
 Companion files: [`ManualTests.md`](manual-tests.md) (manual test checklist for areas without unit tests) · [`WhatsNew.md`](https://github.com/purelogiccode/SimpleLauncher/blob/master/SimpleLauncher/WhatsNew.md) (changelog) · [`parameters.md`](parameters.md) (emulator parameter reference).
 

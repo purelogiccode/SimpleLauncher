@@ -1,6 +1,6 @@
 # Simple Launcher — Manual Test Plan (areas not covered by unit tests)
 
-**Scope:** This document lists only functionality **not covered** by the automated tests in `SimpleLauncher.Tests`
+**Scope:** This document lists only functionality **not covered** by the automated tests in the main `SimpleLauncher.Avalonia.Tests` suite and the WPF reference `SimpleLauncher.Tests` suite
 (150 test files). The unit suite covers the core logic layer (settings, system manager, favorites, play history,
 game scanner, file finder, search orchestrator, launch strategies, mount-strategy matching, config-injection services,
 models, path/URL/pagination helpers, RetroAchievements manager/matcher/hasher, Steam VDF parser, update-check logic,
@@ -12,7 +12,7 @@ Everything below must be verified by hand in the running application. Items mark
 external components (emulators, store clients, API endpoints, network) and cannot be fully verified otherwise.
 
 **Method note:** coverage was determined by scanning all production types in `SimpleLauncher` + `SimpleLauncher.Core`
-(462 types) against references in `SimpleLauncher.Tests`; 259 types have no test reference. Windows, Views, ViewModels,
+(462 types) against references in the main and WPF reference test suites; 259 types have no test reference. Windows, Views, ViewModels,
 and dispatcher-dependent WPF services are inherently untested and are the bulk of this list.
 
 **Suggested workflow:** one full pass through Easy Mode → Edit System → Emulator Settings → launch a game per emulator →

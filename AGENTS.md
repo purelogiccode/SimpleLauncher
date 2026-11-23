@@ -27,10 +27,12 @@ disk.
 ## ✅ Standing policies (do not revert or bypass)
 
 - **CI scope**: GitHub Actions builds, packages releases and deploys docs — it never runs tests.
-  - `.github/workflows/ci.yml` — build-only on pushes to `master` (non-docs paths) and PRs: full
-    `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia `net11.0`
-    Debug/Release and the updater `net11.0` build on `ubuntu-latest`. Builds pass
-    `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.**
+  - `.github/workflows/ci.yml` - build-only on pushes to `master` (non-docs paths) and PRs: the
+    Avalonia-first `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia
+    `net11.0` Debug/Release and the updater `net11.0` build on `ubuntu-latest`. Builds pass
+    `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.** The WPF
+    reference (`SimpleLauncher.Wpf.Reference.sln`) is deliberately **not** built by CI; build it
+    locally when changing the reference implementation or shared Core code.
   - `.github/workflows/package-dry-run.yml` — packages every release asset exactly like the
     release workflow (version read from `SimpleLauncher.csproj`): Windows bundles and per-user
     Inno Setup installers on `windows-latest`; portable ZIP/tar.gz + AppImage/Flatpak for both
@@ -46,8 +48,9 @@ disk.
     via `scripts/package-release-linux.ps1`, plus self-contained
     `SimpleLauncher-{version}-{rid}.AppImage` and `.flatpak` via
     `scripts/package-linux-native.sh`. On Windows the payload is the Avalonia app renamed to
-    `SimpleLauncher.exe` (framework-dependent); the WPF project stays in the source tree and CI
-    as the reference implementation but is **not** published or bundled. The workflow also ships
+    `SimpleLauncher.exe` (framework-dependent); the WPF project stays in the source tree as the
+    reference implementation (separate `SimpleLauncher.Wpf.Reference.sln`) but is **not** built by
+    CI, published or bundled. The workflow also ships
     `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` with the .NET 11 bootstrap; the portable
     Linux formats require the .NET 11 runtime, while AppImage/Flatpak bundle it. The same
     workflow builds the **macOS Apple Silicon DMG** on `macos-15` (arm64) via
@@ -78,13 +81,15 @@ disk.
   format or an architecture from the release workflow or the R2 publisher
   (`scripts/publish-fallback-r2.ps1`) without updating both.
 - **Fast/slow test split (no filtering)**: the suites are split **by project**, never by
-  `[Trait]`/filter: fast — `SimpleLauncher.Tests` and `SimpleLauncher.Avalonia.Tests`; slow —
+  `[Trait]`/filter. The main solution's fast suite is `SimpleLauncher.Avalonia.Tests`; its slow
+  suite is `SimpleLauncher.Avalonia.SlowTests` (cross-platform mount extraction/guards). The WPF
+  reference keeps `SimpleLauncher.Tests` (fast; app/Core/reference coverage) and
   `SimpleLauncher.SlowTests` (app-launch language checks, real ZIP/CHD mounts, live-endpoint
-  suites) and `SimpleLauncher.Avalonia.SlowTests` (cross-platform mount extraction/guards).
-  Every test in a project always runs unfiltered with `dotnet test` — never add a filter,
+  suites); run those when changing the WPF reference or shared Core behavior, and before a
+  deploy. Every test in a project always runs unfiltered with `dotnet test` - never add a filter,
   quarantine, runtime skip, or exclusion mechanism for flaky tests. Run only the **fast suites**
   during iteration; run the slow suites **only before a deploy or when the admin explicitly asks**
-  for them — never as part of routine iteration or verification.
+  for them - never as part of routine iteration or verification.
 - **Bug reports**: the `BugReportApiSink` sends Warning+ log events to the bug-report API.
   Expected user-error conditions (missing files, rate limits, timeouts, unsupported input)
   must be logged at **Information** level, not Warning/Error, so they are never reported as bugs.
@@ -119,20 +124,23 @@ disk.
 
 ## 🔧 Build & test
 
-- Windows (per project): `dotnet build <proj>.csproj -c Debug` (or `-c Release`) — expect
+- Windows (per project): `dotnet build <proj>.csproj -c Debug` (or `-c Release`) - expect
   0 warnings / 0 errors.
+- Main solution (Avalonia-first): `dotnet build SimpleLauncher.sln -c Debug` (and `-c Release`).
+- WPF reference: `dotnet build SimpleLauncher.Wpf.Reference.sln -c Debug` (and `-c Release`).
 - Fast suites (run during iteration):
-  - `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` (~40 s) — everything except
-    the slow projects below.
-  - `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (~20 s).
-- Slow suites (**do not run during iteration** — only before a deploy or when the admin explicitly
+  - `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (~75 s) -
+    the main fast suite, including the shared version/appsettings/localization guards.
+  - `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` (~70 s) - the WPF reference
+    suite; run it when the reference or shared Core code changes.
+- Slow suites (**do not run during iteration** - only before a deploy or when the admin explicitly
   asks for them):
-  - `dotnet test SimpleLauncher.SlowTests/SimpleLauncher.SlowTests.csproj` (~3.5 min) — launches
-    `SimpleLauncher.exe` for the language checks (no other SimpleLauncher instance may run),
-    mounts real ZIP/CHD images (needs Dokan + the bundled mount tools; skips cleanly when the
-    images/tools are absent) and hits the live GitHub/PureLogicCode endpoints.
   - `dotnet test SimpleLauncher.Avalonia.SlowTests/SimpleLauncher.Avalonia.SlowTests.csproj`
-    (~1 s) — cross-platform mount extraction fallback and platform guards.
+    (~1 s) - cross-platform mount extraction fallback and platform guards.
+  - `dotnet test SimpleLauncher.SlowTests/SimpleLauncher.SlowTests.csproj` (~3.5 min) - WPF
+    reference: launches `SimpleLauncher.exe` for the language checks (no other SimpleLauncher
+    instance may run), mounts real ZIP/CHD images (needs Dokan + the bundled mount tools; skips
+    cleanly when the images/tools are absent) and hits the live GitHub/PureLogicCode endpoints.
 
 ### Test temp path (drive D)
 
@@ -142,7 +150,7 @@ temporary files**. Set `TEMP` and `TMP` in the same shell session as `dotnet tes
 ```powershell
 $env:TEMP = 'D:\Temp\opencode\test-temp'
 $env:TMP = $env:TEMP
-dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj
+dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj
 ```
 
 Use separate subdirectories when running suites in parallel and remove them afterwards.
@@ -151,12 +159,14 @@ Do **not** redirect `TEMP`/`TMP` for `dotnet build` / `dotnet publish`: WPF's ge
 `_wpftmp` XAML project stops resolving its generated members when the temp path is moved.
 Builds use the normal temp path; only test execution uses drive D.
 
-- Version metadata is centralized: `SimpleLauncher/SimpleLauncher.csproj` is canonical;
-  `SimpleLauncher.Core.csproj`, `SimpleLauncher/app.manifest`, the Avalonia csproj/manifest and
-  `SimpleLauncher.Avalonia.Updater.csproj` must stay in sync (`VersionConsistencyTests` enforces
-  and auto-corrects this). The two `appsettings.json` files must stay identical even though the
-  Windows bundle ships only the Avalonia copy — the WPF project remains the reference
-  implementation (`AppSettingsFilesAreIdentical` enforces this).
+- Version metadata is centralized: `SimpleLauncher/SimpleLauncher.csproj` remains canonical while
+  the WPF reference is kept; `SimpleLauncher.Core.csproj`, `SimpleLauncher/app.manifest`, the
+  Avalonia csproj/manifest and `SimpleLauncher.Avalonia.Updater.csproj` must stay in sync
+  (`VersionConsistencyTests` in `SimpleLauncher.Avalonia.Tests` enforces and auto-corrects this).
+  Packaging scripts also read the canonical WPF csproj. The two `appsettings.json` files must stay
+  identical even though the Windows bundle ships only the Avalonia copy
+  (`AppSettingsFilesAreIdentical` enforces this). Moving the canonical version source to the
+  Avalonia csproj is a separate change.
 
 ## 🖥️ Test environments
 

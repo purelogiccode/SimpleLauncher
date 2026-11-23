@@ -34,7 +34,8 @@ Older releases only include the portable ZIP; use the ZIP steps in that case.
 **Portable ZIP.** Prefer no installer? Download `release_{version}_win-x64.zip` (or `-win-arm64`),
 extract it to a writable folder such as `C:\Games\SimpleLauncher` (not `C:\Program Files`), and run
 `SimpleLauncher.exe`. The Windows release now ships the Avalonia app under that name; the WPF
-project remains in the source tree as a reference and is no longer bundled.
+project remains in the source tree as a reference in the separate `SimpleLauncher.Wpf.Reference.sln`
+and is no longer bundled or built by CI.
 
 No account is needed either way. Uninstalling removes the program files but **keeps your settings,
 game lists and media**; delete the install folder afterwards to remove everything. Newer releases
@@ -231,7 +232,7 @@ they remain available as separate downloads from their own repositories.
 | Yabause | ✅ Added | Sega Saturn |
 
 ### 💻 Technical Specifications
-* **Framework:** .NET 11 (Avalonia; the WPF project remains as a source reference)
+* **Framework:** .NET 11 (Avalonia; the WPF project remains as a source reference in `SimpleLauncher.Wpf.Reference.sln`, outside the main solution and CI)
 * **Language:** C# 15
 * **Data Serialization:** Unified SQLite `settings.dat` (settings, favorites, play history, systems), MessagePack (RA/MAME/history databases) & XML (legacy migration)
 * **Dependencies:** MahApps.Metro (UI), SharpDX (Input), SharpCompress (Archives), DokanNet (Mounting), NAudio 3 + NLayer (Audio; managed MP3/WAV on Linux/macOS), YamlDotNet, Tomlyn, PBPSharp - RetroAchievements hashing is delegated to the bundled `RetroAchievementsSharp` CLI tool (`tools\RetroAchievementsSharp\`)

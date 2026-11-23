@@ -117,7 +117,7 @@ the Cloudflare R2 fallback next to the Windows and Linux assets.
 4. Launch a game with each installed emulator, check audio, gamepad navigation and the data
    folder (`~/Library/Application Support/SimpleLauncher`).
 5. Run the fast suites (`SimpleLauncher.Avalonia.Tests` on macOS, plus
-   `SimpleLauncher.Tests` on Windows) and, before publishing, the slow suites with the live
+   the WPF reference suite in `SimpleLauncher.Wpf.Reference.sln` on Windows) and, before publishing, the slow suites with the live
    URL checks.
 6. `nomac stop` when finished — this ends billing and deletes the Mac (`~/drive` survives).
 

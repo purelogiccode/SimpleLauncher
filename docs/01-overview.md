@@ -13,7 +13,7 @@ Four application projects implement it:
 |---|---|
 | `SimpleLauncher.Avalonia` (Avalonia UI app) | **The shipped launcher** on Windows, Linux and macOS (x64/ARM64): windows, pages, ViewModels, UI services, launch handlers, game scanners, DI composition root. The Windows release publishes it as `SimpleLauncher.exe` |
 | `SimpleLauncher.Core` (class library) | Platform-independent services, models, interfaces, data persistence, emulator config injection |
-| `SimpleLauncher` (WPF app) | **Reference implementation, not shipped.** Kept in the source tree and test suite for parity checks while the Avalonia app remains the active target |
+| `SimpleLauncher` (WPF app) | **Reference implementation, not shipped.** Kept in the source tree and the separate `SimpleLauncher.Wpf.Reference.sln` for parity checks while the Avalonia app remains the active target |
 | `SimpleLauncher.Avalonia.Updater` (Avalonia app) | The single `Updater.exe` / `Updater`: checks for updates, swaps the payload, relaunches the app and migrates legacy WPF installs to the Avalonia `SimpleLauncher.exe` |
 
 On Windows the Avalonia app hides Windows-only features (Dokan mounting, emulator config injection, F8 hotkey, storefront scanning) or uses platform equivalents; on Linux archives and disc images mount through FUSE 3, with temp extraction/conversion as automatic fallbacks; macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE) and no in-app updater.
