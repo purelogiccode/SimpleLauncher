@@ -77,7 +77,7 @@ Set-StrictMode -Version Latest
 
 $repoDir = Split-Path -Parent $PSScriptRoot
 $projectPath = Join-Path $repoDir 'SimpleLauncher\SimpleLauncher.csproj'
-$schemaVersion = '1.12.0'
+$schemaVersion = '1.28.0'
 
 if (-not $SetupDir) {
     $SetupDir = Join-Path $repoDir 'artifacts\release'
