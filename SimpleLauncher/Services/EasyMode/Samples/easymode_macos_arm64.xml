@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <EasyMode>
   <EasyModeSystemConfig>
     <SystemName>Amstrad CPC</SystemName>
@@ -842,6 +842,10 @@
         <EmulatorLatestVersion>0.8.139</EmulatorLatestVersion>
         <EmulatorDownloadLink>https://github.com/xemu-project/xemu/releases/download/v0.8.139/xemu-0.8.139-macos-universal.zip</EmulatorDownloadLink>
         <EmulatorDownloadExtractPath>%BASEFOLDER%/emulators/Xemu/</EmulatorDownloadExtractPath>
+        <CoreLocation />
+        <CoreLatestVersion />
+        <CoreDownloadLink />
+        <CoreDownloadExtractPath />
         <ImagePackDownloadLink>https://assets.purelogiccode.com/Simple%20Launcher/microsoftxbox.zip</ImagePackDownloadLink>
         <ImagePackDownloadLink2>https://assets.purelogiccode.com/Simple%20Launcher/microsoftxbox_2.zip</ImagePackDownloadLink2>
         <ImagePackDownloadLink3 />
@@ -2218,6 +2222,10 @@
         <EmulatorLatestVersion>continuous</EmulatorLatestVersion>
         <EmulatorDownloadLink>https://github.com/Vita3K/Vita3K/releases/download/continuous/macos-arm64-latest.dmg</EmulatorDownloadLink>
         <EmulatorDownloadExtractPath>%BASEFOLDER%/emulators/Vita3K/</EmulatorDownloadExtractPath>
+        <CoreLocation />
+        <CoreLatestVersion />
+        <CoreDownloadLink />
+        <CoreDownloadExtractPath />
         <ImagePackDownloadLink>https://assets.purelogiccode.com/Simple%20Launcher/sonyplaystationvita.zip</ImagePackDownloadLink>
         <ImagePackDownloadLink2 />
         <ImagePackDownloadLink3 />
