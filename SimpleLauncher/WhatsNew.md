@@ -1,5 +1,5 @@
-# Next Release
-*Unreleased*
+# Release 5.9.1
+*2026-11-23*
 ---
 
 ## Cover Catalog
@@ -9,6 +9,8 @@
 - **Automatic repair** - when a legacy white `.jpg` exists and the catalog has a transparent
   PNG, **Download Missing Covers** adds the `.png` beside it; the image-extension order
   prefers the corrected file. Existing files are never deleted.
+- **Repository layout** - the WPF reference now lives in `SimpleLauncher.Wpf.Reference.sln`;
+  `SimpleLauncher.sln` is Avalonia-first and CI builds only the main solution.
 
 ---
 

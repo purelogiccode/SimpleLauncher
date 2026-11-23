@@ -20,9 +20,9 @@ RetroAchievements → a download → a store-game scan covers most of this check
 
 ---
 
-## Release gate - 2026-11-22 (5.9.0)
+## Release gate - 2026-11-23 (5.9.1)
 
-Local pre-release gate for 5.9.0:
+Local pre-release gate for 5.9.1:
 
 | Check | Result |
 |---|---|
@@ -31,7 +31,7 @@ Local pre-release gate for 5.9.0:
 | Slow suites | main `SimpleLauncher.Avalonia.SlowTests` **11/11**; WPF reference `SimpleLauncher.SlowTests` **84/84** (Debug and Release) |
 | `jb inspectcode -e=WARNING` | 0 issues |
 | Cover catalog | 121,812 PNG covers / 37.88 GiB; 0 legacy JPGs; public Atari PNG alpha `0`; live smoke download + legacy-JPEG repair passed |
-| Windows x64 bundle | `release_5.9.0_win-x64.zip` inspected: `SimpleLauncher.exe` 5.9.0, RetroAchievementsSharp 1.1.1, no stale `.Cli` payload, no helper logs |
+| Windows x64 bundle | `release_5.9.1_win-x64.zip` inspected: `SimpleLauncher.exe` 5.9.1, RetroAchievementsSharp 1.1.1, no stale `.Cli` payload, no helper logs |
 
 The CI release workflow builds and verifies Windows x64/ARM64, Linux x64/ARM64 and macOS
 Apple Silicon (arm64) bundles before publishing the GitHub release and the R2 fallback.

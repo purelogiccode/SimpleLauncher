@@ -2,9 +2,10 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
-## Next release - Unreleased
+## 5.9.1 - 2026-11-23
 
 - **Cover catalog transparency**: derivatives are now PNG with alpha preserved instead of JPEG flattened onto white. The client saves the catalog extension (`.png`) and repairs a legacy white `.jpg` by adding the transparent PNG beside it.
+- **Repository layout**: the WPF reference moved to `SimpleLauncher.Wpf.Reference.sln`; `SimpleLauncher.sln` and CI are Avalonia-first.
 
 ## 5.9.0 - 2026-11-22
 

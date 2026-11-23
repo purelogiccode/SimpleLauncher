@@ -14,9 +14,9 @@
 
         <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <ImplicitUsings>enable</ImplicitUsings>
-        <AssemblyVersion>5.9.0</AssemblyVersion>
-        <FileVersion>5.9.0</FileVersion>
-        <Version>5.9.0</Version>
+        <AssemblyVersion>5.9.1</AssemblyVersion>
+        <FileVersion>5.9.1</FileVersion>
+        <Version>5.9.1</Version>
         <IsPackable>false</IsPackable>
         <LangVersion>15</LangVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>

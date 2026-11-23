@@ -90,8 +90,8 @@ The per-core ZIPs are stored under
 Runs on macOS with the .NET 11 SDK (CI uses the arm64 `macos-15` GitHub runner):
 
 ```bash
-pwsh scripts/package-release-macos.ps1 -Version 5.9.0
-# -> artifacts/release/SimpleLauncher-5.9.0-osx-arm64.dmg
+pwsh scripts/package-release-macos.ps1 -Version 5.9.1
+# -> artifacts/release/SimpleLauncher-5.9.1-osx-arm64.dmg
 ```
 
 The script validates the version against `SimpleLauncher.csproj`/manifests, publishes
