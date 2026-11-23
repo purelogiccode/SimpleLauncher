@@ -16,9 +16,6 @@ internal sealed class BuilderOptions
     /// <summary>Gets the maximum width or height of a derivative.</summary>
     public int MaxSize { get; private set; } = 800;
 
-    /// <summary>Gets the JPEG quality (1-100).</summary>
-    public int Quality { get; private set; } = 85;
-
     /// <summary>Gets the maximum number of images encoded in parallel.</summary>
     public int Parallelism { get; private set; } = Math.Min(8, Environment.ProcessorCount);
 
@@ -69,9 +66,6 @@ internal sealed class BuilderOptions
                     break;
                 case "--max-size":
                     options.MaxSize = ParseInt(RequireValue(args, ref index), "--max-size", 64, 4096);
-                    break;
-                case "--quality":
-                    options.Quality = ParseInt(RequireValue(args, ref index), "--quality", 1, 100);
                     break;
                 case "--parallel":
                     options.Parallelism = ParseInt(RequireValue(args, ref index), "--parallel", 1, 64);
@@ -142,17 +136,16 @@ internal sealed class BuilderOptions
                             --systems <a,b>          only build these systems (repeatable)
                             --exclude-system <a,b>   skip these systems (repeatable)
                             --max-size <px>          derivative longest side (default 800)
-                            --quality <1-100>        JPEG quality (default 85)
                             --parallel <n>           images encoded in parallel (default min(8, CPUs))
                             --limit <n>              max groups per system (diagnostics only)
                             --force                  re-encode existing derivatives
-                            --clean                  remove stale .jpg files from the output system folders
+                            --clean                  remove stale image files from the output system folders
                             --help                   show this help
 
                           Output:
                             <output>/catalog.json
                             <output>/<system-slug>/index.json
-                            <output>/<system-slug>/<canonical-name>.jpg
+                            <output>/<system-slug>/<canonical-name>.png
                           """);
     }
 

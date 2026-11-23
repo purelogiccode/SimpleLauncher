@@ -14,7 +14,7 @@ reference/parity work. The WPF solution is **not** built by CI, published or bun
 | Project | Kind | Role |
 |---|---|---|
 | `SimpleLauncher.Core` | Class library | **Shared logic** - services, models, interfaces, persistence, emulator config injection |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 797 tests (`net11.0`, runs on Windows + Linux/WSL2 + macOS via `Avalonia.Headless`); **main fast suite**, including the shared version/appsettings/localization guards |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 823 tests (`net11.0`, runs on Windows + Linux/WSL2 + macOS via `Avalonia.Headless`); **main fast suite**, including the shared version/appsettings/localization guards |
 | `SimpleLauncher.Avalonia.SlowTests` | xUnit test project | Main slow suite: cross-platform mount extraction fallback and platform guards |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) - downloads the release zip, extracts over the app folder, relaunches the app that launched it and migrates legacy WPF installs to the Avalonia `SimpleLauncher.exe` |
 | `SimpleLauncher.Avalonia` | Avalonia UI app | **The shipped launcher** (Windows + Linux + macOS, x64/ARM64), published on Windows as `SimpleLauncher.exe`. Windows-only features (Dokan mounting, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`); macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE, no bundled helpers, no in-app updater) |

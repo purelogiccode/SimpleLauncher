@@ -1,7 +1,8 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-Builds the canonical Simple Launcher cover catalog and 800px JPEG derivatives.
+Builds the canonical Simple Launcher cover catalog and 800px PNG derivatives with
+transparency preserved.
 
 .DESCRIPTION
 Scans a local Simple Launcher images folder, reuses the app's annotation stripping
@@ -10,7 +11,7 @@ stores every variant name as an alias, and writes:
 
   <output>/catalog.json
   <output>/<system-slug>/index.json
-  <output>/<system-slug>/<canonical-name>.jpg
+  <output>/<system-slug>/<canonical-name>.png
   <output>/report.md
 
 The output is a staging folder only. Nothing is uploaded by this script; use
@@ -30,9 +31,6 @@ Optional system names to skip (repeatable).
 
 .PARAMETER MaxSize
 Longest side of the derivative in pixels. Defaults to 800.
-
-.PARAMETER Quality
-JPEG quality 1-100. Defaults to 85.
 
 .PARAMETER Force
 Re-encode derivatives that already exist in the staging folder.
@@ -56,9 +54,6 @@ param(
 
     [ValidateRange(64, 4096)]
     [int]$MaxSize = 800,
-
-    [ValidateRange(1, 100)]
-    [int]$Quality = 85,
 
     [switch]$Force,
 
@@ -90,8 +85,7 @@ $arguments = @(
     '--',
     '--source', ([System.IO.Path]::GetFullPath($Source)),
     '--output', $Output,
-    '--max-size', $MaxSize,
-    '--quality', $Quality
+    '--max-size', $MaxSize
 )
 
 foreach ($system in $Systems) {
@@ -122,14 +116,14 @@ if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
     throw "The builder finished without producing catalog.json: $catalogPath"
 }
 
-$images = Get-ChildItem -LiteralPath $Output -Recurse -File -Filter '*.jpg' -ErrorAction SilentlyContinue
+$images = Get-ChildItem -LiteralPath $Output -Recurse -File -Filter '*.png' -ErrorAction SilentlyContinue
 $bytes = ($images | Measure-Object Length -Sum).Sum
 if ($null -eq $bytes) { $bytes = 0 }
 
 Write-Host ''
 Write-Host 'Cover catalog ready (staging only; nothing uploaded):'
 Write-Host "  Catalog: $catalogPath"
-Write-Host ("  Covers:  {0:N0} JPEG files, {1:N1} MiB" -f $images.Count, ($bytes / 1MB))
+Write-Host ("  Covers:  {0:N0} PNG files, {1:N1} MiB" -f $images.Count, ($bytes / 1MB))
 Write-Host "  Report:  $(Join-Path $Output 'report.md')"
 Write-Host ''
 Write-Host 'R2 destination used by publish-covers-r2.ps1:'

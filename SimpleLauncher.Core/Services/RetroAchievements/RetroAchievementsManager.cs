@@ -25,14 +25,19 @@ public class RetroAchievementsManager
     /// <summary>
     ///     Loads the RetroAchievements game database from the MessagePack .dat file.
     /// </summary>
-    public static RetroAchievementsManager LoadRetroAchievement(ILogger logErrors, ILogger logger)
+    /// <param name="logErrors">Logger for expected environment/load failures.</param>
+    /// <param name="logger">Diagnostic logger.</param>
+    /// <param name="filePath">Optional override path (tests); null uses the shared app data file.</param>
+    public static RetroAchievementsManager LoadRetroAchievement(ILogger logErrors, ILogger logger,
+        string? filePath = null)
     {
+        var datFilePath = string.IsNullOrWhiteSpace(filePath) ? DatFilePath : filePath;
         var manager = new RetroAchievementsManager { _logger = logger };
-        if (File.Exists(DatFilePath))
+        if (File.Exists(datFilePath))
         {
             try
             {
-                var bytes = File.ReadAllBytes(DatFilePath);
+                var bytes = File.ReadAllBytes(datFilePath);
                 if (bytes.Length > 0)
                 {
                     // The root object in the .dat file is a List<RaGameInfo>,

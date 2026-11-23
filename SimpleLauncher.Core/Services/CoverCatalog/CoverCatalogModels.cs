@@ -70,4 +70,10 @@ public sealed class CoverCatalogEntry
 
     /// <summary>Gets or sets the image height in pixels.</summary>
     public int Height { get; set; }
+
+    /// <summary>
+    ///     Gets or sets whether the source cover has actual transparent pixels. The client
+    ///     uses this to replace a legacy white-flattened JPEG with the transparent PNG.
+    /// </summary>
+    public bool HasAlpha { get; set; }
 }

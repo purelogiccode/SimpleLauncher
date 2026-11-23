@@ -1,18 +1,19 @@
 #Requires -Version 7
 <#
 .SYNOPSIS
-Uploads the staged cover catalog and JPEG derivatives to Cloudflare R2.
+Uploads the staged cover catalog and PNG derivatives (alpha preserved) to Cloudflare R2.
 
 .DESCRIPTION
 Copies the output of scripts/build-cover-catalog.ps1 to:
 
   r2:<bucket>/Simple Launcher/covers/v1/catalog.json
   r2:<bucket>/Simple Launcher/covers/v1/<system-slug>/index.json
-  r2:<bucket>/Simple Launcher/covers/v1/<system-slug>/<canonical-name>.jpg
+  r2:<bucket>/Simple Launcher/covers/v1/<system-slug>/<canonical-name>.png
 
 Images are uploaded first, system indexes second, and catalog.json last, so a client
 never sees an index that points at an object that is not there yet. The script uses
-rclone copy (never sync --delete), so existing R2 objects are never removed.
+rclone copy (never sync --delete); the only removal is the explicit opt-in
+-RemoveLegacyJpegs cleanup, which runs after the PNG catalog is publicly verified.
 
 Public URLs are served from:
   https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/
@@ -50,6 +51,11 @@ Skip objects already present instead of comparing checksums. Useful for resuming
 .PARAMETER SkipImages
 Skip the image pass (for example after uploading images in batches).
 
+.PARAMETER RemoveLegacyJpegs
+After the PNG catalog is uploaded and publicly verified, delete the old `.jpg`/`.jpeg`
+objects under the same prefix. This is the only destructive operation in the script and is
+explicitly opt-in.
+
 .PARAMETER FastList
 Use rclone's fast-list for the S3/R2 backend.
 
@@ -86,6 +92,8 @@ param(
 
     [switch]$SkipImages,
 
+    [switch]$RemoveLegacyJpegs,
+
     [switch]$FastList
 )
 
@@ -107,9 +115,9 @@ if ($indexFiles.Count -eq 0) {
     throw "No <system>/index.json files were found in the staging folder: $StageDir"
 }
 
-$imageFiles = @(Get-ChildItem -LiteralPath $StageDir -Recurse -File -Filter '*.jpg' -ErrorAction SilentlyContinue)
+$imageFiles = @(Get-ChildItem -LiteralPath $StageDir -Recurse -File -Filter '*.png' -ErrorAction SilentlyContinue)
 if ($imageFiles.Count -eq 0) {
-    throw "No JPEG derivatives were found in the staging folder: $StageDir"
+    throw "No PNG derivatives were found in the staging folder: $StageDir"
 }
 
 $rcloneCommand = Get-Command rclone -ErrorAction SilentlyContinue
@@ -132,19 +140,24 @@ $remoteRoot = "$Remote$Bucket/$Prefix"
 
 Write-Host 'Cover catalog upload plan'
 Write-Host "  Stage:   $StageDir"
-Write-Host "  Covers:  $($imageFiles.Count) JPEG files"
+Write-Host "  Covers:  $($imageFiles.Count) PNG files"
 Write-Host "  Indexes: $($indexFiles.Count)"
 Write-Host "  Remote:  $remoteRoot"
 Write-Host "  Public:  $PublicBaseUrl/"
 Write-Host "  Workers: $Transfers transfers / $Checkers checkers"
 if ($IgnoreExisting) { Write-Host '  Mode:    skip existing images (resume)' }
 if ($SkipImages) { Write-Host '  Mode:    skip image pass' }
+if ($RemoveLegacyJpegs) { Write-Host '  Cleanup: delete legacy .jpg/.jpeg objects after verification' }
 Write-Host ''
 
 function Invoke-Rclone {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
 
     $effective = @($Arguments)
+    # R2 occasionally returns a transient 502 on a single PutObject; retry the file and
+    # the HTTP request instead of failing the whole 121k-object upload.
+    if ($effective -notcontains '--retries') { $effective += @('--retries', '5') }
+    if ($effective -notcontains '--low-level-retries') { $effective += @('--low-level-retries', '10') }
     if ($DryRun) { $effective += '--dry-run' }
 
     Write-Host ("rclone " + ($effective -join ' '))
@@ -161,10 +174,13 @@ $imageArguments = @(
     '--exclude', '*/index.json',
     '--exclude', 'catalog.json',
     '--exclude', 'report.md',
+    '--exclude', '*.jpg',
+    '--exclude', '*.jpeg',
+    '--exclude', '*.webp',
     '--transfers', $Transfers,
     '--checkers', $Checkers,
     '--s3-no-check-bucket',
-    '--header-upload', 'Content-Type: image/jpeg',
+    '--header-upload', 'Content-Type: image/png',
     '--header-upload', 'Cache-Control: public, max-age=86400',
     '--stats', '30s',
     '--stats-one-line'
@@ -251,7 +267,22 @@ Write-Host ''
 Write-Host 'Verifying public objects...'
 Test-PublicObject -Url (Get-PublicUrl 'catalog.json') -ExpectedContentType 'application/json'
 Test-PublicObject -Url (Get-PublicUrl $indexRelative) -ExpectedContentType 'application/json'
-Test-PublicObject -Url (Get-PublicUrl $imageRelative) -ExpectedContentType 'image/jpeg'
+Test-PublicObject -Url (Get-PublicUrl $imageRelative) -ExpectedContentType 'image/png'
+
+if ($RemoveLegacyJpegs) {
+    Write-Host ''
+    Write-Host 'Removing legacy JPEG derivatives (PNG catalog is verified)...'
+    $deleteArguments = @(
+        'delete', $remoteRoot,
+        '--include', '*.jpg',
+        '--include', '*.jpeg',
+        '--s3-no-check-bucket',
+        '--stats', '30s',
+        '--stats-one-line'
+    )
+    if ($FastList) { $deleteArguments += '--fast-list' }
+    Invoke-Rclone -Arguments $deleteArguments
+}
 
 Write-Host ''
 Write-Host 'Upload complete.'

@@ -19,6 +19,9 @@ public sealed class CoverCatalogDownloadService
         "https://assets.purelogiccode.com/Simple%20Launcher/covers/v1";
     private const int MaxDownloadAttempts = 3;
     private const int MaxParallelDownloads = 4;
+    // Bump when the catalog derivative format changes so a new app build ignores the
+    // previous index cache (JPEG v1 -> PNG with alpha v2).
+    private const string CacheFormatVersion = "v2";
 
     private static readonly TimeSpan CatalogCacheTtl = TimeSpan.FromHours(24);
     private static readonly TimeSpan IndexCacheTtl = TimeSpan.FromDays(7);
@@ -142,13 +145,18 @@ public sealed class CoverCatalogDownloadService
 
         foreach (var game in games)
         {
-            if (localLookup.FindBestMatch(game, fuzzyThreshold) is not null)
+            var local = localLookup.FindBestMatch(game, fuzzyThreshold);
+            var entry = catalogLookup.FindBestMatch(game, fuzzyThreshold);
+
+            // A JPEG written by the old catalog cannot carry alpha. If the current catalog
+            // entry is a transparent PNG, keep the legacy JPEG and add the corrected PNG
+            // beside it (the image extension order prefers .png).
+            if (local is not null && !NeedsTransparencyRepair(local, entry))
             {
                 alreadyPresent++;
                 continue;
             }
 
-            var entry = catalogLookup.FindBestMatch(game, fuzzyThreshold);
             if (entry is null)
             {
                 notFound++;
@@ -190,7 +198,10 @@ public sealed class CoverCatalogDownloadService
             {
                 try
                 {
-                    var target = Path.Combine(imageFolder, $"{item.Game}.jpg");
+                    var extension = Path.GetExtension(item.Entry.File);
+                    if (string.IsNullOrEmpty(extension) || !_imageExtensions.Contains(extension))
+                        extension = ".png";
+                    var target = Path.Combine(imageFolder, $"{item.Game}{extension}");
                     if (File.Exists(target) && new FileInfo(target).Length > 0)
                     {
                         Interlocked.Increment(ref raceSkipped);
@@ -245,7 +256,7 @@ public sealed class CoverCatalogDownloadService
     {
         return await LoadCachedOrFetchAsync<CoverCatalogManifest>(
             $"{_catalogBaseUrl}/catalog.json",
-            Path.Combine(_cacheDirectory, "catalog.json"),
+            Path.Combine(_cacheDirectory, $"catalog.{CacheFormatVersion}.json"),
             CatalogCacheTtl, cancellationToken);
     }
 
@@ -256,7 +267,7 @@ public sealed class CoverCatalogDownloadService
             : system.IndexFile;
         return await LoadCachedOrFetchAsync<CoverCatalogIndex>(
             $"{_catalogBaseUrl}/{relative}",
-            Path.Combine(_cacheDirectory, $"{system.Slug}.index.json"),
+            Path.Combine(_cacheDirectory, $"{system.Slug}.{CacheFormatVersion}.index.json"),
             IndexCacheTtl, cancellationToken);
     }
 
@@ -401,11 +412,31 @@ public sealed class CoverCatalogDownloadService
 
         return Directory.EnumerateFiles(imageFolder, "*", SearchOption.TopDirectoryOnly)
             .Where(path => _imageExtensions.Contains(Path.GetExtension(path)))
-            .Select(path => Path.GetFileNameWithoutExtension(path))
-            .Where(static name => !string.IsNullOrWhiteSpace(name) &&
-                                  !string.Equals(name, "default", StringComparison.OrdinalIgnoreCase))
-            .Select(static name => new CoverCatalogEntry { File = name, Names = [name] })
+            .Select(path => new
+            {
+                Path = path,
+                Name = Path.GetFileNameWithoutExtension(path)
+            })
+            .Where(static item => !string.IsNullOrWhiteSpace(item.Name) &&
+                                  !string.Equals(item.Name, "default", StringComparison.OrdinalIgnoreCase))
+            .Select(static item => new CoverCatalogEntry { File = item.Path, Names = [item.Name] })
             .ToList();
+    }
+
+    /// <summary>
+    ///     Detects a cover downloaded by the old JPEG catalog that must be repaired by the
+    ///     new transparent PNG. Only transparent catalog entries trigger the repair; opaque
+    ///     user JPEG covers are left untouched.
+    /// </summary>
+    private static bool NeedsTransparencyRepair(CoverCatalogEntry local, CoverCatalogEntry? catalog)
+    {
+        if (catalog?.HasAlpha != true) return false;
+        if (!string.Equals(Path.GetExtension(catalog.File), ".png", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var localExtension = Path.GetExtension(local.File);
+        return string.Equals(localExtension, ".jpg", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(localExtension, ".jpeg", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveImageFolder(CoverDownloadRequest request)

@@ -9,7 +9,7 @@ using SkiaSharp;
 
 namespace CoverCatalogBuilder;
 
-/// <summary>Builds the canonical cover catalog and its JPEG derivatives.</summary>
+/// <summary>Builds the canonical cover catalog and its PNG derivatives (alpha preserved).</summary>
 internal sealed class CatalogBuilder
 {
     private const string CatalogFileName = "catalog.json";
@@ -180,15 +180,17 @@ internal sealed class CatalogBuilder
                                 entry.Height = existingHeight;
                             }
 
+                            entry.HasAlpha = TryReadTransparency(destination);
                             entry.Size = new FileInfo(destination).Length;
                             Interlocked.Increment(ref skipped);
                         }
                         else
                         {
-                            var (width, height) = EncodeCover(group.Canonical.SourcePath, destination,
-                                _options.MaxSize, _options.Quality);
+                            var (width, height, hasAlpha) = EncodeCover(group.Canonical.SourcePath, destination,
+                                _options.MaxSize);
                             entry.Width = width;
                             entry.Height = height;
+                            entry.HasAlpha = hasAlpha;
                             entry.Size = new FileInfo(destination).Length;
                             Interlocked.Increment(ref written);
                             Interlocked.Add(ref bytesWritten, entry.Size);
@@ -218,6 +220,7 @@ internal sealed class CatalogBuilder
 
         var index = new CoverCatalogIndex
         {
+            Version = 2,
             System = plan.Name,
             Slug = plan.Slug,
             Images = entries
@@ -232,8 +235,9 @@ internal sealed class CatalogBuilder
         {
             var expected = new HashSet<string>(
                 index.Images.Select(static entry => entry.File), StringComparer.OrdinalIgnoreCase);
-            foreach (var existing in Directory.EnumerateFiles(outputDirectory, "*.jpg",
-                         SearchOption.TopDirectoryOnly))
+            foreach (var existing in Directory.EnumerateFiles(outputDirectory, "*",
+                         SearchOption.TopDirectoryOnly)
+                     .Where(static path => SupportedExtensions.Contains(Path.GetExtension(path))))
             {
                 if (expected.Contains(Path.GetFileName(existing))) continue;
                 File.Delete(existing);
@@ -263,6 +267,7 @@ internal sealed class CatalogBuilder
     {
         var catalog = new CoverCatalogManifest
         {
+            Version = 2,
             BaseUrl = _options.BaseUrl.TrimEnd('/'),
             GeneratedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
             Systems = results
@@ -292,7 +297,7 @@ internal sealed class CatalogBuilder
         builder.AppendLine(CultureInfo.InvariantCulture, $"- Output: `{_options.OutputDirectory}`");
         builder.AppendLine(CultureInfo.InvariantCulture, $"- Public base: `{_options.BaseUrl.TrimEnd('/')}`");
         builder.AppendLine(CultureInfo.InvariantCulture,
-            $"- Derivative: max {_options.MaxSize}px, JPEG q{_options.Quality}");
+            $"- Derivative: max {_options.MaxSize}px, PNG with alpha preserved");
         builder.AppendLine();
 
         var sourceImages = results.Sum(static result => result.SourceFiles);
@@ -372,9 +377,9 @@ internal sealed class CatalogBuilder
         if (safeName.Length > 180)
             safeName = string.Concat(safeName.AsSpan(0, 160), "-", ShortHash(baseName));
 
-        var candidate = $"{safeName}.jpg";
+        var candidate = $"{safeName}.png";
         var suffix = 2;
-        while (!usedFileNames.TryAdd(candidate, 0)) candidate = $"{safeName}-{suffix++}.jpg";
+        while (!usedFileNames.TryAdd(candidate, 0)) candidate = $"{safeName}-{suffix++}.png";
         return candidate;
     }
 
@@ -394,28 +399,32 @@ internal sealed class CatalogBuilder
         return Convert.ToHexString(hash)[..8].ToLowerInvariant();
     }
 
-    private static (int Width, int Height) EncodeCover(string sourcePath, string destination, int maxSize, int quality)
+    private static (int Width, int Height, bool HasAlpha) EncodeCover(string sourcePath, string destination,
+        int maxSize)
     {
         using var source = SKBitmap.Decode(sourcePath) ??
                            throw new InvalidOperationException("The image could not be decoded.");
         if (source.Width <= 0 || source.Height <= 0)
             throw new InvalidOperationException("The image has invalid dimensions.");
+        var hasAlpha = HasTransparency(source);
 
         var scale = Math.Min(1d, maxSize / (double)Math.Max(source.Width, source.Height));
         var width = Math.Max(1, (int)Math.Round(source.Width * scale, MidpointRounding.AwayFromZero));
         var height = Math.Max(1, (int)Math.Round(source.Height * scale, MidpointRounding.AwayFromZero));
 
-        using var resized = new SKBitmap(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Opaque));
+        using var resized = new SKBitmap(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul));
         using (var canvas = new SKCanvas(resized))
         {
-            canvas.Clear(SKColors.White);
+            // Keep the alpha channel: transparent box-art backgrounds must not be flattened
+            // onto white (PNG is the catalog format for this reason).
+            canvas.Clear(SKColors.Transparent);
             using var sourceImage = SKImage.FromBitmap(source);
             var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
             canvas.DrawImage(sourceImage, new SKRect(0, 0, width, height), sampling);
         }
 
         using var image = SKImage.FromBitmap(resized);
-        using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality) ??
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100) ??
                          throw new InvalidOperationException("The image could not be encoded.");
 
         var tempPath = $"{destination}.tmp-{Guid.NewGuid():N}";
@@ -434,7 +443,32 @@ internal sealed class CatalogBuilder
             if (File.Exists(tempPath)) File.Delete(tempPath);
         }
 
-        return (width, height);
+        return (width, height, hasAlpha);
+    }
+
+    private static bool HasTransparency(SKBitmap bitmap)
+    {
+        if (bitmap.AlphaType == SKAlphaType.Opaque) return false;
+
+        foreach (var pixel in bitmap.Pixels)
+        {
+            if (pixel.Alpha < 255) return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryReadTransparency(string path)
+    {
+        try
+        {
+            using var bitmap = SKBitmap.Decode(path);
+            return bitmap is not null && HasTransparency(bitmap);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static bool TryReadDimensions(string path, out int width, out int height)

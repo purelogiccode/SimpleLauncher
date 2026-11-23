@@ -63,7 +63,7 @@ public class RetroAchievementsManagerTests : IDisposable
         var bytes = MessagePackSerializer.Serialize(games);
         File.WriteAllBytes(_datFilePath, bytes);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
 
         Assert.NotNull(manager);
         Assert.Single(manager.AllGames);
@@ -78,7 +78,7 @@ public class RetroAchievementsManagerTests : IDisposable
     {
         File.WriteAllBytes(_datFilePath, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
 
         Assert.NotNull(manager);
         Assert.Empty(manager.AllGames);
@@ -92,7 +92,7 @@ public class RetroAchievementsManagerTests : IDisposable
     {
         File.WriteAllText(_datFilePath, "<xml><item>test</item></xml>");
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
 
         Assert.NotNull(manager);
         Assert.Empty(manager.AllGames);
@@ -106,7 +106,7 @@ public class RetroAchievementsManagerTests : IDisposable
     {
         File.WriteAllBytes(_datFilePath, []);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
 
         Assert.NotNull(manager);
         Assert.Empty(manager.AllGames);
@@ -121,7 +121,7 @@ public class RetroAchievementsManagerTests : IDisposable
         // Ensure the file does not exist
         if (File.Exists(_datFilePath)) File.Delete(_datFilePath);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
 
         Assert.NotNull(manager);
         Assert.Empty(manager.AllGames);
@@ -152,7 +152,7 @@ public class RetroAchievementsManagerTests : IDisposable
         var bytes = MessagePackSerializer.Serialize(games);
         File.WriteAllBytes(_datFilePath, bytes);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
         var result = manager.GetGameInfoByHash("abc123");
 
         Assert.NotNull(result);
@@ -184,7 +184,7 @@ public class RetroAchievementsManagerTests : IDisposable
         var bytes = MessagePackSerializer.Serialize(games);
         File.WriteAllBytes(_datFilePath, bytes);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
         var result = manager.GetGameInfoByHash("unknown_hash");
 
         Assert.Null(result);
@@ -215,7 +215,7 @@ public class RetroAchievementsManagerTests : IDisposable
         var bytes = MessagePackSerializer.Serialize(games);
         File.WriteAllBytes(_datFilePath, bytes);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
         var result = manager.GetGameInfoByHash("");
 
         Assert.Null(result);
@@ -258,7 +258,7 @@ public class RetroAchievementsManagerTests : IDisposable
         var bytes = MessagePackSerializer.Serialize(games);
         File.WriteAllBytes(_datFilePath, bytes);
 
-        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger);
+        var manager = RetroAchievementsManager.LoadRetroAchievement(_logErrors, Log.Logger, _datFilePath);
         var result = manager.GetGameInfoByHash("shared_hash");
 
         Assert.NotNull(result);

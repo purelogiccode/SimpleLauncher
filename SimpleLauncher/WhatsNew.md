@@ -1,3 +1,17 @@
+# Next Release
+*Unreleased*
+---
+
+## Cover Catalog
+- **Transparency preserved** - the R2 cover catalog is rebuilt as PNG with the alpha channel
+  intact instead of JPEG flattened onto white. Transparent Atari 2600 (and other) box art now
+  keeps its real background.
+- **Automatic repair** - when a legacy white `.jpg` exists and the catalog has a transparent
+  PNG, **Download Missing Covers** adds the `.png` beside it; the image-extension order
+  prefers the corrected file. Existing files are never deleted.
+
+---
+
 # Release 5.9.0
 *2026-11-22*
 ---

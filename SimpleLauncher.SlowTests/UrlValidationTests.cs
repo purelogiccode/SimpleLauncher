@@ -227,6 +227,12 @@ public partial class UrlValidationTests
 
                 return $"{url} -> Timeout";
             }
+            catch (HttpRequestException) when (attempt < maxRetries)
+            {
+                // Transient DNS/TLS/connectivity failures should not fail the whole
+                // documentation URL sweep on the first attempt.
+                await Task.Delay(2000);
+            }
             catch (Exception ex)
             {
                 return $"{url} -> {ex.GetType().Name}: {ex.Message}";

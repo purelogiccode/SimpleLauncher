@@ -2,6 +2,10 @@
 
 > Condensed changelog. The canonical, fully detailed file is `SimpleLauncher\WhatsNew.md` (shown in-app via **Help → Update History**).
 
+## Next release - Unreleased
+
+- **Cover catalog transparency**: derivatives are now PNG with alpha preserved instead of JPEG flattened onto white. The client saves the catalog extension (`.png`) and repairs a legacy white `.jpg` by adding the transparent PNG beside it.
+
 ## 5.9.0 - 2026-11-22
 
 - **Release bundles**: Windows x64/ARM64 portable ZIP + per-user installer; Linux x64/ARM64 portable ZIP/tar.gz + self-contained AppImage + Flatpak; macOS Apple Silicon (arm64) unsigned DMG.

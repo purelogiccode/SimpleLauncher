@@ -27,9 +27,10 @@ Local pre-release gate for 5.9.0:
 | Check | Result |
 |---|---|
 | `SimpleLauncher.sln` + `SimpleLauncher.Wpf.Reference.sln` Debug + Release builds | 0 warnings / 0 errors |
-| Fast suites | main `SimpleLauncher.Avalonia.Tests` **797/797**; WPF reference `SimpleLauncher.Tests` **2278/2278** |
+| Fast suites | main `SimpleLauncher.Avalonia.Tests` **823/823**; WPF reference `SimpleLauncher.Tests` **2279/2279** |
 | Slow suites | main `SimpleLauncher.Avalonia.SlowTests` **11/11**; WPF reference `SimpleLauncher.SlowTests` **84/84** (Debug and Release) |
 | `jb inspectcode -e=WARNING` | 0 issues |
+| Cover catalog | 121,812 PNG covers / 37.88 GiB; 0 legacy JPGs; public Atari PNG alpha `0`; live smoke download + legacy-JPEG repair passed |
 | Windows x64 bundle | `release_5.9.0_win-x64.zip` inspected: `SimpleLauncher.exe` 5.9.0, RetroAchievementsSharp 1.1.1, no stale `.Cli` payload, no helper logs |
 
 The CI release workflow builds and verifies Windows x64/ARM64, Linux x64/ARM64 and macOS

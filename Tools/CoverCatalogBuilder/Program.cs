@@ -1,7 +1,7 @@
 namespace CoverCatalogBuilder;
 
 /// <summary>
-///     Builds the canonical cover catalog and 800px JPEG derivatives from a local
+///     Builds the canonical cover catalog and 800px PNG derivatives from a local
 ///     Simple Launcher images folder. The output is ready for an incremental R2 upload.
 /// </summary>
 internal static class Program
@@ -31,7 +31,7 @@ internal static class Program
         Console.WriteLine($"  source:  {options.SourceDirectory}");
         Console.WriteLine($"  output:  {options.OutputDirectory}");
         Console.WriteLine($"  baseUrl: {options.BaseUrl}");
-        Console.WriteLine($"  size:    max {options.MaxSize}px, JPEG q{options.Quality}");
+        Console.WriteLine($"  size:    max {options.MaxSize}px, PNG (alpha preserved)");
         Console.WriteLine();
 
         return new CatalogBuilder(options).Run();

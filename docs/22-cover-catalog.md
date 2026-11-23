@@ -12,7 +12,7 @@ prefix so it cannot collide with the release assets or the old image packs:
 ```text
 r2:simplelauncher-thumbnails/Simple Launcher/covers/v1/catalog.json
 r2:simplelauncher-thumbnails/Simple Launcher/covers/v1/<system-slug>/index.json
-r2:simplelauncher-thumbnails/Simple Launcher/covers/v1/<system-slug>/<canonical-name>.jpg
+r2:simplelauncher-thumbnails/Simple Launcher/covers/v1/<system-slug>/<canonical-name>.png
 ```
 
 Public URLs:
@@ -20,14 +20,14 @@ Public URLs:
 ```text
 https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/catalog.json
 https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/<system-slug>/index.json
-https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/<system-slug>/<canonical-name>.jpg
+https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/<system-slug>/<canonical-name>.png
 ```
 
 Examples:
 
 ```text
 https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/atari-5200/index.json
-https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/atari-5200/BerZerk%20(USA).jpg
+https://assets.purelogiccode.com/Simple%20Launcher/covers/v1/atari-5200/BerZerk%20(USA).png
 ```
 
 The old `Simple Launcher/<system>.zip` packs are not modified. The existing
@@ -36,12 +36,12 @@ cover catalog excludes `Microsoft Windows` by default.
 
 ## Published catalog
 
-The first full catalog was published on **2026-11-22**:
+The full PNG catalog was rebuilt on **2026-11-23** (the previous JPEG set was removed):
 
 - **80 systems**
 - **121,812 canonical covers**
 - **121,893 R2 objects** (covers + 80 indexes + catalog)
-- **7.108 GiB**
+- **37.88 GiB** (PNG is lossless; transparent backgrounds are preserved)
 - `rclone check --size-only --one-way` reports **0 differences**
 
 The public catalog is live at
@@ -69,14 +69,14 @@ The builder uses the same normalization as the app's local cover matcher:
 The default build excludes `Microsoft Windows` (store covers already exist per-game under
 `Microsoft Windows/`). Pass `-ExcludeSystem`/`--exclude-system` to change that. Non-image
 files (ZIP/RAR archives) are counted as unsupported and are not uploaded. The two `.webp`
-sources are supported by SkiaSharp and are re-encoded as JPEG.
+sources are supported by SkiaSharp and are re-encoded as PNG.
 
 ## Derivatives
 
 - Longest side: **800 px** (no upscaling).
-- Format: JPEG quality **85**, flattened onto white when the source has alpha.
-- This keeps a ~154k-cover set near **10 GB** instead of the ~50 GB originals.
-- The source collection remains the master copy; only derivatives are uploaded.
+- Format: **PNG** with the alpha channel preserved; transparent backgrounds are never flattened onto white.
+- The full catalog is larger than the old JPEG set because PNG is lossless; only derivatives are uploaded.
+- The source collection remains the master copy.
 
 ## Build and upload
 
@@ -104,11 +104,15 @@ Review `<output>/report.md`, then dry-run the upload:
 pwsh scripts/publish-covers-r2.ps1 -StageDir "D:\Temp\covers-stage" -DryRun
 ```
 
-Publish:
+Publish, and after the PNG catalog has been publicly verified remove the legacy JPEGs:
 
 ```powershell
-pwsh scripts/publish-covers-r2.ps1 -StageDir "D:\Temp\covers-stage"
+pwsh scripts/publish-covers-r2.ps1 -StageDir "D:\Temp\covers-stage" -RemoveLegacyJpegs
 ```
+
+`-RemoveLegacyJpegs` is opt-in and scoped to `covers/v1`; it deletes only `.jpg`/`.jpeg`
+objects after the catalog, index and image HEAD checks pass. The old JPEGs are never
+referenced by the PNG indexes.
 
 Upload order is deliberate:
 
@@ -141,7 +145,7 @@ pass can be skipped entirely with `-SkipImages` after uploading images in batche
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "baseUrl": "https://assets.purelogiccode.com/Simple%20Launcher/covers/v1",
   "generatedUtc": "2026-11-21T00:00:00Z",
   "systems": [
@@ -154,16 +158,17 @@ pass can be skipped entirely with `-SkipImages` after uploading images in batche
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "system": "Atari 5200",
   "slug": "atari-5200",
   "images": [
     {
-      "file": "BerZerk (USA).jpg",
+      "file": "BerZerk (USA).png",
       "names": ["berzerk", "BerZerk (USA)"],
       "size": 61100,
       "width": 439,
-      "height": 600
+      "height": 600,
+      "hasAlpha": true
     }
   ]
 }
@@ -185,11 +190,13 @@ The Avalonia app exposes **Edit System → Download Missing Covers**. The flow i
 
 1. build one local name index from the selected system's image folder;
 2. use the cached per-system `index.json` (24 h catalog TTL, 7 day index TTL, stale cache
-   fallback when offline);
+   fallback when offline; the new PNG format uses fresh `*.v2.*` cache files);
 3. match exact aliases, then annotation-stripped names, then a normalized token order, then
    the existing Jaro-Winkler fuzzy matcher;
-4. download only the matched canonical JPEG with 3 attempts and bounded parallelism;
-5. save it as `<rom base name>.jpg` atomically and never replace an existing cover;
+4. download only the matched canonical PNG with 3 attempts and bounded parallelism;
+5. save it as `<rom base name>.png` atomically and never overwrite an existing file; a
+   legacy white `.jpg` from the old catalog is preserved and the transparent `.png` is added
+   beside it (the image-extension order prefers `.png`);
 6. report `x / y`, current game, downloaded/already present/not found/failed and support
    cancellation through the loading overlay.
 

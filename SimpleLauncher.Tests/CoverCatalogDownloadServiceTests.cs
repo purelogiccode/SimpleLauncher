@@ -79,8 +79,8 @@ public class CoverCatalogDownloadServiceTests : IDisposable
         Assert.Equal(1, result.Downloaded);
         Assert.Equal(1, result.AlreadyPresent);
         Assert.Equal(1, result.NotFound);
-        Assert.True(File.Exists(Path.Combine(_images, "Super Mario Bros. (USA).jpg")));
-        Assert.False(File.Exists(Path.Combine(_images, "Unknown Game.jpg")));
+        Assert.True(File.Exists(Path.Combine(_images, "Super Mario Bros. (USA).png")));
+        Assert.False(File.Exists(Path.Combine(_images, "Unknown Game.png")));
         Assert.Equal(1, handler.ImageRequests);
     }
 
@@ -95,7 +95,23 @@ public class CoverCatalogDownloadServiceTests : IDisposable
             CreateRequest("Super Mario Brothers (USA).nes"));
 
         Assert.Equal(1, result.Downloaded);
-        Assert.True(File.Exists(Path.Combine(_images, "Super Mario Brothers (USA).jpg")));
+        Assert.True(File.Exists(Path.Combine(_images, "Super Mario Brothers (USA).png")));
+    }
+
+    [Fact]
+    public async Task DownloadMissingCovers_RepairsLegacyWhiteJpegWithTransparentPng()
+    {
+        WriteRom("Adventure (USA).nes");
+        var legacy = Path.Combine(_images, "Adventure (USA).jpg");
+        File.WriteAllBytes(legacy, [9, 9, 9]);
+
+        var service = CreateService(CreateHandler());
+
+        var result = await service.DownloadMissingCoversAsync(CreateRequest("Adventure (USA).nes"));
+
+        Assert.Equal(1, result.Downloaded);
+        Assert.True(File.Exists(Path.Combine(_images, "Adventure (USA).png")));
+        Assert.True(File.Exists(legacy)); // the legacy file is preserved, not overwritten
     }
 
     [Fact]
@@ -109,7 +125,7 @@ public class CoverCatalogDownloadServiceTests : IDisposable
 
         Assert.Equal(0, result.Downloaded);
         Assert.Equal(1, result.NotFound);
-        Assert.False(File.Exists(Path.Combine(_images, "Gone.jpg")));
+        Assert.False(File.Exists(Path.Combine(_images, "Gone.png")));
     }
 
     [Fact]
@@ -198,12 +214,17 @@ public class CoverCatalogDownloadServiceTests : IDisposable
                                "slug": "nintendo-nes",
                                "images": [
                                  {
-                                   "file": "Super Mario Bros. (USA).jpg",
+                                   "file": "Super Mario Bros. (USA).png",
                                    "names": ["Super Mario Bros. (USA)", "Super Mario Bros.", "Super Mario Brothers (USA)"]
                                  },
                                  {
-                                   "file": "Gone.jpg",
+                                   "file": "Gone.png",
                                    "names": ["Gone"]
+                                 },
+                                 {
+                                   "file": "Adventure (USA).png",
+                                   "names": ["Adventure (USA)"],
+                                   "hasAlpha": true
                                  }
                                ]
                              }
@@ -216,7 +237,7 @@ public class CoverCatalogDownloadServiceTests : IDisposable
                 return Json(HttpStatusCode.OK, catalog);
             if (path.EndsWith("/nintendo-nes/index.json", StringComparison.Ordinal))
                 return Json(HttpStatusCode.OK, index);
-            if (path.EndsWith(".jpg", StringComparison.Ordinal))
+            if (path.EndsWith(".png", StringComparison.Ordinal))
             {
                 if (notFoundImage) return new HttpResponseMessage(HttpStatusCode.NotFound);
                 return new HttpResponseMessage(HttpStatusCode.OK)
@@ -246,7 +267,7 @@ public class CoverCatalogDownloadServiceTests : IDisposable
             CancellationToken cancellationToken)
         {
             TotalRequests++;
-            if (request.RequestUri?.AbsolutePath.EndsWith(".jpg", StringComparison.Ordinal) == true)
+            if (request.RequestUri?.AbsolutePath.EndsWith(".png", StringComparison.Ordinal) == true)
                 ImageRequests++;
             return Task.FromResult(responder(request));
         }

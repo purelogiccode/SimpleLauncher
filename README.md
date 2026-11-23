@@ -156,7 +156,7 @@ Want the longer story, including where the other frontends are stronger? Read th
 * **Dual View Modes:** Toggle between visual **Grid View** with customizable aspect ratios and detailed **List View** with sortable metadata
 * **Modern Game Store Integration:** Automatic scanning for games from Microsoft Store (Windows Apps), Steam, Epic Games Store, GOG, Amazon Games, Battle.net, EA App, Humble Bundle, itch.io, Rockstar Games, and Uplay
 * **Fuzzy Image Matching:** Intelligent algorithm to find cover art even with imperfect filename matches
-* **Missing-Cover Download:** **Edit System → Download Missing Covers** checks the selected system locally and fetches only the missing art from the project's own R2 catalog (80 systems / 121,812 covers); existing covers are never replaced
+* **Missing-Cover Download:** **Edit System → Download Missing Covers** checks the selected system locally and fetches only the missing art from the project's own R2 catalog (80 systems / 121,812 covers, PNG with transparency preserved); existing covers are never overwritten, and a legacy white JPEG is repaired by adding the transparent PNG beside it
 * **Play History Tracking:** Detailed logs of play count, total playtime, and last played timestamps
 * **Global Search:** Advanced search engine supporting `AND`/`OR` operators across the entire multi-system library
 * **Favorites System:** Mark and organize favorite games with persistent storage
