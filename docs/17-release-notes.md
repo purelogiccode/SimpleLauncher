@@ -5,6 +5,7 @@
 ## 5.9.1 - 2026-11-23
 
 - **Cover catalog transparency**: derivatives are now PNG with alpha preserved instead of JPEG flattened onto white. The client saves the catalog extension (`.png`) and repairs a legacy white `.jpg` by adding the transparent PNG beside it.
+- **Post-download refresh**: Download Missing Covers now reloads only the selected system, preserves its letter filter/page, and releases superseded scans from the loading overlay immediately.
 - **Repository layout**: the WPF reference moved to `SimpleLauncher.Wpf.Reference.sln`; `SimpleLauncher.sln` and CI are Avalonia-first.
 
 ## 5.9.0 - 2026-11-22

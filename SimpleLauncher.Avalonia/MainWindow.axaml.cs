@@ -2793,7 +2793,7 @@ internal partial class MainWindow : Window, IPaginationHost
             _viewModel.SetStatusText(summary);
             ShowToast(_localization.GetString("CoverDownloadComplete", "Cover download complete."), summary);
 
-            if (result.Downloaded > 0) await _viewModel.ReloadGamesAsync();
+            if (result.Downloaded > 0) await _viewModel.ReloadCurrentSystemAsync();
         }
         catch (OperationCanceledException)
         {

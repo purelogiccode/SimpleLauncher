@@ -60,6 +60,13 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
     // newer request and must not overwrite the current view.
     private int _viewGeneration;
 
+    // View loads own at most one loading-overlay reference. When a newer view load
+    // supersedes an older scan, the older count is released immediately instead of
+    // waiting for the (uncancellable) scan to finish - otherwise the overlay can stay
+    // on screen after the newer view has already rendered.
+    private readonly Lock _viewLoadOverlayLock = new();
+    private int _viewLoadOverlayCount;
+
     /// <summary>
     ///     Font size for the game title caption on cards (from the Filename Font Size setting).
     /// </summary>
@@ -320,6 +327,23 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
     }
 
     /// <summary>
+    ///     Reloads only the currently selected system after its cover files changed. This
+    ///     keeps the user in the open system and avoids an unnecessary all-systems scan
+    ///     (which used to keep the loading overlay alive after Download Missing Covers).
+    /// </summary>
+    public async Task ReloadCurrentSystemAsync()
+    {
+        if (string.IsNullOrEmpty(SelectedSystem))
+        {
+            await ReloadGamesAsync();
+            return;
+        }
+
+        Log.Debug("Reloading the current system {System}", SelectedSystem);
+        await NavigateToSystemCoreAsync(SelectedSystem, preservePagination: true);
+    }
+
+    /// <summary>
     ///     Re-applies the Filename Preferences display mode (Original / CleanUp / NoFilename)
     ///     to the already-loaded cards in place. Called after the menu-driven setting change
     ///     instead of a full library reload: the mode only affects the caption text, so there
@@ -515,7 +539,18 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
     {
         var generation = ++_viewGeneration;
         if (clearBeforeLoad) ClearGameViewBeforeLoad();
-        SetLoadingState(true, loadingMessage);
+
+        lock (_viewLoadOverlayLock)
+        {
+            // A superseded scan cannot be cancelled (Task.Run is already enumerating the
+            // filesystem), so release its overlay reference now. The newer load then owns
+            // the single current reference.
+            var superseded = _viewLoadOverlayCount;
+            _viewLoadOverlayCount = 1;
+            for (var index = 0; index < superseded; index++) SetLoadingState(false);
+            SetLoadingState(true, loadingMessage);
+        }
+
         try
         {
             var result = await Task.Run(load);
@@ -523,7 +558,16 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
         }
         finally
         {
-            SetLoadingState(false);
+            lock (_viewLoadOverlayLock)
+            {
+                // Only the current view load owns the overlay reference; superseded
+                // loads were already released by the newer load's start.
+                if (generation == _viewGeneration)
+                {
+                    _viewLoadOverlayCount = 0;
+                    SetLoadingState(false);
+                }
+            }
         }
     }
 
@@ -1411,7 +1455,9 @@ internal partial class MainViewModel : ObservableObject, ILoadingState, ILaunchF
             SelectedSystem = systemName;
             IsMixedView = string.IsNullOrEmpty(systemName);
             IsShowingRetroAchievements = false;
-            LetterFilter = "";
+            // A watcher/cover refresh keeps the active letter filter and page; only a
+            // user-initiated navigation starts from the full unfiltered list.
+            if (!preservePagination) LetterFilter = "";
 
             var systems = string.IsNullOrEmpty(systemName)
                 ? _allSystems

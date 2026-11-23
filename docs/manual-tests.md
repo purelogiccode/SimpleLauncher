@@ -18,7 +18,7 @@ and dispatcher-dependent WPF services are inherently untested and are the bulk o
 **Suggested workflow:** one full pass through Easy Mode → Edit System → Emulator Settings → launch a game per emulator →
 RetroAchievements → a download → a store-game scan covers most of this checklist.
 
-**5.9.1 release gate (2026-11-23):** Debug/Release builds 0 warnings; fast suites **2279 + 823**;
+**5.9.1 release gate (2026-11-23):** Debug/Release builds 0 warnings; fast suites **2279 + 825**;
 slow suites **84 + 11**; `jb inspectcode -e=WARNING` 0 issues; Windows x64 bundle verified with
 RetroAchievementsSharp 1.1.1 and no stale tool payloads. The CI release workflow builds the
 Windows x64/ARM64, Linux x64/ARM64 and macOS arm64 bundles.
@@ -87,7 +87,7 @@ covered by this pass.
 - [ ] **Menu actions** (`MenuActionHandlerService`) — every menu item opens the right window / performs the right action with status-bar feedback: Easy/Expert mode, Download Image Pack, Scan for store games, Edit links, Gamepad toggle, Dead zone, fuzzy matching toggle/threshold, annotation stripping, Support, Donate. Rapid clicking → no double handling.
 - [X] **Platform-specific menus & data (Avalonia)** - on Windows, Options → Inject Emulator Config (21 emulators) and Edit System → "Scan for Microsoft Windows games" are present; on Linux/macOS both are hidden (Windows executables / registry-based features) and the first-run flow skips the "Scanning for Windows games..." overlay. The Tools menu was removed on every platform; MENU-00 asserts the top-level menu. About → Open AppData Path opens the folder that holds `settings.dat`: `%LocalAppData%\SimpleLauncher` on Windows, `~/.local/share/SimpleLauncher` (XDG) on Linux, `~/Library/Application Support/SimpleLauncher` on macOS.
 - [X] **Filter bar** (`FilterMenu`) - A-Z / # / All letters filter the game list with button highlight; "All" resets; keyboard arrows/Home/End navigate the letter buttons; notification sound on click.
-- [ ] **Missing-cover download** (`CoverCatalogDownloadService`) - with a system selected, **Edit System → Download Missing Covers** shows `x / y` progress, downloads only missing covers from the R2 catalog, leaves existing covers untouched, and the grid shows the new art after reload; cancel/emergency return stops cleanly; without a selected system a status hint appears.
+- [ ] **Missing-cover download** (`CoverCatalogDownloadService`) - with a system selected, **Edit System → Download Missing Covers** shows `x / y` progress, downloads only missing covers from the R2 catalog, leaves existing covers untouched, and the grid returns in place with the new art (no stuck "Loading games..." overlay); the letter filter/page are preserved; cancel/emergency return stops cleanly; without a selected system a status hint appears.
 - [X] **Status bar** — actions (sorting, launching, saving) show status text that auto-clears after the timeout.
 - [X] **Gamepad navigation** — see section 10.
 

@@ -414,6 +414,59 @@ public class MainViewModelQuickActionsTests : IDisposable
     }
 
     [Fact]
+    public async Task ReloadCurrentSystem_PreservesSystemAndLetterFilter()
+    {
+        await _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+        Assert.NotEmpty(_viewModel.Games);
+
+        var letter = _viewModel.Games[0].DisplayTitle[..1];
+        _viewModel.SetLetterFilter(letter);
+        var filteredCount = _viewModel.Games.Count;
+
+        await _viewModel.ReloadCurrentSystemAsync();
+
+        Assert.Equal("Test System", _viewModel.SelectedSystem);
+        Assert.Equal(letter, _viewModel.LetterFilter);
+        Assert.Equal(filteredCount, _viewModel.Games.Count);
+    }
+
+    [Fact]
+    public async Task SupersededViewLoad_ReleasesItsLoadingOverlayImmediately()
+    {
+        var calls = 0;
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _findCover
+            .Setup(s => s.FindCoverImagePath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns((string)null!)
+            .Callback(() =>
+            {
+                if (Interlocked.Increment(ref calls) != 1) return;
+                entered.TrySetResult();
+                gate.Task.GetAwaiter().GetResult();
+            });
+
+        Task? supersededLoad = null;
+        try
+        {
+            supersededLoad = _viewModel.NavigateToSystemCommand.ExecuteAsync("Test System");
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+            // A newer view load must release the old scan's overlay reference even though
+            // the uncancellable filesystem scan is still blocked in the background.
+            await _viewModel.NavigateToAllGamesCommand.ExecuteAsync(null);
+
+            Assert.False(_loadingHost.IsLoading);
+            Assert.False(_viewModel.IsLoading);
+        }
+        finally
+        {
+            gate.TrySetResult();
+            if (supersededLoad != null) await supersededLoad;
+        }
+    }
+
+    [Fact]
     public async Task ViewLoad_ClearsThePreviousGridBeforeTheScanCompletes()
     {
         // Start with a populated All Games view.

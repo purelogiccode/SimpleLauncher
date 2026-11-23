@@ -9,6 +9,9 @@
 - **Automatic repair** - when a legacy white `.jpg` exists and the catalog has a transparent
   PNG, **Download Missing Covers** adds the `.png` beside it; the image-extension order
   prefers the corrected file. Existing files are never deleted.
+- **No stuck loading overlay** - after a cover download the app reloads only the selected
+  system, keeps its letter filter/page, and releases the overlay reference of any superseded
+  scan immediately. The grid returns in place instead of showing "Loading games..." forever.
 - **Repository layout** - the WPF reference now lives in `SimpleLauncher.Wpf.Reference.sln`;
   `SimpleLauncher.sln` is Avalonia-first and CI builds only the main solution.
 
