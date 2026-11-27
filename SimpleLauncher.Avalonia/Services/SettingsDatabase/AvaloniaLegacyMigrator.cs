@@ -8,6 +8,7 @@ using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
+using SimpleLauncher.Diagnostics;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Core.Services.UnifiedSettings;
 using ILogger = Serilog.ILogger;

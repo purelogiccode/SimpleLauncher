@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using SimpleLauncher.Diagnostics;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;

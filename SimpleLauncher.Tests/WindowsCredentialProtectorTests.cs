@@ -1,7 +1,7 @@
 using System.Reflection;
 using Serilog.Core;
 using Serilog.Events;
-using SimpleLauncher.Core.Services.WpfServices;
+using SimpleLauncher.Core.Services.PlatformServices;
 using Xunit;
 
 namespace SimpleLauncher.Tests;

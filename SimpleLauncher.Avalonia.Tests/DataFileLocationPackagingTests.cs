@@ -1,5 +1,6 @@
 using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
+using SimpleLauncher.Diagnostics;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

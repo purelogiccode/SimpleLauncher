@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
-using Mame.DatCreator.Services.DebugAndBugReport;
+using SimpleLauncher.Diagnostics;
 using Serilog.Events;
 
 namespace Mame.DatCreator;
@@ -23,7 +23,7 @@ public static class Program
         var appDataLogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
         Directory.CreateDirectory(appDataLogFolder);
 
-        var bugReportSink = new BugReportApiSink(appDataLogFolder);
+        var bugReportSink = new BugReportApiSink(new BugReportSinkOptions { LogFolder = appDataLogFolder });
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()

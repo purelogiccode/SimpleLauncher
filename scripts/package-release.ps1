@@ -41,8 +41,8 @@ keep only the matching subfolder.
 Debug symbol files (*.pdb) are pruned from the payload: they are never needed at runtime
 and the native SkiaSharp/HarfBuzzSharp symbols alone account for roughly 105 MB.
 
-The version is validated against the canonical SimpleLauncher.csproj (plus both app
-projects/manifests, SimpleLauncher.Core.csproj and the Avalonia updater project) before
+The version is validated against the canonical SimpleLauncher.Avalonia.csproj (plus the
+Avalonia manifest, SimpleLauncher.Core.csproj and the Avalonia updater project) before
 publishing.
 
 .PARAMETER Version
@@ -92,7 +92,6 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 $repoDir = Split-Path -Parent $PSScriptRoot
-$wpfProject = Join-Path $repoDir 'SimpleLauncher\SimpleLauncher.csproj'
 $avaloniaProject = Join-Path $repoDir 'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj'
 $updaterProject = Join-Path $repoDir 'SimpleLauncher.Avalonia.Updater\SimpleLauncher.Avalonia.Updater.csproj'
 
@@ -236,8 +235,8 @@ function Assert-Versions {
     param([Parameter(Mandatory = $true)][string]$Version)
 
     $projectVersions = [ordered]@{
-        'SimpleLauncher\SimpleLauncher.csproj'                       = $wpfProject
         'SimpleLauncher.Core\SimpleLauncher.Core.csproj'             = (Join-Path $repoDir 'SimpleLauncher.Core\SimpleLauncher.Core.csproj')
+        'SimpleLauncher.Diagnostics\...csproj'                       = (Join-Path $repoDir 'SimpleLauncher.Diagnostics\SimpleLauncher.Diagnostics.csproj')
         'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj'     = $avaloniaProject
         'SimpleLauncher.Avalonia.Updater\...csproj'                  = $updaterProject
     }
@@ -250,7 +249,6 @@ function Assert-Versions {
     }
 
     $manifests = @(
-        'SimpleLauncher\app.manifest',
         'SimpleLauncher.Avalonia\app.manifest'
     )
     foreach ($manifestRelative in $manifests) {
@@ -260,7 +258,7 @@ function Assert-Versions {
         }
     }
 
-    Write-Host "Version $Version is consistent across both app projects, the updater project and the manifests."
+    Write-Host "Version $Version is consistent across the Avalonia app, the updater project and the manifest."
 }
 
 function Invoke-DotnetPublish {

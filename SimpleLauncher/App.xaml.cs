@@ -41,7 +41,7 @@ using SimpleLauncher.Core.Services.RetroAchievements;
 using SimpleLauncher.Core.Services.SanitizeInputString;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Core.Services.UsageStats;
-using SimpleLauncher.Core.Services.WpfServices;
+using SimpleLauncher.Core.Services.PlatformServices;
 using SimpleLauncher.InjectConfigWindows;
 using SimpleLauncher.Interfaces;
 using SimpleLauncher.Services;

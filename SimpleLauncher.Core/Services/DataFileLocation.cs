@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using SimpleLauncher.Diagnostics;
 using PathHelper = SimpleLauncher.Core.Services.CheckPaths.PathHelper;
 
 namespace SimpleLauncher.Core.Services;

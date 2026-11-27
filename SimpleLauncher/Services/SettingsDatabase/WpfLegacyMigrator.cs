@@ -7,6 +7,7 @@ using SimpleLauncher.Core.Services;
 using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Core.Services.UnifiedSettings;
+using SimpleLauncher.Diagnostics;
 using SimpleLauncher.Services.Favorites;
 using SimpleLauncher.Services.PlayHistory;
 using SimpleLauncher.Services.SystemManager;

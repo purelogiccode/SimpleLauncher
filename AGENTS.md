@@ -31,10 +31,10 @@ disk.
     Avalonia-first `SimpleLauncher.sln` Debug **and Release** builds on `windows-latest` + Avalonia
     `net11.0` Debug/Release and the updater `net11.0` build on `ubuntu-latest`. Builds pass
     `-warnaserror`, so the 0-warning policy is enforced. **Never add tests to it.** The WPF
-    reference (`SimpleLauncher.Wpf.Reference.sln`) is deliberately **not** built by CI; build it
-    locally when changing the reference implementation or shared Core code.
+    reference (`SimpleLauncher.Wpf.Reference.sln`) is frozen reference code: it is deliberately
+    **not** built by CI and must **not** be updated to mirror Avalonia/Core changes.
   - `.github/workflows/package-dry-run.yml` — packages every release asset exactly like the
-    release workflow (version read from `SimpleLauncher.csproj`): Windows bundles and per-user
+    release workflow (version read from `SimpleLauncher.Avalonia.csproj`): Windows bundles and per-user
     Inno Setup installers on `windows-latest`; portable ZIP/tar.gz + AppImage/Flatpak for both
     Linux RIDs on `ubuntu-latest`; the arm64 DMG on `macos-15`; then verifies the archives, the
     installers, executable bits, AppImage architectures, Flatpak commits and the DMG bundle
@@ -48,8 +48,8 @@ disk.
     via `scripts/package-release-linux.ps1`, plus self-contained
     `SimpleLauncher-{version}-{rid}.AppImage` and `.flatpak` via
     `scripts/package-linux-native.sh`. On Windows the payload is the Avalonia app renamed to
-    `SimpleLauncher.exe` (framework-dependent); the WPF project stays in the source tree as the
-    reference implementation (separate `SimpleLauncher.Wpf.Reference.sln`) but is **not** built by
+    `SimpleLauncher.exe` (framework-dependent); the WPF project stays in the source tree as frozen
+    reference code (separate `SimpleLauncher.Wpf.Reference.sln`) and is **not** built by
     CI, published or bundled. The workflow also ships
     `SimpleLauncher-{version}-win-{x64,arm64}-setup.exe` with the .NET 11 bootstrap; the portable
     Linux formats require the .NET 11 runtime, while AppImage/Flatpak bundle it. The same
@@ -83,10 +83,9 @@ disk.
 - **Fast/slow test split (no filtering)**: the suites are split **by project**, never by
   `[Trait]`/filter. The main solution's fast suite is `SimpleLauncher.Avalonia.Tests`; its slow
   suite is `SimpleLauncher.Avalonia.SlowTests` (cross-platform mount extraction/guards). The WPF
-  reference keeps `SimpleLauncher.Tests` (fast; app/Core/reference coverage) and
-  `SimpleLauncher.SlowTests` (app-launch language checks, real ZIP/CHD mounts, live-endpoint
-  suites); run those when changing the WPF reference or shared Core behavior, and before a
-  deploy. Every test in a project always runs unfiltered with `dotnet test` - never add a filter,
+  reference's `SimpleLauncher.Tests` / `SimpleLauncher.SlowTests` are frozen legacy suites: do
+  not mirror new Avalonia/Core behavior into them and do not treat them as required verification.
+  Every test in a project always runs unfiltered with `dotnet test` - never add a filter,
   quarantine, runtime skip, or exclusion mechanism for flaky tests. Run only the **fast suites**
   during iteration; run the slow suites **only before a deploy or when the admin explicitly asks**
   for them - never as part of routine iteration or verification.
@@ -127,12 +126,14 @@ disk.
 - Windows (per project): `dotnet build <proj>.csproj -c Debug` (or `-c Release`) - expect
   0 warnings / 0 errors.
 - Main solution (Avalonia-first): `dotnet build SimpleLauncher.sln -c Debug` (and `-c Release`).
-- WPF reference: `dotnet build SimpleLauncher.Wpf.Reference.sln -c Debug` (and `-c Release`).
+- WPF reference: frozen, not part of the solution or CI. Do not build it as part of routine
+  verification and do not mirror Avalonia/Core changes into it.
 - Fast suites (run during iteration):
   - `dotnet test SimpleLauncher.Avalonia.Tests/SimpleLauncher.Avalonia.Tests.csproj` (~75 s) -
-    the main fast suite, including the shared version/appsettings/localization guards.
-  - `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` (~70 s) - the WPF reference
-    suite; run it when the reference or shared Core code changes.
+    the main fast suite, including the shared version/localization guards.
+  - `dotnet test SimpleLauncher.Tests/SimpleLauncher.Tests.csproj` (~70 s) - the frozen WPF
+    reference suite; not part of routine Avalonia iteration. Run it only when touching the
+    reference itself (optional).
 - Slow suites (**do not run during iteration** - only before a deploy or when the admin explicitly
   asks for them):
   - `dotnet test SimpleLauncher.Avalonia.SlowTests/SimpleLauncher.Avalonia.SlowTests.csproj`
@@ -159,14 +160,13 @@ Do **not** redirect `TEMP`/`TMP` for `dotnet build` / `dotnet publish`: WPF's ge
 `_wpftmp` XAML project stops resolving its generated members when the temp path is moved.
 Builds use the normal temp path; only test execution uses drive D.
 
-- Version metadata is centralized: `SimpleLauncher/SimpleLauncher.csproj` remains canonical while
-  the WPF reference is kept; `SimpleLauncher.Core.csproj`, `SimpleLauncher/app.manifest`, the
-  Avalonia csproj/manifest and `SimpleLauncher.Avalonia.Updater.csproj` must stay in sync
-  (`VersionConsistencyTests` in `SimpleLauncher.Avalonia.Tests` enforces and auto-corrects this).
-  Packaging scripts also read the canonical WPF csproj. The two `appsettings.json` files must stay
-  identical even though the Windows bundle ships only the Avalonia copy
-  (`AppSettingsFilesAreIdentical` enforces this). Moving the canonical version source to the
-  Avalonia csproj is a separate change.
+- Version metadata is centralized in `SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj`
+  (canonical). `SimpleLauncher.Core.csproj`, `SimpleLauncher.Diagnostics.csproj`,
+  `SimpleLauncher.Avalonia/app.manifest` and `SimpleLauncher.Avalonia.Updater.csproj` must stay in
+  sync (`VersionConsistencyTests` in `SimpleLauncher.Avalonia.Tests` enforces and auto-corrects
+  this). Packaging scripts read the canonical Avalonia csproj. The WPF reference csproj/manifest and
+  `SimpleLauncher/appsettings.json` are frozen and intentionally excluded from version/appsettings
+  validation.
 
 ## 🖥️ Test environments
 
@@ -178,7 +178,7 @@ machine's resume state stays in `AGENTS.local.md`.
 
 | Environment | OS / arch | What it is for |
 |---|---|---|
-| This PC (`PETERSONPC`) | Windows 11 x64 | build, WPF reference app, fast suites, packaging, control plane |
+| This PC (`PETERSONPC`) | Windows 11 x64 | build, Avalonia app, fast suites, packaging, control plane |
 | `linuxgpu` | Linux Mint x64 (LAN, bare metal) | real X11 + AT-SPI automation, FUSE mounts, real ROM library |
 | `LinuxMint` Hyper-V VM | Linux Mint x64 | full GUI harness suite (`scripts\gui-test-harness\`), fixtures, emulator matrix |
 | `linuxarm-test` | Ubuntu 24.04 aarch64 (Azure) | Linux arm64 bundles, AppImage/Flatpak runtime checks |

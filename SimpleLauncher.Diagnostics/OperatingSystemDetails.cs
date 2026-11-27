@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
-namespace SimpleLauncher.Core.Services.DebugAndBugReport;
+namespace SimpleLauncher.Diagnostics;
 
 /// <summary>
 ///     Resolves the human-readable operating-system name and version included in bug reports.

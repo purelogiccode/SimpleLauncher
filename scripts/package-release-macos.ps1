@@ -20,8 +20,8 @@ payloads are removed: no macOS payloads exist for CHDMounter, RetroAchievementsS
 SimpleXisoDrive, SimpleZipDrive or 7-Zip. The standalone Updater is removed too: macOS
 installs update by downloading the next DMG (no in-app updater).
 
-The version is validated against the canonical SimpleLauncher.csproj (plus the
-Avalonia/Core/updater projects and both manifests) before publishing.
+The version is validated against the canonical SimpleLauncher.Avalonia.csproj (plus the
+Core and updater projects and the Avalonia manifest) before publishing.
 
 This script must run on macOS; it uses `sips`/`iconutil`, `codesign`, `plutil` and
 `hdiutil`.
@@ -100,8 +100,8 @@ function Assert-Versions {
     param([Parameter(Mandatory = $true)][string]$Version)
 
     $projectVersions = [ordered]@{
-        'SimpleLauncher/SimpleLauncher.csproj'                   = (Join-Path $repoDir 'SimpleLauncher/SimpleLauncher.csproj')
         'SimpleLauncher.Core/SimpleLauncher.Core.csproj'         = (Join-Path $repoDir 'SimpleLauncher.Core/SimpleLauncher.Core.csproj')
+        'SimpleLauncher.Diagnostics/...csproj'                   = (Join-Path $repoDir 'SimpleLauncher.Diagnostics/SimpleLauncher.Diagnostics.csproj')
         'SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj' = $avaloniaProject
         'SimpleLauncher.Avalonia.Updater/...csproj'              = (Join-Path $repoDir 'SimpleLauncher.Avalonia.Updater/SimpleLauncher.Avalonia.Updater.csproj')
     }
@@ -114,7 +114,6 @@ function Assert-Versions {
     }
 
     $manifests = @(
-        'SimpleLauncher/app.manifest',
         'SimpleLauncher.Avalonia/app.manifest'
     )
     foreach ($manifestRelative in $manifests) {
@@ -124,7 +123,7 @@ function Assert-Versions {
         }
     }
 
-    Write-Host "Version $Version is consistent across the app projects, the updater project and the manifests."
+    Write-Host "Version $Version is consistent across the Avalonia app, the updater project and the manifest."
 }
 
 function Invoke-DotnetPublish {

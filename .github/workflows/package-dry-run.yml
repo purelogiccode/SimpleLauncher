@@ -4,7 +4,7 @@ name: Package dry run
 # updates a GitHub release. It validates the Windows portable bundles and per-user
 # installer, the Linux packaging scripts, the Linux ZIP/tar.gz permissions, the
 # AppImage architecture, the Flatpak bundles and the macOS DMG bundle layout.
-# The version is read from the canonical SimpleLauncher.csproj, so this workflow never
+# The version is read from the canonical SimpleLauncher.Avalonia.csproj, so this workflow never
 # needs a version input and can never publish a version that is not consistent across
 # the projects and manifests.
 
@@ -65,10 +65,10 @@ jobs:
       - name: Read the canonical version
         shell: pwsh
         run: |
-          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher/SimpleLauncher.csproj' -Raw
+          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj' -Raw
           $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
           if ($version -notmatch '^\d+\.\d+\.\d+$') {
-              throw "Unexpected version '$version' in SimpleLauncher.csproj."
+              throw "Unexpected version '$version' in SimpleLauncher.Avalonia.csproj."
           }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
@@ -178,10 +178,10 @@ jobs:
       - name: Read the canonical version
         shell: pwsh
         run: |
-          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher/SimpleLauncher.csproj' -Raw
+          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj' -Raw
           $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
           if ($version -notmatch '^\d+\.\d+\.\d+$') {
-              throw "Unexpected version '$version' in SimpleLauncher.csproj."
+              throw "Unexpected version '$version' in SimpleLauncher.Avalonia.csproj."
           }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
@@ -243,10 +243,10 @@ jobs:
       - name: Read the canonical version
         shell: pwsh
         run: |
-          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher/SimpleLauncher.csproj' -Raw
+          [xml]$project = Get-Content -LiteralPath 'SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj' -Raw
           $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
           if ($version -notmatch '^\d+\.\d+\.\d+$') {
-              throw "Unexpected version '$version' in SimpleLauncher.csproj."
+              throw "Unexpected version '$version' in SimpleLauncher.Avalonia.csproj."
           }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 

@@ -4,10 +4,11 @@ using System.Xml.Linq;
 namespace SimpleLauncher.Avalonia.Tests;
 
 /// <summary>
-///     Ensures that version metadata scattered across the repository stays in sync
-///     with the canonical version defined in SimpleLauncher.csproj.
-///     When a mismatch is detected the test automatically rewrites the file and
-///     then fails so the developer can review the change before committing.
+///     Ensures that version metadata scattered across the repository stays in sync with the
+///     canonical version defined in <c>SimpleLauncher.Avalonia.csproj</c>. When a mismatch is
+///     detected the test automatically rewrites the file and then fails so the developer can
+///     review the change before committing. The WPF reference project is intentionally excluded:
+///     it is frozen reference code and is not shipped or built by CI.
 /// </summary>
 public class VersionConsistencyTests
 {
@@ -23,24 +24,16 @@ public class VersionConsistencyTests
 
     private static string GetProjectVersion()
     {
-        var csprojPath = GetProjectFilePath(Path.Combine("SimpleLauncher", "SimpleLauncher.csproj"));
-        Assert.True(File.Exists(csprojPath), $"SimpleLauncher.csproj not found at {csprojPath}");
+        var csprojPath = GetProjectFilePath(Path.Combine("SimpleLauncher.Avalonia",
+            "SimpleLauncher.Avalonia.csproj"));
+        Assert.True(File.Exists(csprojPath), $"SimpleLauncher.Avalonia.csproj not found at {csprojPath}");
 
         var doc = XDocument.Load(csprojPath);
         var assemblyVersion = doc.Descendants("AssemblyVersion").FirstOrDefault()?.Value;
-        Assert.False(string.IsNullOrWhiteSpace(assemblyVersion), "AssemblyVersion not found in SimpleLauncher.csproj");
+        Assert.False(string.IsNullOrWhiteSpace(assemblyVersion),
+            "AssemblyVersion not found in SimpleLauncher.Avalonia.csproj");
 
         return assemblyVersion.Trim();
-    }
-
-    /// <summary>
-    ///     Verifies that the version in app.manifest matches the AssemblyVersion from the project file, auto-correcting
-    ///     mismatches.
-    /// </summary>
-    [Fact]
-    public void AppManifestVersionMatchesProjectVersion()
-    {
-        AssertManifestVersionMatchesProjectVersion(Path.Combine("SimpleLauncher", "app.manifest"));
     }
 
     /// <summary>
@@ -54,19 +47,30 @@ public class VersionConsistencyTests
     }
 
     /// <summary>
-    ///     Verifies that the Avalonia csproj version metadata matches the canonical version from
-    ///     SimpleLauncher.csproj, auto-correcting mismatches.
+    ///     Verifies that the shared Core csproj version metadata matches the canonical Avalonia
+    ///     version, auto-correcting mismatches.
     /// </summary>
     [Fact]
-    public void AvaloniaProjectVersionMatchesProjectVersion()
+    public void CoreProjectVersionMatchesProjectVersion()
     {
         AssertProjectVersionMatchesProjectVersion(
-            Path.Combine("SimpleLauncher.Avalonia", "SimpleLauncher.Avalonia.csproj"));
+            Path.Combine("SimpleLauncher.Core", "SimpleLauncher.Core.csproj"));
     }
 
     /// <summary>
-    ///     Verifies that the Avalonia updater csproj version metadata matches the canonical version
-    ///     from SimpleLauncher.csproj, auto-correcting mismatches.
+    ///     Verifies that the shared Diagnostics csproj version metadata matches the canonical
+    ///     Avalonia version, auto-correcting mismatches.
+    /// </summary>
+    [Fact]
+    public void DiagnosticsProjectVersionMatchesProjectVersion()
+    {
+        AssertProjectVersionMatchesProjectVersion(
+            Path.Combine("SimpleLauncher.Diagnostics", "SimpleLauncher.Diagnostics.csproj"));
+    }
+
+    /// <summary>
+    ///     Verifies that the Avalonia updater csproj version metadata matches the canonical
+    ///     Avalonia version, auto-correcting mismatches.
     /// </summary>
     [Fact]
     public void AvaloniaUpdaterProjectVersionMatchesProjectVersion()
@@ -132,33 +136,5 @@ public class VersionConsistencyTests
         Assert.Fail(
             $"{relativePath} version was automatically updated from '{currentVersion}' to '{expectedVersion}'. " +
             "Please review the change and commit it.");
-    }
-
-    /// <summary>
-    ///     Verifies that both apps ship the exact same appsettings.json. The unified release
-    ///     bundle places both executables in one folder with a single shared appsettings.json,
-    ///     so the two source files must never drift apart.
-    /// </summary>
-    [Fact]
-    public void AppSettingsFilesAreIdentical()
-    {
-        var wpfPath = GetProjectFilePath(Path.Combine("SimpleLauncher", "appsettings.json"));
-        var avaloniaPath = GetProjectFilePath(Path.Combine("SimpleLauncher.Avalonia", "appsettings.json"));
-
-        Assert.True(File.Exists(wpfPath), $"appsettings.json not found at {wpfPath}");
-        Assert.True(File.Exists(avaloniaPath), $"appsettings.json not found at {avaloniaPath}");
-
-        var wpf = Normalize(wpfPath);
-        var avalonia = Normalize(avaloniaPath);
-
-        Assert.True(string.Equals(wpf, avalonia, StringComparison.OrdinalIgnoreCase),
-            "SimpleLauncher/appsettings.json and SimpleLauncher.Avalonia/appsettings.json differ. " +
-            "The unified release bundle ships a single shared appsettings.json, so both files must stay in sync.");
-        return;
-
-        static string Normalize(string path)
-        {
-            return File.ReadAllText(path).Replace("\r\n", "\n", StringComparison.Ordinal).TrimEnd();
-        }
     }
 }

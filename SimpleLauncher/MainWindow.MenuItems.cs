@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using SimpleLauncher.Core;
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Diagnostics;
 
 namespace SimpleLauncher;
 

@@ -4,7 +4,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using MessagePack;
 using RetroAchievements.DataFetcher.Models;
-using RetroAchievements.DataFetcher.Services.DebugAndBugReport;
+using SimpleLauncher.Diagnostics;
 using Serilog.Events;
 
 namespace RetroAchievements.DataFetcher;
@@ -30,7 +30,7 @@ file static class Program
         var appDataLogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
         Directory.CreateDirectory(appDataLogFolder);
 
-        var bugReportSink = new BugReportApiSink(appDataLogFolder);
+        var bugReportSink = new BugReportApiSink(new BugReportSinkOptions { LogFolder = appDataLogFolder });
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()

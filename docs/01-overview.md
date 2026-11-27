@@ -51,7 +51,7 @@ On Windows the Avalonia app hides Windows-only features (Dokan mounting, emulato
 
 ## Version & license
 
-- Current version: **5.9.1** (`SimpleLauncher.csproj` is canonical; `SimpleLauncher.Core.csproj` and both `app.manifest` files are kept in sync and covered by `VersionConsistencyTests`). The shipped Avalonia app (`SimpleLauncher.Avalonia`) is synced to the same version (5.9.1).
+- Current version: **5.9.2** (`SimpleLauncher.Avalonia.csproj` is canonical; `SimpleLauncher.Core.csproj`, the Avalonia `app.manifest` and `SimpleLauncher.Avalonia.Updater.csproj` are kept in sync and covered by `VersionConsistencyTests`). The WPF reference is frozen and excluded from version validation.
 - The secondary server publishes a `version.txt` (e.g. `release5.9.1`) used by the update-check fallback.
 - Framework: **.NET 11** (`net11.0-windows`), **C# 15**, nullable reference types enabled.
 - License: **GPLv3** (`LICENSE.txt`).

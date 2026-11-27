@@ -8,7 +8,7 @@ using SimpleLauncher.Avalonia.Services.PlayHistory;
 using SimpleLauncher.Avalonia.Services.SettingsDatabase;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.UnifiedSettings;
-using SimpleLauncher.Core.Services.WpfServices;
+using SimpleLauncher.Core.Services.PlatformServices;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

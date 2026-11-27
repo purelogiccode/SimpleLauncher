@@ -94,7 +94,7 @@ pwsh scripts/package-release-macos.ps1 -Version 5.9.1
 # -> artifacts/release/SimpleLauncher-5.9.1-osx-arm64.dmg
 ```
 
-The script validates the version against `SimpleLauncher.csproj`/manifests, publishes
+The script validates the version against `SimpleLauncher.Avalonia.csproj`/manifest, publishes
 `net11.0 -r osx-arm64 --self-contained true`, prunes the Windows/Linux-only helper payloads
 and the Updater, builds `Simple Launcher.app` with an `Info.plist` and `.icns`, applies an
 ad-hoc signature (`codesign -s -`, skip with `-NoAdHocSign`), and creates and verifies the

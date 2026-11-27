@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows;
 using Serilog.Events;
-using XmlToBinaryConverter.Services.DebugAndBugReport;
+using SimpleLauncher.Diagnostics;
 
 namespace XmlToBinaryConverter;
 
@@ -18,7 +18,7 @@ public partial class App
         var appDataLogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
         Directory.CreateDirectory(appDataLogFolder);
 
-        var bugReportSink = new BugReportApiSink(appDataLogFolder);
+        var bugReportSink = new BugReportApiSink(new BugReportSinkOptions { LogFolder = appDataLogFolder });
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()

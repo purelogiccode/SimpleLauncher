@@ -7,6 +7,8 @@ using Serilog.Events;
 using SimpleLauncher.Core;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Services.DebugAndBugReport;
+using SimpleLauncher.Diagnostics;
+using BugReportApiSink = SimpleLauncher.Core.Services.DebugAndBugReport.BugReportApiSink;
 using Xunit;
 
 namespace SimpleLauncher.Tests;

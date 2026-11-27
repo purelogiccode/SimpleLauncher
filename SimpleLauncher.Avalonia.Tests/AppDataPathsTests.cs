@@ -1,4 +1,5 @@
 using SimpleLauncher.Core.Services;
+using SimpleLauncher.Diagnostics;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

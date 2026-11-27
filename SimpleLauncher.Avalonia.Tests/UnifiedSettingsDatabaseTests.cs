@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.SettingsManager;
 using SimpleLauncher.Core.Services.UnifiedSettings;
-using SimpleLauncher.Core.Services.WpfServices;
+using SimpleLauncher.Core.Services.PlatformServices;
 
 namespace SimpleLauncher.Avalonia.Tests;
 

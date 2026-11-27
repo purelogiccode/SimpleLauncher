@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using SimpleLauncher.Diagnostics;
 
 namespace SimpleLauncher.Core.Services.UnifiedSettings;
 

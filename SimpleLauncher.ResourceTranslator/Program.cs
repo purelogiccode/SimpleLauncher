@@ -2,9 +2,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Serilog.Events;
+using SimpleLauncher.Diagnostics;
 using SimpleLauncher.ResourceTranslator.Models;
 using SimpleLauncher.ResourceTranslator.Services;
-using SimpleLauncher.ResourceTranslator.Services.DebugAndBugReport;
 
 namespace SimpleLauncher.ResourceTranslator;
 
@@ -25,7 +25,7 @@ public static class Program
         var appDataLogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
         Directory.CreateDirectory(appDataLogFolder);
 
-        var bugReportSink = new BugReportApiSink(appDataLogFolder);
+        var bugReportSink = new BugReportApiSink(new BugReportSinkOptions { LogFolder = appDataLogFolder });
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()

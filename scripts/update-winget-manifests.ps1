@@ -6,7 +6,7 @@ Generates the winget manifests for PureLogicCode.SimpleLauncher from the built s
 .DESCRIPTION
 winget installs the per-user Inno Setup installer
 (SimpleLauncher-{version}-win-{x64,arm64}-setup.exe), not the portable ZIP. This script
-reads the version from the canonical SimpleLauncher.csproj, hashes both installers that
+reads the version from the canonical SimpleLauncher.Avalonia.csproj, hashes both installers that
 scripts/package-release.ps1 -BuildInstaller produced, and writes the three manifest files
 in the layout expected by microsoft/winget-pkgs:
 
@@ -25,7 +25,7 @@ dependency installs it silently before Setup runs and avoids a UAC prompt during
 install.
 
 .PARAMETER Version
-Release version, e.g. 5.8.4. Defaults to <Version> in SimpleLauncher\SimpleLauncher.csproj.
+Release version, e.g. 5.8.4. Defaults to <Version> in SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj.
 
 .PARAMETER SetupDir
 Folder that contains the setup executables. Defaults to artifacts\release.
@@ -76,7 +76,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $repoDir = Split-Path -Parent $PSScriptRoot
-$projectPath = Join-Path $repoDir 'SimpleLauncher\SimpleLauncher.csproj'
+$projectPath = Join-Path $repoDir 'SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj'
 $schemaVersion = '1.28.0'
 
 if (-not $SetupDir) {

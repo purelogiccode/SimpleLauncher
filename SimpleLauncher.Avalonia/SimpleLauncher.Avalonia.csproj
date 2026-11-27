@@ -21,9 +21,9 @@
         <AssemblyName>SimpleLauncher.Avalonia</AssemblyName>
         <RootNamespace>SimpleLauncher.Avalonia</RootNamespace>
         <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-        <AssemblyVersion>5.9.1</AssemblyVersion>
-        <FileVersion>5.9.1</FileVersion>
-        <Version>5.9.1</Version>
+        <AssemblyVersion>5.9.2</AssemblyVersion>
+        <FileVersion>5.9.2</FileVersion>
+        <Version>5.9.2</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <ApplicationIcon>icon\icon.ico</ApplicationIcon>
         <PackageIcon>icon\icon2.png</PackageIcon>
@@ -74,6 +74,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SimpleLauncher.Core\SimpleLauncher.Core.csproj" />
+        <ProjectReference Include="..\SimpleLauncher.Diagnostics\SimpleLauncher.Diagnostics.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -109,9 +110,9 @@
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <!-- Avalonia 12.1.2; the References/Avalonia-12.1.1 tree is an older source snapshot -->
-        <PackageReference Include="Avalonia" Version="12.1.6" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+        <PackageReference Include="Avalonia" Version="12.2.0" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.2.0" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.2.0" />
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
         <!-- Markdown.Avalonia 12.x is required for Avalonia 12 — 11.0.3 crashes with
              MissingMethodException (DynamicResourceExtension.ProvideValue) at XAML load -->

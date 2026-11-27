@@ -1,6 +1,7 @@
 using System.Text.Json;
 using SimpleLauncher.Core.Interfaces;
 using SimpleLauncher.Core.Models;
+using SimpleLauncher.Diagnostics;
 
 namespace SimpleLauncher.Core.Services.RetroAchievements;
 

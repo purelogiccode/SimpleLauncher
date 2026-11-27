@@ -11,14 +11,18 @@
         <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
         <LangVersion>15</LangVersion>
         <Company>PureLogicCode.com</Company>
-        <AssemblyVersion>5.9.1</AssemblyVersion>
-        <FileVersion>5.9.1</FileVersion>
+        <AssemblyVersion>5.9.2</AssemblyVersion>
+        <FileVersion>5.9.2</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
         <Using Include="Serilog" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\SimpleLauncher.Diagnostics\SimpleLauncher.Diagnostics.csproj" />
     </ItemGroup>
 
     <ItemGroup>

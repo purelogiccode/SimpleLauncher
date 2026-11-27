@@ -9,12 +9,13 @@ The repository ships **two solutions**. `SimpleLauncher.sln` is the Avalonia-fir
 `SimpleLauncher.Wpf.Reference.sln` keeps the WPF implementation and its tests buildable for
 reference/parity work. The WPF solution is **not** built by CI, published or bundled.
 
-### Main solution - `SimpleLauncher.sln` (10 projects)
+### Main solution - `SimpleLauncher.sln` (11 projects)
 
 | Project | Kind | Role |
 |---|---|---|
 | `SimpleLauncher.Core` | Class library | **Shared logic** - services, models, interfaces, persistence, emulator config injection |
-| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 825 tests (`net11.0`, runs on Windows + Linux/WSL2 + macOS via `Avalonia.Headless`); **main fast suite**, including the shared version/appsettings/localization guards |
+| `SimpleLauncher.Diagnostics` | Class library | Shared Serilog bug-report sink, app-data/log-path resolution and OS details (app, updater, tools) |
+| `SimpleLauncher.Avalonia.Tests` | xUnit test project | 833 tests (`net11.0`, runs on Windows + Linux/WSL2 + macOS via `Avalonia.Headless`); **main fast suite**, including the shared version/localization guards |
 | `SimpleLauncher.Avalonia.SlowTests` | xUnit test project | Main slow suite: cross-platform mount extraction fallback and platform guards |
 | `SimpleLauncher.Avalonia.Updater` | Avalonia app (WinExe) | The single updater (`Updater.exe`) - downloads the release zip, extracts over the app folder, relaunches the app that launched it and migrates legacy WPF installs to the Avalonia `SimpleLauncher.exe` |
 | `SimpleLauncher.Avalonia` | Avalonia UI app | **The shipped launcher** (Windows + Linux + macOS, x64/ARM64), published on Windows as `SimpleLauncher.exe`. Windows-only features (Dokan mounting, emulator config injection, F8 hotkey, storefront scanning) are hidden/no-ops elsewhere; Linux gets FUSE 3 mounting plus native launch paths (temp extraction, CHDSharp conversion, DOSBox `imgmount`); macOS ships an unsigned Apple Silicon DMG with extraction/conversion fallbacks (no FUSE, no bundled helpers, no in-app updater) |
@@ -28,16 +29,14 @@ reference/parity work. The WPF solution is **not** built by CI, published or bun
 `SimpleLauncher` (WPF app), `SimpleLauncher.Tests` (~154 test files, fast reference suite),
 `SimpleLauncher.SlowTests` (app-launch/mount/live-endpoint reference suite),
 `SimpleLauncher.Core`, `SimpleLauncher.ResourceTranslator` and `Tools\XmlToBinaryConverter`.
-Build it with `dotnet build SimpleLauncher.Wpf.Reference.sln -c Debug` when changing the reference
-implementation or shared Core behavior. It is intentionally outside CI so the main pipeline stays
-Avalonia-first.
+The WPF reference is frozen: it is intentionally outside CI and is not updated to mirror
+Avalonia/Core changes.
 
 Dependency edges: `SimpleLauncher -> SimpleLauncher.Core`; `SimpleLauncher.Tests -> SimpleLauncher`;
 `SimpleLauncher.Avalonia.Tests -> SimpleLauncher.Avalonia`; `SimpleLauncher.Avalonia.Updater`
-standalone (no compile reference - the Avalonia app publishes it and copies `Updater.exe` next to
-itself); `SimpleLauncher.Avalonia` references Core (via `InternalsVisibleTo`).
-`SimpleLauncher.Avalonia.Tests` targets `net11.0` (not `-windows`) so it runs on Linux CI/WSL2
-without the Windows desktop pack.
+references `SimpleLauncher.Diagnostics`; `SimpleLauncher.Avalonia` references Core + Diagnostics;
+`SimpleLauncher.Core -> SimpleLauncher.Diagnostics`; `SimpleLauncher.Diagnostics` has no project
+references.
 
 ## `SimpleLauncher\SimpleLauncher.csproj` (WPF reference app)
 
@@ -60,7 +59,7 @@ Key properties:
 <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 ```
 
-- **Versioning:** `5.9.1`; this reference csproj is still the canonical version source while the WPF project is kept. Core, the tests, the Avalonia projects/manifests and the updater are synchronized by `VersionConsistencyTests` (Avalonia fast suite); packaging scripts read this file too.
+- **Versioning:** `5.9.2`; the WPF reference is frozen and no longer the version source. `SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj` is canonical; Core, the Avalonia manifest and the updater are synchronized by `VersionConsistencyTests` (Avalonia fast suite); packaging scripts read the Avalonia csproj too.
 - **`InternalsVisibleTo("SimpleLauncher.Tests")`** — tests reach internal members.
 - **Copy-to-output payloads** (`<None Update=... CopyToOutputDirectory>`):
   - `appsettings.json` (Always), `WhatsNew.md` (PreserveNewest), `mame.dat` (Always), system images `images\systems\*.png` (Always), `audio\*.mp3`.
@@ -94,7 +93,7 @@ Key properties:
 
 ## `SimpleLauncher.Core\SimpleLauncher.Core.csproj` (the library)
 
-Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 15`, `DebugType=embedded`, version `5.9.1`.
+Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangVersion 15`, `DebugType=embedded`, version `5.9.2`.
 
 - **`InternalsVisibleTo`:** `SimpleLauncher.Tests`, `SimpleLauncher`, `SimpleLauncher.New`, `SimpleLauncher.Avalonia`, `SimpleLauncher.Avalonia.Tests`, `SimpleLauncher.New.Tests`.
 - **Global usings:** `System.IO`, `System.Net.Http`, `Serilog` — so every Core service takes a Serilog `ILogger` by convention.
@@ -103,7 +102,7 @@ Key properties: `net11.0-windows`, `IsPackable=true`, `Nullable` enabled, `LangV
 
 ## `SimpleLauncher.Avalonia\SimpleLauncher.Avalonia.csproj` (the shipped app)
 
-Key properties: `net11.0` + `net11.0-windows` (dual target - the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.6`, `UseWindowsForms=False`, version synced to the WPF reference (5.9.1), `StartupObject = SimpleLauncher.Avalonia.Program`. The Windows release publishes this project as `SimpleLauncher.exe`.
+Key properties: `net11.0` + `net11.0-windows` (dual target - the `net11.0` TFM is Linux/macOS-only and rejects Windows RIDs via a build guard), `Avalonia 12.1.6`, `UseWindowsForms=False`, canonical version source (5.9.2, synced to Core/the updater), `StartupObject = SimpleLauncher.Avalonia.Program`. The Windows release publishes this project as `SimpleLauncher.exe`.
 
 - **Reuses `SimpleLauncher.Core`** for all business logic (launch, scanning, persistence, emulator config injection, RA).
 - **Windows-only services** (`#if WINDOWS`, `net11.0-windows`): F8 global hotkey (`AvaloniaGlobalHotkeyService`), active-window screenshot (`AvaloniaActiveWindowScreenshotService` + `WindowScreenshot` Win32 helpers, `System.Drawing.Common` package conditional on the windows TFM).

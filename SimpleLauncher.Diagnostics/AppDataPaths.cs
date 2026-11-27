@@ -1,4 +1,4 @@
-namespace SimpleLauncher.Core.Services;
+namespace SimpleLauncher.Diagnostics;
 
 /// <summary>
 ///     Resolves the SimpleLauncher application-data folder robustly across platforms.

@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Models;
 using SimpleLauncher.Core.Services.UnifiedSettings;
-using SimpleLauncher.Core.Services.WpfServices;
+using SimpleLauncher.Core.Services.PlatformServices;
 using SimpleLauncher.Services.Favorites;
 using SimpleLauncher.Services.PlayHistory;
 using SimpleLauncher.Services.SettingsDatabase;

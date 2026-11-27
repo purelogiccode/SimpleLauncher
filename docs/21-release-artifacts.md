@@ -54,7 +54,7 @@ Architecture mapping:
    silently failing at runtime.
 5. **Package version.** Keep the app version and package release number aligned
    (`{version}-1` for RPM; `{version}` for DEB). Version bumping remains in
-   `SimpleLauncher/SimpleLauncher.csproj` plus the synchronized files enforced by
+   `SimpleLauncher.Avalonia/SimpleLauncher.Avalonia.csproj` plus the synchronized files enforced by
    `VersionConsistencyTests`.
 6. **Final file names.** The names above are the proposed convention. If a different prefix
    (`SimpleLauncher-...`) is preferred, decide it once and update the release workflow, R2

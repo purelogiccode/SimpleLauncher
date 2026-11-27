@@ -3,8 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Serilog.Events;
+using SimpleLauncher.Diagnostics;
 using SimpleLauncher.Avalonia.Updater.Services;
-using SimpleLauncher.Avalonia.Updater.Services.DebugAndBugReport;
 
 namespace SimpleLauncher.Avalonia.Updater;
 
@@ -37,7 +37,7 @@ public class App : Application
             Directory.CreateDirectory(appDataLogFolder);
         }
 
-        var bugReportSink = new BugReportApiSink(appDataLogFolder);
+        var bugReportSink = new BugReportApiSink(new BugReportSinkOptions { LogFolder = appDataLogFolder });
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()

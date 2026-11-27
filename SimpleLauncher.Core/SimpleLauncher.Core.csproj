@@ -17,9 +17,9 @@
         <DebugSymbols>true</DebugSymbols>
         <RepositoryUrl>https://github.com/purelogiccode/SimpleLauncher</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <AssemblyVersion>5.9.1</AssemblyVersion>
-        <FileVersion>5.9.1</FileVersion>
-        <Version>5.9.1</Version>
+        <AssemblyVersion>5.9.2</AssemblyVersion>
+        <FileVersion>5.9.2</FileVersion>
+        <Version>5.9.2</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     </PropertyGroup>
 
@@ -30,7 +30,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CHDSharp" Version="1.7.1" />
+        <ProjectReference Include="..\SimpleLauncher.Diagnostics\SimpleLauncher.Diagnostics.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CHDSharp" Version="1.7.3" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
         <PackageReference Include="Meziantou.Analyzer" Version="3.0.342">
@@ -59,7 +63,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="SharpCompress" Version="0.50.11" />
+        <PackageReference Include="SharpCompress" Version="0.50.12" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0" />
         <PackageReference Include="Tomlyn" Version="2.11.1" />

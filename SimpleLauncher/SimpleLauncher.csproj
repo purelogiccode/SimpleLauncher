@@ -765,7 +765,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
-        <PackageReference Include="SharpCompress" Version="0.50.11" />
+        <PackageReference Include="SharpCompress" Version="0.50.12" />
         <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="Tomlyn" Version="2.11.1" />
         <PackageReference Include="Serilog" Version="4.4.0" />

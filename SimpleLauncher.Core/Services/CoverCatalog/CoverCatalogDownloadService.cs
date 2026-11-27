@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using SimpleLauncher.Core.Services.CheckPaths;
 using SimpleLauncher.Core.Services.SettingsManager;
+using SimpleLauncher.Diagnostics;
 
 namespace SimpleLauncher.Core.Services.CoverCatalog;
 
