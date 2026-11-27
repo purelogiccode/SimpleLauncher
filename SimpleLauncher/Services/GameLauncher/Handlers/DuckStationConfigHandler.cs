@@ -14,14 +14,17 @@ namespace SimpleLauncher.Services.GameLauncher.Handlers;
 public class DuckStationConfigHandler : IEmulatorConfigHandler
 {
     private readonly ILogger _logger;
+    private readonly IMessageBoxLibraryService _messageBox;
     private readonly IServiceScopeFactory _scopeFactory;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="DuckStationConfigHandler" /> class.
     /// </summary>
-    public DuckStationConfigHandler(ILogger logger, IServiceScopeFactory scopeFactory)
+    public DuckStationConfigHandler(IMessageBoxLibraryService messageBox, ILogger logger,
+        IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
+        _messageBox = messageBox;
         _scopeFactory = scopeFactory;
     }
 
@@ -59,7 +62,19 @@ public class DuckStationConfigHandler : IEmulatorConfigHandler
             {
                 shouldRun = true;
                 if (File.Exists(resolvedExe))
-                    DuckStationConfigurationService.InjectSettings(resolvedExe, context.Settings!, _logger);
+                {
+                    try
+                    {
+                        DuckStationConfigurationService.InjectSettings(resolvedExe, context.Settings!, _logger);
+                    }
+                    catch (DuckStationPermissionException)
+                    {
+                        // Expected user-environment condition (the Documents\DuckStation folder could
+                        // not be created or written). Show guidance but let the game launch with the
+                        // emulator's default settings instead of aborting the launch pipeline.
+                        await _messageBox.FailedToInjectDuckStationConfigurationMessageBoxAsync();
+                    }
+                }
             }
 
             return shouldRun;

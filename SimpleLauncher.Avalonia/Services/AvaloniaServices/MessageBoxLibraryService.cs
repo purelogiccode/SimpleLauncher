@@ -546,19 +546,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes && !string.IsNullOrEmpty(logPath))
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
             }
         }
     }
@@ -591,19 +580,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -657,19 +635,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -728,19 +695,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -763,19 +719,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes && !string.IsNullOrEmpty(logPath))
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     _localization.GetString("Error", "Error"), MessageButtons.Ok,
@@ -949,19 +894,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -1084,19 +1018,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -1499,19 +1422,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -1935,19 +1847,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -1988,19 +1889,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -2068,17 +1958,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes && !string.IsNullOrEmpty(logPath))
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                Log.Information(ex, "Failed to open the 'error_user.log' file. The file may not exist");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     _localization.GetString("Error", "Error"), MessageButtons.Ok, MessageIcon.Error);
@@ -2594,19 +2475,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwas", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -3601,19 +3471,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -4336,19 +4195,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
 
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Expected user-environment condition (no log file yet, no default handler):
-                // never report it as an application bug.
-                Log.Information(ex, "Failed to open the error log file");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlogwasnotfound",
                         "The file 'error_user.log' was not found!"),
@@ -4398,17 +4246,8 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
         var result = await ShowAsync(O, message, error, MessageButtons.YesNo, MessageIcon.Error);
         if (result == MessageBoxResult.Yes)
         {
-            try
+            if (!TryOpenLogFile(logPath))
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = PathHelper.ResolveActualLogFile(logPath),
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                Log.Information(ex, "Failed to open the error log file from a batch file error message box");
                 await ShowAsync(O,
                     _localization.GetString("Thefileerroruserlog", "The file 'error_user.log' was not found!"),
                     error, MessageButtons.Ok, MessageIcon.Error);
@@ -4470,6 +4309,64 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
     }
 
     /// <summary>
+    ///     Opens the newest error log file with the operating system's default handler.
+    /// </summary>
+    /// <remarks>
+    ///     The configured base name is date-stamped by the Serilog rolling sink, and .log files often
+    ///     have no registered handler on Windows. This helper resolves the real file, falls back to a
+    ///     plain text editor, and returns false (never throws) so callers can show an accurate message
+    ///     instead of reporting a Win32Exception as an application bug (bug 70618).
+    /// </remarks>
+    private static bool TryOpenLogFile(string? logPath)
+    {
+        string actualPath;
+        try
+        {
+            actualPath = PathHelper.ResolveActualLogFile(logPath);
+        }
+        catch (Exception ex)
+        {
+            Log.Information(ex, "Failed to resolve the error log file");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(actualPath) || !File.Exists(actualPath))
+            return false;
+
+        if (TryStartProcess(new ProcessStartInfo { FileName = actualPath, UseShellExecute = true }))
+            return true;
+
+        // Fall back to a plain text editor when no application is associated with .log.
+        var editor = OperatingSystem.IsWindows()
+            ? "notepad.exe"
+            : OperatingSystem.IsMacOS()
+                ? "open"
+                : "xdg-open";
+
+        var fallback = new ProcessStartInfo { FileName = editor, UseShellExecute = false };
+        fallback.ArgumentList.Add(actualPath);
+        return TryStartProcess(fallback);
+    }
+
+    /// <summary>
+    ///     Starts a process, treating a missing handler or an unavailable desktop session as an
+    ///     expected user-environment condition rather than an application bug.
+    /// </summary>
+    private static bool TryStartProcess(ProcessStartInfo startInfo)
+    {
+        try
+        {
+            Process.Start(startInfo);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Information(ex, "Failed to open the error log file");
+            return false;
+        }
+    }
+
+    /// <summary>
     ///     WPF parity: <c>MessageBox.Show</c> without an explicit owner uses the active window.
     ///     Owning the dialog by the window that actually invoked it (Easy Mode, a config window)
     ///     keeps it above that modal child; always owning it by the MainWindow leaves the dialog
@@ -4480,9 +4377,15 @@ internal class MessageBoxLibraryService : IMessageBoxLibraryService
     {
         if (!Dispatcher.UIThread.CheckAccess()) return owner;
 
-        var active = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?
-            .Windows.FirstOrDefault(window => window.IsActive);
+        var windows = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?
+            .Windows;
+        if (windows is null) return owner;
 
-        return active ?? owner;
+        var active = windows.FirstOrDefault(window => window.IsActive && window.IsVisible);
+        if (active is not null) return active;
+
+        // Never hand Avalonia a non-visible owner: ShowDialog throws
+        // "Cannot show window with non-visible owner" (bug 70148).
+        return windows.FirstOrDefault(window => window.IsVisible) ?? owner;
     }
 }

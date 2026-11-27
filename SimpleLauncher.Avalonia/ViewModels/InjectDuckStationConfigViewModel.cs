@@ -214,6 +214,11 @@ internal partial class InjectDuckStationConfigViewModel : ObservableObject
             DuckStationConfigurationService.InjectSettings(path, _settings, _logger);
             return true;
         }
+        catch (DuckStationPermissionException)
+        {
+            await _messageBox.FailedToInjectDuckStationConfigurationMessageBoxAsync();
+            throw;
+        }
         catch (InvalidOperationException ex)
         {
             _logger.Error(ex, $"DuckStation configuration injection failed for path: {path}");
@@ -237,6 +242,12 @@ internal partial class InjectDuckStationConfigViewModel : ObservableObject
                 await _messageBox.InjectionFailedGenericMessageBoxAsync();
                 CloseRequested?.Invoke(this, EventArgs.Empty);
             }
+        }
+        catch (DuckStationPermissionException)
+        {
+            // Run: the user asked to configure and launch; allow the launch with defaults.
+            ShouldRun = true;
+            CloseRequested?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException)
         {
@@ -268,6 +279,10 @@ internal partial class InjectDuckStationConfigViewModel : ObservableObject
                 await _messageBox.InjectionFailedGenericMessageBoxAsync();
                 CloseRequested?.Invoke(this, EventArgs.Empty);
             }
+        }
+        catch (DuckStationPermissionException)
+        {
+            CloseRequested?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException)
         {

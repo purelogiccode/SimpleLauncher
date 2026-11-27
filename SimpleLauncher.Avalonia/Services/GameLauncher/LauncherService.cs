@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Versioning;
-using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using SimpleLauncher.Avalonia.Interfaces;
@@ -575,8 +574,8 @@ internal class LauncherService : ILauncherService
                 {
                     var isBatchFile = Path.GetExtension(resolvedEmulatorPath)
                         .Equals(".bat", StringComparison.OrdinalIgnoreCase);
-                    var stderrBuffer = new StringBuilder();
-                    var stdoutBuffer = new StringBuilder();
+                    var stderrBuffer = new BoundedOutputBuffer();
+                    var stdoutBuffer = new BoundedOutputBuffer();
 
                     using var process = new Process();
                     // .bat files require shell execution; .exe works without it. Inside a
@@ -2114,6 +2113,48 @@ internal class LauncherService : ILauncherService
         var parentName = Path.GetFileName(parentPath ?? string.Empty);
         return parentName.Equals("Ymir", StringComparison.OrdinalIgnoreCase) ||
                parentName.Equals("Yumir", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Keeps only the most recent emulator output, up to a fixed character budget.
+    /// </summary>
+    /// <remarks>
+    ///     Emulators can log indefinitely (Xenia in particular). Buffering the whole stream and then
+    ///     calling <c>StringBuilder.ToString()</c> exhausted memory and crashed the launch pipeline
+    ///     with an <see cref="OutOfMemoryException" /> (bug 70321). The tail is kept because emulator
+    ///     error diagnostics are normally written last.
+    /// </remarks>
+    internal sealed class BoundedOutputBuffer
+    {
+        private const int MaxCharacters = 64 * 1024;
+        private readonly Queue<string> _lines = new();
+        private readonly Lock _gate = new();
+        private int _characters;
+
+        public void AppendLine(string line)
+        {
+            if (line.Length > MaxCharacters) line = line[^MaxCharacters..];
+
+            lock (_gate)
+            {
+                _lines.Enqueue(line);
+                _characters += line.Length + Environment.NewLine.Length;
+
+                while (_characters > MaxCharacters && _lines.Count > 1)
+                {
+                    var removed = _lines.Dequeue();
+                    _characters -= removed.Length + Environment.NewLine.Length;
+                }
+            }
+        }
+
+        public override string ToString()
+        {
+            lock (_gate)
+            {
+                return string.Join(Environment.NewLine, _lines);
+            }
+        }
     }
 
     #endregion

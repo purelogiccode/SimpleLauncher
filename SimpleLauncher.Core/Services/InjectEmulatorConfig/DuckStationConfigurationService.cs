@@ -26,9 +26,19 @@ public static class DuckStationConfigurationService
         // DuckStation reads '<exeDir>\settings.ini' only in portable mode (portable.txt);
         // installed copies read 'Documents\DuckStation\settings.ini'.
         var isPortable = File.Exists(Path.Combine(emuDir, "portable.txt"));
+        var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        if (!isPortable && string.IsNullOrWhiteSpace(documentsPath))
+        {
+            // The shell did not resolve a Documents folder (rare, but possible on stripped or
+            // redirected profiles). Fall back to the emulator folder instead of writing to the
+            // current working directory.
+            logger.Debug("[DuckStationConfig] Documents folder unavailable; using the emulator directory.");
+            documentsPath = emuDir;
+        }
+
         var configDir = isPortable
             ? emuDir
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "DuckStation");
+            : Path.Combine(documentsPath, "DuckStation");
 
         var configPath = Path.Combine(configDir, "settings.ini");
 
@@ -44,6 +54,29 @@ public static class DuckStationConfigurationService
                     Directory.CreateDirectory(configDir);
                     File.Copy(samplePath, configPath);
                     logger.Debug($"[DuckStationConfig] Created new settings.ini from sample: {configPath}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    // Expected user-environment condition (read-only, ACL-protected, or OneDrive-redirected
+                    // Documents folder). The UI shows guidance and the game still launches, so keep it out
+                    // of the bug report.
+                    logger.Information(ex,
+                        "[DuckStationConfig] Access denied creating settings.ini from sample: {ConfigPath}",
+                        configPath);
+                    throw new DuckStationPermissionException(
+                        $"Cannot write to configuration directory: {configDir}", ex);
+                }
+                catch (IOException ex)
+                {
+                    // Expected user-environment condition: the config folder cannot be created (e.g. a
+                    // stale or cloud-only OneDrive-redirected Documents folder, a Documents component
+                    // blocked by a file, or an unavailable drive). Report file-not-found as an access
+                    // condition instead of aborting the game launch.
+                    logger.Information(ex,
+                        "[DuckStationConfig] Failed to create settings.ini from sample: {ConfigPath}",
+                        configPath);
+                    throw new DuckStationPermissionException(
+                        $"Cannot create configuration directory: {configDir}", ex);
                 }
                 catch (Exception ex)
                 {
@@ -97,15 +130,16 @@ public static class DuckStationConfigurationService
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.Debug($"[DuckStationConfig] Access denied reading config: {configPath}");
-            logger.Error(ex, $"[DuckStationConfig] Access denied reading config: {configPath}");
-            throw;
+            // Expected user-environment condition: keep it out of the bug report.
+            logger.Information(ex, "[DuckStationConfig] Access denied reading config: {ConfigPath}", configPath);
+            throw new DuckStationPermissionException($"Cannot read configuration file: {configPath}", ex);
         }
         catch (IOException ex)
         {
-            logger.Debug($"[DuckStationConfig] I/O error reading config: {configPath}");
-            logger.Error(ex, $"[DuckStationConfig] I/O error reading config: {configPath}");
-            throw;
+            // Expected user-environment condition (locked, cloud-only, or otherwise unavailable config
+            // file). The UI shows guidance and the game still launches, so keep it out of the bug report.
+            logger.Information(ex, "[DuckStationConfig] I/O error reading config: {ConfigPath}", configPath);
+            throw new DuckStationPermissionException($"Cannot read configuration file: {configPath}", ex);
         }
 
         var modified = false;
@@ -180,6 +214,19 @@ public static class DuckStationConfigurationService
             {
                 File.WriteAllLines(configPath, lines, new UTF8Encoding(false));
                 logger.Debug("[DuckStationConfig] Injected configuration changes..");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // Expected user-environment condition (read-only or ACL-protected config file).
+                logger.Information(ex,
+                    "[DuckStationConfig] Access denied writing config: {ConfigPath}", configPath);
+                throw new DuckStationPermissionException($"Cannot write to configuration file: {configPath}", ex);
+            }
+            catch (IOException ex)
+            {
+                // Expected user-environment condition (locked, cloud-only, or unavailable config file).
+                logger.Information(ex, "[DuckStationConfig] I/O error writing config: {ConfigPath}", configPath);
+                throw new DuckStationPermissionException($"Cannot write to configuration file: {configPath}", ex);
             }
             catch (Exception ex)
             {

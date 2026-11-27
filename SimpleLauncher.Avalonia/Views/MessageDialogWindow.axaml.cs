@@ -14,6 +14,8 @@ namespace SimpleLauncher.Avalonia.Views;
 /// </summary>
 internal partial class MessageDialogWindow : Window
 {
+    private MessageBoxResult _result = MessageBoxResult.Cancel;
+
     public MessageDialogWindow()
     {
         InitializeComponent();
@@ -22,7 +24,13 @@ internal partial class MessageDialogWindow : Window
     /// <summary>
     ///     Shows a modal message dialog owned by the specified window and returns the clicked button.
     /// </summary>
-    public static Task<MessageBoxResult> ShowAsync(
+    /// <remarks>
+    ///     Avalonia refuses to show a modal dialog whose owner is not visible (e.g. the main window was
+    ///     closed or minimized to tray while a launch-failure prompt was pending). In that case the dialog
+    ///     is shown as an independent top-level window instead of throwing
+    ///     "Cannot show window with non-visible owner" (bug 70148).
+    /// </remarks>
+    public static async Task<MessageBoxResult> ShowAsync(
         Window owner, string message, string caption,
         MessageButtons buttons, MessageIcon icon)
     {
@@ -35,7 +43,16 @@ internal partial class MessageDialogWindow : Window
         dialog.SetIcon(icon);
         dialog.BuildButtons(buttons);
 
-        return dialog.ShowDialog<MessageBoxResult>(owner);
+        if (!owner.IsVisible)
+        {
+            var completion = new TaskCompletionSource<MessageBoxResult>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            dialog.Closed += (_, _) => completion.TrySetResult(dialog._result);
+            dialog.Show();
+            return await completion.Task;
+        }
+
+        return await dialog.ShowDialog<MessageBoxResult>(owner);
     }
 
     private void SetIcon(MessageIcon icon)
@@ -103,9 +120,15 @@ internal partial class MessageDialogWindow : Window
             if (definition.Primary) button.Classes.Add("primary");
 
             var result = definition.Result;
-            button.Click += (_, _) => Close(result);
+            button.Click += (_, _) => Complete(result);
             ButtonsPanel.Children.Add(button);
         }
+    }
+
+    private void Complete(MessageBoxResult result)
+    {
+        _result = result;
+        Close(result);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -113,7 +136,7 @@ internal partial class MessageDialogWindow : Window
         if (e.Key == Key.Escape)
         {
             e.Handled = true;
-            Close(MessageBoxResult.Cancel);
+            Complete(MessageBoxResult.Cancel);
         }
     }
 }
